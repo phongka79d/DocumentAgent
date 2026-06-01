@@ -146,7 +146,7 @@ Later backend services depend on a stable application entrypoint, configuration 
   - Blocked Condition: None.
   - Files: `backend/app/api/health.py`, `backend/app/main.py`
 
-- [ ] (01E): Add backend environment example and secret convention
+- [x] (01E): Add backend environment example and secret convention
   - Source of Truth: `docs/plans/Plan_1.md` > `## 3. Scope`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`; `docs/plans/Plan_1.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_1.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Create `backend/.env.example` with placeholders and no real keys.
@@ -506,7 +506,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 - [x] (01B): Implement backend settings loading
 - [x] (01C): Implement backend logging and FastAPI app wiring
 - [x] (01D): Implement health router and response contract
-- [ ] (01E): Add backend environment example and secret convention
+- [x] (01E): Add backend environment example and secret convention
 - [ ] (01F): Add backend health test
 
 #### Batch02
