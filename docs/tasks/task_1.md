@@ -95,7 +95,7 @@ Later backend services depend on a stable application entrypoint, configuration 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if Python is unavailable and dependencies/tests cannot be run.
   - Files: `backend/app/main.py`, `backend/app/api/__init__.py`, `backend/app/core/`, `backend/app/models/__init__.py`, `backend/tests/`, `backend/requirements.txt`
 
-- [ ] (01B): Implement backend settings loading
+- [x] (01B): Implement backend settings loading
   - Source of Truth: `docs/plans/Plan_1.md` > `## 3. Scope`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`; `docs/plans/Plan_1.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_1.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Settings must load from environment variables.
@@ -503,7 +503,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 #### Batch01
 
 - [x] (01A): Create backend folder structure and dependency file
-- [ ] (01B): Implement backend settings loading
+- [x] (01B): Implement backend settings loading
 - [ ] (01C): Implement backend logging and FastAPI app wiring
 - [ ] (01D): Implement health router and response contract
 - [ ] (01E): Add backend environment example and secret convention
