@@ -162,7 +162,7 @@ Later backend services depend on a stable application entrypoint, configuration 
   - Blocked Condition: None.
   - Files: `backend/.env.example`
 
-- [ ] (01F): Add backend health test
+- [x] (01F): Add backend health test
   - Source of Truth: `docs/plans/Plan_1.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`; `docs/plans/Plan_1.md` > `## 11. Required Tests`; `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Add `backend/tests/test_health.py` using `fastapi.testclient.TestClient`.
@@ -494,7 +494,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 ### Batches
 
-- [ ] Batch01 - Backend Foundation and Health API
+- [x] Batch01 - Backend Foundation and Health API
 - [ ] Batch02 - Frontend Foundation and API Client
 - [ ] Batch03 - Verification, Safety Checks, and Handoff
 
@@ -507,7 +507,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 - [x] (01C): Implement backend logging and FastAPI app wiring
 - [x] (01D): Implement health router and response contract
 - [x] (01E): Add backend environment example and secret convention
-- [ ] (01F): Add backend health test
+- [x] (01F): Add backend health test
 
 #### Batch02
 
