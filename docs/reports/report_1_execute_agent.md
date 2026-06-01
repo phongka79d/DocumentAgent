@@ -170,3 +170,100 @@ complete
 - next task ID: (01C)
 - can proceed: yes
 - handoff notes: `backend/app/core/config.py` now exposes `Settings` and `get_settings()` for later FastAPI app wiring, logging, and CORS configuration.
+
+-----
+
+-----
+
+# Task Execution Report - (01C)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Report File
+docs/reports/report_1_execute_agent.md
+
+## Batch
+Batch01 - Backend Foundation and Health API
+
+## Task
+(01C) - Implement backend logging and FastAPI app wiring
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## 3. Scope`
+- `docs/plans/Plan_1.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_1.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_1.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Backend Foundation and Health API
+- Task ID: (01C)
+- Task title: Implement backend logging and FastAPI app wiring
+
+## Completed Work
+- The task is complete.
+- Added backend logging setup in `backend/app/core/logging.py` using Python logging at `INFO` level.
+- Wired `backend/app/main.py` to call `setup_logging()`, create `FastAPI(title="Document QA Agent")`, configure CORS from `FRONTEND_ORIGIN`, expose `app`, and log app creation/startup failures.
+- Did not implement or mount the health router because that belongs to `(01D)`.
+
+## Files Created or Modified
+- `backend/app/core/logging.py`
+- `backend/app/main.py`
+- `docs/tasks/task_1.md`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `python -c "from app.main import app; assert app.title == 'Document QA Agent'; print(app.title)"` from `backend`: Passed
+- Evidence: printed `Document QA Agent`.
+- `python -c "from app.main import app; cors=[m for m in app.user_middleware if m.cls.__name__ == 'CORSMiddleware']; assert cors; assert cors[0].kwargs['allow_origins'] == ['http://localhost:5173']; print(cors[0].kwargs)"` from `backend`: Passed
+- Evidence: printed CORS middleware kwargs with `allow_origins` set to `['http://localhost:5173']`.
+- `$env:FRONTEND_ORIGIN='http://localhost:3000'; python -c "..."; Remove-Item Env:FRONTEND_ORIGIN` from `backend`: Passed
+- Evidence: printed `http://localhost:3000`, confirming CORS uses the configured frontend origin.
+- `python -c "import logging; from app.core.logging import setup_logging; setup_logging(); assert logging.getLogger().getEffectiveLevel() == logging.INFO; print(logging.getLevelName(logging.getLogger().getEffectiveLevel()))"` from `backend`: Passed
+- Evidence: printed `INFO`.
+- `python -m py_compile app\main.py app\core\logging.py` from `backend`: Passed
+- Evidence: command exited successfully.
+- `rg "health|include_router|APIRouter" backend\app`: Passed
+- Evidence: no matches, confirming sibling task `(01D)` was not implemented.
+- Full backend health tests and manual `uvicorn app.main:app --reload` check: Not run
+- Evidence or reason: Per task validation and user instruction, these are scheduled for Batch03; a focused import/CORS middleware check was acceptable before Batch03.
+
+## Acceptance Check
+- Task acceptance condition: `app.main:app` imports successfully and CORS allows the configured frontend origin.
+- Status: satisfied
+- Evidence: `from app.main import app` succeeded, app title matched `Document QA Agent`, default CORS origin matched `http://localhost:5173`, and an overridden `FRONTEND_ORIGIN` was reflected in CORS middleware configuration.
+
+## Artifacts Produced
+- Runnable backend app entrypoint at `backend/app/main.py`.
+- Backend logging module at `backend/app/core/logging.py`.
+- Task execution report entry.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(01C)` acceptance and focused validation passed; Batch01 still has incomplete sibling tasks `(01D)`, `(01E)`, and `(01F)`.
+
+## Key Implementation Decisions
+- Used a `create_app()` factory while still exposing module-level `app` for `uvicorn app.main:app`.
+- Used FastAPI lifespan logging for startup visibility and exception logging for startup/shutdown failures.
+- Configured CORS from `get_settings().frontend_origin` with standard local-development allowances for credentials, methods, and headers.
+
+## Risks or Open Issues
+- Full live server validation is deferred to Batch03 as specified.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified. `(01B)` dependency is complete and accepted; selected task had source-of-truth fields, source requirements, acceptance, and validation instructions.
+
+## Notes for Next Task
+- next task ID: (01D)
+- can proceed: yes
+- handoff notes: `backend/app/main.py` exposes `app` and has CORS/logging ready. The next task can add `backend/app/api/health.py` and mount the health router under `/api`.

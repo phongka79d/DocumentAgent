@@ -112,7 +112,7 @@ Later backend services depend on a stable application entrypoint, configuration 
   - Blocked Condition: None.
   - Files: `backend/app/core/config.py`
 
-- [ ] (01C): Implement backend logging and FastAPI app wiring
+- [x] (01C): Implement backend logging and FastAPI app wiring
   - Source of Truth: `docs/plans/Plan_1.md` > `## 3. Scope`; `docs/plans/Plan_1.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`; `docs/plans/Plan_1.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add backend logging setup.
@@ -504,7 +504,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 - [x] (01A): Create backend folder structure and dependency file
 - [x] (01B): Implement backend settings loading
-- [ ] (01C): Implement backend logging and FastAPI app wiring
+- [x] (01C): Implement backend logging and FastAPI app wiring
 - [ ] (01D): Implement health router and response contract
 - [ ] (01E): Add backend environment example and secret convention
 - [ ] (01F): Add backend health test
