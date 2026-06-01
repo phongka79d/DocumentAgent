@@ -80,7 +80,7 @@ Later backend services depend on a stable application entrypoint, configuration 
 
 ### Tasks
 
-- [ ] (01A): Create backend folder structure and dependency file
+- [x] (01A): Create backend folder structure and dependency file
   - Source of Truth: `docs/plans/Plan_1.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Create `backend/app`, `backend/app/api`, `backend/app/core`, `backend/app/models`, and `backend/tests`.
@@ -502,7 +502,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 #### Batch01
 
-- [ ] (01A): Create backend folder structure and dependency file
+- [x] (01A): Create backend folder structure and dependency file
 - [ ] (01B): Implement backend settings loading
 - [ ] (01C): Implement backend logging and FastAPI app wiring
 - [ ] (01D): Implement health router and response contract
