@@ -129,7 +129,7 @@ Later backend services depend on a stable application entrypoint, configuration 
   - Blocked Condition: None.
   - Files: `backend/app/core/logging.py`, `backend/app/main.py`
 
-- [ ] (01D): Implement health router and response contract
+- [x] (01D): Implement health router and response contract
   - Source of Truth: `docs/plans/Plan_1.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_1.md` > `## 8. API Design`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`; `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Add `GET /api/health`.
@@ -505,7 +505,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 - [x] (01A): Create backend folder structure and dependency file
 - [x] (01B): Implement backend settings loading
 - [x] (01C): Implement backend logging and FastAPI app wiring
-- [ ] (01D): Implement health router and response contract
+- [x] (01D): Implement health router and response contract
 - [ ] (01E): Add backend environment example and secret convention
 - [ ] (01F): Add backend health test
 

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.health import router as health_router
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+        application.include_router(health_router, prefix="/api")
         return application
     except Exception:
         logger.exception("Failed to create FastAPI application")
