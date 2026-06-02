@@ -285,7 +285,7 @@ Later UI pages depend on a stable frontend entrypoint, TypeScript setup, API cli
   - Blocked Condition: None.
   - Files: `frontend/src/App.tsx`, `frontend/src/main.tsx`, `frontend/src/styles.css`
 
-- [ ] (02D): Add frontend environment example and enforce frontend-safe boundary
+- [x] (02D): Add frontend environment example and enforce frontend-safe boundary
   - Source of Truth: `docs/plans/Plan_1.md` > `## 3. Scope`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`; `docs/plans/Plan_1.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_1.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Create `frontend/.env.example` with `VITE_API_BASE_URL=http://localhost:8000`.
@@ -495,7 +495,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 ### Batches
 
 - [x] Batch01 - Backend Foundation and Health API
-- [ ] Batch02 - Frontend Foundation and API Client
+- [x] Batch02 - Frontend Foundation and API Client
 - [ ] Batch03 - Verification, Safety Checks, and Handoff
 
 ### Task IDs
@@ -514,7 +514,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 - [x] (02A): Create frontend Vite React TypeScript skeleton
 - [x] (02B): Implement frontend API client configuration
 - [x] (02C): Implement minimal app shell and styles
-- [ ] (02D): Add frontend environment example and enforce frontend-safe boundary
+- [x] (02D): Add frontend environment example and enforce frontend-safe boundary
 
 #### Batch03
 
