@@ -87,7 +87,7 @@ The migration and service client need a stable backend package layout and typed 
 
 ### Tasks
 
-- [ ] (01A): Add Supabase backend dependency
+- [x] (01A): Add Supabase backend dependency
   - Source of Truth: `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Add Supabase client dependencies to `backend/requirements.txt`.
@@ -667,7 +667,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 #### Batch01
 
-- [ ] (01A): Add Supabase backend dependency
+- [x] (01A): Add Supabase backend dependency
 - [ ] (01B): Add backend-only Supabase environment placeholders
 - [ ] (01C): Extend backend settings for Supabase variables
 - [ ] (01D): Add services and database package markers
