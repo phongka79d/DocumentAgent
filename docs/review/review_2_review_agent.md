@@ -550,3 +550,197 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01C)
+
+## Source Task File
+`docs/tasks/task_2.md`
+
+## Execution Report Reviewed
+`docs/reports/report_2_execute_agent.md`
+
+## Review Report File
+`docs/review/review_2_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Backend Supabase Configuration
+- Task ID: (01C)
+- Task title: Extend backend settings for Supabase variables
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_2.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01C)
+- Reviewed task ID: (01C)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the `(01C)` report, followed by a post-report progress-tracker correction for the same task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/core/config.py`
+  - `docs/reports/report_2_execute_agent.md`
+  - `docs/tasks/task_2.md`
+- untracked files:
+  - `backend/tests/test_config.py`
+
+## Files Reviewed
+- `backend/app/core/config.py`: in scope - adds optional Supabase settings and deferred validation helper without forcing app startup failure.
+- `backend/tests/test_config.py`: in scope - focused validation support for the new config behavior.
+- `backend/tests/test_health.py`: in scope - existing acceptance evidence for basic health independence.
+- `backend/app/api/health.py`: in scope - unchanged health path still reads only `app_env`.
+- `backend/.env.example`: in scope - dependency evidence for `(01B)` and environment naming consistency.
+- `docs/tasks/task_2.md`: in scope - `(01C)` checkbox and Progress Tracker are both synchronized to checked.
+- `docs/reports/report_2_execute_agent.md`: in scope - appended `(01C)` execution report matches repository evidence.
+- `backend/requirements.txt`: in scope - confirms Supabase dependency prerequisite from `(01A)` exists.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: contains optional Supabase fields and `require_supabase_settings()`.
+- file from execution report: `backend/tests/test_config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: untracked but present; covers missing URL, missing service key, configured values, and no-Supabase startup path.
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: task body and Progress Tracker both mark `(01C)` complete while Batch01 remains unchecked.
+
+## Dependency Review
+- Required dependencies: `(01B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: None. `backend/.env.example` already contains `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET`, and `(01B)` is checked in the task tracker.
+
+## Architecture Alignment
+- Passed:
+  - `Settings` now exposes backend-only Supabase variables with optional typing for URL and service-role key.
+  - Basic health remains independent from Supabase credentials because `get_health()` only uses `settings.app_env` and `Settings()` can still construct with no Supabase env values.
+  - Missing required Supabase values are deferred to explicit service-use time through `require_supabase_settings()`.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence:
+  - `require_supabase_settings()` performs actual runtime checks and returns the configured values only when both required settings are present.
+  - The new tests exercise both failure paths and the configured-success path.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence:
+  - The storage bucket default of `documents` matches the plan example.
+  - Error messages reference the real backend env var names rather than sample-only logic.
+
+## Validations Reviewed
+- Command/check: `pytest tests\test_config.py -q` from `backend`
+- Reported result: Passed (4 tests)
+- Rerun result: Passed (4 tests, 1 pytest cache warning)
+- Status: passed
+- Notes: Confirms optional settings behavior and clear missing-config errors.
+- Command/check: `pytest tests\test_health.py -q` from `backend`
+- Reported result: Passed (1 test)
+- Rerun result: Passed (1 test, 1 pytest cache warning)
+- Status: passed
+- Notes: Confirms basic health still works without Supabase credentials.
+
+## Acceptance Review
+- Task acceptance: Existing basic health tests still pass without real Supabase credentials; Supabase service calls can detect missing required values clearly.
+- Status: satisfied
+- Evidence:
+  - `Settings(_env_file=None)` leaves `supabase_url` and `supabase_service_role_key` unset without failing construction.
+  - `require_supabase_settings()` raises clear `RuntimeError` messages naming `SUPABASE_URL` or `SUPABASE_SERVICE_ROLE_KEY` when missing.
+  - Rerun `tests/test_health.py` still passes unchanged.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(01C)` is checked in the task body and Progress Tracker.
+- Batch status: accurate; `Batch01` remains unchecked because `(01D)` is still incomplete.
+- Execution report entry: accurate; `(01C)` report is appended and includes the tracked post-report correction note.
+- Review report entry: appended by this review.
+- Other: No sibling task was incorrectly marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- `pytest` emitted cache-directory permission warnings in this environment during reruns, but both reported test commands still passed.
+
+### Observations
+- The task added a focused config test file even though the task's primary output was the settings module; this is aligned with the behavior being reviewed and does not expand runtime scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(01A)` through `(01C)` are complete and `(01D)` remains unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch01 - Backend Supabase Configuration",
+  "selected_task_id": "(01C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/tests/test_config.py",
+    "backend/tests/test_health.py",
+    "backend/app/api/health.py",
+    "backend/.env.example",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md",
+    "backend/requirements.txt"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "pytest cache permission warnings occurred during reruns but did not affect pass/fail results"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

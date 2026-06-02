@@ -225,3 +225,91 @@ complete
 - next task ID: (01C)
 - can proceed: yes
 - handoff notes: `(01B)` tracking and report wording are now consistent with the implemented scope and actual validations run.
+
+---
+
+# Task Execution Report - (01C)
+
+## Source Task File
+`docs/tasks/task_2.md`
+
+## Report File
+`docs/reports/report_2_execute_agent.md`
+
+## Batch
+`Batch01 - Backend Supabase Configuration`
+
+## Task
+`(01C) - Extend backend settings for Supabase variables`
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_2.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch01 - Backend Supabase Configuration`
+- Task ID: `(01C)`
+- Task title: `Extend backend settings for Supabase variables`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Complete: extended `Settings` with optional Supabase URL and service-role fields plus a default storage bucket, while keeping base settings construction independent from Supabase credentials.
+- Added `require_supabase_settings()` so future Supabase service code can fail lazily with clear backend configuration errors only when Supabase access is requested.
+- Added focused config tests covering missing-value behavior, configured-value behavior, and the no-Supabase basic settings path.
+
+## Files Created or Modified
+- `backend/app/core/config.py`
+- `backend/tests/test_config.py`
+- `docs/tasks/task_2.md`
+
+## Tests or Validations Run
+- `cd backend && pytest tests\test_config.py -q`: Passed
+- Evidence or reason: 4 tests passed; validates optional settings plus clear runtime errors for missing `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+- `cd backend && pytest tests\test_health.py -q`: Passed
+- Evidence or reason: existing basic health endpoint still passes without Supabase credentials.
+
+## Acceptance Check
+- Task acceptance condition: Existing basic health tests still pass without real Supabase credentials; Supabase service calls can detect missing required values clearly.
+- Status: satisfied
+- Evidence: `Settings(_env_file=None)` works without Supabase values, `require_supabase_settings()` raises explicit errors for missing required fields, and `tests/test_health.py` passes unchanged.
+
+## Artifacts Produced
+- `backend/tests/test_config.py`
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(01C)` passed focused validation; `Batch01` still has unchecked task `(01D)`.
+
+## Key Implementation Decisions
+- Used optional typed settings fields so importing the app and serving basic health does not require Supabase credentials.
+- Centralized deferred validation in `require_supabase_settings()` so later Supabase service code can reuse one clear config gate.
+
+## Risks or Open Issues
+- `pytest` emitted cache-directory permission warnings in this environment, but test execution and assertions still passed.
+- Batch04 Supabase service tests remain deferred because service code is not implemented yet.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: `(01D)`
+- can proceed: yes
+- handoff notes: Supabase config access should call `settings.require_supabase_settings()` to preserve lazy failure behavior and keep basic health independent.
+
+---
+
+## Post-Report Correction - (01C)
+- Updated the Progress Tracker `(01C)` entry in `docs/tasks/task_2.md` to `[x]` so both task-list locations are synchronized.
+- Batch status remains unchanged because `(01D)` is still incomplete.

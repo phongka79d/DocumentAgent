@@ -118,7 +118,7 @@ The migration and service client need a stable backend package layout and typed 
   - Blocked Condition: None for placeholder work; `BLOCKED_BY_USER_ACTION` for real local values needed by live connectivity validation.
   - Files: `backend/.env.example`, frontend env files for inspection only
 
-- [ ] (01C): Extend backend settings for Supabase variables
+- [x] (01C): Extend backend settings for Supabase variables
   - Source of Truth: `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_2.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Extend `Settings` in `backend/app/core/config.py` with Supabase variables.
@@ -669,7 +669,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 - [x] (01A): Add Supabase backend dependency
 - [x] (01B): Add backend-only Supabase environment placeholders
-- [ ] (01C): Extend backend settings for Supabase variables
+- [x] (01C): Extend backend settings for Supabase variables
 - [ ] (01D): Add services and database package markers
 
 #### Batch02
