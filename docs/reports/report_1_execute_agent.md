@@ -1067,3 +1067,96 @@ complete
 - next task ID: (03C)
 - can proceed: yes
 - handoff notes: Frontend build validation is complete. The next task can focus on repository safety and out-of-scope verification searches.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Report File
+`docs/reports/report_1_execute_agent.md`
+
+## Batch
+Batch03 - Verification, Safety Checks, and Handoff
+
+## Task
+(03C) - Verify scope, secret safety, and out-of-scope exclusions
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## 4. Out of Scope`
+- `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_1.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Verification, Safety Checks, and Handoff
+- Task ID: (03C)
+- Task title: Verify scope, secret safety, and out-of-scope exclusions
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Ran targeted repository searches for prohibited Supabase, Qdrant, ShopAIKey, auth/JWT/login, frontend secret-name exposure, and `SINGLE_USER_ID` placement.
+- Distinguished documentation-only matches from runtime code so false positives were recorded safely.
+- Rechecked backend startup behavior without Supabase, Qdrant, or ShopAIKey environment variables by importing the app and calling `/api/health` through `TestClient`.
+
+## Files Created or Modified
+- `docs/tasks/task_1.md`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `rg -n -i "supabase|qdrant|shopaikey" .`: Passed
+- evidence or reason: matches were limited to documentation/report files and future-plan documents; no runtime matches were found in `backend` or `frontend`.
+- `rg -n -i "\bjwt\b|\bauth\b|\blogin\b" .`: Passed
+- evidence or reason: matches were limited to documentation/report files and future-plan documents; no runtime matches were found in `backend` or `frontend`.
+- `rg -n "SINGLE_USER_ID" .`: Passed
+- evidence or reason: runtime occurrence is limited to backend configuration and backend env example; additional matches are documentation references.
+- `rg -n -i "api[_-]?key|secret|private[_-]?key|token" frontend`: Passed
+- evidence or reason: no matches in `frontend`.
+- `rg -n -i "supabase|qdrant|shopaikey" backend frontend`: Passed
+- evidence or reason: no matches in runtime backend/frontend files.
+- `rg -n -i "\bjwt\b|\bauth\b|\blogin\b" backend frontend`: Passed
+- evidence or reason: no matches in runtime backend/frontend files.
+- `rg -n "SINGLE_USER_ID|APP_ENV|FRONTEND_ORIGIN|SUPABASE|QDRANT|SHOPAIKEY|SECRET|TOKEN|PRIVATE_KEY|API_KEY" frontend`: Passed
+- evidence or reason: no matches in `frontend`, including `frontend/.env.example` and `frontend/src`.
+- `rg -n "SINGLE_USER_ID" backend`: Passed
+- evidence or reason: matches are limited to `backend/app/core/config.py` and `backend/.env.example`.
+- `Remove-Item Env:SUPABASE_URL ...; python -c "from fastapi.testclient import TestClient; from app.main import app; response = TestClient(app).get('/api/health'); assert response.status_code == 200; print(response.json())"` from `backend`: Passed
+- evidence or reason: returned `{'status': 'ok', 'service': 'document-qa-agent', 'app_env': 'development'}` with the prohibited service variables unset.
+
+## Acceptance Check
+- Task acceptance condition: No prohibited logic or frontend secret exposure is present; any false-positive text is documented safely.
+- Status: satisfied
+- Evidence: runtime searches found no Supabase, Qdrant, ShopAIKey, auth, JWT, or login logic in `backend` or `frontend`; frontend secret-name search returned no matches; `SINGLE_USER_ID` is backend-only in runtime files; documentation-only matches were recorded as false positives.
+
+## Artifacts Produced
+- Safety verification summary recorded in this execution report.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(03C)` acceptance and validation were satisfied, but Batch03 still has unchecked sibling task `(03D)`.
+
+## Key Implementation Decisions
+- Treated repository-wide matches in `docs/` and prior reports as acceptable false positives, then reran the required searches against runtime directories to verify actual implementation scope.
+- Used a focused backend app import plus health request as the safest confirmation that startup does not require Supabase, Qdrant, or ShopAIKey variables.
+
+## Risks or Open Issues
+- None
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified
+
+## Notes for Next Task
+- next task ID: (03D)
+- can proceed: yes
+- handoff notes: Scope and secret-safety verification is complete. The next task can produce the final handoff report using the already recorded backend, frontend, and safety validation results.

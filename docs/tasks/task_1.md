@@ -393,7 +393,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if local Node.js/npm tooling is missing and cannot be installed by the agent.
   - Files: `frontend/package.json`, generated lockfile if package manager creates one, execution report or task progress notes
 
-- [ ] (03C): Verify scope, secret safety, and out-of-scope exclusions
+- [x] (03C): Verify scope, secret safety, and out-of-scope exclusions
   - Source of Truth: `docs/plans/Plan_1.md` > `## 4. Out of Scope`; `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_1.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - No Supabase, Qdrant, or ShopAIKey logic exists yet.
@@ -520,7 +520,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 - [x] (03A): Run backend automated and manual health validations
 - [x] (03B): Run frontend install/build validation
-- [ ] (03C): Verify scope, secret safety, and out-of-scope exclusions
+- [x] (03C): Verify scope, secret safety, and out-of-scope exclusions
 - [ ] (03D): Produce execution report and update progress tracker
 
 ## Completion Reporting Rules for Future Execution Agents
