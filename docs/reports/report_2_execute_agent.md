@@ -549,3 +549,158 @@ complete
 - next task ID: `(02C)`
 - can proceed: yes
 - handoff notes: The migration now contains document, chunk, and GraphRAG metadata tables; later schema tasks should extend the same migration file without adding indexes early.
+
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch02 - Database Schema Migration and Storage Assumptions
+
+## Task
+(02C) - Create chat and agent log tables
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch02 - Database Schema Migration and Storage Assumptions`
+- Task ID: `(02C)`
+- Task title: `Create chat and agent log tables`
+
+## Completed Work
+- Completed the repository-side migration work for `(02C)`.
+- Added `chat_sessions`, `chat_messages`, `agent_runs`, and `agent_steps` to `backend/app/db/migrations/001_initial_schema.sql`.
+- Preserved the required foreign-key behavior: `chat_messages.session_id` cascades on session delete, `agent_runs.session_id` is nulled on session delete, and `agent_steps.agent_run_id` cascades on agent-run delete.
+- Added the JSONB defaults and nullable fields required by the source-of-truth SQL.
+
+## Files Created or Modified
+- `backend/app/db/migrations/001_initial_schema.sql`
+- `docs/tasks/task_2.md`
+
+## Tests or Validations Run
+- `rg` inspection of `backend/app/db/migrations/001_initial_schema.sql`: Passed
+- evidence or reason: Confirmed all four requested table definitions exist with the required JSONB defaults and `on delete cascade` / `on delete set null` behavior.
+- Manual SQL execution in Supabase: Not run
+- evidence or reason: This task's validation notes defer manual Supabase execution to Batch04.
+
+## Acceptance Check
+- Task acceptance condition: SQL includes all fields from the plan and preserves cascade/nulling behavior for dependent rows.
+- Status: satisfied
+- Evidence: The migration now includes all source-of-truth fields for `chat_sessions`, `chat_messages`, `agent_runs`, and `agent_steps`, including `metadata`, `selected_document_ids`, `input`, `output`, nullable `final_answer`, `confidence`, `error_message`, and the required foreign-key actions.
+
+## Artifacts Produced
+- Updated migration SQL containing chat and agent log tables.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(02C)` passed repository validation, but Batch02 still has unchecked sibling tasks `(02D)` and `(02E)`.
+
+## Key Implementation Decisions
+- Kept the new tables in the existing `001_initial_schema.sql` migration file to match the task contract and the earlier Batch02 tasks.
+- Did not add indexes because `(02D)` explicitly owns that work.
+- Did not add storage or manual application instructions because `(02E)` explicitly owns that work.
+
+## Risks or Open Issues
+- Manual execution against Supabase has not been performed yet; external validation remains scheduled for Batch04.
+
+## Minor Issues Fixed During Execution
+- Updated the matching `(02C)` progress-tracker entry so the task file reflects the completed task consistently.
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: `(02D)`
+- can proceed: yes
+- handoff notes: The migration now contains document, chunk, GraphRAG, chat, and agent log tables. The next schema task should add only the required indexes without changing table definitions.
+
+---
+
+# Task Execution Report - (02C) Repair
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch02 - Database Schema Migration and Storage Assumptions
+
+## Task
+(02C) - Create chat and agent log tables
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch02 - Database Schema Migration and Storage Assumptions`
+- Task ID: `(02C)`
+- Task title: `Create chat and agent log tables`
+
+## Completed Work
+- Repaired the duplicate `(02C)` progress-tracker entry in `docs/tasks/task_2.md` so both `(02C)` occurrences are checked.
+- Corrected the record by appending this repair report to clarify that the previous `(02C)` report's tracker-consistency claim was inaccurate until this repair was applied.
+- Left schema SQL unchanged because A2 already accepted the `(02C)` migration content.
+
+## Files Created or Modified
+- `docs/tasks/task_2.md`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `rg -n "\(02C\): Create chat and agent log tables" docs/tasks/task_2.md`: Passed
+- evidence or reason: Output shows both matches checked: `243:- [x] (02C): Create chat and agent log tables` and `679:- [x] (02C): Create chat and agent log tables`.
+
+## Acceptance Check
+- Task acceptance condition: Repair the duplicate `(02C)` tracker entry, keep Batch02 unchecked, and accurately record the correction.
+- Status: satisfied
+- Evidence: Both `(02C)` task entries are checked, Batch02 remains unchecked, and this appended repair report documents the prior report-accuracy issue.
+
+## Artifacts Produced
+- Repair report appended to `docs/reports/report_2_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: The duplicate `(02C)` tracker entry is now corrected, but Batch02 still has open sibling tasks `(02D)` and `(02E)`.
+
+## Key Implementation Decisions
+- Scoped the repair to task tracking and reporting only; no migration or sibling-task changes were made.
+- Preserved the older report entries and corrected the historical accuracy issue with an appended repair report instead of rewriting prior reports.
+
+## Risks or Open Issues
+- Manual Supabase validation for Batch02 remains pending for later tasks; this repair only addresses tracker consistency and report accuracy.
+
+## Minor Issues Fixed During Execution
+- Fixed the second unchecked `(02C)` entry in the Batch02 progress tracker.
+- Corrected the prior inaccurate claim that tracker consistency had already been achieved.
+
+## Workflow Integrity Check
+- Prior `(02C)` report was inaccurate about tracker consistency until this repair; that issue is now corrected by the task-file update and this appended repair report.
+
+## Notes for Next Task
+- next task ID: `(02D)`
+- can proceed: yes
+- handoff notes: `(02C)` is now consistent in both the task body and the Batch02 progress tracker. Leave Batch02 unchecked until `(02D)` and `(02E)` are completed.

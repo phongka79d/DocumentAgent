@@ -47,3 +47,47 @@ create table if not exists document_relationships (
   description text,
   created_at timestamptz not null default now()
 );
+
+create table if not exists chat_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null,
+  title text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references chat_sessions(id) on delete cascade,
+  user_id text not null,
+  role text not null,
+  content text not null,
+  created_at timestamptz not null default now(),
+  metadata jsonb not null default '{}'::jsonb
+);
+
+create table if not exists agent_runs (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid references chat_sessions(id) on delete set null,
+  user_id text not null,
+  question text not null,
+  selected_document_ids jsonb not null default '[]'::jsonb,
+  status text not null default 'running',
+  final_answer text,
+  confidence double precision,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  error_message text
+);
+
+create table if not exists agent_steps (
+  id uuid primary key default gen_random_uuid(),
+  agent_run_id uuid not null references agent_runs(id) on delete cascade,
+  step_name text not null,
+  agent_name text not null,
+  input jsonb not null default '{}'::jsonb,
+  output jsonb not null default '{}'::jsonb,
+  status text not null,
+  created_at timestamptz not null default now(),
+  error_message text
+);
