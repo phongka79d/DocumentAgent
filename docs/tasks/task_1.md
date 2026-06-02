@@ -253,7 +253,7 @@ Later UI pages depend on a stable frontend entrypoint, TypeScript setup, API cli
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if Node.js is unavailable and install/build cannot run.
   - Files: `frontend/package.json`, `frontend/tsconfig.json`, `frontend/vite.config.ts`, `frontend/src/main.tsx`
 
-- [ ] (02B): Implement frontend API client configuration
+- [x] (02B): Implement frontend API client configuration
   - Source of Truth: `docs/plans/Plan_1.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`; `docs/plans/Plan_1.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_1.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Create `frontend/src/api/client.ts`.
@@ -512,7 +512,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 #### Batch02
 
 - [x] (02A): Create frontend Vite React TypeScript skeleton
-- [ ] (02B): Implement frontend API client configuration
+- [x] (02B): Implement frontend API client configuration
 - [ ] (02C): Implement minimal app shell and styles
 - [ ] (02D): Add frontend environment example and enforce frontend-safe boundary
 
