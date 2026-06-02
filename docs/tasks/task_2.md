@@ -223,7 +223,7 @@ Document upload, chunk persistence, GraphRAG metadata, chat history, and agent l
   - Blocked Condition: None for repository SQL; `BLOCKED_BY_USER_ACTION` if Supabase project access is unavailable for manual execution.
   - Files: `backend/app/db/migrations/001_initial_schema.sql`
 
-- [ ] (02B): Create GraphRAG entity and relationship tables
+- [x] (02B): Create GraphRAG entity and relationship tables
   - Source of Truth: `docs/plans/Plan_2.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
   - Source Requirements:
     - Create `document_entities`.
@@ -675,7 +675,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 #### Batch02
 
 - [x] (02A): Create document metadata and chunk tables
-- [ ] (02B): Create GraphRAG entity and relationship tables
+- [x] (02B): Create GraphRAG entity and relationship tables
 - [ ] (02C): Create chat and agent log tables
 - [ ] (02D): Add required indexes
 - [ ] (02E): Record storage bucket and migration application instructions

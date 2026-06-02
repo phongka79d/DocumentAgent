@@ -473,3 +473,79 @@ complete
 - next task ID: `(02B)`
 - can proceed: yes
 - handoff notes: `001_initial_schema.sql` is now in place for follow-up schema tasks in the same migration file series.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+`docs/tasks/task_2.md`
+
+## Report File
+`docs/reports/report_2_execute_agent.md`
+
+## Batch
+Batch02 - Database Schema Migration and Storage Assumptions
+
+## Task
+(02B) - Create GraphRAG entity and relationship tables
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch02 - Database Schema Migration and Storage Assumptions`
+- Task ID: `(02B)`
+- Task title: `Create GraphRAG entity and relationship tables`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Complete. Added `document_entities` and `document_relationships` to `backend/app/db/migrations/001_initial_schema.sql` with the planned columns, defaults, and foreign-key behavior.
+
+## Files Created or Modified
+- `backend/app/db/migrations/001_initial_schema.sql`
+- `docs/tasks/task_2.md`
+
+## Tests or Validations Run
+- migration content inspection: Passed
+- evidence or reason: Verified the migration contains `document_entities` and `document_relationships` with all fields from the task source and `on delete cascade` on `document_entities.document_id`, `document_entities.chunk_id`, and `document_relationships.document_id`.
+- manual Supabase SQL execution: Not run
+- evidence or reason: This task's required validation is migration inspection before execution; manual Supabase execution is deferred to Batch04.
+
+## Acceptance Check
+- Task acceptance condition: SQL includes all fields from the plan and keeps GraphRAG logic itself out of scope.
+- Status: satisfied
+- Evidence: The migration adds only the two GraphRAG metadata tables and does not introduce extraction, retrieval, index, chat, or agent logic.
+
+## Artifacts Produced
+- `backend/app/db/migrations/001_initial_schema.sql`
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(02B)` is complete, but Batch02 still has unchecked sibling tasks.
+
+## Key Implementation Decisions
+- Kept `document_relationships` unlinked to entity tables by foreign key because the plan defines `source_id` and `target_id` as text polymorphic identifiers.
+- Kept indexes out of the migration update because `(02D)` owns that scope.
+
+## Risks or Open Issues
+- Manual execution against Supabase has not been performed yet; external validation remains scheduled for Batch04.
+
+## Minor Issues Fixed During Execution
+- Updated the matching `(02B)` progress-tracker entry so the task file reflects the completed task consistently.
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: `(02C)`
+- can proceed: yes
+- handoff notes: The migration now contains document, chunk, and GraphRAG metadata tables; later schema tasks should extend the same migration file without adding indexes early.

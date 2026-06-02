@@ -23,3 +23,27 @@ create table if not exists document_chunks (
   qdrant_point_id text,
   created_at timestamptz not null default now()
 );
+
+create table if not exists document_entities (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references documents(id) on delete cascade,
+  chunk_id uuid references document_chunks(id) on delete cascade,
+  user_id text not null,
+  entity_name text not null,
+  entity_type text not null,
+  description text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists document_relationships (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references documents(id) on delete cascade,
+  source_type text not null,
+  source_id text not null,
+  target_type text not null,
+  target_id text not null,
+  relationship_type text not null,
+  weight double precision not null default 1.0,
+  description text,
+  created_at timestamptz not null default now()
+);
