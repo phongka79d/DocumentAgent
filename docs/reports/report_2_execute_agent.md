@@ -704,3 +704,84 @@ complete
 - next task ID: `(02D)`
 - can proceed: yes
 - handoff notes: `(02C)` is now consistent in both the task body and the Batch02 progress tracker. Leave Batch02 unchecked until `(02D)` and `(02E)` are completed.
+
+---
+
+# Task Execution Report - (02D)
+
+## Source Task File
+`docs/tasks/task_2.md`
+
+## Report File
+`docs/reports/report_2_execute_agent.md`
+
+## Batch
+`Batch02 - Database Schema Migration and Storage Assumptions`
+
+## Task
+`(02D) - Add required indexes`
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 3. Scope`
+- `docs/plans/Plan_2.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_2.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch02 - Database Schema Migration and Storage Assumptions`
+- Task ID: `(02D)`
+- Task title: `Add required indexes`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Complete. Added all required `create index if not exists` and `create unique index if not exists` statements to `backend/app/db/migrations/001_initial_schema.sql` after table creation.
+- Included every index named in the plan, including the unique index on `(document_id, chunk_index)`.
+
+## Files Created or Modified
+- `backend/app/db/migrations/001_initial_schema.sql`
+- `docs/tasks/task_2.md`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `Get-Content backend/app/db/migrations/001_initial_schema.sql`: Passed
+- evidence or reason: Confirmed index SQL is placed after all table definitions in dependency-safe order.
+- `rg -n "idx_documents_user_id|idx_documents_status|idx_document_chunks_document_id|idx_document_chunks_user_id|idx_document_chunks_document_chunk_index|idx_document_entities_document_id|idx_document_entities_user_name|idx_document_relationships_document_id|idx_document_relationships_source|idx_document_relationships_target|idx_chat_sessions_user_id|idx_chat_messages_session_id|idx_agent_runs_user_id|idx_agent_steps_agent_run_id" backend/app/db/migrations/001_initial_schema.sql`: Passed
+- evidence or reason: Output showed all 14 required index statements present in the migration.
+- `rg -n "\(02D\): Add required indexes|Batch02 - Database Schema Migration and Storage Assumptions" docs/tasks/task_2.md`: Passed
+- evidence or reason: Verified both `(02D)` tracker entries are checked and `Batch02` remains unchecked.
+
+## Acceptance Check
+- Task acceptance condition: Migration contains every required index from `docs/plans/Plan_2.md`.
+- Status: satisfied
+- Evidence: The migration now includes all required indexes listed in the plan, including the unique `document_chunks(document_id, chunk_index)` index.
+
+## Artifacts Produced
+- Updated migration SQL with all required indexes.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(02D)` is complete, but `Batch02` still contains unchecked task `(02E)`.
+
+## Key Implementation Decisions
+- Added the index statements exactly as specified by the plan instead of deriving alternate names or extra indexes.
+- Kept the change scoped to the migration and task/report tracking only.
+
+## Risks or Open Issues
+- Manual SQL application in Supabase is still pending for later Batch04 validation; this task only adds the repository migration SQL.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: `(02E)`
+- can proceed: yes
+- handoff notes: The migration now includes all required indexes. Leave schema-application and storage-instruction work to `(02E)` and later Batch04 manual validation.

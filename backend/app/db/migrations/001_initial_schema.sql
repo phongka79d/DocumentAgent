@@ -91,3 +91,18 @@ create table if not exists agent_steps (
   created_at timestamptz not null default now(),
   error_message text
 );
+
+create index if not exists idx_documents_user_id on documents(user_id);
+create index if not exists idx_documents_status on documents(status);
+create index if not exists idx_document_chunks_document_id on document_chunks(document_id);
+create index if not exists idx_document_chunks_user_id on document_chunks(user_id);
+create unique index if not exists idx_document_chunks_document_chunk_index on document_chunks(document_id, chunk_index);
+create index if not exists idx_document_entities_document_id on document_entities(document_id);
+create index if not exists idx_document_entities_user_name on document_entities(user_id, entity_name);
+create index if not exists idx_document_relationships_document_id on document_relationships(document_id);
+create index if not exists idx_document_relationships_source on document_relationships(source_type, source_id);
+create index if not exists idx_document_relationships_target on document_relationships(target_type, target_id);
+create index if not exists idx_chat_sessions_user_id on chat_sessions(user_id);
+create index if not exists idx_chat_messages_session_id on chat_messages(session_id);
+create index if not exists idx_agent_runs_user_id on agent_runs(user_id);
+create index if not exists idx_agent_steps_agent_run_id on agent_steps(agent_run_id);
