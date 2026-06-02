@@ -135,7 +135,7 @@ The migration and service client need a stable backend package layout and typed 
   - Blocked Condition: None.
   - Files: `backend/app/core/config.py`
 
-- [ ] (01D): Add services and database package markers
+- [x] (01D): Add services and database package markers
   - Source of Truth: `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Create `backend/app/services/__init__.py`.
@@ -658,7 +658,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 ### Batches
 
-- [ ] Batch01 - Backend Supabase Configuration
+- [x] Batch01 - Backend Supabase Configuration
 - [ ] Batch02 - Database Schema Migration and Storage Assumptions
 - [ ] Batch03 - Backend Supabase Service and Optional Dependency Health
 - [ ] Batch04 - Validation, Manual Setup Checks, and Handoff
@@ -670,7 +670,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [x] (01A): Add Supabase backend dependency
 - [x] (01B): Add backend-only Supabase environment placeholders
 - [x] (01C): Extend backend settings for Supabase variables
-- [ ] (01D): Add services and database package markers
+- [x] (01D): Add services and database package markers
 
 #### Batch02
 

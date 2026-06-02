@@ -313,3 +313,86 @@ complete
 ## Post-Report Correction - (01C)
 - Updated the Progress Tracker `(01C)` entry in `docs/tasks/task_2.md` to `[x]` so both task-list locations are synchronized.
 - Batch status remains unchanged because `(01D)` is still incomplete.
+
+---
+
+# Task Execution Report - (01D)
+
+## Source Task File
+`docs/tasks/task_2.md`
+
+## Report File
+`docs/reports/report_2_execute_agent.md`
+
+## Batch
+`Batch01 - Backend Supabase Configuration`
+
+## Task
+`(01D) - Add services and database package markers`
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch01 - Backend Supabase Configuration`
+- Task ID: `(01D)`
+- Task title: `Add services and database package markers`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Created `backend/app/services/__init__.py` and `backend/app/db/__init__.py` as package markers.
+- Created `backend/app/db/migrations/` so later migration SQL can be added without mixing in Batch02 work.
+
+## Files Created or Modified
+- `backend/app/services/__init__.py`
+- `backend/app/db/__init__.py`
+- `docs/tasks/task_2.md`
+- `backend/app/db/migrations/`
+
+## Tests or Validations Run
+- `Get-ChildItem -Recurse backend/app/db,backend/app/services | Select-Object FullName`: Passed
+- evidence or reason: confirmed `backend/app/services`, `backend/app/db`, and `backend/app/db/migrations` exist in the backend tree.
+- `python -` import smoke check from `backend/`: Passed
+- evidence or reason: `from app.services import *` and `from app.db import *` completed and printed `import-ok`.
+- Batch04 backend tests: Not run
+- evidence or reason: this task explicitly defers broader backend import/tests to Batch04.
+
+## Acceptance Check
+- Task acceptance condition: `backend/app/services` and `backend/app/db` are valid Python packages, and the migrations folder exists.
+- Status: satisfied
+- Evidence: both `__init__.py` files exist, the `migrations` directory exists, and the focused Python import check passed.
+
+## Artifacts Produced
+- `backend/app/services/__init__.py`
+- `backend/app/db/__init__.py`
+- `backend/app/db/migrations/`
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: `(01D)` passed validation, and all Batch01 task IDs are now complete.
+
+## Key Implementation Decisions
+- Kept both package marker files empty to satisfy the importable-package requirement without adding runtime behavior.
+- Created the migrations directory only, leaving migration SQL for Batch02.
+
+## Risks or Open Issues
+- None
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: `(02A)`
+- can proceed: yes
+- handoff notes: Batch02 can add `backend/app/db/migrations/001_initial_schema.sql` directly into the prepared migrations directory.
