@@ -206,7 +206,7 @@ Document upload, chunk persistence, GraphRAG metadata, chat history, and agent l
 
 ### Tasks
 
-- [ ] (02A): Create document metadata and chunk tables
+- [x] (02A): Create document metadata and chunk tables
   - Source of Truth: `docs/plans/Plan_2.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
   - Source Requirements:
     - Create `documents`.
@@ -674,7 +674,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 #### Batch02
 
-- [ ] (02A): Create document metadata and chunk tables
+- [x] (02A): Create document metadata and chunk tables
 - [ ] (02B): Create GraphRAG entity and relationship tables
 - [ ] (02C): Create chat and agent log tables
 - [ ] (02D): Add required indexes

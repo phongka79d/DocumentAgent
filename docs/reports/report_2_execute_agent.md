@@ -396,3 +396,80 @@ complete
 - next task ID: `(02A)`
 - can proceed: yes
 - handoff notes: Batch02 can add `backend/app/db/migrations/001_initial_schema.sql` directly into the prepared migrations directory.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+`docs/tasks/task_2.md`
+
+## Report File
+`docs/reports/report_2_execute_agent.md`
+
+## Batch
+Batch02 - Database Schema Migration and Storage Assumptions
+
+## Task
+(02A) - Create document metadata and chunk tables
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch02 - Database Schema Migration and Storage Assumptions`
+- Task ID: `(02A)`
+- Task title: `Create document metadata and chunk tables`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Complete. Created `backend/app/db/migrations/001_initial_schema.sql` with `documents` and `document_chunks` only.
+- Added all planned fields, defaults, nullable columns, allowed document statuses via a check constraint, and the `document_chunks.document_id -> documents(id)` cascade foreign key.
+
+## Files Created or Modified
+- `backend/app/db/migrations/001_initial_schema.sql`
+- `docs/tasks/task_2.md`
+
+## Tests or Validations Run
+- migration content inspection: Passed
+- evidence or reason: Verified the SQL file contains both required tables, all planned fields, default values, allowed statuses `uploaded|processing|ready|failed`, and `on delete cascade` on `document_chunks.document_id`.
+- manual Supabase SQL execution: Blocked
+- evidence or reason: Deferred by task definition to Batch04/user setup.
+
+## Acceptance Check
+- Task acceptance condition: SQL includes all fields from the plan for both tables and preserves the required cascade behavior.
+- Status: satisfied
+- Evidence: `001_initial_schema.sql` defines `documents` and `document_chunks` with the exact plan fields and the required cascade relationship.
+
+## Artifacts Produced
+- `backend/app/db/migrations/001_initial_schema.sql`
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(02A)` is complete, but Batch02 still has unchecked sibling tasks.
+
+## Key Implementation Decisions
+- Enforced the allowed document statuses with an inline `check` constraint instead of leaving `status` unconstrained.
+- Kept the migration limited to the two in-scope tables and excluded GraphRAG, chat, agent, and index work.
+
+## Risks or Open Issues
+- Manual execution against Supabase has not been performed yet; that validation remains scheduled for Batch04.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: `(02B)`
+- can proceed: yes
+- handoff notes: `001_initial_schema.sql` is now in place for follow-up schema tasks in the same migration file series.
