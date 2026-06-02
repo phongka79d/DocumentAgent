@@ -377,7 +377,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if local Python tooling is missing and cannot be installed by the agent.
   - Files: `backend/tests/test_health.py`, execution report or task progress notes
 
-- [ ] (03B): Run frontend install/build validation
+- [x] (03B): Run frontend install/build validation
   - Source of Truth: `docs/plans/Plan_1.md` > `## 1. Goal`; `docs/plans/Plan_1.md` > `## 11. Required Tests`; `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Run frontend install if needed.
@@ -519,7 +519,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 #### Batch03
 
 - [x] (03A): Run backend automated and manual health validations
-- [ ] (03B): Run frontend install/build validation
+- [x] (03B): Run frontend install/build validation
 - [ ] (03C): Verify scope, secret safety, and out-of-scope exclusions
 - [ ] (03D): Produce execution report and update progress tracker
 
