@@ -269,7 +269,7 @@ Later UI pages depend on a stable frontend entrypoint, TypeScript setup, API cli
   - Blocked Condition: None.
   - Files: `frontend/src/api/client.ts`, `frontend/package.json`
 
-- [ ] (02C): Implement minimal app shell and styles
+- [x] (02C): Implement minimal app shell and styles
   - Source of Truth: `docs/plans/Plan_1.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Create `frontend/src/App.tsx`.
@@ -513,7 +513,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 - [x] (02A): Create frontend Vite React TypeScript skeleton
 - [x] (02B): Implement frontend API client configuration
-- [ ] (02C): Implement minimal app shell and styles
+- [x] (02C): Implement minimal app shell and styles
 - [ ] (02D): Add frontend environment example and enforce frontend-safe boundary
 
 #### Batch03
