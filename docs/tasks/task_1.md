@@ -360,7 +360,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 ### Tasks
 
-- [ ] (03A): Run backend automated and manual health validations
+- [x] (03A): Run backend automated and manual health validations
   - Source of Truth: `docs/plans/Plan_1.md` > `## 1. Goal`; `docs/plans/Plan_1.md` > `## 11. Required Tests`; `docs/plans/Plan_1.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_1.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Backend starts.
@@ -518,7 +518,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 #### Batch03
 
-- [ ] (03A): Run backend automated and manual health validations
+- [x] (03A): Run backend automated and manual health validations
 - [ ] (03B): Run frontend install/build validation
 - [ ] (03C): Verify scope, secret safety, and out-of-scope exclusions
 - [ ] (03D): Produce execution report and update progress tracker
