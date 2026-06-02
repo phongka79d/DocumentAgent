@@ -238,7 +238,7 @@ Later UI pages depend on a stable frontend entrypoint, TypeScript setup, API cli
 
 ### Tasks
 
-- [ ] (02A): Create frontend Vite React TypeScript skeleton
+- [x] (02A): Create frontend Vite React TypeScript skeleton
   - Source of Truth: `docs/plans/Plan_1.md` > `## 3. Scope`; `docs/plans/Plan_1.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_1.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Create frontend Vite React TypeScript files under `frontend/`.
@@ -511,7 +511,7 @@ The foundation is only complete when backend tests pass, frontend builds, health
 
 #### Batch02
 
-- [ ] (02A): Create frontend Vite React TypeScript skeleton
+- [x] (02A): Create frontend Vite React TypeScript skeleton
 - [ ] (02B): Implement frontend API client configuration
 - [ ] (02C): Implement minimal app shell and styles
 - [ ] (02D): Add frontend environment example and enforce frontend-safe boundary
