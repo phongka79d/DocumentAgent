@@ -70,3 +70,158 @@ complete
 - next task ID: (01B)
 - can proceed: yes
 - handoff notes: backend dependency setup is ready for backend-only Supabase environment placeholder work.
+
+---
+
+# Task Execution Report - (01B)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch01 - Backend Supabase Configuration
+
+## Task
+(01B) - Add backend-only Supabase environment placeholders
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_2.md > ## 3. Scope
+- docs/plans/Plan_2.md > ## 9. Implementation Steps
+- docs/plans/Plan_2.md > ## 10. Configuration and Environment Variables
+- docs/plans/Master_Plan.md > # 15. Environment Variables
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Backend Supabase Configuration
+- Task ID: (01B)
+- Task title: Add backend-only Supabase environment placeholders
+
+## Completed Work
+- complete
+- Added safe placeholder values for `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` to `backend/.env.example` while preserving `SINGLE_USER_ID` as a backend-only variable and leaving frontend env files unchanged.
+
+## Files Created or Modified
+- backend/.env.example
+- docs/tasks/task_2.md
+
+## Tests or Validations Run
+- Inspect `backend/.env.example`: Passed
+- Evidence: file now contains `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` with placeholder/example values only, alongside existing backend-only `SINGLE_USER_ID`.
+- Frontend secret-name search in Batch04: Not run
+- Evidence: deferred per task validation instructions for this batch.
+
+## Acceptance Check
+- Task acceptance condition: `backend/.env.example` includes Supabase variable names and no real secrets; frontend env files remain private-key-free.
+- Status: satisfied
+- Evidence: `backend/.env.example` contains non-secret placeholders only; frontend env files were not edited in this task, and the repo-wide frontend secret-name search remains deferred to Batch04.
+
+## Artifacts Produced
+- Updated backend env example with Supabase placeholders.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: backend env placeholder work is complete and the required file inspection passed; the broader frontend secret-name search remains deferred to Batch04, and other Batch01 tasks remain unchecked.
+
+## Key Implementation Decisions
+- Used explicit placeholder strings in `backend/.env.example` and kept the bucket example as `documents` to match the plan guidance for local setup.
+
+## Risks or Open Issues
+- Live Supabase connectivity remains blocked until the user provides real local `.env` values.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: (01C)
+- can proceed: yes
+- handoff notes: backend env example is ready for Supabase configuration code to consume these backend-only variables.
+
+---
+
+# Task Execution Report - (01B) Repair
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch01 - Backend Supabase Configuration
+
+## Task
+(01B) - Add backend-only Supabase environment placeholders
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_2.md > ## 3. Scope
+- docs/plans/Plan_2.md > ## 9. Implementation Steps
+- docs/plans/Plan_2.md > ## 10. Configuration and Environment Variables
+- docs/plans/Master_Plan.md > # 15. Environment Variables
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Backend Supabase Configuration
+- Task ID: (01B)
+- Task title: Add backend-only Supabase environment placeholders
+
+## Completed Work
+- complete
+- Repaired the `(01B)` Progress Tracker entry so both task-file occurrences are checked.
+- Revised the existing `(01B)` execution report wording to reflect that only `backend/.env.example` inspection was run and that the frontend secret-name search remains deferred to Batch04.
+
+## Files Created or Modified
+- docs/tasks/task_2.md
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- `rg -n "\(01B\)" docs/tasks/task_2.md`: Passed
+- Evidence: both `(01B)` task entries are `[x]`.
+- Reread `(01B)` report entry in `docs/reports/report_2_execute_agent.md`: Passed
+- Evidence: validation and progress wording now state that the backend env inspection ran and the frontend secret-name search was deferred to Batch04.
+
+## Acceptance Check
+- Task acceptance condition: `backend/.env.example` includes Supabase variable names and no real secrets; frontend env files remain private-key-free.
+- Status: satisfied
+- Evidence: backend env placeholder work remains unchanged; this repair synchronized task tracking and corrected the report wording to match the validation actually performed.
+
+## Artifacts Produced
+- Repaired `(01B)` task tracking and execution report wording.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: the Progress Tracker `(01B)` entry was out of sync and is now corrected; other Batch01 tasks remain unchecked.
+
+## Key Implementation Decisions
+- Preserved `backend/.env.example` exactly as requested because A2's feedback was limited to tracking and reporting accuracy.
+
+## Risks or Open Issues
+- Repo-wide frontend secret-name search for backend-only Supabase secrets is still deferred to Batch04.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: (01C)
+- can proceed: yes
+- handoff notes: `(01B)` tracking and report wording are now consistent with the implemented scope and actual validations run.

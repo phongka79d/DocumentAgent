@@ -102,7 +102,7 @@ The migration and service client need a stable backend package layout and typed 
   - Blocked Condition: None.
   - Files: `backend/requirements.txt`
 
-- [ ] (01B): Add backend-only Supabase environment placeholders
+- [x] (01B): Add backend-only Supabase environment placeholders
   - Source of Truth: `docs/plans/Plan_2.md` > `## 3. Scope`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`
   - Source Requirements:
     - Add `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` to `backend/.env.example`.
@@ -668,7 +668,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 #### Batch01
 
 - [x] (01A): Add Supabase backend dependency
-- [ ] (01B): Add backend-only Supabase environment placeholders
+- [x] (01B): Add backend-only Supabase environment placeholders
 - [ ] (01C): Extend backend settings for Supabase variables
 - [ ] (01D): Add services and database package markers
 
