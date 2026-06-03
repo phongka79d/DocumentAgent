@@ -503,7 +503,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if local Python tooling or dependency installation is unavailable.
   - Files: `backend/tests/test_supabase_service.py`, `backend/tests/test_health.py` if impacted, execution report
 
-- [ ] (04C): Perform manual Supabase database and storage checks
+- [x] (04C): Perform manual Supabase database and storage checks
   - Source of Truth: `docs/plans/Plan_2.md` > `## 5. Dependencies`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 11. Required Tests`; `docs/plans/Plan_2.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_2.md` > `## 13. Failure Handling`; `docs/plans/Plan_2.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Requires a Supabase project with PostgreSQL and Storage enabled.
@@ -691,7 +691,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 - [x] (04A): Add mocked Supabase service tests
 - [x] (04B): Run backend automated validations
-- [ ] (04C): Perform manual Supabase database and storage checks
+- [x] (04C): Perform manual Supabase database and storage checks
 - [ ] (04D): Verify scope, secret safety, and reviewer checklist items
 - [ ] (04E): Produce execution report and update progress tracker
 

@@ -1502,3 +1502,92 @@ complete
 - next task ID: (04C)
 - can proceed: yes
 - handoff notes: Automated backend validations are passing. Manual Supabase database/storage checks remain the next Batch04 step and may require user-provided Supabase project setup and local environment values.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch04 - Validation, Manual Setup Checks, and Handoff
+
+## Task
+(04C) - Perform manual Supabase database and storage checks
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 5. Dependencies`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_2.md` > `## 11. Required Tests`
+- `docs/plans/Plan_2.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_2.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_2.md` > `## 14. Agent Report Requirement`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04C)
+- Task title: Perform manual Supabase database and storage checks
+
+## Completed Work
+- Completed live Supabase database and storage validation for the configured backend environment.
+- Confirmed `backend/.env` contains the required Supabase-related keys without printing their values.
+- Confirmed all 8 required tables are reachable: `documents`, `document_chunks`, `document_entities`, `document_relationships`, `chat_sessions`, `chat_messages`, `agent_runs`, and `agent_steps`.
+- Confirmed the configured Supabase Storage bucket exists. Configured bucket name observed: `documents`.
+- Ran the optional backend connection helper and confirmed it reports database and storage availability.
+- SQL migration application method: live-confirmed by database/table availability; exact application method was not confirmed as SQL editor or CLI during this task.
+
+## Files Created or Modified
+- `docs/tasks/task_2.md`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- check: `backend/.env` required key presence inspection: Passed
+- evidence or reason: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, and `SINGLE_USER_ID` keys are present; raw values were not printed.
+- command/check: live Supabase table and bucket probe from `backend`: Passed
+- evidence or reason: all 8 required table probes returned reachable status and the configured storage bucket exists.
+- command/check: `python -c "from app.services.supabase_service import check_supabase_connection; print(check_supabase_connection())"`: Passed
+- evidence or reason: command returned `{'database': True, 'storage': True}`.
+
+## Acceptance Check
+- Task acceptance condition: All 8 tables exist, configured storage bucket exists, and `check_supabase_connection()` reports database/storage availability, or the task is explicitly blocked by missing user setup.
+- Status: satisfied
+- Evidence: Live Supabase checks confirmed all 8 required tables and the configured bucket; `check_supabase_connection()` returned `{'database': True, 'storage': True}`.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_2_execute_agent.md`.
+- Updated `(04C)` checkbox entries in `docs/tasks/task_2.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(04C)` acceptance and validation are satisfied. Batch04 remains incomplete because sibling tasks `(04D)` and `(04E)` are still unchecked and out of scope for this execution.
+
+## Key Implementation Decisions
+- Used live read-only table probes and storage bucket listing to validate external setup without printing credentials.
+- Reported the migration method as live-confirmed but not confirmed as SQL editor or CLI because no manual application method evidence was available in this task.
+
+## Risks or Open Issues
+- Exact SQL migration application method is unknown; database state was live-confirmed, but this task did not verify whether SQL editor or CLI was used.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; `(02D)`, `(02E)`, `(03C)`, and `(04B)` are checked in both task locations
+- no architecture concern identified
+
+## Notes for Next Task
+- next task ID: (04D)
+- can proceed: yes
+- handoff notes: Live Supabase database/storage checks passed. Continue with scope, secret safety, and reviewer checklist verification; do not assume the migration application method beyond live-confirmed database state.

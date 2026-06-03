@@ -3321,3 +3321,175 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04C)
+- Task title: Perform manual Supabase database and storage checks
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## 5. Dependencies`; `## 9. Implementation Steps`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`; `## 14. Agent Report Requirement`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The latest matching `(04C)` report entry was appended after `(04B)` and matches the requested batch and task title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_2_execute_agent.md`
+  - `docs/tasks/task_2.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_2_execute_agent.md`: in scope - contains the appended `(04C)` execution report.
+- `docs/tasks/task_2.md`: in scope - marks only `(04C)` complete in the task entry and progress tracker; Batch04 remains incomplete.
+- `docs/plans/Plan_2.md`: in scope - cited source sections reviewed for dependencies, implementation steps, tests, acceptance, failure handling, and reporting.
+- `backend/app/services/supabase_service.py`: in scope - reviewed connection helper behavior used by the live validation.
+- `backend/app/core/config.py`: in scope - reviewed backend `.env` loading and configured bucket setting.
+- `backend/app/db/migrations/001_initial_schema.sql`: in scope - reviewed required table definitions for comparison to live checks.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff only updates `(04C)` task/progress checkboxes.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff appends the `(04C)` execution report.
+
+## Dependency Review
+- Required dependencies: `(02D)`, `(02E)`, `(03C)`, `(04B)`
+- Dependency status: satisfied; task tracker shows the required dependencies checked, and prior review file evidence includes accepted reviews for `(02D)`, repaired `(02E)`, `(03C)`, and `(04B)`.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Live checks use backend-only settings and Supabase service-role access through backend code; no frontend, auth/JWT, API, or implementation scope changes were introduced.
+- Failed: none
+- Uncertain: The exact migration application method was not independently confirmed as SQL editor or CLI, but the executor disclosed this and live table reachability proves the schema is present.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Sanitized live Supabase probes reached all 8 required tables, verified the configured bucket exists, and `check_supabase_connection()` returned `{'database': True, 'storage': True}`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The reviewed task did not change production code. The live validation queried the planned table list and used the configured storage bucket from backend settings.
+
+## Validations Reviewed
+- Command/check: `backend/.env` required key presence inspection
+- Reported result: Passed
+- Rerun result: Passed; sanitized output showed required Supabase/backend keys present without printing values.
+- Status: satisfied
+- Notes: No raw secrets were printed or copied.
+
+- Command/check: sanitized live Supabase table and bucket probe from `backend`
+- Reported result: Passed
+- Rerun result: Passed; all required tables were live-reachable: `documents`, `document_chunks`, `document_entities`, `document_relationships`, `chat_sessions`, `chat_messages`, `agent_runs`, `agent_steps`; configured bucket existence returned true.
+- Status: satisfied
+- Notes: Read-only table probes were used.
+
+- Command/check: `check_supabase_connection()` live backend helper
+- Reported result: Passed with `{'database': True, 'storage': True}`
+- Rerun result: Passed with `{'database': True, 'storage': True}`
+- Status: satisfied
+- Notes: The result contains no credentials.
+
+## Acceptance Review
+- Task acceptance: All 8 tables exist, configured storage bucket exists, and `check_supabase_connection()` reports database/storage availability, or the task is explicitly blocked by missing user setup.
+- Status: satisfied
+- Evidence: Live rerun confirmed all 8 tables, bucket existence, and helper result. User setup is available, so the task is not blocked.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(04C)` is checked in both the task list and progress tracker.
+- Batch status: accurate; Batch04 remains unchecked because `(04D)` and `(04E)` are still unchecked.
+- Execution report entry: accurate and appended.
+- Review report entry: appended at EOF.
+- Other: No sibling task was marked complete by this task.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none requiring repair. The report honestly states that the exact SQL migration application method was not confirmed as SQL editor or CLI, while live database state was confirmed.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The exact migration application method remains unknown, but this does not block `(04C)` acceptance because live database/storage reachability and helper validation passed, and the report disclosed the limitation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04C)` is accepted here and Batch04 still has unchecked `(04D)` and `(04E)`.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Validation, Manual Setup Checks, and Handoff",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
