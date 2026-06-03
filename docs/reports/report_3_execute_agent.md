@@ -1172,3 +1172,89 @@ complete
 - next task ID: (04B)
 - can proceed: yes
 - handoff notes: Upload API tests now exist and pass. Next task can add list/detail API and document service metadata tests without changing this upload-only scope.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04B) - Add document API and service tests for metadata behavior
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 3. Scope
+- docs/plans/Plan_3.md > ## 8. API Design
+- docs/plans/Plan_3.md > ## 9. Implementation Steps
+- docs/plans/Plan_3.md > ## 11. Required Tests
+- docs/plans/Plan_3.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_3.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04B)
+- Task title: Add document API and service tests for metadata behavior
+
+## Completed Work
+- Task is complete.
+- Added document metadata API tests for list response contract, detail response contract with empty chunks, and unknown document UUID HTTP 404 behavior.
+- Added document service tests for upload success with mocked Supabase helpers, exact uploaded metadata insert shape, storage failure without metadata insert, metadata insert failure, list single-user filtering, detail single-user filtering, and not-found behavior.
+- Kept tests deterministic by mocking document service and Supabase helper boundaries; no live Supabase credentials are required.
+
+## Files Created or Modified
+- backend/tests/test_document_api.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_document_upload.py tests/test_document_api.py -v: Passed
+- evidence or reason: 13 tests passed, 1 FastAPI deprecation warning for HTTP_413_REQUEST_ENTITY_TOO_LARGE.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove the required metadata contract and failure behavior without external credentials.
+- Status: satisfied
+- Evidence: Required pytest command passed; new tests cover list/detail contracts, unknown UUID 404, mocked upload success insert shape, storage failure, metadata failure, and SINGLE_USER_ID filtering through service calls.
+
+## Artifacts Produced
+- backend/tests/test_document_api.py
+- Updated task progress in docs/tasks/task_3.md
+- Execution report appended to docs/reports/report_3_execute_agent.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (04B) acceptance and validation passed; Batch04 remains incomplete because (04C) and (04D) are still unchecked.
+
+## Key Implementation Decisions
+- Tested API route contracts by monkeypatching app.api.documents.document_service so HTTP behavior is isolated from Supabase.
+- Tested service orchestration by monkeypatching document_service Supabase helper functions and settings, matching the module's direct imports.
+- Verified SINGLE_USER_ID filtering at the document_service boundary by asserting list_document_metadata and get_document_metadata receive the configured user ID.
+
+## Risks or Open Issues
+- The required validation emits an existing FastAPI deprecation warning for HTTP_413_REQUEST_ENTITY_TOO_LARGE; no production code was changed because this task only requested metadata API and service tests.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies Batch02 and Batch03 were marked complete before execution.
+- Scope remained limited to (04B); sibling tasks (04C) and (04D) were not implemented.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes
+- handoff notes: Document upload and metadata API/service tests now pass with mocked dependencies. Next task can run broader backend regression, secret, and scope validations.

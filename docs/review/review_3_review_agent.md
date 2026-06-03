@@ -2195,3 +2195,340 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04A)
+- Task title: Add upload API tests with mocked document service
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 11. Required Tests`; `docs/plans/Plan_3.md` > `## 14. Agent Report Requirement`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: User reported that (04A) was committed before A2 review. The reviewed execution artifact is the (04A) report present in commit `ac79dc4 P3B4A04: Complete`; later uncommitted (04B) work is noted separately and is not treated as part of (04A).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: current working tree has later uncommitted `docs/reports/report_3_execute_agent.md` and `docs/tasks/task_3.md` changes for (04B); commit `ac79dc4` contains `backend/tests/test_document_upload.py`, `docs/reports/report_3_execute_agent.md`, and `docs/tasks/task_3.md` for (04A).
+- untracked files: `backend/tests/test_document_api.py` from later (04B) execution, out of scope for this (04A) review.
+
+## Files Reviewed
+- `backend/tests/test_document_upload.py`: in scope - contains upload API tests with mocked document service for success, unsupported file type, empty file, and oversized file behavior.
+- `backend/app/api/documents.py`: in scope - route behavior under test maps upload success, `UploadValidationError`, and `UploadTooLargeError` to the expected HTTP responses.
+- `docs/tasks/task_3.md`: in scope - (04A) is checked in the task block and progress tracker; Batch04 remains incomplete.
+- `docs/reports/report_3_execute_agent.md`: in scope - contains the (04A) execution report with files, validation evidence, and progress update.
+- `docs/plans/Plan_3.md`: in scope - cited source sections align with mocked upload API test requirements.
+- `backend/tests/test_document_api.py`: out of scope - later uncommitted (04B) test file, not part of this review decision.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_document_upload.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File exists and contains the requested upload API tests.
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (04A) is checked; Batch04 is still unchecked because sibling tasks remain.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (04A) execution report is appended after (03D).
+
+## Dependency Review
+- Required dependencies: Batch03 upload route.
+- Dependency status: satisfied; Batch03 is complete and prior review entries for (03A)-(03D) are accepted.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Tests are backend-only, use FastAPI `TestClient`, mock the document service instead of requiring live Supabase, and verify the approved upload API contract and error mappings.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The tests exercise the real FastAPI app route and monkeypatch only the service boundary, which is appropriate for deterministic API contract tests.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUID and filenames are test fixtures only. Production route code is not altered or overfit by this task.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_document_upload.py -v`
+- Reported result: Passed, 4 collected and 4 passed with one FastAPI deprecation warning.
+- Rerun result: Passed, 4 passed and 1 warning.
+- Status: passed
+- Notes: Covered supported upload success, unsupported file type HTTP 400, empty file HTTP 400, and oversized upload HTTP 413.
+
+## Acceptance Review
+- Task acceptance: Add upload tests with at least one successful upload, unsupported-file negative evidence, and empty-file validation failure coverage.
+- Status: satisfied
+- Evidence: `tests/test_document_upload.py` includes all required cases and the required validation command passed.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (04A) is checked.
+- Batch status: accurate; Batch04 remains unchecked because (04B), (04C), and (04D) were not accepted at the time of (04A).
+- Execution report entry: present and task-specific.
+- Review report entry: appended by this review.
+- Other: Later unreviewed (04B) work remains separate and requires its own A2 review before proceeding.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None for (04A). The repository currently also contains later (04B) work that was not part of the (04A) execution report.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Existing FastAPI deprecation warning for `HTTP_413_REQUEST_ENTITY_TOO_LARGE`; this does not block (04A) because the route behavior is correct and the warning predates this test-only task.
+
+### Observations
+- The user correctly identified a workflow gap: (04A) had been committed before this A2 review existed. This review closes the missing A2 evidence for (04A), but the review report itself is now an uncommitted artifact.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, after this review artifact is preserved
+- Should batch be marked complete? no, only (04A) is accepted in Batch04 at this point
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_document_upload.py",
+    "backend/app/api/documents.py",
+    "docs/tasks/task_3.md",
+    "docs/reports/report_3_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "FastAPI deprecation warning for HTTP_413_REQUEST_ENTITY_TOO_LARGE"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04B)
+- Task title: Add document API and service tests for metadata behavior
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Plan_3.md` > `## 11. Required Tests`; `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_3.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: Latest execution report entry is for (04B), appended after (04A). (04A) now has an accepted review entry and is treated as a satisfied dependency.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`; untracked `backend/tests/test_document_api.py`
+- untracked files: `backend/tests/test_document_api.py`
+
+## Files Reviewed
+- `backend/tests/test_document_api.py`: in scope - adds metadata API and document service tests for list/detail contracts, upload success insert shape, storage failure, metadata failure, single-user filtering, and not-found behavior.
+- `backend/tests/test_document_upload.py`: in scope for validation context - existing 04A tests are included in the required 04B validation command.
+- `backend/app/services/document_service.py`: in scope - behavior under service tests maps upload/list/detail operations and failure paths.
+- `backend/app/api/documents.py`: in scope - behavior under API tests returns list/detail responses and not-found mapping.
+- `docs/tasks/task_3.md`: in scope - marks (04B) complete while Batch04 remains incomplete.
+- `docs/reports/report_3_execute_agent.md`: in scope - contains the appended (04B) execution report.
+- `docs/review/review_3_review_agent.md`: in scope - this review is appended after the recovered (04A) review.
+- `docs/plans/Plan_3.md`: in scope - cited source sections align with the required metadata API/service tests and mocked validation boundary.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_document_api.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File is currently untracked and must be included in the next commit; content matches the 04B test scope.
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (04B) is checked in both the task block and progress tracker; (04C), (04D), and Batch04 remain unchecked.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The (04B) execution report is appended and contains validation evidence.
+
+## Dependency Review
+- Required dependencies: Batch02 and Batch03 implementation, plus (04A) upload API tests for the combined validation command.
+- Dependency status: satisfied; Batch02 and Batch03 are complete with accepted review entries, and (04A) now has an accepted review entry.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Tests remain backend-only, use mocks at deterministic service/Supabase boundaries, do not require live Supabase, and verify `SINGLE_USER_ID` filtering at the document service boundary.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: API tests exercise the real FastAPI app route with monkeypatched service calls; service tests exercise real document service logic with mocked Supabase helper boundaries.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs, timestamps, and filenames are test fixtures. Production code is not changed or overfit by this task.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_document_upload.py tests/test_document_api.py -v`
+- Reported result: Passed, 13 tests passed with one FastAPI deprecation warning.
+- Rerun result: Passed, 13 passed and 1 warning.
+- Status: passed
+- Notes: Covers upload API tests from (04A), list/detail API contracts, unknown UUID 404, upload service success, storage failure, metadata insert failure, list user filtering, detail user filtering, and not-found behavior.
+
+## Acceptance Review
+- Task acceptance: Tests prove the required metadata contract and failure behavior without external credentials.
+- Status: satisfied
+- Evidence: `tests/test_document_api.py` includes the required API and service tests, and the required combined pytest command passed.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (04B) is checked.
+- Batch status: accurate; Batch04 remains unchecked because (04C) and (04D) remain incomplete.
+- Execution report entry: present and task-specific.
+- Review report entry: appended by this review.
+- Other: No (04C), (04D), live Supabase validation, frontend, parsing, chunking, embeddings, Qdrant, deletion, auth, or multi-user behavior was added.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Existing FastAPI deprecation warning for `HTTP_413_REQUEST_ENTITY_TOO_LARGE`; not caused by (04B) and not blocking.
+
+### Observations
+- `backend/tests/test_document_api.py` is untracked and must be included with the docs/report/review changes in the next commit.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, (04C) and (04D) remain incomplete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_document_api.py",
+    "backend/tests/test_document_upload.py",
+    "backend/app/services/document_service.py",
+    "backend/app/api/documents.py",
+    "docs/tasks/task_3.md",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/review/review_3_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "FastAPI deprecation warning for HTTP_413_REQUEST_ENTITY_TOO_LARGE"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

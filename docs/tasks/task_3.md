@@ -488,7 +488,7 @@ Plan 3 completion depends on test evidence, negative checks, single-user filteri
   - Blocked Condition: None.
   - Files: `backend/tests/test_document_upload.py`
 
-- [ ] (04B): Add document API and service tests for metadata behavior
+- [x] (04B): Add document API and service tests for metadata behavior
   - Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Plan_3.md` > `## 11. Required Tests`; `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_3.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Test list and detail API contracts.
@@ -652,7 +652,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch04
 - [x] (04A): Add upload API tests with mocked document service
-- [ ] (04B): Add document API and service tests for metadata behavior
+- [x] (04B): Add document API and service tests for metadata behavior
 - [ ] (04C): Run backend regression, secret, and scope validations
 - [ ] (04D): Perform live API and Supabase checks when user setup is available
 
