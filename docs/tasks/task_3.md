@@ -471,7 +471,7 @@ Plan 3 completion depends on test evidence, negative checks, single-user filteri
 
 ### Tasks
 
-- [ ] (04A): Add upload API tests with mocked document service
+- [x] (04A): Add upload API tests with mocked document service
   - Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 11. Required Tests`; `docs/plans/Plan_3.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Add upload tests with FastAPI `TestClient` and mocked document service.
@@ -651,7 +651,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03D): Register documents router without disrupting existing APIs
 
 #### Batch04
-- [ ] (04A): Add upload API tests with mocked document service
+- [x] (04A): Add upload API tests with mocked document service
 - [ ] (04B): Add document API and service tests for metadata behavior
 - [ ] (04C): Run backend regression, secret, and scope validations
 - [ ] (04D): Perform live API and Supabase checks when user setup is available

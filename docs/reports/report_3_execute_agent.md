@@ -1090,3 +1090,85 @@ complete
 - next task ID: (04A)
 - can proceed: yes
 - handoff notes: Batch03 is complete. Batch04 can add persistent mocked upload API tests without needing additional router registration.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04A) - Add upload API tests with mocked document service
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 3. Scope
+- docs/plans/Plan_3.md > ## 8. API Design
+- docs/plans/Plan_3.md > ## 11. Required Tests
+- docs/plans/Plan_3.md > ## 14. Agent Report Requirement
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04A)
+- Task title: Add upload API tests with mocked document service
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added FastAPI TestClient upload API tests that mock the document service instead of using live Supabase.
+- Covered successful supported upload response, unsupported file type HTTP 400, empty file HTTP 400, and oversized upload HTTP 413 route mapping.
+
+## Files Created or Modified
+- backend/tests/test_document_upload.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_document_upload.py -v: Passed
+- evidence or reason: 4 collected, 4 passed. Cases included supported upload success, unsupported file type, empty file, and oversized upload. Pytest reported one FastAPI deprecation warning for HTTP_413_REQUEST_ENTITY_TOO_LARGE.
+
+## Acceptance Check
+- Task acceptance condition: Tests fail before behavior exists and pass after route/service behavior satisfies Plan 3.
+- Status: satisfied
+- Evidence: tests/test_document_upload.py passed with mocked service coverage for supported upload, unsupported file type, and empty file validation failure; required validation command passed.
+
+## Artifacts Produced
+- backend/tests/test_document_upload.py
+- docs/reports/report_3_execute_agent.md entry for (04A)
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (04A) passed validation and was marked complete; Batch04 still has unchecked sibling tasks (04B), (04C), and (04D).
+
+## Key Implementation Decisions
+- Mocked app.api.documents.document_service.upload_document directly so upload API contract tests do not require Supabase credentials or storage setup.
+- Used DocumentUploadResponse for the successful mock return to match the route response model.
+
+## Risks or Open Issues
+- None for (04A).
+- The FastAPI status constant used by existing route code emits a deprecation warning during the oversized upload test; no production change was made because this task scope is upload test coverage only.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependency Batch03 upload route was marked complete before execution.
+- Scope remained limited to (04A); sibling tasks (04B), (04C), and (04D) were not implemented.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: Upload API tests now exist and pass. Next task can add list/detail API and document service metadata tests without changing this upload-only scope.
