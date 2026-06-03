@@ -16,7 +16,7 @@ from app.services.supabase_service import (
     list_document_metadata,
     upload_document_file,
 )
-from app.utils.file_validation import validate_upload_file
+from app.utils.file_validation import sanitize_filename, validate_upload_file
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,8 @@ def build_document_storage_path(
     document_id: UUID,
     file_name: str,
 ) -> str:
-    return f"documents/{user_id}/{document_id}/{file_name}"
+    safe_file_name = sanitize_filename(file_name)
+    return f"documents/{user_id}/{document_id}/{safe_file_name}"
 
 
 def build_uploaded_document_row(
@@ -89,6 +90,25 @@ def _document_detail_from_row(row: dict[str, Any]) -> DocumentDetailResponse:
         updated_at=row["updated_at"],
         error_message=row.get("error_message"),
         chunks=[],
+    )
+
+
+def _ensure_uploaded_metadata_inserted(
+    *,
+    inserted_row: dict[str, Any],
+    document_id: UUID,
+) -> None:
+    inserted_id = inserted_row.get("id")
+    inserted_status = inserted_row.get("status")
+    if str(inserted_id) == str(document_id) and inserted_status == "uploaded":
+        return
+
+    logger.error(
+        "Document metadata insert returned unexpected row for document_id=%s",
+        document_id,
+    )
+    raise DocumentMetadataError(
+        "Document metadata insert did not return the uploaded document row."
     )
 
 
@@ -140,10 +160,15 @@ async def upload_document(upload_file: Any) -> DocumentUploadResponse:
             "Document metadata insert failed after storage upload completed."
         ) from exc
 
+    _ensure_uploaded_metadata_inserted(
+        inserted_row=inserted_row,
+        document_id=document_id,
+    )
+
     return DocumentUploadResponse(
         document_id=document_id,
         file_name=validated_upload.file_name,
-        status=inserted_row.get("status", "uploaded"),
+        status=inserted_row["status"],
     )
 
 

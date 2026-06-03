@@ -272,7 +272,7 @@ Document APIs need a single service layer that coordinates validation output, st
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live validation if Supabase credentials or documents table are missing.
   - Files: `backend/app/services/document_service.py`, `backend/app/services/supabase_service.py`
 
-- [ ] (02D): Preserve Plan 3 failure and scope boundaries in service code
+- [x] (02D): Preserve Plan 3 failure and scope boundaries in service code
   - Source of Truth: `docs/plans/Plan_3.md` > `## 4. Out of Scope`; `docs/plans/Plan_3.md` > `## 13. Failure Handling`; `docs/plans/Plan_3.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Supabase Storage upload failure returns failure and does not insert a success row.
@@ -626,7 +626,7 @@ Optional future tracks are outside the mandatory chain.
 ### Batches
 
 - [x] Batch01 - Document Schemas, Upload Validation, and Configuration
-- [ ] Batch02 - Supabase Storage and Document Metadata Service
+- [x] Batch02 - Supabase Storage and Document Metadata Service
 - [ ] Batch03 - Document API Routes and Router Registration
 - [ ] Batch04 - Tests, Manual Validation, and Handoff
 
@@ -642,7 +642,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (02A): Add Supabase helpers for document storage and metadata
 - [x] (02B): Implement document upload orchestration service
 - [x] (02C): Implement document list and detail service operations
-- [ ] (02D): Preserve Plan 3 failure and scope boundaries in service code
+- [x] (02D): Preserve Plan 3 failure and scope boundaries in service code
 
 #### Batch03
 - [ ] (03A): Add document upload API route

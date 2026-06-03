@@ -633,3 +633,98 @@ complete
 - next task ID: (02D)
 - can proceed: yes
 - handoff notes: `list_documents()` and `get_document_detail(document_id)` are available for future API route tasks; `DocumentNotFoundError` can be mapped to HTTP 404, and `DocumentMetadataError` can be mapped to HTTP 500.
+
+---
+
+# Task Execution Report - (02D)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch02 - Supabase Storage and Document Metadata Service
+
+## Task
+(02D) - Preserve Plan 3 failure and scope boundaries in service code
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 4. Out of Scope
+- docs/plans/Plan_3.md > ## 13. Failure Handling
+- docs/plans/Plan_3.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Supabase Storage and Document Metadata Service
+- Task ID: (02D)
+- Task title: Preserve Plan 3 failure and scope boundaries in service code
+
+## Completed Work
+- Complete.
+- Updated `build_document_storage_path()` so filename path segments are sanitized at the service boundary before Supabase Storage paths are constructed.
+- Added metadata insert result verification so the upload service does not return success unless the inserted row matches the generated document ID and `uploaded` status.
+- Preserved the existing storage-failure behavior where metadata insert is not attempted after Supabase Storage upload failure.
+- Preserved scoped service responsibilities only: upload validation, storage path construction, storage upload, metadata insert/list/detail, and typed service failures.
+
+## Files Created or Modified
+- backend/app/services/document_service.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_config.py tests/test_supabase_service.py -v`: Passed
+- `cd backend; python -m compileall app/services/document_service.py app/services/supabase_service.py`: Passed
+- `cd backend; <ad hoc mocked negative service checks>`: Passed
+- evidence or reason: mocked checks verified unsupported and empty uploads raise validation errors before storage/insert, storage upload failure raises `DocumentStorageError` and leaves metadata insert uncalled, metadata insert failure raises `DocumentMetadataError` with a clear log entry, and unsafe filename separators are removed from the storage path.
+- `git diff --name-only`: Passed
+- evidence or reason: only `backend/app/services/document_service.py` and `docs/tasks/task_3.md` changed before report append.
+- `git diff --name-only -- frontend`: Passed
+- evidence or reason: no frontend changes.
+- `rg -n "parse|document_chunks|embedding|qdrant|ShopAIKey|processing|ready|agent" backend/app/services -g "*.py"`: Passed
+- evidence or reason: no service-layer out-of-scope processing, chunking, embeddings, Qdrant, ShopAIKey, processing-status, or agent additions found.
+- `if (Test-Path frontend) { rg -n "SUPABASE_SERVICE_ROLE_KEY|supabase_service_role_key|SUPABASE_URL|SUPABASE_STORAGE_BUCKET|SINGLE_USER_ID" frontend }`: Passed
+- evidence or reason: no frontend exposure found.
+
+## Acceptance Check
+- Task acceptance condition: Failure tests can prove unsupported/empty/upload/insert failures do not report fake success.
+- Status: satisfied
+- Evidence: Ad hoc mocked negative service checks passed for unsupported upload, empty upload, storage upload failure without metadata insert, metadata insert failure with clear log entry, and unsafe filename separator removal.
+
+## Artifacts Produced
+- Safer service-level storage path boundary in `backend/app/services/document_service.py`.
+- Metadata insert verification hook in `backend/app/services/document_service.py`.
+- Execution report appended to `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: (02D) is complete and all Batch02 task IDs (02A), (02B), (02C), and (02D) are checked complete.
+
+## Key Implementation Decisions
+- Reused the existing `sanitize_filename()` utility in the service storage-path helper instead of duplicating filename filtering.
+- Treated an unexpected metadata insert response as a metadata failure rather than returning a fake upload success.
+- Kept permanent negative test file creation out of scope because Batch04 owns formal test additions.
+
+## Risks or Open Issues
+- Permanent Batch04 negative service/API tests are still future tasks.
+- Live Supabase validation remains dependent on user-provided credentials, bucket setup, and the existing `documents` table.
+
+## Minor Issues Fixed During Execution
+- Storage-path construction no longer trusts direct helper callers to pass an already sanitized filename.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies (02B) and (02C) were already marked complete before implementation.
+- Scope remained limited to service code and task/report progress updates; no API routes, router registration, frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior were implemented.
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes
+- handoff notes: Batch02 is complete. Upload route work can map `UploadValidationError` to 400/413 as appropriate, `DocumentStorageError` and `DocumentMetadataError` to safe HTTP 500 responses, and must keep storage/metadata failures from reporting success.

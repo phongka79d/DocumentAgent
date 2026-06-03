@@ -1291,3 +1291,188 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02D)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Supabase Storage and Document Metadata Service
+- Task ID: (02D)
+- Task title: Preserve Plan 3 failure and scope boundaries in service code
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_3.md > ## 4. Out of Scope; ## 13. Failure Handling; ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02D)
+- Reviewed task ID: (02D)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching (02D) execution entry.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/services/document_service.py
+  - docs/reports/report_3_execute_agent.md
+  - docs/tasks/task_3.md
+- untracked files: none shown by git status --short before appending this review
+
+## Files Reviewed
+- `backend/app/services/document_service.py`: in scope - service boundary, storage-path sanitization, storage/metadata failure handling, list/detail behavior.
+- `backend/app/services/supabase_service.py`: in scope - dependency helper contracts used by service code.
+- `docs/tasks/task_3.md`: in scope - selected task and Batch02 progress tracking.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest execution report entry for (02D).
+- `docs/plans/Plan_3.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/document_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds service-level filename sanitization and metadata insert verification only.
+- file from execution report: docs/tasks/task_3.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Marks (02D) and Batch02 complete while later batches remain unchecked.
+- file from execution report: docs/reports/report_3_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest report entry is appended for (02D).
+
+## Dependency Review
+- Required dependencies: (02B), (02C)
+- Dependency status: Satisfied in task tracker and prior execution report history; service functions from those tasks are present.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Service stays backend-only, does not add API routes/frontend/processing, preserves single-user service ownership, uses existing validation and Supabase helper boundaries, and raises typed safe failures.
+- Failed: None.
+- Uncertain: Live Supabase behavior remains unverified, but live validation is not required for this task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `build_document_storage_path()` now sanitizes the final filename segment; storage failures raise `DocumentStorageError` before metadata insert; metadata helper exceptions and unexpected insert rows raise `DocumentMetadataError`; success response reads the verified inserted status.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-specific IDs, provider secrets, expected answers, or sample-file overfitting were added. Required literal status `uploaded` and storage prefix `documents/` are plan-defined constants.
+
+## Validations Reviewed
+- Command/check: git status --short; git diff --stat; git diff
+- Reported result: Changed files limited to service code and task/report docs
+- Rerun result: Confirmed
+- Status: passed
+- Notes: No untracked files were shown before this review append.
+- Command/check: cd backend; python -m pytest tests/test_config.py tests/test_supabase_service.py -v
+- Reported result: Passed
+- Rerun result: 19 passed in 0.84s
+- Status: passed
+- Notes: Count differs from the report's aggregate wording because the selected command collected current config plus Supabase tests.
+- Command/check: cd backend; python -m compileall app/services/document_service.py app/services/supabase_service.py
+- Reported result: Passed
+- Rerun result: exit code 0
+- Status: passed
+- Notes: No compile errors.
+- Command/check: targeted mocked negative service smoke check
+- Reported result: Passed
+- Rerun result: passed
+- Status: passed
+- Notes: Verified invalid/empty uploads fail, storage failure skips metadata insert, unexpected metadata insert rows fail, and unsafe filename separators are removed from the storage path filename segment.
+- Command/check: rg scope and frontend secret searches
+- Reported result: Passed
+- Rerun result: no matches
+- Status: passed
+- Notes: `rg` returned exit code 1 for no matches, which is expected.
+
+## Acceptance Review
+- Task acceptance: Failure tests can prove unsupported/empty/upload/insert failures do not report fake success.
+- Status: satisfied
+- Evidence: Targeted mocked check and code inspection prove unsupported/empty uploads raise validation errors, storage failure does not insert metadata, and unexpected metadata insert results raise `DocumentMetadataError` instead of returning success.
+
+## Progress Tracking
+- Selected task checkbox: checked complete
+- Batch status: Batch02 checked complete; later Batch03 and Batch04 remain unchecked
+- Execution report entry: appended for (02D)
+- Review report entry: appended by this review
+- Other: No whole-plan completion was claimed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The executor's ad hoc validation details are consistent with rerun targeted checks and repository evidence.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Formal negative service/API tests are still scheduled for Batch04; this task's ad hoc negative checks are acceptable for the selected scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch02 task IDs are checked complete; Batch03 and Batch04 remain open
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch02 - Supabase Storage and Document Metadata Service",
+  "selected_task_id": "(02D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_service.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```
