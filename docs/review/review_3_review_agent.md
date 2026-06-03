@@ -1661,3 +1661,179 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Document API Routes and Router Registration
+- Task ID: (03B)
+- Task title: Add document list API route
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_3.md > ## 1. Goal; docs/plans/Plan_3.md > ## 3. Scope; docs/plans/Plan_3.md > ## 8. API Design; docs/plans/Master_Plan.md > # 13. Backend API Design > ## 13.2 List Documents
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest execution report entry is for the requested task (03B).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/api/documents.py
+  - docs/reports/report_3_execute_agent.md
+  - docs/tasks/task_3.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/api/documents.py`: in scope - contains the new list route and existing upload route only.
+- `backend/app/services/document_service.py`: in scope - confirms `list_documents()` delegates to the single-user metadata helper and maps rows into `DocumentListResponse`.
+- `backend/app/services/supabase_service.py`: in scope - confirms list query filters by `user_id` and orders by `created_at desc`.
+- `backend/app/schemas/documents.py`: in scope - confirms `DocumentListResponse` contains a `documents` list.
+- `backend/tests/test_supabase_service.py`: in scope - confirms existing mocked metadata list test verifies user filtering and ordering.
+- `backend/app/main.py`: in scope - confirms documents router registration was not added early.
+- `docs/tasks/task_3.md`: in scope - confirms only (03B) was marked complete and Batch03 remains incomplete.
+- `docs/reports/report_3_execute_agent.md`: in scope - confirms the (03B) execution report was appended.
+- `docs/plans/Plan_3.md`: in scope - cited source requirements reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited list endpoint contract reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/api/documents.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New `@router.get("")` route returns `DocumentListResponse` and maps `DocumentMetadataError` to HTTP 500.
+- file from execution report: docs/tasks/task_3.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (03B) task checkbox and progress tracker were updated; Batch03 was not marked complete.
+- file from execution report: docs/reports/report_3_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The selected execution report entry is present at the end of the report file.
+
+## Dependency Review
+- Required dependencies: (02C) Implement document list and detail service operations.
+- Dependency status: satisfied; (02C) is marked complete and `document_service.list_documents()` exists.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: List route is backend-only, uses the document service layer, returns the approved response schema, leaves single-user filtering in service/Supabase helpers, maps metadata failures to safe HTTP 500, and avoids router registration reserved for (03D).
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/api/documents.py` defines a real FastAPI `GET` route and calls `document_service.list_documents()`; service and Supabase helper code perform real mapping/query construction.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The route does not hardcode document rows, fixture IDs, filenames, or expected responses; user scoping comes from configured service settings below the route.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_supabase_service.py tests/test_health.py tests/test_config.py -v`
+- Reported result: passed, 20 passed in 1.03s
+- Rerun result: passed, 20 passed in 1.10s
+- Status: passed
+- Notes: Includes the existing Supabase metadata list test verifying `user_id` filtering and `created_at desc` ordering.
+- Command/check: Inline FastAPI `TestClient` route smoke check for `GET /api/documents`
+- Reported result: passed
+- Rerun result: passed, `route smoke passed`
+- Status: passed
+- Notes: Verified HTTP 200 response with a `documents` array and HTTP 500 mapping for `DocumentMetadataError`.
+
+## Acceptance Review
+- Task acceptance: API test receives a `documents` array and service tests prove single-user filtering happens below the route.
+- Status: satisfied
+- Evidence: Rerun route smoke check returned a `documents` array; rerun pytest included `test_list_document_metadata_filters_user_and_orders_created_desc`.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (03B) is checked.
+- Batch status: accurate; Batch03 remains unchecked because (03C) and (03D) are incomplete.
+- Execution report entry: appended and accurate.
+- Review report entry: appended by this review.
+- Other: No sibling task was marked complete early.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The list route is intentionally not reachable from the main FastAPI app until router registration task (03D).
+- Persistent document API tests remain future Batch04 scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; (03C) and (03D) remain incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch03 - Document API Routes and Router Registration",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/documents.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

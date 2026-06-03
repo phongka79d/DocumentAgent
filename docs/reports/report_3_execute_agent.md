@@ -820,3 +820,94 @@ complete
 - next task ID: (03B)
 - can proceed: yes
 - handoff notes: Add the list route in the existing `backend/app/api/documents.py` without registering the router unless executing (03D).
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch03 - Document API Routes and Router Registration
+
+## Task
+(03B) - Add document list API route
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 1. Goal
+- docs/plans/Plan_3.md > ## 3. Scope
+- docs/plans/Plan_3.md > ## 8. API Design
+- docs/plans/Master_Plan.md > # 13. Backend API Design > ## 13.2 List Documents
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Document API Routes and Router Registration
+- Task ID: (03B)
+- Task title: Add document list API route
+
+## Completed Work
+- Task is complete.
+- Added `GET /api/documents` at the documents router level by defining `@router.get("")` in `backend/app/api/documents.py`.
+- Returned the existing `DocumentListResponse` schema from `document_service.list_documents()`.
+- Mapped `DocumentMetadataError` from metadata query failures to HTTP 500 with the service's safe public error message.
+- Kept single-user filtering below the route in the existing document/Supabase service layer.
+- Did not add the detail route and did not register the router in `main.py`.
+
+## Files Created or Modified
+- backend/app/api/documents.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_supabase_service.py tests/test_health.py tests/test_config.py -v`: Passed
+- evidence or reason: `20 passed in 1.03s`; includes `test_list_document_metadata_filters_user_and_orders_created_desc`, proving the metadata query filters by user and orders by `created_at desc` below the route.
+- Inline FastAPI `TestClient` route smoke check for `GET /api/documents`: Passed
+- evidence or reason: mounted `documents.router` at `/api/documents`, mocked `document_service.list_documents`, verified HTTP 200 response contains a `documents` array, and verified `DocumentMetadataError` maps to HTTP 500.
+- Initial inline route smoke command using Unix heredoc syntax in PowerShell: Failed, then rerun with PowerShell here-string and passed
+- evidence or reason: PowerShell rejected `python - <<'PY'` before Python executed; validation was rerun successfully with `@'...'@ | python -`.
+
+## Acceptance Check
+- Task acceptance condition: API test receives a `documents` array and service tests prove single-user filtering happens below the route.
+- Status: satisfied
+- Evidence: Inline FastAPI `TestClient` check received HTTP 200 with a `documents` array from `GET /api/documents`; existing Supabase service test `test_list_document_metadata_filters_user_and_orders_created_desc` passed and verifies `user_id = SINGLE_USER_ID` filtering behavior below the route.
+
+## Artifacts Produced
+- Document list endpoint in `backend/app/api/documents.py`.
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (03B) acceptance and validation were satisfied; Batch03 remains incomplete because (03C) and (03D) are still unchecked.
+
+## Key Implementation Decisions
+- Used an empty router path (`""`) so future registration under `/api/documents` exposes exactly `GET /api/documents` without requiring a trailing slash.
+- Reused `document_service.list_documents()` so `SINGLE_USER_ID` filtering remains enforced in the service/Supabase layer rather than route code.
+- Returned `DocumentListResponse` as the route response model to match the approved response body containing `documents`.
+
+## Risks or Open Issues
+- Formal persistent list API tests are still future Batch04 work.
+- The route is not reachable from the main FastAPI app until task (03D) registers the documents router.
+- Live Supabase list validation was not attempted because this task only requires mocked API validation.
+
+## Minor Issues Fixed During Execution
+- Corrected the inline validation command form for PowerShell after the initial heredoc syntax failure.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependency (02C) was already marked complete in the task file before implementation.
+- Scope remained limited to the list API route and required task/report progress updates; no detail route, router registration, frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes
+- handoff notes: Add the document detail route in `backend/app/api/documents.py`; router registration remains reserved for (03D).

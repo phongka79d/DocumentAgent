@@ -1,6 +1,12 @@
+from uuid import UUID
+
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
-from app.schemas.documents import DocumentUploadResponse
+from app.schemas.documents import (
+    DocumentDetailResponse,
+    DocumentListResponse,
+    DocumentUploadResponse,
+)
 from app.services import document_service
 from app.utils.file_validation import UploadTooLargeError, UploadValidationError
 
@@ -30,6 +36,41 @@ async def upload_document(file: UploadFile = File(...)) -> DocumentUploadRespons
         document_service.DocumentStorageError,
         document_service.DocumentMetadataError,
     ) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
+
+
+@router.get(
+    "",
+    response_model=DocumentListResponse,
+    status_code=status.HTTP_200_OK,
+)
+def list_documents() -> DocumentListResponse:
+    try:
+        return document_service.list_documents()
+    except document_service.DocumentMetadataError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
+
+
+@router.get(
+    "/{document_id}",
+    response_model=DocumentDetailResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_document_detail(document_id: UUID) -> DocumentDetailResponse:
+    try:
+        return document_service.get_document_detail(document_id)
+    except document_service.DocumentNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except document_service.DocumentMetadataError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(exc),
