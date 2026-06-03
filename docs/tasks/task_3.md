@@ -145,7 +145,7 @@ The upload service and API routes need stable response models, supported-type va
   - Blocked Condition: None.
   - Files: `backend/app/core/config.py`, `backend/.env.example`, backend config tests if present
 
-- [ ] (01D): Confirm Plan 3 package boundaries and imports
+- [x] (01D): Confirm Plan 3 package boundaries and imports
   - Source of Truth: `docs/plans/Plan_3.md` > `## 4. Out of Scope`; `docs/plans/Plan_3.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_3.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Keep upload, validation, schemas, and service modules in backend packages.
@@ -625,7 +625,7 @@ Optional future tracks are outside the mandatory chain.
 
 ### Batches
 
-- [ ] Batch01 - Document Schemas, Upload Validation, and Configuration
+- [x] Batch01 - Document Schemas, Upload Validation, and Configuration
 - [ ] Batch02 - Supabase Storage and Document Metadata Service
 - [ ] Batch03 - Document API Routes and Router Registration
 - [ ] Batch04 - Tests, Manual Validation, and Handoff
@@ -636,7 +636,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01A): Add document API response schemas
 - [x] (01B): Add supported document type and upload validation utilities
 - [x] (01C): Add upload size configuration
-- [ ] (01D): Confirm Plan 3 package boundaries and imports
+- [x] (01D): Confirm Plan 3 package boundaries and imports
 
 #### Batch02
 - [ ] (02A): Add Supabase helpers for document storage and metadata

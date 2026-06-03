@@ -543,3 +543,191 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01D)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Document Schemas, Upload Validation, and Configuration
+- Task ID: (01D)
+- Task title: Confirm Plan 3 package boundaries and imports
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 4. Out of Scope`; `docs/plans/Plan_3.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_3.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01D)
+- Reviewed task ID: (01D)
+- Correct selection: yes
+- Notes: The latest execution report entry is for `(01D) - Confirm Plan 3 package boundaries and imports`, matching the requested batch and title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_3_execute_agent.md`: in scope - contains the appended `(01D)` execution report.
+- `docs/tasks/task_3.md`: in scope - marks `(01D)` complete and marks Batch01 complete while leaving future batches/tasks unchecked.
+- `backend/app/schemas/__init__.py`: in scope - package marker/export file imports document schemas without side effects.
+- `backend/app/utils/__init__.py`: in scope - package marker/export file imports validation utilities without side effects.
+- `backend/app/schemas/documents.py`: in scope - existing Batch01 schema module contains only response models and expected `chunk_count`/empty `chunks` fields.
+- `backend/app/utils/file_validation.py`: in scope - existing Batch01 utility module contains validation helpers and no processing, storage, route, Qdrant, ShopAIKey, or frontend dependency.
+- `docs/plans/Plan_3.md`: in scope - cited source sections reviewed.
+- `docs/review/review_3_review_agent.md`: in scope - prior `(01A)`, `(01B)`, and `(01C)` reviews were checked for accepted outcomes before allowing Batch01 completion.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff only marks `(01D)` and Batch01 complete; Batch02, Batch03, and Batch04 remain unchecked.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(01D)` report is appended after prior task reports.
+
+## Dependency Review
+- Required dependencies: `(01A)`, `(01B)`, and `(01C)`.
+- Dependency status: satisfied; prior review entries in `docs/review/review_3_review_agent.md` show ACCEPTED outcomes for `(01A)`, `(01B)`, and `(01C)`.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Package boundary work stays under backend schemas/utils packages; no frontend changes, processing modules, API routes, storage service changes, Qdrant calls, ShopAIKey calls, embeddings, document deletion, authentication, or multi-user behavior were introduced for `(01D)`.
+- Passed: `backend/app/schemas/__init__.py` and `backend/app/utils/__init__.py` export only backend schema/validation symbols and import cleanly.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `(01D)` required confirmation/import validation rather than new runtime code. Existing package markers and modules are real files, and the direct backend import command succeeded.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No new production runtime code was added for `(01D)`. Existing constants in reviewed schema/validation files are plan-approved supported document types/MIME types, not fixture-specific values or fake success logic.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -c "from app.schemas import DocumentUploadResponse, DocumentListItem, DocumentListResponse, DocumentDetailResponse; from app.utils import SUPPORTED_DOCUMENT_TYPES, get_file_type, sanitize_filename, validate_upload_file; print('imports ok', sorted(SUPPORTED_DOCUMENT_TYPES))"`
+- Reported result: Passed, `imports ok ['csv', 'docx', 'pdf', 'txt']`.
+- Rerun result: Passed, `imports ok ['csv', 'docx', 'pdf', 'txt']`.
+- Status: passed
+- Notes: Confirms schema and utility packages import from backend without side effects.
+- Command/check: `cd backend; pytest tests/test_config.py -q`
+- Reported result: Passed, `5 passed in 0.39s`.
+- Rerun result: Passed, `5 passed in 0.27s`.
+- Status: passed
+- Notes: Existing config tests remain green.
+- Command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|SUPABASE_URL|SUPABASE_STORAGE_BUCKET|SINGLE_USER_ID|MAX_UPLOAD_BYTES" frontend . --glob '!backend/**' --glob '!docs/**' --glob '!**/__pycache__/**'`
+- Reported result: Passed, no matches outside backend/docs.
+- Rerun result: Passed, no matches; `rg` returned exit code 1 because no matches were found.
+- Status: passed
+- Notes: Confirms backend-only secret/config names were not exposed outside backend/docs.
+- Command/check: `rg -n "Qdrant|ShopAIKey|embedding|document_chunks|processing|ready|parse|chunk" backend/app/schemas backend/app/utils --glob '!**/__pycache__/**'`
+- Reported result: Passed, matches limited to expected schema fields and DOCX MIME type string.
+- Rerun result: Passed, matches only `chunk_count`, empty `chunks`, and DOCX MIME string.
+- Status: passed
+- Notes: No out-of-scope processing dependency was found in schemas/utils.
+- Command/check: `git diff -- docs/tasks/task_3.md`
+- Reported result: Passed, diff only marks `(01D)` and Batch01 complete.
+- Rerun result: Passed, diff only marks `(01D)` and Batch01 complete.
+- Status: passed
+- Notes: Progress tracking matches completed Batch01 after accepted dependencies.
+
+## Acceptance Review
+- Task acceptance: New schema and utility modules can be imported in tests without side effects.
+- Status: satisfied
+- Evidence: Direct import smoke check passed; package marker files exist; no frontend, processing, service, route, Qdrant, ShopAIKey, embedding, deletion, auth, or multi-user additions appear in the `(01D)` diff or reviewed backend package files.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(01D)` is checked in the task block and progress tracker.
+- Batch status: accurate; Batch01 is checked complete because `(01A)`, `(01B)`, and `(01C)` have prior ACCEPTED reviews and `(01D)` is accepted by this review.
+- Execution report entry: present and appended.
+- Review report entry: appended at physical EOF.
+- Other: Batch02, Batch03, and Batch04 remain unchecked; no future task is marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(01D)` is documentation/progress plus verification only; no runtime changes were required because package markers and imports already existed from accepted Batch01 tasks.
+- Full upload/API tests remain planned for Batch04, which is consistent with the task file and does not block `(01D)` acceptance.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch01 task IDs are complete and `(01A)`, `(01B)`, `(01C)`, and `(01D)` are accepted.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch01 - Document Schemas, Upload Validation, and Configuration",
+  "selected_task_id": "(01D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md",
+    "backend/app/schemas/__init__.py",
+    "backend/app/utils/__init__.py",
+    "backend/app/schemas/documents.py",
+    "backend/app/utils/file_validation.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

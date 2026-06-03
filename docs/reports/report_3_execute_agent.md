@@ -261,3 +261,90 @@ complete
 - next task ID: (01D)
 - can proceed: yes
 - handoff notes: MAX_UPLOAD_BYTES is available as Settings.max_upload_bytes with a 25_000_000 byte default, documented in backend/.env.example, and can be passed to validate_upload_file for oversize enforcement.
+
+---
+
+# Task Execution Report - (01D)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch01 - Document Schemas, Upload Validation, and Configuration
+
+## Task
+(01D) - Confirm Plan 3 package boundaries and imports
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 4. Out of Scope
+- docs/plans/Plan_3.md > ## 6. Required Files and Folders
+- docs/plans/Plan_3.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Document Schemas, Upload Validation, and Configuration
+- Task ID: (01D)
+- Task title: Confirm Plan 3 package boundaries and imports
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Confirmed backend package markers exist for schemas and utils.
+- Confirmed schema and utility modules import through backend packages without frontend, processing, Qdrant, ShopAIKey, embedding, or service-role exposure dependencies.
+- Confirmed no runtime code changes were needed because the package boundaries and imports were already in place from accepted tasks (01A), (01B), and (01C).
+
+## Files Created or Modified
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -c "from app.schemas import DocumentUploadResponse, DocumentListItem, DocumentListResponse, DocumentDetailResponse; from app.utils import SUPPORTED_DOCUMENT_TYPES, get_file_type, sanitize_filename, validate_upload_file; print('imports ok', sorted(SUPPORTED_DOCUMENT_TYPES))"`: Passed
+- evidence or reason: output was `imports ok ['csv', 'docx', 'pdf', 'txt']`.
+- `cd backend; pytest tests/test_config.py -q`: Passed
+- evidence or reason: output was `5 passed in 0.39s`.
+- `rg -n "SUPABASE_SERVICE_ROLE_KEY|SUPABASE_URL|SUPABASE_STORAGE_BUCKET|SINGLE_USER_ID|MAX_UPLOAD_BYTES" frontend . --glob '!backend/**' --glob '!docs/**' --glob '!**/__pycache__/**'`: Passed
+- evidence or reason: no matches were found outside backend/docs.
+- `rg -n "Qdrant|ShopAIKey|embedding|document_chunks|processing|ready|parse|chunk" backend/app/schemas backend/app/utils --glob '!**/__pycache__/**'`: Passed
+- evidence or reason: matches were limited to expected schema fields (`chunk_count`, empty `chunks`) and the DOCX MIME type string; no processing dependency or out-of-scope integration was found.
+- `git diff -- docs/tasks/task_3.md`: Passed
+- evidence or reason: diff only marks (01D) and Batch01 complete.
+
+## Acceptance Check
+- Task acceptance condition: New schema and utility modules can be imported in tests without side effects.
+- Status: satisfied
+- Evidence: Direct backend import smoke check passed and backend config tests passed; package markers exist at `backend/app/schemas/__init__.py` and `backend/app/utils/__init__.py`.
+
+## Artifacts Produced
+- docs/reports/report_3_execute_agent.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: (01D) acceptance and validation were satisfied, and all Batch01 task IDs (01A), (01B), (01C), and (01D) are now checked complete.
+
+## Key Implementation Decisions
+- No runtime package files were changed because required backend package markers and import exports already existed.
+- Kept scope limited to backend import/boundary validation and task/report documentation.
+
+## Risks or Open Issues
+- Full document upload/API tests remain scheduled for Batch04 after Batch02 and Batch03 implementation.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, user action requirements, or architecture concerns identified.
+- Dependencies (01A), (01B), and (01C) were marked complete and provided as accepted by prior A2 review context.
+- No frontend files, processing modules, storage service changes, API routes, parsing, chunking, embeddings, Qdrant, ShopAIKey, document deletion, authentication, or multi-user behavior were added.
+
+## Notes for Next Task
+- next task ID: (02A)
+- can proceed: yes
+- handoff notes: Batch01 is complete. Backend schema and utility packages import cleanly and are ready for the Batch02 service/helper work.
