@@ -380,7 +380,7 @@ Later upload, document, and agent workflows need a safe backend Supabase access 
   - Blocked Condition: None.
   - Files: `backend/app/services/supabase_service.py`
 
-- [ ] (03C): Implement database and storage connectivity helper
+- [x] (03C): Implement database and storage connectivity helper
   - Source of Truth: `docs/plans/Plan_2.md` > `## 1. Goal`; `docs/plans/Plan_2.md` > `## 8. API Design`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 11. Required Tests`; `docs/plans/Plan_2.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_2.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add `check_supabase_connection()`.
@@ -640,7 +640,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [ ] Agent steps cascade when an agent run is deleted.
 - [ ] Every table includes `user_id` where required by the plan.
 - [ ] `backend/app/services/supabase_service.py` provides `get_supabase_client()`.
-- [ ] `backend/app/services/supabase_service.py` provides `check_supabase_connection()`.
+- [x] `backend/app/services/supabase_service.py` provides `check_supabase_connection()`.
 - [ ] Missing Supabase config produces clear safe backend errors.
 - [ ] Missing storage bucket is reported as setup failure.
 - [ ] Basic health works without Supabase credentials.
@@ -684,7 +684,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 - [x] (03A): Implement backend-only Supabase client singleton
 - [x] (03B): Add custom Supabase connection error handling
-- [ ] (03C): Implement database and storage connectivity helper
+- [x] (03C): Implement database and storage connectivity helper
 - [ ] (03D): Preserve basic health and optionally add dependency health flag
 
 #### Batch04

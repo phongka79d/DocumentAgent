@@ -1169,3 +1169,98 @@ complete
 - next task ID: `(03C)`
 - can proceed: yes
 - handoff notes: Use `SupabaseConnectionError`, `_raise_supabase_query_error(...)`, and `_raise_missing_storage_bucket_error(...)` when implementing `check_supabase_connection()` so database/storage failures remain safe and operation-specific.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch03 - Backend Supabase Service and Optional Dependency Health
+
+## Task
+(03C) - Implement database and storage connectivity helper
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_2.md selected task block for (03C)
+- docs/plans/Plan_2.md > ## 1. Goal
+- docs/plans/Plan_2.md > ## 8. API Design
+- docs/plans/Plan_2.md > ## 9. Implementation Steps
+- docs/plans/Plan_2.md > ## 11. Required Tests
+- docs/plans/Plan_2.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_2.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Backend Supabase Service and Optional Dependency Health
+- Task ID: (03C)
+- Task title: Implement database and storage connectivity helper
+
+## Completed Work
+- Task is complete.
+- Added `check_supabase_connection()` to `backend/app/services/supabase_service.py`.
+- The helper uses the existing singleton Supabase client, performs a lightweight `documents` query with `select("id").limit(1).execute()`, checks the configured storage bucket via `client.storage.list_buckets()`, and returns `{"database": True, "storage": True}` when both checks pass.
+- Failure paths raise `SupabaseConnectionError` through the existing safe query/storage helpers.
+- No health endpoint changes, document upload logic, storage writes, or sibling task work were added.
+
+## Files Created or Modified
+- backend/app/services/supabase_service.py
+- docs/tasks/task_2.md
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -c "from app.services.supabase_service import check_supabase_connection; print(check_supabase_connection)"` before implementation: Passed as RED validation by failing with `ImportError: cannot import name 'check_supabase_connection'`.
+- `cd backend; python -m compileall app\services\supabase_service.py`: Passed; exit code 0.
+- `cd backend; python -c "from app.services.supabase_service import check_supabase_connection; print(check_supabase_connection.__name__)"`: Passed; printed `check_supabase_connection`.
+- PowerShell-compatible inline Python mocked success check: Passed; returned `{'database': True, 'storage': True}`.
+- PowerShell-compatible inline Python mocked query failure check: Passed; raised `SupabaseConnectionError` containing `documents connectivity check` and did not include mocked provider detail.
+- PowerShell-compatible inline Python mocked missing bucket check: Passed; raised `SupabaseConnectionError` reporting bucket `documents` missing or unavailable.
+- PowerShell-compatible inline Python mocked storage list failure check: Passed; raised `SupabaseConnectionError` containing `storage bucket connectivity check` and did not include mocked provider detail.
+- Optional live command `cd backend; python -c "from app.services.supabase_service import check_supabase_connection; print(check_supabase_connection())"`: Passed in this local environment; printed `{'database': True, 'storage': True}` without printing secrets.
+
+## Acceptance Check
+- Task acceptance condition: Mocked passing checks return `{"database": True, "storage": True}` or equivalent Python dict; failure paths raise safe errors.
+- Status: satisfied
+- Evidence: Mocked passing validation returned the required dict; mocked database query, missing bucket, and storage-list failures raised `SupabaseConnectionError` with operation/setup-specific safe messages. Optional live validation also returned `{'database': True, 'storage': True}`.
+
+## Artifacts Produced
+- Connectivity helper in `backend/app/services/supabase_service.py`.
+- Updated `(03C)` task checkbox and related global checklist item in `docs/tasks/task_2.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(03C)` is complete, but sibling Batch03 task `(03D)` remains unchecked.
+
+## Key Implementation Decisions
+- Used `client.table("documents").select("id").limit(1).execute()` for a safe, lightweight schema reachability check.
+- Used `client.storage.list_buckets()` for bucket existence without performing storage writes or uploads.
+- Matched buckets by either `id` or `name` and supported both object and dict bucket shapes for Supabase client and mock compatibility.
+- Reused existing `SupabaseConnectionError`, `_raise_supabase_query_error(...)`, and `_raise_missing_storage_bucket_error(...)` helpers to keep errors safe and consistent.
+
+## Risks or Open Issues
+- Formal mocked unit tests remain deferred to Batch04 as specified by the selected task.
+- Live validation depends on local Supabase credentials, applied migration, and configured storage bucket; it passed in this environment, but no secrets were printed or recorded.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; `(02A)`, `(02E)`, and `(03B)` are checked in the task file and current dependency context says A2 accepted `(03B)`
+- no architecture concern identified
+
+## Notes for Next Task
+- next task ID: `(03D)`
+- can proceed: yes
+- handoff notes: `check_supabase_connection()` is available for optional dependency health integration, but basic health has not been modified in this task.

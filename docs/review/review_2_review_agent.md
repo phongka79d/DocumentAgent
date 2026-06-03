@@ -2615,3 +2615,200 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Backend Supabase Service and Optional Dependency Health
+- Task ID: (03C)
+- Task title: Implement database and storage connectivity helper
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_2.md > ## 1. Goal; ## 8. API Design; ## 9. Implementation Steps; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for the requested Batch03 task ID and does not include sibling task completion.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/services/supabase_service.py
+  - docs/reports/report_2_execute_agent.md
+  - docs/tasks/task_2.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/supabase_service.py`: in scope - adds `check_supabase_connection()`, bucket matching, and configured bucket lookup.
+- `docs/reports/report_2_execute_agent.md`: in scope - appended execution report for `(03C)`.
+- `docs/tasks/task_2.md`: in scope - marks `(03C)` complete in the task block, global checklist item, and progress tracker only.
+- `backend/app/core/config.py`: in scope - supporting dependency review for settings and default storage bucket.
+- `docs/plans/Plan_2.md`: in scope - cited source-of-truth sections reviewed.
+- `docs/review/review_2_review_agent.md`: in scope - prior review tail inspected before appending.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements the internal connectivity helper only.
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Progress tracking is limited to `(03C)` and the related global checklist item.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The `(03C)` report entry is appended after `(03B)`.
+
+## Dependency Review
+- Required dependencies: (02A), (02E), (03B)
+- Dependency status: satisfied for this review; task tracker shows dependencies complete, and the prior review file tail records `(03B)` as accepted.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Helper remains backend-only, uses the singleton Supabase client, performs a lightweight `documents` query, checks configured storage bucket existence, raises `SupabaseConnectionError`, and does not alter public endpoints.
+- Failed: none found
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `check_supabase_connection()` calls `client.table("documents").select("id").limit(1).execute()`, calls `client.storage.list_buckets()`, verifies bucket name/id, and returns `{"database": True, "storage": True}` only after both checks pass.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The `documents` table check is required by the plan. The storage bucket is read from backend settings, defaulting to the documented `documents` value; no credentials or fixed success values are present.
+
+## Validations Reviewed
+- Command/check: `python -m compileall app\services\supabase_service.py`
+- Reported result: Passed
+- Rerun result: Passed, exit code 0
+- Status: satisfied
+- Notes: No compile errors.
+- Command/check: import `check_supabase_connection`
+- Reported result: Passed
+- Rerun result: Passed, printed `check_supabase_connection`
+- Status: satisfied
+- Notes: Import path is real.
+- Command/check: mocked success path
+- Reported result: Passed
+- Rerun result: Passed, returned `{'database': True, 'storage': True}`
+- Status: satisfied
+- Notes: Confirms the expected helper output.
+- Command/check: mocked database query failure
+- Reported result: Passed
+- Rerun result: Passed, raised `SupabaseConnectionError` with `documents connectivity check` and exception type while excluding provider detail.
+- Status: satisfied
+- Notes: Safe query failure behavior matches requirements.
+- Command/check: mocked missing storage bucket
+- Reported result: Passed
+- Rerun result: Passed, raised setup failure mentioning bucket `documents`.
+- Status: satisfied
+- Notes: Missing bucket is not silently ignored.
+- Command/check: mocked storage list failure
+- Reported result: Passed
+- Rerun result: Passed, raised `SupabaseConnectionError` with `storage bucket connectivity check` and exception type while excluding provider detail.
+- Status: satisfied
+- Notes: Safe storage failure behavior matches requirements.
+- Command/check: optional live connection command
+- Reported result: Passed
+- Rerun result: Passed, returned `{'database': True, 'storage': True}`
+- Status: satisfied
+- Notes: No secrets were printed.
+
+## Acceptance Review
+- Task acceptance: Mocked passing checks return the required database/storage booleans and failure paths raise safe errors.
+- Status: satisfied
+- Evidence: Reviewer-rerun mocked and optional live checks confirm output and safe failure behavior. No public endpoint, upload, storage write, frontend, Auth/JWT, embedding, or Qdrant work was added.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(03C)` is checked in the task block and progress tracker.
+- Batch status: accurate; Batch03 remains unchecked because `(03D)` remains incomplete.
+- Execution report entry: accurate and appended.
+- Review report entry: appended by this review.
+- Other: The global checklist item for `check_supabase_connection()` is checked; unrelated global checklist items remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Formal `backend/tests/test_supabase_service.py` tests remain deferred to Batch04 as specified by the task file.
+- The live connectivity check currently passes in this local environment, but Batch04 still owns broader manual database/storage and mocked unit-test validation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(03D)` remains unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch03 - Backend Supabase Service and Optional Dependency Health",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/supabase_service.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
