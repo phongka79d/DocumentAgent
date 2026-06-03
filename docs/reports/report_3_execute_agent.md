@@ -437,3 +437,99 @@ complete
 - next task ID: (02B)
 - can proceed: yes
 - handoff notes: Supabase helper functions are available for document upload orchestration: `upload_document_file`, `insert_document_metadata`, `list_document_metadata`, and `get_document_metadata`.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch02 - Supabase Storage and Document Metadata Service
+
+## Task
+(02B) - Implement document upload orchestration service
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 1. Goal
+- docs/plans/Plan_3.md > ## 3. Scope
+- docs/plans/Plan_3.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_3.md > ## 9. Implementation Steps
+- docs/plans/Plan_3.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Supabase Storage and Document Metadata Service
+- Task ID: (02B)
+- Task title: Implement document upload orchestration service
+
+## Completed Work
+- The task is complete.
+- Created the document upload orchestration service that validates upload bytes, generates a UUID before storage upload, builds the storage path, uploads the original file through Supabase helpers, inserts uploaded metadata, and returns `DocumentUploadResponse` data.
+- Added explicit service error classes for storage and metadata failures while allowing validation errors to remain distinct for later API error mapping.
+
+## Files Created or Modified
+- backend/app/services/document_service.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `python -c "import sys; sys.path.insert(0, 'backend'); from app.services.document_service import upload_document"`: Failed as expected before implementation
+- evidence or reason: confirmed the new service module/function did not exist before production code was added.
+- `python -c "import sys; sys.path.insert(0, 'backend'); from app.services.document_service import upload_document; print(upload_document.__name__)"`: Passed
+- evidence or reason: imported `upload_document` from the new module successfully.
+- PowerShell-stdin Python mocked happy-path orchestration check: Passed
+- evidence or reason: supported `.txt` upload produced document ID `11111111-1111-4111-8111-111111111111`, storage path `documents/single_user/11111111-1111-4111-8111-111111111111/Contract_PDF.txt`, and metadata insert shape with `status='uploaded'`, `chunk_count=0`, and `error_message=None`.
+- PowerShell-stdin Python mocked storage and metadata failure check: Passed
+- evidence or reason: storage failure raised `DocumentStorageError` and skipped metadata insert; metadata failure after storage upload raised `DocumentMetadataError` and did not return a success response.
+- PowerShell-stdin Python mocked validation failure check: Passed
+- evidence or reason: unsupported `.exe` and empty `.txt` uploads raised `UploadValidationError` before storage was called.
+- `python -m py_compile backend/app/services/document_service.py`: Passed
+- evidence or reason: new service module compiled successfully.
+- `cd backend; pytest -q`: Passed
+- evidence or reason: 20 backend tests passed.
+- Live Supabase upload validation: Not run
+- evidence or reason: selected task has no required live Supabase validation; live API/storage/table checks remain for later live validation tasks.
+
+## Acceptance Check
+- Task acceptance condition: A supported upload can produce a `document_id`, storage path, and `uploaded` metadata insert shape for `SINGLE_USER_ID`.
+- Status: satisfied
+- Evidence: mocked orchestration check verified the generated UUID, sanitized filename, exact storage path under `documents/single_user/{document_id}/{file_name}`, and insert row containing `user_id='single_user'`, `status='uploaded'`, `chunk_count=0`, and `error_message=None`.
+
+## Artifacts Produced
+- backend document upload orchestration service in `backend/app/services/document_service.py`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (02B) is complete, but sibling tasks (02C) and (02D) remain unchecked.
+
+## Key Implementation Decisions
+- Inserted the generated UUID as `id` in the metadata row so the returned `document_id`, storage path segment, and database row stay aligned.
+- Returned the existing `DocumentUploadResponse` schema from the service to match the planned upload response contract.
+- Wrapped Supabase helper failures as storage-specific and metadata-specific service errors without masking validation errors.
+
+## Risks or Open Issues
+- Live Supabase storage upload and metadata insert were not executed in this task; those checks still depend on later live validation workflow.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies (01B), (01C), and (02A) were already marked complete before implementation.
+- Scope remained limited to the upload orchestration service; no list/detail service operations, API routes, router registration, frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior were implemented.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes
+- handoff notes: `upload_document`, `build_document_storage_path`, and `build_uploaded_document_row` are available; list/detail service operations still need to be implemented separately.
