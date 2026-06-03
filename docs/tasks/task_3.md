@@ -221,7 +221,7 @@ Document APIs need a single service layer that coordinates validation output, st
 
 ### Tasks
 
-- [ ] (02A): Add Supabase helpers for document storage and metadata
+- [x] (02A): Add Supabase helpers for document storage and metadata
   - Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Plan_3.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design` > `### 6.1 Supabase Storage`
   - Source Requirements:
     - Upload bytes to Supabase Storage using bucket `SUPABASE_STORAGE_BUCKET`.
@@ -639,7 +639,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01D): Confirm Plan 3 package boundaries and imports
 
 #### Batch02
-- [ ] (02A): Add Supabase helpers for document storage and metadata
+- [x] (02A): Add Supabase helpers for document storage and metadata
 - [ ] (02B): Implement document upload orchestration service
 - [ ] (02C): Implement document list and detail service operations
 - [ ] (02D): Preserve Plan 3 failure and scope boundaries in service code

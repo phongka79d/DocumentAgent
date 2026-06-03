@@ -82,3 +82,84 @@ def check_supabase_connection() -> dict[str, bool]:
         _raise_missing_storage_bucket_error(bucket_name)
 
     return {"database": True, "storage": True}
+
+
+def upload_document_file(
+    storage_path: str,
+    content: bytes,
+    *,
+    content_type: str | None = None,
+) -> str:
+    client = get_supabase_client()
+    bucket_name = _get_configured_storage_bucket()
+
+    file_options = {"upsert": "false"}
+    if content_type:
+        file_options["content-type"] = content_type
+
+    try:
+        client.storage.from_(bucket_name).upload(storage_path, content, file_options)
+    except Exception as exc:
+        _raise_supabase_query_error("storage upload", exc)
+
+    return storage_path
+
+
+def _first_response_row(operation_name: str, response: object) -> dict:
+    data = getattr(response, "data", None)
+    if not data:
+        raise SupabaseConnectionError(
+            _format_operation_error(operation_name, "empty result")
+        )
+
+    return data[0]
+
+
+def insert_document_metadata(document_row: dict) -> dict:
+    client = get_supabase_client()
+
+    try:
+        response = client.table("documents").insert(document_row).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("document metadata insert", exc)
+
+    return _first_response_row("document metadata insert", response)
+
+
+def list_document_metadata(user_id: str) -> list[dict]:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("documents")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document metadata list", exc)
+
+    return getattr(response, "data", None) or []
+
+
+def get_document_metadata(document_id: str, user_id: str) -> dict | None:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("documents")
+            .select("*")
+            .eq("id", document_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document metadata detail", exc)
+
+    data = getattr(response, "data", None) or []
+    if not data:
+        return None
+
+    return data[0]

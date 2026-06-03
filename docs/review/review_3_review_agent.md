@@ -731,3 +731,190 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Supabase Storage and Document Metadata Service
+- Task ID: (02A)
+- Task title: Add Supabase helpers for document storage and metadata
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design` > `### 6.1 Supabase Storage`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: The last execution report entry is for the requested task ID and batch.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/supabase_service.py`
+  - `backend/tests/test_supabase_service.py`
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/supabase_service.py`: in scope - added Supabase Storage upload and documents table helper functions.
+- `backend/tests/test_supabase_service.py`: in scope - added mocked helper tests for upload, insert, list, detail, and failure wrapping.
+- `docs/tasks/task_3.md`: in scope - marked only (02A) complete in the task block and progress tracker; Batch02 remains open.
+- `docs/reports/report_3_execute_agent.md`: in scope - appended the (02A) execution report.
+- `docs/plans/Plan_3.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited Supabase Storage section reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the reported helper functions.
+- file from execution report: `backend/tests/test_supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains mocked coverage matching the report.
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Only (02A) tracking changed.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The execution report entry was appended.
+
+## Dependency Review
+- Required dependencies: Batch01; completed Plan 2 Supabase service foundation; Supabase Storage bucket and documents table for live checks only.
+- Dependency status: satisfied for mocked helper implementation and validation.
+- Missing or invalid dependency: none for (02A). Live Supabase mutation validation was not required for accepting this helper task.
+
+## Architecture Alignment
+- Passed: Helpers remain backend-only in the existing Supabase service module, use configured storage bucket, call the existing Supabase client path, filter metadata reads by `user_id`, order list results by `created_at desc`, and wrap provider failures without raw error text.
+- Failed: none.
+- Uncertain: Real Supabase bucket/table mutation behavior remains unverified, but this is explicitly reserved for later live API validation tasks and would create external artifacts.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `upload_document_file` calls `client.storage.from_(bucket).upload(...)`; `insert_document_metadata` calls `table("documents").insert(...).execute()`; list/detail helpers execute Supabase query chains and return response data. The installed storage client accepts `upload(path, file, file_options=None)`, matching the helper call shape.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses configured bucket and caller-provided storage paths, rows, document IDs, and user IDs. Fake keys and sample IDs appear only in tests.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_supabase_service.py -v`
+- Reported result: Passed, 14 tests.
+- Rerun result: Passed, 14 tests.
+- Status: passed
+- Notes: Covers mocked storage upload, metadata insert, list/detail queries, missing detail, and safe failure messages.
+- Command/check: `cd backend; pytest -v`
+- Reported result: Passed, 20 tests.
+- Rerun result: Passed, 20 tests.
+- Status: passed
+- Notes: Full backend suite passed.
+- Command/check: Live Supabase mutation validation
+- Reported result: Not run.
+- Rerun result: Not run.
+- Status: acceptable for (02A)
+- Notes: User confirmed local credentials and bucket setup exist, but (02A) validation calls for mocked helper/service tests; live upload/insert checks would create external artifacts and are reserved for later live API validation.
+- Command/check: Scope/secret searches over changed service/test files and backend/frontend exposure checks
+- Reported result: No frontend or secret exposure claimed.
+- Rerun result: No frontend changes in git; changed helper files contain no out-of-scope Qdrant, ShopAIKey, embedding, parsing, frontend, deletion, or auth work.
+- Status: passed
+- Notes: Test-only fake values are not secret exposure.
+
+## Acceptance Review
+- Task acceptance: Helpers are mockable, keep credentials backend-only, and can surface storage/query failures without leaking secrets.
+- Status: satisfied
+- Evidence: Tests monkeypatch the Supabase client and settings; production helpers do not change frontend or env files; error messages include operation and exception type but not raw provider text.
+
+## Progress Tracking
+- Selected task checkbox: accurate, (02A) is checked complete.
+- Batch status: accurate, Batch02 remains unchecked because (02B), (02C), and (02D) remain unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended by this review.
+- Other: No sibling tasks were marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live Supabase mutation validation was honestly not run and is acceptable for exactly (02A), because the selected task's validation defers mocked helper/service tests to Batch04 and live API/Supabase validation to later tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (02A) is complete in Batch02.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch02 - Supabase Storage and Document Metadata Service",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/supabase_service.py",
+    "backend/tests/test_supabase_service.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

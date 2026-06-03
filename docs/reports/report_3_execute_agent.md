@@ -348,3 +348,92 @@ complete
 - next task ID: (02A)
 - can proceed: yes
 - handoff notes: Batch01 is complete. Backend schema and utility packages import cleanly and are ready for the Batch02 service/helper work.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch02 - Supabase Storage and Document Metadata Service
+
+## Task
+(02A) - Add Supabase helpers for document storage and metadata
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 3. Scope
+- docs/plans/Plan_3.md > ## 6. Required Files and Folders
+- docs/plans/Plan_3.md > ## 9. Implementation Steps
+- docs/plans/Plan_3.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > ## 6. Data Storage Design > ### 6.1 Supabase Storage
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Supabase Storage and Document Metadata Service
+- Task ID: (02A)
+- Task title: Add Supabase helpers for document storage and metadata
+
+## Completed Work
+- Status: complete.
+- Extended the existing Supabase service module with helpers to upload original document bytes to the configured storage bucket, insert document metadata rows, list document metadata by user, and fetch a single document by document ID and user.
+- Added safe error wrapping for storage and metadata failures through `SupabaseConnectionError` without exposing raw provider messages or secrets.
+- Added mocked helper tests proving bucket selection, insert result handling, user-scoped list/detail queries, missing-detail behavior, and safe failure messages.
+
+## Files Created or Modified
+- backend/app/services/supabase_service.py
+- backend/tests/test_supabase_service.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed
+- evidence or reason: 14 tests passed, including mocked document storage upload, metadata insert, list, detail, and failure handling coverage.
+- `cd backend; pytest -v`: Passed
+- evidence or reason: 20 backend tests passed.
+- Live Supabase mutation validation: Not run
+- evidence or reason: (02A) requires mocked helper/service validation; live upload/insert checks would create external artifacts and are reserved for later live API validation tasks.
+
+## Acceptance Check
+- Task acceptance condition: Helpers are mockable, keep credentials backend-only, and can surface storage/query failures without leaking secrets.
+- Status: satisfied
+- Evidence: Helper tests use mocked Supabase client/storage/table chains; no frontend or env files were changed; failures are wrapped as operation/type-only `SupabaseConnectionError` messages and tested not to include raw failure text.
+
+## Artifacts Produced
+- Supabase helper functions in `backend/app/services/supabase_service.py` for document storage upload and document metadata insert/list/detail.
+- Mocked Supabase helper tests in `backend/tests/test_supabase_service.py`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (02A) is complete, but sibling tasks (02B), (02C), and (02D) remain unchecked.
+
+## Key Implementation Decisions
+- Kept helper functions in the existing Supabase service module and reused the established client/config/error pattern.
+- Returned storage paths and Supabase row dictionaries directly so later document service code can map them into API schemas without coupling this helper layer to route or schema modules.
+- Used `.select("*").eq(...).order(...)` and `.limit(1)` query chains for easy mocking and explicit single-user filtering.
+
+## Risks or Open Issues
+- Live storage upload and metadata insert were not run in this task, so real Supabase table/bucket behavior still needs validation in the later live-check task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Batch01 was already marked complete and the user confirmed Supabase credentials and bucket setup are available for live validation.
+- Scope remained limited to Supabase helpers and their mocked validation; no document orchestration service, API routes, frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: Supabase helper functions are available for document upload orchestration: `upload_document_file`, `insert_document_metadata`, `list_document_metadata`, and `get_document_metadata`.
