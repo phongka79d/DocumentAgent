@@ -95,7 +95,7 @@ The upload service and API routes need stable response models, supported-type va
 
 ### Tasks
 
-- [ ] (01A): Add document API response schemas
+- [x] (01A): Add document API response schemas
   - Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_3.md` > `## 7. Data Model / Schema Changes`
   - Source Requirements:
     - Add document Pydantic schemas.
@@ -633,7 +633,7 @@ Optional future tracks are outside the mandatory chain.
 ### Task IDs
 
 #### Batch01
-- [ ] (01A): Add document API response schemas
+- [x] (01A): Add document API response schemas
 - [ ] (01B): Add supported document type and upload validation utilities
 - [ ] (01C): Add upload size configuration
 - [ ] (01D): Confirm Plan 3 package boundaries and imports
