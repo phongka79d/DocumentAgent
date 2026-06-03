@@ -3493,3 +3493,444 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (04D)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04D)
+- Task title: Verify scope, secret safety, and reviewer checklist items
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_2.md > ## 4. Out of Scope; ## 10. Configuration and Environment Variables; ## 12. Acceptance Criteria; ## 15. Reviewer Checklist; docs/plans/Master_Plan.md > ## 3. Authentication Policy
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04D)
+- Reviewed task ID: (04D)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for (04D) and matches the requested batch/title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_2_execute_agent.md
+  - docs/tasks/task_2.md
+- untracked files: none shown by `git status --short`
+
+## Files Reviewed
+- `docs/reports/report_2_execute_agent.md`: in scope - appended (04D) execution report lists the expected scope/safety checks and no production changes.
+- `docs/tasks/task_2.md`: in scope - (04D) is checked in both task locations; Batch04 remains unchecked because (04E) is still open.
+- `backend/app/db/migrations/001_initial_schema.sql`: in scope for inspection - required `user_id` fields and cascade rules verified.
+- `backend/app/services/supabase_service.py`: in scope for secret/scope inspection - backend-only service reads settings and does not expose service-role values through frontend code.
+- `backend/app/core/config.py`: in scope for secret/scope inspection - Supabase values are backend settings; errors name missing variable names only.
+- `frontend`: in scope for search-only inspection - no Supabase/private-key/Auth/JWT matches found.
+
+## Reported Files Cross-Check
+- file from execution report: docs/tasks/task_2.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Checkbox update for (04D) is present and scoped.
+- file from execution report: docs/reports/report_2_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report append is present and scoped.
+
+## Dependency Review
+- Required dependencies: Batch02 and Batch03 complete; (04D) depends on schema/service work being available for inspection.
+- Dependency status: satisfied in the task tracker and repository evidence.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: No frontend Supabase client, no frontend private-key reference, no Auth/JWT/multi-user runtime additions, no upload/parsing/chunking/embedding/Qdrant integration work, and no production changes in this task.
+- Failed: none.
+- Uncertain: none for this task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: (04D) is a verification task. Rerun searches and migration inspection reproduced the executor's safety/scope claims.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No new production code was added. Placeholder/example Supabase values appear only in backend tests and plan examples; local `.env` values were not printed or reviewed by value.
+
+## Validations Reviewed
+- Command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|service[-_ ]?role|service_role" --glob "!backend/.env" --glob "!**/.env" --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**" .`
+- Reported result: Passed; matches limited to backend implementation/tests and documentation/report/review context.
+- Rerun result: Passed; no frontend hits and no raw `.env` values printed.
+- Status: satisfied
+- Notes: Additional plan files contain safe placeholder/example references, not secrets.
+
+- Command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|service[-_ ]?role|service_role|SUPABASE_URL|SUPABASE_STORAGE_BUCKET|SINGLE_USER_ID" frontend --glob "!**/node_modules/**"`
+- Reported result: Passed; no matches.
+- Rerun result: Passed; no matches.
+- Status: satisfied
+- Notes: Confirms no frontend backend-only Supabase names.
+
+- Command/check: `rg -n "createClient\(|@supabase/supabase-js|supabase-js|SUPABASE_" frontend --glob "!**/node_modules/**"`
+- Reported result: Passed; no matches.
+- Rerun result: Passed; no matches.
+- Status: satisfied
+- Notes: Confirms no frontend Supabase client/reference.
+
+- Command/check: `rg -n "\b(jwt|JWT|auth|Auth|authorization|Authorization|login|signup|sign_in|signIn|multi[-_ ]?user)\b" backend frontend --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**"`
+- Reported result: Passed; no runtime matches.
+- Rerun result: Passed; no matches.
+- Status: satisfied
+- Notes: Supports Master Plan no-auth/no-JWT policy.
+
+- Command/check: `rg -n "UploadFile|multipart|storage\.from_\(|\.upload\(|parse_document|document_parser|chunking_service|embedding_service|qdrant|QDRANT|embeddings|frontend pages" backend frontend --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**"`
+- Reported result: Passed; only approved `qdrant_point_id` schema field matched.
+- Rerun result: Passed; only `backend/app/db/migrations/001_initial_schema.sql:23:qdrant_point_id text` matched.
+- Status: satisfied
+- Notes: The schema metadata field is in scope; no Qdrant integration code was found.
+
+- Command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|OPENAI_API_KEY|API_KEY|SECRET|PRIVATE_KEY" frontend --glob "!**/node_modules/**"`
+- Reported result: Passed; no frontend private-key/secret-name matches.
+- Rerun result: Passed; no matches.
+- Status: satisfied
+- Notes: No frontend private-key exposure found.
+
+- Command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|OPENAI_API_KEY|API_KEY|SECRET|PRIVATE_KEY" backend --glob "!backend/.env" --glob "!**/.env" --glob "!**/.venv/**" --glob "!**/__pycache__/**"`
+- Reported result: Passed; matches limited to safe backend error handling and tests.
+- Rerun result: Passed; only backend config/test variable-name references found.
+- Status: satisfied
+- Notes: Raw local `.env` values were excluded.
+
+- Command/check: `rg -n "supabase\.co|eyJ|sb_secret|service-role-placeholder|fake-service-role-key|service-role-key" --glob "!backend/.env" --glob "!**/.env" --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**" backend frontend docs/plans/Plan_2.md docs/plans/Master_Plan.md`
+- Reported result: Passed; matches were only plan examples and test placeholder values.
+- Rerun result: Passed; no JWT-like token or `sb_secret` key found.
+- Status: satisfied
+- Notes: No raw secret evidence found.
+
+- Command/check: schema inspection of `backend/app/db/migrations/001_initial_schema.sql`
+- Reported result: Passed.
+- Rerun result: Passed; `documents`, `document_chunks`, `document_entities`, `chat_sessions`, `chat_messages`, and `agent_runs` include `user_id text not null`; `document_chunks.document_id` cascades to `documents(id)`; `agent_steps.agent_run_id` cascades to `agent_runs(id)`.
+- Status: satisfied
+- Notes: `document_relationships` and `agent_steps` omit `user_id` consistently with the Plan 2 schema.
+
+## Acceptance Review
+- Task acceptance: No frontend private-key exposure, no Auth/JWT/multi-user additions, and schema reviewer checks pass.
+- Status: satisfied
+- Evidence: Rerun searches and migration inspection support all acceptance conditions.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (04D) checked in both locations.
+- Batch status: accurate; Batch04 remains unchecked because (04E) is not complete.
+- Execution report entry: appended and accurate for (04D).
+- Review report entry: appended at EOF.
+- Other: Global checklist still has unchecked items from earlier/final handoff scope; this does not block acceptance of exactly (04D).
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Batch04 must not be marked complete yet because (04E) remains unchecked.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Validation, Manual Setup Checks, and Handoff",
+  "selected_task_id": "(04D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (04E)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04E)
+- Task title: Produce execution report and update progress tracker
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_2.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04E)
+- Reviewed task ID: (04E)
+- Correct selection: yes
+- Notes: The latest execution report entry is `# Task Execution Report - (04E)` and matches the requested batch and title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_2_execute_agent.md`
+  - `docs/review/review_2_review_agent.md`
+  - `docs/tasks/task_2.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_2_execute_agent.md`: in scope - reviewed latest `(04E)` entry and prior `(04A)` through `(04D)` entries only as needed for dependency and final report accuracy.
+- `docs/tasks/task_2.md`: in scope - reviewed `(04E)` task entry and Batch04 progress tracker.
+- `docs/plans/Plan_2.md`: in scope - reviewed cited `## 14. Agent Report Requirement` and `## 15. Reviewer Checklist` sections.
+- `docs/review/review_2_review_agent.md`: in scope - reviewed prior `(04A)` through `(04D)` review outcomes and appended this review at EOF.
+- `backend/app/services/__init__.py`: in scope - existence checked as a file listed in the final report.
+- `backend/app/db/__init__.py`: in scope - existence checked as a file listed in the final report.
+- `backend/app/db/migrations/`: in scope - existence checked as an artifact listed in the final report.
+- `backend/app/db/migrations/001_initial_schema.sql`: in scope - existence checked as a file listed in the final report.
+- `backend/tests/test_supabase_service.py`: in scope - existence checked as a file listed in the final report.
+- `backend/requirements.txt`: in scope - existence checked as a file listed in the final report.
+- `backend/.env.example`: in scope - existence checked as a file listed in the final report; local `.env` values were not read or printed.
+- `backend/app/core/config.py`: in scope - existence checked as a file listed in the final report.
+- `backend/app/services/supabase_service.py`: in scope - existence checked as a file listed in the final report.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Required tracker updates for `(04E)` and Batch04 are present.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Final `(04E)` execution report is appended.
+- file from final report field: `backend/app/services/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 artifact exists.
+- file from final report field: `backend/app/db/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 artifact exists.
+- file from final report field: `backend/app/db/migrations/`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 artifact exists.
+- file from final report field: `backend/app/db/migrations/001_initial_schema.sql`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 artifact exists.
+- file from final report field: `backend/tests/test_supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 artifact exists.
+- file from final report field: `backend/requirements.txt`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 modified file exists.
+- file from final report field: `backend/.env.example`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 modified file exists; no raw local secret values were inspected.
+- file from final report field: `backend/app/core/config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 modified file exists.
+- file from final report field: `backend/app/services/supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Prior Plan 2 modified file exists.
+
+## Dependency Review
+- Required dependencies: (04A), (04B), (04C), and (04D).
+- Dependency status: satisfied.
+- Missing or invalid dependency: none. Prior review reports show `(04A)`, `(04B)`, `(04C)`, and `(04D)` accepted. The task file also shows all four dependencies checked complete.
+
+## Architecture Alignment
+- Passed: `(04E)` is limited to report production and tracker synchronization. No implementation code was changed in the current diff.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The final report is appended, the progress tracker is synchronized, referenced artifacts exist, and prior accepted Batch04 reports provide validation evidence.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production code changed for `(04E)`; review found no fake success in the final report.
+
+## Validations Reviewed
+- Command/check: `git status --short`
+- Reported result: not an executor-reported validation; reviewer evidence.
+- Rerun result: Passed; modified files are `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, and `docs/tasks/task_2.md`; no untracked files.
+- Status: satisfied
+- Notes: `docs/review/review_2_review_agent.md` includes prior review entries and this review append, not execution-agent implementation work.
+- Command/check: `git diff --stat` and `git diff`
+- Reported result: not an executor-reported validation; reviewer evidence.
+- Rerun result: Passed; diff shows appended `(04D)` and `(04E)` execution reports plus tracker checkbox updates, with no implementation code changes for `(04E)`.
+- Status: satisfied
+- Notes: `(04D)` evidence was read only as needed for dependency/final report accuracy.
+- Command/check: Plan 2 report requirement inspection
+- Reported result: executor reported the final report includes all required fields.
+- Rerun result: Passed; `Plan_2.md` requires files created, files modified, commands run, test results, known issues, out-of-scope items, and SQL migration application status.
+- Status: satisfied
+- Notes: The `(04E)` report includes those fields under `## Plan 2 Final Report Fields`.
+- Command/check: final report SQL migration status review
+- Reported result: live-confirmed by table availability; exact SQL Editor vs CLI method not confirmed.
+- Rerun result: Passed; the `(04E)` report preserves that caveat and does not claim SQL Editor or CLI application.
+- Status: satisfied
+- Notes: This matches the user's hard rule for honest migration-method reporting.
+- Command/check: progress tracker review
+- Reported result: `(04E)` and Batch04 marked complete.
+- Rerun result: Passed; `(04E)` is checked in both task locations, and Batch04 is checked only after `(04A)` through `(04E)` are all checked.
+- Status: satisfied
+- Notes: Prior review reports show `(04A)` through `(04D)` accepted; this review accepts `(04E)`.
+- Command/check: reported artifact existence check using `Test-Path`
+- Reported result: final report lists created and modified Plan 2 files.
+- Rerun result: Passed; all listed files/directories exist.
+- Status: satisfied
+- Notes: The check did not inspect or print local `.env` values.
+- Command/check: prior Batch04 review report lookup
+- Reported result: executor stated dependencies were accepted by A2.
+- Rerun result: Passed after rerunning with safe PowerShell quoting; review reports for `(04A)`, `(04B)`, `(04C)`, and `(04D)` have `ACCEPTED` outcomes.
+- Status: satisfied
+- Notes: An initial reviewer search command had a PowerShell quoting error; the corrected search and direct excerpts verified the dependency evidence.
+
+## Acceptance Review
+- Task acceptance: Report includes all required fields and accurately reflects passing, failing, or blocked validations.
+- Status: satisfied
+- Evidence: The final report includes files created, files modified, commands run, test results, known issues, out-of-scope items intentionally not implemented, and SQL migration application status. It also states the SQL migration is live-confirmed but not confirmed as SQL Editor versus CLI.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(04E)` is checked in both task locations.
+- Batch status: accurate; Batch04 is checked, and `(04A)`, `(04B)`, `(04C)`, `(04D)`, and `(04E)` are all checked and accepted.
+- Execution report entry: appended and accurate for `(04E)`.
+- Review report entry: appended at EOF.
+- Other: Global checklist items remain a separate checklist and are not the selected `(04E)` progress tracker.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The `(04E)` final report references prior appended reports for the full command history instead of duplicating every command inline; the command evidence is still present in the same execution report file and the required `Commands run` field exists.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes; there is no remaining Task 2 Batch04 task, so handoff/next-plan work can proceed.
+- Should batch be marked complete? yes, only because all Batch04 task IDs are checked and accepted.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Validation, Manual Setup Checks, and Handoff",
+  "selected_task_id": "(04E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

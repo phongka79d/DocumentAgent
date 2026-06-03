@@ -521,7 +521,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if Supabase project access, real local env values, migration application, or storage bucket setup is missing.
   - Files: `backend/app/db/migrations/001_initial_schema.sql`, local `.env` for user-managed secrets, execution report
 
-- [ ] (04D): Verify scope, secret safety, and reviewer checklist items
+- [x] (04D): Verify scope, secret safety, and reviewer checklist items
   - Source of Truth: `docs/plans/Plan_2.md` > `## 4. Out of Scope`; `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_2.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_2.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
   - Source Requirements:
     - `SUPABASE_SERVICE_ROLE_KEY` appears only in backend files and examples.
@@ -540,7 +540,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
   - Blocked Condition: None.
   - Files: Entire repository for inspection; execution report
 
-- [ ] (04E): Produce execution report and update progress tracker
+- [x] (04E): Produce execution report and update progress tracker
   - Source of Truth: `docs/plans/Plan_2.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_2.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created.
@@ -661,7 +661,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [x] Batch01 - Backend Supabase Configuration
 - [x] Batch02 - Database Schema Migration and Storage Assumptions
 - [x] Batch03 - Backend Supabase Service and Optional Dependency Health
-- [ ] Batch04 - Validation, Manual Setup Checks, and Handoff
+- [x] Batch04 - Validation, Manual Setup Checks, and Handoff
 
 ### Task IDs
 
@@ -692,8 +692,8 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [x] (04A): Add mocked Supabase service tests
 - [x] (04B): Run backend automated validations
 - [x] (04C): Perform manual Supabase database and storage checks
-- [ ] (04D): Verify scope, secret safety, and reviewer checklist items
-- [ ] (04E): Produce execution report and update progress tracker
+- [x] (04D): Verify scope, secret safety, and reviewer checklist items
+- [x] (04E): Produce execution report and update progress tracker
 
 ## Completion Reporting Rules for Future Execution Agents
 

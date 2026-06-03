@@ -1591,3 +1591,203 @@ complete
 - next task ID: (04D)
 - can proceed: yes
 - handoff notes: Live Supabase database/storage checks passed. Continue with scope, secret safety, and reviewer checklist verification; do not assume the migration application method beyond live-confirmed database state.
+
+---
+
+# Task Execution Report - (04D)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch04 - Validation, Manual Setup Checks, and Handoff
+
+## Task
+(04D) - Verify scope, secret safety, and reviewer checklist items
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_2.md > ## 4. Out of Scope
+- docs/plans/Plan_2.md > ## 10. Configuration and Environment Variables
+- docs/plans/Plan_2.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_2.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 3. Authentication Policy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04D)
+- Task title: Verify scope, secret safety, and reviewer checklist items
+
+## Completed Work
+- Task is complete.
+- Ran targeted repository searches for Supabase service-role exposure, frontend Supabase/private-key references, Auth/JWT/multi-user additions, and Plan 2 out-of-scope upload/parsing/chunking/embedding/Qdrant/frontend work.
+- Inspected `backend/app/db/migrations/001_initial_schema.sql` for required `user_id` fields and cascade rules.
+- Confirmed no production code changes were required.
+
+## Files Created or Modified
+- docs/tasks/task_2.md
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|service[-_ ]?role|service_role" --glob "!backend/.env" --glob "!**/.env" --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**" .`: Passed
+- evidence or reason: Matches were limited to backend implementation/tests and documentation/report/review context. No frontend matches and no raw local `.env` values were searched or printed.
+- command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|service[-_ ]?role|service_role|SUPABASE_URL|SUPABASE_STORAGE_BUCKET|SINGLE_USER_ID" frontend --glob "!**/node_modules/**"`: Passed
+- evidence or reason: No matches found in frontend.
+- command/check: `rg -n "createClient\(|@supabase/supabase-js|supabase-js|SUPABASE_" frontend --glob "!**/node_modules/**"`: Passed
+- evidence or reason: No frontend Supabase client or Supabase environment references found.
+- command/check: `rg -n "\b(jwt|JWT|auth|Auth|authorization|Authorization|login|signup|sign_in|signIn|multi[-_ ]?user)\b" backend frontend --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**"`: Passed
+- evidence or reason: No runtime backend/frontend Auth, JWT, login, signup, authorization, or multi-user matches found.
+- command/check: `rg -n "UploadFile|multipart|storage\.from_\(|\.upload\(|parse_document|document_parser|chunking_service|embedding_service|qdrant|QDRANT|embeddings|frontend pages" backend frontend --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**"`: Passed
+- evidence or reason: The only match was `qdrant_point_id text` in the Plan 2 migration, which is an approved schema field. No upload endpoint, storage upload, parser, chunking service, embedding service, Qdrant integration, or frontend page implementation was found.
+- command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|OPENAI_API_KEY|API_KEY|SECRET|PRIVATE_KEY" frontend --glob "!**/node_modules/**"`: Passed
+- evidence or reason: No frontend private-key or secret-name matches found.
+- command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|OPENAI_API_KEY|API_KEY|SECRET|PRIVATE_KEY" backend --glob "!backend/.env" --glob "!**/.env" --glob "!**/.venv/**" --glob "!**/__pycache__/**"`: Passed
+- evidence or reason: Matches were limited to safe backend configuration error handling and tests naming `SUPABASE_SERVICE_ROLE_KEY`; local secret files were excluded.
+- command/check: `rg -n "supabase\.co|eyJ|sb_secret|service-role-placeholder|fake-service-role-key|service-role-key" --glob "!backend/.env" --glob "!**/.env" --glob "!**/.venv/**" --glob "!**/node_modules/**" --glob "!**/__pycache__/**" backend frontend docs/plans/Plan_2.md docs/plans/Master_Plan.md`: Passed
+- evidence or reason: Matches were only plan examples and test placeholder values. No JWT-like `eyJ` token or Supabase `sb_secret` key was found.
+- command/check: schema inspection of `backend/app/db/migrations/001_initial_schema.sql`: Passed
+- evidence or reason: `documents`, `document_chunks`, `document_entities`, `chat_sessions`, `chat_messages`, and `agent_runs` include `user_id text not null`; `document_relationships` and `agent_steps` omit `user_id` consistently with Plan 2. `document_chunks.document_id` references `documents(id) on delete cascade`; `agent_steps.agent_run_id` references `agent_runs(id) on delete cascade`.
+
+## Acceptance Check
+- Task acceptance condition: No frontend private-key exposure, no Auth/JWT/multi-user additions, and schema reviewer checks pass.
+- Status: satisfied
+- Evidence: Frontend secret and Supabase searches returned no matches; runtime Auth/JWT/multi-user search returned no matches; migration inspection confirmed required `user_id` fields and cascade relationships.
+
+## Artifacts Produced
+- Scope and safety verification summary in this execution report.
+- Updated `(04D)` checkbox in `docs/tasks/task_2.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(04D)` acceptance and validation are satisfied. Batch04 remains incomplete because sibling task `(04E)` is still unchecked and out of scope for this execution.
+
+## Key Implementation Decisions
+- Excluded local `.env`, virtualenv, node_modules, and cache folders from secret searches to avoid printing raw secrets and irrelevant generated files.
+- Treated the migration `qdrant_point_id` column as in scope because Plan 2 explicitly requires it as chunk metadata; no Qdrant integration code was found.
+- Did not modify production code because no safety defect was found.
+
+## Risks or Open Issues
+- None for this task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; Batch02 and Batch03 are checked complete and prior A2 acceptance was provided in the user context
+- no architecture concern identified
+
+## Notes for Next Task
+- next task ID: (04E)
+- can proceed: yes
+- handoff notes: Scope and safety checks passed. Next task should produce the final handoff report without re-marking this task or claiming additional live setup beyond previously recorded evidence.
+
+---
+
+# Task Execution Report - (04E)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch04 - Validation, Manual Setup Checks, and Handoff
+
+## Task
+(04E) - Produce execution report and update progress tracker
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_2.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04E)
+- Task title: Produce execution report and update progress tracker
+
+## Completed Work
+- Task is complete.
+- Produced this final reviewer handoff report for Plan 2 / Task 2.
+- Synchronized `docs/tasks/task_2.md` by marking `(04E)` complete in the task list and progress tracker.
+- Marked Batch04 complete because `(04A)`, `(04B)`, `(04C)`, `(04D)`, and `(04E)` are all checked complete.
+- Did not add implementation code or execute future work.
+
+## Plan 2 Final Report Fields
+- Files created: `backend/app/services/__init__.py`, `backend/app/db/__init__.py`, `backend/app/db/migrations/`, `backend/app/db/migrations/001_initial_schema.sql`, `backend/tests/test_supabase_service.py`.
+- Files modified: `backend/requirements.txt`, `backend/.env.example`, `backend/app/core/config.py`, `backend/app/services/supabase_service.py`, `docs/tasks/task_2.md`, `docs/reports/report_2_execute_agent.md`.
+- Commands run: see `Tests or Validations Run` in this report and prior appended reports for `(04A)` through `(04D)`.
+- Test results: mocked Supabase service tests passed; existing backend health test passed; live Supabase database/storage checks passed; scope and secret-safety searches passed.
+- Known issues: exact SQL migration application method is unknown; live database state confirms the schema exists, but the reports do not confirm whether SQL Editor or Supabase CLI was used.
+- Out-of-scope items intentionally not implemented: no upload endpoint, no document parsing, no chunking service, no embedding service, no Qdrant integration, no frontend pages, no Auth/JWT/multi-user logic, no RLS policies.
+- SQL migration application status: live-confirmed by table availability in `(04C)`; exact method not confirmed as SQL Editor versus CLI. It is not merely repository-only at final handoff because live table probes passed.
+
+## Files Created or Modified
+- docs/tasks/task_2.md
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `rg -n "\(04E\)|Batch04|Agent Report Requirement|Reviewer Checklist" docs/tasks/task_2.md docs/plans/Plan_2.md`: Passed
+- evidence or reason: Located the selected task, Batch04 tracker entries, and the cited Plan 2 report/reviewer sections.
+- command/check: `Get-Content docs/reports/report_2_execute_agent.md -Tail 80`: Passed
+- evidence or reason: Inspected the physical end of the existing report before appending, per append safety rules.
+- command/check: `Get-Content docs/tasks/task_2.md | Select-Object -Skip 450 -First 120`: Passed
+- evidence or reason: Confirmed `(04A)` through `(04D)` are checked complete and `(04E)` was the only remaining unchecked Batch04 task before this update.
+- command/check: `Get-Content docs/tasks/task_2.md | Select-Object -Skip 655 -First 50`: Passed
+- evidence or reason: Confirmed the progress tracker showed Batch04 incomplete only because `(04E)` was unchecked before this update.
+- command/check: `Get-Content docs/plans/Plan_2.md | Select-Object -Skip 320 -First 70`: Passed
+- evidence or reason: Confirmed Plan 2 requires reporting files created, files modified, commands run, test results, known issues, out-of-scope items intentionally not implemented, and SQL migration application status.
+- command/check: `rg -n "Task Execution Report - \(04A\)|Task Execution Report - \(04B\)|Task Execution Report - \(04C\)|Task Execution Report - \(04D\)|SQL migration|migration" docs/reports/report_2_execute_agent.md`: Passed
+- evidence or reason: Confirmed prior Batch04 report entries and extracted the live-confirmed but method-unknown SQL migration status.
+- command/check: manual review of this `(04E)` report against `docs/plans/Plan_2.md` sections 14 and 15: Passed
+- evidence or reason: This report includes all required Plan 2 fields and does not claim fake success for the unconfirmed SQL Editor vs CLI method.
+
+## Acceptance Check
+- Task acceptance condition: Report includes all required fields and accurately reflects passing, failing, or blocked validations.
+- Status: satisfied
+- Evidence: This report includes files created, files modified, commands run, test results, known issues, out-of-scope items intentionally not implemented, and SQL migration application status. It accurately states that automated tests and live checks passed while the exact SQL migration application method remains unknown.
+
+## Artifacts Produced
+- Final `(04E)` execution report appended to `docs/reports/report_2_execute_agent.md`.
+- Updated `docs/tasks/task_2.md` progress tracker for `(04E)` and Batch04.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: `(04E)` acceptance and validation are satisfied, and all Batch04 task IDs are now complete.
+
+## Key Implementation Decisions
+- Reported migration status as live-confirmed by reachable tables while preserving the caveat that the exact SQL Editor vs CLI application method is not confirmed.
+- Treated reporting and tracker synchronization as the only in-scope work for `(04E)`.
+
+## Risks or Open Issues
+- Exact SQL migration application method remains unknown; the live database/storage state passed, but no evidence distinguishes SQL Editor from Supabase CLI.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; `(04A)`, `(04B)`, `(04C)`, and `(04D)` are checked complete and were accepted by A2 per the user-provided dependency context
+- no architecture concern identified
+
+## Notes for Next Task
+- next task ID: None in Batch04 / Task 2
+- can proceed: yes
+- handoff notes: Plan 2 Task 2 Batch04 is complete and ready for A2 review. Do not modify `docs/review` from this execution-agent handoff.
