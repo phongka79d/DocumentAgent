@@ -2246,3 +2246,180 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Backend Supabase Service and Optional Dependency Health
+- Task ID: (03A)
+- Task title: Implement backend-only Supabase client singleton
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## 1. Goal`; `## 6. Required Files and Folders`; `## 8. API Design`; `## 9. Implementation Steps`; `## 10. Configuration and Environment Variables`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The last execution report entry is for `(03A)` and matches the requested batch/title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_2_execute_agent.md`, `docs/tasks/task_2.md`
+- untracked files: `backend/app/services/supabase_service.py`
+
+## Files Reviewed
+- `backend/app/services/supabase_service.py`: in scope - new backend-only Supabase service singleton module.
+- `backend/app/core/config.py`: in scope - dependency used for lazy required Supabase config validation.
+- `docs/tasks/task_2.md`: in scope - selected task and progress tracker updated for `(03A)` only.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest execution report appended for `(03A)`.
+- `docs/plans/Plan_2.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File exists as untracked repository evidence and implements `get_supabase_client()`.
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(03A)` is checked in the task block and Progress Tracker; sibling Batch03 tasks remain unchecked.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry was appended for `(03A)`.
+
+## Dependency Review
+- Required dependencies: (01A), (01C), (01D)
+- Dependency status: satisfied; all three dependency task IDs are checked in `docs/tasks/task_2.md`.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Backend-only module reads Supabase URL/service-role key through backend settings, validates lazily at service-call time, creates the Supabase client with `create_client()`, and reuses a module-local singleton. No frontend, Auth/JWT, upload, parsing, storage-write, health endpoint, or connection-helper work was added.
+- Failed: none
+- Uncertain: none for `(03A)` scope; broader mocked tests remain scheduled for Batch04.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `get_supabase_client()` calls `get_settings().require_supabase_settings()`, initializes `create_client(supabase_url, service_role_key)` once, caches it in `_supabase_client`, and returns the cached client on later calls.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Supabase URL and service-role key are read from backend settings, not fixed literals. The smoke-test literals were only used in reviewer validation, not production code.
+
+## Validations Reviewed
+- Command/check: `python -m py_compile app\services\supabase_service.py` from `backend`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: satisfied
+- Notes: No syntax/import compile issue found.
+- Command/check: `python -c "from app.services.supabase_service import get_supabase_client; print(get_supabase_client.__name__)"` from `backend`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: satisfied
+- Notes: `get_supabase_client` imports successfully.
+- Command/check: inline mocked singleton smoke check from `backend`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: satisfied
+- Notes: Repeated calls returned the same mocked client and called client creation once.
+- Command/check: inline missing-config smoke check from `backend`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: satisfied
+- Notes: Missing URL raises a clear `RuntimeError` naming `SUPABASE_URL` without leaking secret values.
+
+## Acceptance Review
+- Task acceptance: `get_supabase_client()` returns the same initialized client on repeated calls when config is present, and raises a clear safe error when required config is missing.
+- Status: satisfied
+- Evidence: Reviewer-rerun mocked smoke checks confirmed singleton reuse and safe missing-config failure.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(03A)` is checked in both task locations.
+- Batch status: accurate; Batch03 remains unchecked because `(03B)`, `(03C)`, and `(03D)` are not complete.
+- Execution report entry: accurate and appended.
+- Review report entry: appended by this review.
+- Other: No sibling task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The singleton is module-local and future Batch04 tests may need to reset `_supabase_client` between mocked cases, which the executor already disclosed as a future test isolation consideration.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(03A)` is complete and sibling Batch03 task IDs remain unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch03 - Backend Supabase Service and Optional Dependency Health",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/supabase_service.py",
+    "docs/tasks/task_2.md",
+    "docs/reports/report_2_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

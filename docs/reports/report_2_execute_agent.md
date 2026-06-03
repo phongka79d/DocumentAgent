@@ -993,3 +993,90 @@ complete
 - next task ID: `(03A)`
 - can proceed: yes
 - handoff notes: Batch02 is complete. Use `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, and `SINGLE_USER_ID` only from local backend environment values. Do not expose the service-role key to frontend code or tracked documentation.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch03 - Backend Supabase Service and Optional Dependency Health
+
+## Task
+(03A) - Implement backend-only Supabase client singleton
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 1. Goal`
+- `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_2.md` > `## 8. API Design`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Backend Supabase Service and Optional Dependency Health
+- Task ID: (03A)
+- Task title: Implement backend-only Supabase client singleton
+
+## Completed Work
+- Complete: implemented the backend-only Supabase client singleton for the selected task.
+- Created `backend/app/services/supabase_service.py` with lazy settings validation, Supabase client creation from `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, and singleton reuse through `get_supabase_client()`.
+- Kept service-role access backend-only by reading it only through backend settings and not printing, logging, returning, or writing secret values.
+- Did not implement sibling Batch03 tasks `(03B)`, `(03C)`, or `(03D)`.
+
+## Files Created or Modified
+- `backend/app/services/supabase_service.py`
+- `docs/tasks/task_2.md`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `python -c "from app.services.supabase_service import get_supabase_client; print(get_supabase_client)"` before implementation from `backend`: Passed as RED validation by failing with `ModuleNotFoundError: No module named 'app.services.supabase_service'`.
+- `python -c "import supabase; from supabase import create_client, Client; print('supabase import ok')"` from `backend`: Passed; Supabase package imports.
+- `python -m py_compile app\services\supabase_service.py` from `backend`: Passed.
+- `python -c "from app.services.supabase_service import get_supabase_client; print(get_supabase_client.__name__)"` from `backend`: Passed; imported `get_supabase_client`.
+- Inline Python smoke check with `Settings(_env_file=None)` monkeypatched into the service from `backend`: Passed; missing config raises a clear safe `RuntimeError` naming `SUPABASE_URL`.
+- Inline Python smoke check with mocked settings and mocked `create_client` from `backend`: Passed; repeated `get_supabase_client()` calls returned the same object and client creation ran once.
+
+## Acceptance Check
+- Task acceptance condition: `get_supabase_client()` returns the same initialized client on repeated calls when config is present, and raises a clear safe error when required config is missing.
+- Status: satisfied
+- Evidence: mocked singleton smoke check confirmed one client instance was reused; missing-config smoke check confirmed the existing backend settings error is raised at service-call time without exposing secret values.
+
+## Artifacts Produced
+- `backend/app/services/supabase_service.py`
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(03A)` is complete, but sibling Batch03 tasks `(03B)`, `(03C)`, and `(03D)` remain unchecked.
+
+## Key Implementation Decisions
+- Reused `Settings.require_supabase_settings()` so required Supabase values are validated lazily only when backend Supabase service code is called.
+- Kept the singleton module-local and minimal because connection error handling and live connectivity helpers belong to later task IDs.
+
+## Risks or Open Issues
+- Live Supabase connection validation was not run because this task's validation defers live checks until user-provided environment/setup and later Batch04 validation.
+- The module-level singleton may require explicit reset handling in future mocked tests if Batch04 tests need to isolate cases in one Python process.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; `(01A)`, `(01C)`, and `(01D)` are marked complete
+- no architecture concern identified
+
+## Notes for Next Task
+- next task ID: `(03B)`
+- can proceed: yes
+- handoff notes: `get_supabase_client()` now exists and reuses one backend Supabase client. Future tasks can add custom `SupabaseConnectionError`, connection checks, and optional health behavior without exposing service-role credentials.
