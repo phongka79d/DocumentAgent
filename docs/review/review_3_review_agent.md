@@ -1837,3 +1837,186 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Document API Routes and Router Registration
+- Task ID: (03C)
+- Task title: Add document detail API route
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 1. Goal`; `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Master_Plan.md` > `# 13. Backend API Design` > `## 13.3 Get Document Detail`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: Reviewed the latest matching `(03C)` execution report entry only. Did not review `(03D)` or the whole batch as complete.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_3_execute_agent.md`, `docs/tasks/task_3.md`
+- untracked files: None
+
+## Files Reviewed
+- `backend/app/api/documents.py`: in scope - contains the document detail route with typed UUID path validation, response model, and 404/500 error mapping.
+- `backend/app/services/document_service.py`: in scope - verifies detail route delegates to service that filters through `get_document_metadata(document_id, SINGLE_USER_ID)` and returns empty `chunks`.
+- `backend/app/schemas/documents.py`: in scope - verifies `DocumentDetailResponse` includes expected detail fields and default empty `chunks` list.
+- `backend/tests/test_supabase_service.py`: in scope - verifies metadata detail helper filters by document ID and user ID and returns `None` for missing rows.
+- `backend/app/main.py`: in scope for boundary check - documents router is not registered yet, matching `(03D)` ownership.
+- `docs/tasks/task_3.md`: in scope - selected task and progress tracker mark `(03C)` complete while `(03D)` and Batch03 remain incomplete.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest execution report for `(03C)` is appended.
+- `docs/plans/Plan_3.md`: in scope - cited sections confirm detail endpoint, error behavior, single-user lookup, and empty chunks.
+- `docs/plans/Master_Plan.md`: in scope - cited detail endpoint contract confirms `GET /api/documents/{document_id}` and empty chunks.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/api/documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The current uncommitted git diff does not include this file, but the implementation is present in the working tree and in `HEAD`; repository evidence confirms the route exists.
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff marks only `(03C)` complete in both the task block and progress tracker.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest `(03C)` report entry is appended after `(03B)`.
+
+## Dependency Review
+- Required dependencies: (02C) Implement document list and detail service operations
+- Dependency status: satisfied; `(02C)` is checked complete in `docs/tasks/task_3.md`, and service/helper code for detail lookup exists.
+- Missing or invalid dependency: None
+
+## Architecture Alignment
+- Passed: Route stays in `backend/app/api/documents.py`, delegates user-scoped lookup to the service layer, returns `DocumentDetailResponse`, keeps `chunks=[]`, and leaves router registration to `(03D)`.
+- Failed: None
+- Uncertain: None
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `@router.get("/{document_id}")` accepts `document_id: UUID`, calls `document_service.get_document_detail(document_id)`, maps `DocumentNotFoundError` to 404, and maps `DocumentMetadataError` to 500. Service code raises not found for missing rows and maps schema fields from real metadata rows.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixed document IDs, filenames, fixture-only success paths, or hardcoded response payloads in production route code. The route delegates to service behavior.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_supabase_service.py tests/test_health.py tests/test_config.py -v`
+- Reported result: Passed, `20 passed in 1.11s`
+- Rerun result: Passed, `20 passed in 1.16s`
+- Status: passed
+- Notes: Includes service/helper tests for detail metadata filtering by document ID and user ID, and missing-row behavior.
+
+- Command/check: Inline FastAPI `TestClient` route smoke check for `GET /api/documents/{document_id}`
+- Reported result: Passed
+- Rerun result: Passed, `detail route smoke passed 200 404 422`
+- Status: passed
+- Notes: Mounted `documents.router` at `/api/documents`, mocked `document_service.get_document_detail`, and verified valid detail response with `chunks: []`, unknown UUID 404, and invalid UUID 422.
+
+- Command/check: Scope searches for out-of-scope processing/secret exposure
+- Reported result: Scope remained limited; no frontend or processing work
+- Rerun result: Passed; no frontend exposure of backend-only Supabase setting names, and no out-of-scope processing route/service additions found.
+- Status: passed
+- Notes: The only route/service search hit was the existing health service name string.
+
+## Acceptance Review
+- Task acceptance: API tests cover valid detail response, random unknown UUID 404, and invalid UUID 422.
+- Status: satisfied
+- Evidence: Rerun inline route smoke check verified 200/404/422 behavior. Code also matches Plan 3 detail response shape and keeps single-user filtering below the route.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(03C)` is checked complete.
+- Batch status: accurate; Batch03 remains unchecked because `(03D)` is still incomplete.
+- Execution report entry: accurate; latest `(03C)` report is appended.
+- Review report entry: appended by this review.
+- Other: Sibling `(03D)` remains unchecked; Batch04 remains unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None requiring repair. Observation: current uncommitted git diff only shows docs/report tracking changes; `backend/app/api/documents.py` is nevertheless present in the repository and in `HEAD` with the reported detail route implementation.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/app/api/documents.py` is not part of the current uncommitted diff, but the reported implementation exists in the repository and validates successfully.
+- Formal persistent detail API tests remain scheduled for Batch04, so the current task relies on an inline smoke check plus existing service/helper tests as intended by the task entry.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(03D)` remains incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch03 - Document API Routes and Router Registration",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md",
+    "backend/app/api/documents.py",
+    "backend/app/services/document_service.py",
+    "backend/app/schemas/documents.py",
+    "backend/tests/test_supabase_service.py",
+    "backend/app/main.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

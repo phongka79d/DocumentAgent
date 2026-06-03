@@ -911,3 +911,93 @@ complete
 - next task ID: (03C)
 - can proceed: yes
 - handoff notes: Add the document detail route in `backend/app/api/documents.py`; router registration remains reserved for (03D).
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch03 - Document API Routes and Router Registration
+
+## Task
+(03C) - Add document detail API route
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 1. Goal
+- docs/plans/Plan_3.md > ## 3. Scope
+- docs/plans/Plan_3.md > ## 8. API Design
+- docs/plans/Master_Plan.md > # 13. Backend API Design > ## 13.3 Get Document Detail
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Document API Routes and Router Registration
+- Task ID: (03C)
+- Task title: Add document detail API route
+
+## Completed Work
+- Task is complete.
+- Added `GET /api/documents/{document_id}` at the documents router level in `backend/app/api/documents.py`.
+- Used a typed `UUID` path parameter so FastAPI returns HTTP 422 for invalid UUID path values.
+- Returned the existing `DocumentDetailResponse` schema from `document_service.get_document_detail()`.
+- Mapped `DocumentNotFoundError` to HTTP 404 for unknown documents scoped by `SINGLE_USER_ID` in the service layer.
+- Mapped `DocumentMetadataError` to HTTP 500 for metadata query failures.
+- Did not register the documents router in `main.py`; that remains task (03D).
+
+## Files Created or Modified
+- backend/app/api/documents.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- Inline FastAPI `TestClient` route smoke check for `GET /api/documents/{document_id}`: Passed
+- evidence or reason: mounted `documents.router` at `/api/documents`, mocked `document_service.get_document_detail`, verified valid UUID returns HTTP 200 with `chunks: []`, random unknown UUID returns HTTP 404, and invalid UUID path returns HTTP 422.
+- `cd backend; pytest tests/test_supabase_service.py tests/test_health.py tests/test_config.py -v`: Passed
+- evidence or reason: `20 passed in 1.11s`; includes `test_get_document_metadata_filters_user_and_document_id` and `test_get_document_metadata_returns_none_when_missing`, proving detail metadata lookup filters by user/document and exposes missing rows as a not-found outcome below the route.
+
+## Acceptance Check
+- Task acceptance condition: API tests cover valid detail response, random unknown UUID 404, and invalid UUID 422.
+- Status: satisfied
+- Evidence: Inline FastAPI `TestClient` check covered the valid detail response including empty `chunks`, unknown random UUID HTTP 404, and invalid UUID HTTP 422. Existing Supabase service tests also passed for user/document filtering and missing-row behavior.
+
+## Artifacts Produced
+- Document detail endpoint in `backend/app/api/documents.py`.
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (03C) acceptance and validation were satisfied; Batch03 remains incomplete because (03D) is still unchecked.
+
+## Key Implementation Decisions
+- Used `document_id: UUID` in the route signature to let FastAPI/Pydantic perform path validation and return HTTP 422 for invalid UUID values.
+- Reused `document_service.get_document_detail()` so `SINGLE_USER_ID` filtering remains enforced in the service/Supabase layer rather than route code.
+- Returned `DocumentDetailResponse` as the route response model to match the approved detail body with an empty `chunks` list.
+
+## Risks or Open Issues
+- Formal persistent detail API tests are still future Batch04 work.
+- The route is not reachable from the main FastAPI app until task (03D) registers the documents router.
+- Live Supabase detail validation was not attempted because this task only requires mocked API validation.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependency (02C) was already marked complete in the task file before implementation.
+- Scope remained limited to the detail API route and required task/report progress updates; no router registration, frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (03D)
+- can proceed: yes
+- handoff notes: Register the documents router in `backend/app/main.py` under `/api/documents` without disrupting existing health behavior.

@@ -379,7 +379,7 @@ Plan 3 is testable through HTTP API contracts, so the backend must provide route
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/api/documents.py`
 
-- [ ] (03C): Add document detail API route
+- [x] (03C): Add document detail API route
   - Source of Truth: `docs/plans/Plan_3.md` > `## 1. Goal`; `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Master_Plan.md` > `# 13. Backend API Design` > `## 13.3 Get Document Detail`
   - Source Requirements:
     - Add `GET /api/documents/{document_id}`.
@@ -647,7 +647,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch03
 - [x] (03A): Add document upload API route
 - [x] (03B): Add document list API route
-- [ ] (03C): Add document detail API route
+- [x] (03C): Add document detail API route
 - [ ] (03D): Register documents router without disrupting existing APIs
 
 #### Batch04
