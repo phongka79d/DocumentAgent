@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     supabase_url: str | None = None
     supabase_service_role_key: str | None = None
     supabase_storage_bucket: str = "documents"
+    max_upload_bytes: int | None = 25_000_000
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",

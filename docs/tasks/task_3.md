@@ -129,7 +129,7 @@ The upload service and API routes need stable response models, supported-type va
   - Blocked Condition: None.
   - Files: `backend/app/utils/__init__.py`, `backend/app/utils/file_validation.py`
 
-- [ ] (01C): Add upload size configuration
+- [x] (01C): Add upload size configuration
   - Source of Truth: `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Plan_3.md` > `## 10. Configuration and Environment Variables`
   - Source Requirements:
     - Add `MAX_UPLOAD_BYTES` to backend settings.
@@ -635,7 +635,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch01
 - [x] (01A): Add document API response schemas
 - [x] (01B): Add supported document type and upload validation utilities
-- [ ] (01C): Add upload size configuration
+- [x] (01C): Add upload size configuration
 - [ ] (01D): Confirm Plan 3 package boundaries and imports
 
 #### Batch02

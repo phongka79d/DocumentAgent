@@ -348,3 +348,198 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Document Schemas, Upload Validation, and Configuration
+- Task ID: (01C)
+- Task title: Add upload size configuration
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Plan_3.md` > `## 10. Configuration and Environment Variables`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01C)
+- Reviewed task ID: (01C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for `(01C) - Add upload size configuration` and matches the requested batch/title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/.env.example`
+  - `backend/app/core/config.py`
+  - `backend/tests/test_config.py`
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: none before this review report append
+
+## Files Reviewed
+- `backend/.env.example`: in scope - Adds backend-only `MAX_UPLOAD_BYTES=25000000` placeholder/example.
+- `backend/app/core/config.py`: in scope - Adds typed `Settings.max_upload_bytes` with conservative default.
+- `backend/tests/test_config.py`: in scope - Adds settings default and override coverage.
+- `backend/app/utils/file_validation.py`: in scope - Existing validator accepts `max_bytes` and raises `UploadTooLargeError` when exceeded.
+- `docs/reports/report_3_execute_agent.md`: in scope - Contains appended `(01C)` execution report.
+- `docs/tasks/task_3.md`: in scope - Marks only `(01C)` complete in task block and progress tracker.
+- `docs/plans/Plan_3.md`: in scope - Cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `max_upload_bytes: int | None = 25_000_000`.
+
+- file from execution report: `backend/.env.example`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `MAX_UPLOAD_BYTES=25000000` and no real secret value.
+
+- file from execution report: `backend/tests/test_config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers default and explicit override behavior.
+
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Correctly marks `(01C)` complete without marking `(01D)` or Batch01 complete.
+
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(01C)` report is appended after prior entries.
+
+## Dependency Review
+- Required dependencies: Completed Plan 2 settings pattern.
+- Dependency status: satisfied; `backend/app/core/config.py` and existing config tests are present.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Upload-size configuration is kept in backend settings, `.env.example` uses a placeholder/example value, and upload validation consumes the configured maximum through `validate_upload_file(upload_file, max_bytes)`.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `Settings.max_upload_bytes` is a real Pydantic settings field; environment variable parsing works for `MAX_UPLOAD_BYTES`; `validate_upload_file` enforces the maximum and raises `UploadTooLargeError`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The default `25_000_000` is explicitly allowed by the source requirement as a conservative default; no secrets or fixture-specific runtime logic were introduced.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_config.py -v`
+- Reported result: Passed, 5 tests passed.
+- Rerun result: Passed, 5 tests passed in 0.13s.
+- Status: passed
+- Notes: Confirms settings construction, missing Supabase behavior, and upload-size default/override tests.
+
+- Command/check: direct upload validation smoke check with `Settings(max_upload_bytes=5)` and a 6-byte TXT upload.
+- Reported result: Passed, `UploadTooLargeError` raised.
+- Rerun result: Passed, printed `upload too large enforced`.
+- Status: passed
+- Notes: Confirms configured maximum can be passed into existing upload validation.
+
+- Command/check: direct environment variable parse check for `MAX_UPLOAD_BYTES=12345`.
+- Reported result: not separately reported by executor.
+- Rerun result: Passed, `Settings(_env_file=None).max_upload_bytes == 12345`.
+- Status: passed
+- Notes: Confirms the backend env example variable name maps to the settings field.
+
+## Acceptance Review
+- Task acceptance: App imports without requiring a real value, and upload validation can enforce the configured maximum.
+- Status: satisfied
+- Evidence: `Settings(_env_file=None)` constructs with default `25_000_000`; env var and constructor override paths work; existing validator rejects content larger than the configured value.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(01C)` is marked complete in the task block and progress tracker.
+- Batch status: accurate; Batch01 remains unchecked because `(01D)` is not complete.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at physical EOF.
+- Other: No sibling or future task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- HTTP 413 response mapping remains future Batch03 route work; this is consistent with `(01C)` scope because this task only adds settings and validator-consumable configuration.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch01 - Document Schemas, Upload Validation, and Configuration",
+  "selected_task_id": "(01C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/.env.example",
+    "backend/app/core/config.py",
+    "backend/tests/test_config.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

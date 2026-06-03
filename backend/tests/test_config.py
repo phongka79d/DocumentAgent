@@ -13,6 +13,13 @@ def test_settings_allow_missing_supabase_values_for_basic_app_usage() -> None:
 
     assert settings.supabase_url is None
     assert settings.supabase_service_role_key is None
+    assert settings.max_upload_bytes == 25_000_000
+
+
+def test_settings_allow_upload_size_override() -> None:
+    settings = Settings(_env_file=None, max_upload_bytes=1_000)
+
+    assert settings.max_upload_bytes == 1_000
 
 
 def test_require_supabase_settings_raises_clear_error_when_url_missing() -> None:

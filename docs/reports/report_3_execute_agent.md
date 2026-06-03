@@ -174,3 +174,90 @@ complete
 - next task ID: (01C)
 - can proceed: yes
 - handoff notes: Upload validation utilities are importable from app.utils and app.utils.file_validation; Batch01 remains open for upload size configuration and package boundary confirmation.
+
+---
+
+# Task Execution Report - (01C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch01 - Document Schemas, Upload Validation, and Configuration
+
+## Task
+(01C) - Add upload size configuration
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 8. API Design
+- docs/plans/Plan_3.md > ## 9. Implementation Steps
+- docs/plans/Plan_3.md > ## 10. Configuration and Environment Variables
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Document Schemas, Upload Validation, and Configuration
+- Task ID: (01C)
+- Task title: Add upload size configuration
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added typed backend settings support for MAX_UPLOAD_BYTES through Settings.max_upload_bytes.
+- Set the conservative default to 25_000_000 bytes so app imports and basic settings construction do not require a real env value.
+- Added MAX_UPLOAD_BYTES=25000000 to backend/.env.example as a backend-only placeholder/example value.
+- Extended existing backend config tests to cover the default and explicit override behavior.
+- Confirmed the existing upload validation utility can enforce Settings.max_upload_bytes by raising UploadTooLargeError when content exceeds the configured maximum.
+
+## Files Created or Modified
+- backend/app/core/config.py
+- backend/.env.example
+- backend/tests/test_config.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_config.py -v: Passed
+- evidence or reason: 5 tests passed, including default MAX_UPLOAD_BYTES and override coverage.
+- direct upload validation smoke check with Settings(max_upload_bytes=5) and a 6-byte TXT upload: Passed
+- evidence or reason: validate_upload_file raised UploadTooLargeError and printed "upload too large enforced".
+
+## Acceptance Check
+- Task acceptance condition: App imports without requiring a real value, and upload validation can enforce the configured maximum.
+- Status: satisfied
+- Evidence: Settings(_env_file=None) constructs with max_upload_bytes == 25_000_000; Settings accepts an override; validate_upload_file enforces the configured maximum by raising UploadTooLargeError.
+
+## Artifacts Produced
+- docs/reports/report_3_execute_agent.md entry for (01C)
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (01C) is complete, but Batch01 still has unchecked task (01D).
+
+## Key Implementation Decisions
+- Used int | None for max_upload_bytes to match the existing validation utility signature and allow future deployments to disable the limit by setting no/nullable value in code paths that support it.
+- Kept HTTP 413 response mapping out of this task because document API routes are scheduled for Batch03; this task only provides the configured maximum and validation-consumable setting.
+
+## Risks or Open Issues
+- HTTP 413 mapping still needs to be wired in the later upload API route task.
+- Full upload validation unit tests are scheduled in Batch04; this execution used a direct smoke check because no upload validation test file exists yet.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Completed Plan 2 settings pattern exists in backend/app/core/config.py and backend/tests/test_config.py.
+- No sibling tasks, frontend work, route implementation, storage service work, parsing, chunking, embeddings, Qdrant, ShopAIKey, or authentication work was added.
+
+## Notes for Next Task
+- next task ID: (01D)
+- can proceed: yes
+- handoff notes: MAX_UPLOAD_BYTES is available as Settings.max_upload_bytes with a 25_000_000 byte default, documented in backend/.env.example, and can be passed to validate_upload_file for oversize enforcement.
