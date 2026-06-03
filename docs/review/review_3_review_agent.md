@@ -168,3 +168,183 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Document Schemas, Upload Validation, and Configuration
+- Task ID: (01B)
+- Task title: Add supported document type and upload validation utilities
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `## 6. Required Files and Folders`; `## 8. API Design`; `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 4. Supported Document Types`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01B)
+- Reviewed task ID: (01B)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for the requested task only. (01A) remains previously reported and was not re-reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_3_execute_agent.md`, `docs/tasks/task_3.md`, untracked `backend/app/utils/__init__.py`, untracked `backend/app/utils/file_validation.py`
+- untracked files: `backend/app/utils/` containing `__init__.py` and `file_validation.py`
+
+## Files Reviewed
+- `backend/app/utils/file_validation.py`: in scope - implements supported type constants, extension detection, filename sanitization, async upload byte validation, optional content-type checks, empty-file rejection, and optional max-byte rejection.
+- `backend/app/utils/__init__.py`: in scope - exports the validation utilities for backend imports.
+- `docs/tasks/task_3.md`: in scope - marks only (01B) complete in both the task block and progress tracker; Batch01 remains incomplete.
+- `docs/reports/report_3_execute_agent.md`: in scope - appends the (01B) execution report after the prior (01A) report.
+- `backend/app/core/config.py`: in scope for dependency/context review only - unchanged; confirms (01C) upload-size config was not implemented early.
+- `docs/plans/Plan_3.md`: in scope for cited source-of-truth review.
+- `docs/plans/Master_Plan.md`: in scope for supported document types citation.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/utils/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New utility package export file is present and importable.
+- file from execution report: `backend/app/utils/file_validation.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New validation module is present and implements the requested behavior.
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Progress tracking changed only for (01B).
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is appended, not overwritten.
+
+## Dependency Review
+- Required dependencies: Completed Plan 1 backend package layout.
+- Dependency status: satisfied; backend package imports and existing backend tests pass.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Work stays inside backend utility package and task/report tracking; no frontend, API route, service, config, Supabase, parsing, chunking, embedding, Qdrant, ShopAIKey, auth, or deletion work was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `validate_upload_file` reads bytes from sync or async upload objects, validates filename, extension, content type, emptiness, and size, then returns a typed `ValidatedUpload` dataclass with sanitized filename, file type, bytes, and normalized content type.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Supported extensions and MIME mappings are fixed because the plan explicitly restricts support to PDF, DOCX, TXT, and CSV. No fixture-specific filenames, sample text, IDs, or fake success paths were found.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_config.py tests/test_health.py tests/test_supabase_service.py -q` from `backend/`
+- Reported result: Passed, 12 passed in 1.02s
+- Rerun result: Passed, 12 passed in 1.00s
+- Status: passed
+- Notes: Existing backend regression tests remain green.
+- Command/check: direct Python upload validation smoke script from `backend/`
+- Reported result: Passed
+- Rerun result: Passed, output `upload validation smoke passed`
+- Status: passed
+- Notes: Covered supported extension detection, safe filename normalization, successful TXT validation, unsupported extension rejection, empty file rejection, content-type mismatch rejection, and oversized file rejection.
+- Command/check: Batch04 upload validation tests
+- Reported result: Not run because future task work is not present yet
+- Rerun result: Not run
+- Status: not applicable for (01B)
+- Notes: Task file assigns formal upload validation unit tests to Batch04; direct smoke validation is adequate for this selected utility task.
+
+## Acceptance Review
+- Task acceptance: Unsupported extensions and empty files fail with clear validation errors; supported extensions can produce a file type and safe filename.
+- Status: satisfied
+- Evidence: Code inspection and rerun smoke validation confirm `.pdf`, `.docx`, `.txt`, and `.csv` support, `.exe` rejection, empty upload rejection, content-type mismatch rejection, and `../bad name.csv` normalization to `bad_name.csv`.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (01B) is checked in the task block and progress tracker.
+- Batch status: accurate; Batch01 remains unchecked because (01C) and (01D) are incomplete.
+- Execution report entry: accurate; (01B) report is appended after (01A).
+- Review report entry: appended by this review.
+- Other: No sibling or future task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `git diff --stat` and `git diff` do not show the untracked utility source files; they were reviewed directly from the working tree and are visible in `git status --short`.
+- Content-type matching is strict to one MIME type per supported extension. This aligns with the current plan wording, but future route/API tests may need to decide whether to accept common real-world aliases.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch01 - Document Schemas, Upload Validation, and Configuration",
+  "selected_task_id": "(01B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/utils/__init__.py",
+    "backend/app/utils/file_validation.py",
+    "docs/tasks/task_3.md",
+    "docs/reports/report_3_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

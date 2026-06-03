@@ -111,7 +111,7 @@ The upload service and API routes need stable response models, supported-type va
   - Blocked Condition: None.
   - Files: `backend/app/schemas/__init__.py`, `backend/app/schemas/documents.py`
 
-- [ ] (01B): Add supported document type and upload validation utilities
+- [x] (01B): Add supported document type and upload validation utilities
   - Source of Truth: `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 4. Supported Document Types`
   - Source Requirements:
     - Support PDF, DOCX, TXT, and CSV only.
@@ -634,7 +634,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch01
 - [x] (01A): Add document API response schemas
-- [ ] (01B): Add supported document type and upload validation utilities
+- [x] (01B): Add supported document type and upload validation utilities
 - [ ] (01C): Add upload size configuration
 - [ ] (01D): Confirm Plan 3 package boundaries and imports
 
