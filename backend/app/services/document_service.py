@@ -3,10 +3,17 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from app.core.config import get_settings
-from app.schemas.documents import DocumentUploadResponse
+from app.schemas.documents import (
+    DocumentDetailResponse,
+    DocumentListItem,
+    DocumentListResponse,
+    DocumentUploadResponse,
+)
 from app.services.supabase_service import (
     SupabaseConnectionError,
+    get_document_metadata,
     insert_document_metadata,
+    list_document_metadata,
     upload_document_file,
 )
 from app.utils.file_validation import validate_upload_file
@@ -25,6 +32,10 @@ class DocumentStorageError(DocumentServiceError):
 
 class DocumentMetadataError(DocumentServiceError):
     """Raised when document metadata cannot be persisted."""
+
+
+class DocumentNotFoundError(DocumentServiceError):
+    """Raised when a document is not found for the configured user."""
 
 
 def build_document_storage_path(
@@ -53,6 +64,32 @@ def build_uploaded_document_row(
         "chunk_count": 0,
         "error_message": None,
     }
+
+
+def _document_list_item_from_row(row: dict[str, Any]) -> DocumentListItem:
+    return DocumentListItem(
+        id=row["id"],
+        file_name=row["file_name"],
+        file_type=row["file_type"],
+        status=row["status"],
+        chunk_count=row["chunk_count"],
+        created_at=row["created_at"],
+        error_message=row.get("error_message"),
+    )
+
+
+def _document_detail_from_row(row: dict[str, Any]) -> DocumentDetailResponse:
+    return DocumentDetailResponse(
+        id=row["id"],
+        file_name=row["file_name"],
+        file_type=row["file_type"],
+        status=row["status"],
+        chunk_count=row["chunk_count"],
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+        error_message=row.get("error_message"),
+        chunks=[],
+    )
 
 
 async def upload_document(upload_file: Any) -> DocumentUploadResponse:
@@ -108,3 +145,39 @@ async def upload_document(upload_file: Any) -> DocumentUploadResponse:
         file_name=validated_upload.file_name,
         status=inserted_row.get("status", "uploaded"),
     )
+
+
+def list_documents() -> DocumentListResponse:
+    settings = get_settings()
+
+    try:
+        rows = list_document_metadata(settings.single_user_id)
+    except SupabaseConnectionError as exc:
+        logger.error(
+            "Document metadata list failed for user_id=%s",
+            settings.single_user_id,
+        )
+        raise DocumentMetadataError("Document metadata list failed.") from exc
+
+    return DocumentListResponse(
+        documents=[_document_list_item_from_row(row) for row in rows]
+    )
+
+
+def get_document_detail(document_id: UUID) -> DocumentDetailResponse:
+    settings = get_settings()
+
+    try:
+        row = get_document_metadata(str(document_id), settings.single_user_id)
+    except SupabaseConnectionError as exc:
+        logger.error(
+            "Document metadata detail failed for document_id=%s user_id=%s",
+            document_id,
+            settings.single_user_id,
+        )
+        raise DocumentMetadataError("Document metadata detail failed.") from exc
+
+    if row is None:
+        raise DocumentNotFoundError("Document not found.")
+
+    return _document_detail_from_row(row)

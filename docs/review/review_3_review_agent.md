@@ -1103,3 +1103,191 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Supabase Storage and Document Metadata Service
+- Task ID: (02C)
+- Task title: Implement document list and detail service operations
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 1. Goal`; `## 3. Scope`; `## 8. API Design`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C)
+- Correct selection: yes
+- Notes: The latest matching `(02C)` report was reviewed exactly as requested. Later task `(02D)` remains unchecked and was not reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/document_service.py`
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/document_service.py`: in scope - added list/detail mapping functions, single-user filtered helper calls, metadata error wrapping, and service-level not-found error.
+- `backend/app/services/supabase_service.py`: in scope - dependency reviewed; helper list query filters by user and orders `created_at` descending; detail query filters by document ID and user.
+- `backend/app/schemas/documents.py`: in scope - dependency reviewed; list/detail response schema fields support the service output and empty `chunks` default.
+- `backend/tests/test_supabase_service.py`: in scope - dependency validation reviewed through rerun; covers Supabase helper list/detail filtering and ordering.
+- `docs/tasks/task_3.md`: in scope - progress tracking updated only for `(02C)` and Batch02 remains open.
+- `docs/reports/report_3_execute_agent.md`: in scope - execution report entry appended for `(02C)`.
+- `docs/plans/Plan_3.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/document_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the implemented `(02C)` list/detail service behavior.
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Marks only `(02C)` complete in both task list and tracker; Batch02 remains incomplete.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended `(02C)` execution report.
+
+## Dependency Review
+- Required dependencies: `(02A)` from task file; existing schemas from Batch01; existing upload service work from `(02B)` for shared service module context.
+- Dependency status: satisfied based on task tracker, existing helper functions, and passing helper tests.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Service functions use backend-only Supabase helpers, preserve `SINGLE_USER_ID` filtering, map rows to schema-ready Pydantic responses, return `chunks=[]` for detail, and keep API route error translation out of this service task.
+- Failed: none.
+- Uncertain: Live Supabase data behavior was not validated, but live validation is not required for this task and remains later/bound to user setup.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `list_documents()` calls `list_document_metadata(settings.single_user_id)` and maps rows into `DocumentListResponse`; `get_document_detail(document_id)` calls `get_document_metadata(str(document_id), settings.single_user_id)`, raises `DocumentNotFoundError` on `None`, and returns `DocumentDetailResponse` with `chunks=[]`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The service reads `settings.single_user_id`; it does not hardcode fixture IDs, filenames, documents, query results, secrets, or sample data. The empty `chunks=[]` value is required because chunking is explicitly out of scope.
+
+## Validations Reviewed
+- Command/check: `python -m py_compile backend/app/services/document_service.py backend/app/services/supabase_service.py`
+- Reported result: Passed with exit code 0.
+- Rerun result: Passed.
+- Status: passed
+- Notes: Confirms touched service modules compile.
+- Command/check: `cd backend; pytest tests/test_supabase_service.py -v`
+- Reported result: Passed, 14 passed.
+- Rerun result: Passed, 14 passed.
+- Status: passed
+- Notes: Confirms helper filtering, ordering, detail lookup, and missing-detail behavior.
+- Command/check: `cd backend; pytest -v`
+- Reported result: Passed, 20 passed.
+- Rerun result: Passed, 20 passed.
+- Status: passed
+- Notes: Confirms existing backend regression suite remains green.
+- Command/check: focused inline mocked service behavior check for `(02C)`
+- Reported result: Passed.
+- Rerun result: Passed; verified `single_user` helper calls, list/detail schema mapping, `chunks=[]`, and `DocumentNotFoundError` for missing metadata.
+- Status: passed
+- Notes: This covers the new service-level behavior because permanent service/API tests are scheduled for Batch04.
+- Command/check: inline red check before implementation
+- Reported result: Passed as expected by failing before implementation.
+- Rerun result: not rerun
+- Status: not rerunnable post-implementation without reverting code
+- Notes: Not needed for acceptance because current implementation and validations were directly verified.
+
+## Acceptance Review
+- Task acceptance: List and detail queries are always scoped to `SINGLE_USER_ID`; missing documents return a not-found outcome.
+- Status: satisfied
+- Evidence: Code passes `settings.single_user_id` to both metadata helpers, helper tests verify user filtering and created-at descending ordering, focused service check verified exact helper calls and not-found behavior, and detail mapping returns an empty `chunks` array.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(02C)` marked complete in task block and progress tracker.
+- Batch status: accurate; Batch02 remains unchecked because `(02D)` is still incomplete.
+- Execution report entry: appended and accurate for reviewed task.
+- Review report entry: appended by this review.
+- Other: No sibling or future task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found. The report honestly states API tests and live Supabase validation were not run because they are future or setup-dependent scope.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Permanent list/detail service and API tests are not yet present; this aligns with Batch04 scheduling, and a focused mocked service check was rerun for review evidence.
+- Batch02 must not be marked complete until `(02D)` is executed and reviewed.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, `(02D)` can proceed.
+- Should batch be marked complete? no, only if all task IDs are complete; `(02D)` remains unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch02 - Supabase Storage and Document Metadata Service",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_service.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

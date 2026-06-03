@@ -533,3 +533,103 @@ complete
 - next task ID: (02C)
 - can proceed: yes
 - handoff notes: `upload_document`, `build_document_storage_path`, and `build_uploaded_document_row` are available; list/detail service operations still need to be implemented separately.
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch02 - Supabase Storage and Document Metadata Service
+
+## Task
+(02C) - Implement document list and detail service operations
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_3.md` > `## 1. Goal`
+- `docs/plans/Plan_3.md` > `## 3. Scope`
+- `docs/plans/Plan_3.md` > `## 8. API Design`
+- `docs/plans/Plan_3.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Supabase Storage and Document Metadata Service
+- Task ID: (02C)
+- Task title: Implement document list and detail service operations
+
+## Completed Work
+- Status: complete.
+- Added document list and detail service functions in `backend/app/services/document_service.py`.
+- `list_documents()` calls the existing Supabase metadata list helper with `settings.single_user_id` and maps rows into `DocumentListResponse` / `DocumentListItem`.
+- `get_document_detail(document_id)` calls the existing Supabase metadata detail helper with both `document_id` and `settings.single_user_id`, maps the row into `DocumentDetailResponse`, and always returns `chunks=[]`.
+- Added `DocumentNotFoundError` so missing document metadata produces an explicit not-found outcome for later API route mapping.
+- Supabase metadata query failures are wrapped as `DocumentMetadataError` with safe public messages.
+
+## Files Created or Modified
+- `backend/app/services/document_service.py`
+- `docs/tasks/task_3.md`
+- `docs/reports/report_3_execute_agent.md`
+
+## Tests or Validations Run
+- inline red check for `list_documents`, `get_document_detail`, and `DocumentNotFoundError`: Passed as expected by failing before implementation with `AssertionError`.
+- inline mocked list/detail service behavior check: Passed; verified calls used `single_user`, list/detail schema mapping worked, detail returned `chunks=[]`, and missing detail raised `DocumentNotFoundError`.
+- `python -m py_compile backend/app/services/document_service.py backend/app/services/supabase_service.py`: Passed with exit code 0.
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed, 14 passed.
+- `cd backend; pytest -v`: Passed, 20 passed.
+- Batch04 list/detail API tests: Not run; API routes and Batch04 tests are future task scope and do not exist yet.
+- Live Supabase validation: Not run; selected task requires no live validation and live checks require user-provided Supabase data/setup.
+
+## Acceptance Check
+- Task acceptance condition: List and detail queries are always scoped to `SINGLE_USER_ID`.
+- Status: satisfied.
+- Evidence: service functions pass `settings.single_user_id` into `list_document_metadata(...)` and `get_document_metadata(...)`; mocked check verified exact helper calls.
+- Task acceptance condition: Missing documents return a not-found outcome.
+- Status: satisfied.
+- Evidence: `get_document_detail(...)` raises `DocumentNotFoundError` when the metadata helper returns `None`.
+- Task source requirement: List documents ordered by `created_at desc`.
+- Status: satisfied.
+- Evidence: `list_documents()` uses the existing `list_document_metadata(...)` helper; existing `test_list_document_metadata_filters_user_and_orders_created_desc` passed and verifies `.order("created_at", desc=True)`.
+- Task source requirement: Detail response includes empty `chunks`.
+- Status: satisfied.
+- Evidence: `_document_detail_from_row(...)` sets `chunks=[]`; mocked check verified `detail.chunks == []`.
+
+## Artifacts Produced
+- Document metadata list/detail service functions in `backend/app/services/document_service.py`.
+- Explicit service-level not-found exception for later API 404 mapping.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (02C) is complete, but sibling task (02D) remains unchecked.
+
+## Key Implementation Decisions
+- Reused existing Supabase metadata helpers from (02A) instead of duplicating query construction in `document_service.py`.
+- Kept API error translation out of scope; service raises typed errors that future route tasks can map to HTTP responses.
+- Mapped only schema-relevant fields from Supabase rows and intentionally returned `chunks=[]` because chunking is out of scope.
+
+## Risks or Open Issues
+- Batch04 API tests were not run because API route implementation and test creation are future tasks.
+- Live Supabase validation still depends on user-provided credentials, bucket/table setup, and document data.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependency (02A) was already marked complete before implementation.
+- Scope remained limited to list/detail service operations; no API routes, router registration, frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior were implemented.
+
+## Notes for Next Task
+- next task ID: (02D)
+- can proceed: yes
+- handoff notes: `list_documents()` and `get_document_detail(document_id)` are available for future API route tasks; `DocumentNotFoundError` can be mapped to HTTP 404, and `DocumentMetadataError` can be mapped to HTTP 500.

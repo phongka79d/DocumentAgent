@@ -255,7 +255,7 @@ Document APIs need a single service layer that coordinates validation output, st
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live upload validation if Supabase credentials, storage bucket, or documents table are missing.
   - Files: `backend/app/services/document_service.py`
 
-- [ ] (02C): Implement document list and detail service operations
+- [x] (02C): Implement document list and detail service operations
   - Source of Truth: `docs/plans/Plan_3.md` > `## 1. Goal`; `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - `GET /api/documents` must return only documents for `SINGLE_USER_ID`.
@@ -641,7 +641,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch02
 - [x] (02A): Add Supabase helpers for document storage and metadata
 - [x] (02B): Implement document upload orchestration service
-- [ ] (02C): Implement document list and detail service operations
+- [x] (02C): Implement document list and detail service operations
 - [ ] (02D): Preserve Plan 3 failure and scope boundaries in service code
 
 #### Batch03
