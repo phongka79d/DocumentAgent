@@ -2812,3 +2812,177 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (03D)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Backend Supabase Service and Optional Dependency Health
+- Task ID: (03D)
+- Task title: Preserve basic health and optionally add dependency health flag
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_2.md > ## 6. Required Files and Folders; docs/plans/Plan_2.md > ## 8. API Design; docs/plans/Plan_2.md > ## 12. Acceptance Criteria
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03D)
+- Reviewed task ID: (03D)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for requested task (03D), appended after the (03C) report.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_2_execute_agent.md
+  - docs/tasks/task_2.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_2_execute_agent.md`: in scope - selected (03D) execution report was appended and matches the requested task.
+- `docs/tasks/task_2.md`: in scope - (03D) task checkbox, Batch03 checkbox, and Batch03 progress tracker entry are checked.
+- `backend/app/api/health.py`: in scope - reviewed to verify it remains unchanged and basic health has no Supabase dependency.
+- `backend/tests/test_health.py`: in scope - reviewed to verify the basic health assertion remains focused on the unchanged response.
+- `backend/app/main.py`: in scope - reviewed to confirm app startup/router registration does not require Supabase settings.
+- `backend/app/core/config.py`: in scope - reviewed to confirm Supabase settings are optional unless Supabase service code calls `require_supabase_settings()`.
+- `backend/app/services/supabase_service.py`: in scope - reviewed for dependency confirmation that `check_supabase_connection()` exists from (03C), without reviewing (03C) beyond dependency status.
+- `docs/plans/Plan_2.md`: in scope - cited sections reviewed for optional health extension and acceptance requirements.
+- `docs/review/review_2_review_agent.md`: in scope - reviewed prior Batch03 outcomes and final lines before appending.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The diff checks (03D) in both the task block and progress tracker, and checks the Batch03 batch status.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The (03D) execution report is appended and accurately describes no health code changes.
+
+## Dependency Review
+- Required dependencies: (03C)
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Plan 2 says no new public API endpoints are required, health extension is optional, and basic health must remain independent from Supabase. Leaving `backend/app/api/health.py` unchanged is allowed by the (03D) task block and Plan 2 section 6.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The task intentionally preserves existing behavior. `backend/app/api/health.py` returns the basic health response through `get_settings()` only; Supabase credentials are not required on that path.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production code was changed for this task. The existing fixed health response is pre-existing readiness metadata, not task-specific fake success or overfitting.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_health.py -v`
+- Reported result: Passed
+- Rerun result: Passed, 1 test collected and `tests/test_health.py::test_health_endpoint_returns_ok_status` passed.
+- Status: satisfied
+- Notes: Confirms the reported validation result.
+- Command/check: no-Supabase health smoke request with `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` cleared
+- Reported result: not separately reported
+- Rerun result: Passed; `/api/health` returned HTTP 200 and `{'status': 'ok', 'service': 'document-qa-agent', 'app_env': 'development'}`.
+- Status: satisfied
+- Notes: Specifically verifies basic health still works without Supabase credentials.
+- Command/check: review prior Batch03 task reviews
+- Reported result: executor claimed Batch03 is complete
+- Rerun result: Prior review report contains ACCEPTED outcomes for (03A), (03B), and (03C); task file shows (03A)-(03D) checked.
+- Status: satisfied
+- Notes: This supports the Batch03 checkbox for this review only.
+
+## Acceptance Review
+- Task acceptance: `GET /api/health` still passes without Supabase credentials. Optional dependency flag was not added, which is allowed because health integration is optional.
+- Status: satisfied
+- Evidence: Plan 2 says health is extended only if adding optional Supabase connectivity; the selected task says either leave `backend/app/api/health.py` unchanged or add `include_dependencies`. The health endpoint code is unchanged and the rerun health test/no-Supabase smoke check passed.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (03D) is checked in the task block and progress tracker.
+- Batch status: accurate for Batch03; (03A), (03B), and (03C) have prior ACCEPTED reviews and (03D) is accepted by this report, with all Batch03 task IDs checked.
+- Execution report entry: accurate and appended.
+- Review report entry: appended by this review.
+- Other: Batch04 remains unchecked, so the whole plan is not marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Leaving `backend/app/api/health.py` unchanged is explicitly allowed by (03D) and Plan 2.
+- No optional `include_dependencies` health flag exists, so dependency health remains available only through the internal `check_supabase_connection()` helper until a future optional enhancement.
+- Batch04 still owns formal mocked Supabase service tests and broader final validation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, for Batch03 only; every Batch03 task ID is checked and prior Batch03 reviews for (03A), (03B), and (03C) are ACCEPTED.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch03 - Backend Supabase Service and Optional Dependency Health",
+  "selected_task_id": "(03D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

@@ -398,7 +398,7 @@ Later upload, document, and agent workflows need a safe backend Supabase access 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if live Supabase credentials, applied schema, or storage bucket are missing.
   - Files: `backend/app/services/supabase_service.py`
 
-- [ ] (03D): Preserve basic health and optionally add dependency health flag
+- [x] (03D): Preserve basic health and optionally add dependency health flag
   - Source of Truth: `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_2.md` > `## 8. API Design`; `docs/plans/Plan_2.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - No new public API endpoints are required in this plan.
@@ -660,7 +660,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 - [x] Batch01 - Backend Supabase Configuration
 - [x] Batch02 - Database Schema Migration and Storage Assumptions
-- [ ] Batch03 - Backend Supabase Service and Optional Dependency Health
+- [x] Batch03 - Backend Supabase Service and Optional Dependency Health
 - [ ] Batch04 - Validation, Manual Setup Checks, and Handoff
 
 ### Task IDs
@@ -685,7 +685,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [x] (03A): Implement backend-only Supabase client singleton
 - [x] (03B): Add custom Supabase connection error handling
 - [x] (03C): Implement database and storage connectivity helper
-- [ ] (03D): Preserve basic health and optionally add dependency health flag
+- [x] (03D): Preserve basic health and optionally add dependency health flag
 
 #### Batch04
 
