@@ -363,7 +363,7 @@ Later upload, document, and agent workflows need a safe backend Supabase access 
   - Blocked Condition: None for implementation/tests with mocks; `BLOCKED_BY_USER_ACTION` for live validation without user-provided credentials.
   - Files: `backend/app/services/supabase_service.py`
 
-- [ ] (03B): Add custom Supabase connection error handling
+- [x] (03B): Add custom Supabase connection error handling
   - Source of Truth: `docs/plans/Plan_2.md` > `## 8. API Design`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add a custom `SupabaseConnectionError`.
@@ -683,7 +683,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 #### Batch03
 
 - [x] (03A): Implement backend-only Supabase client singleton
-- [ ] (03B): Add custom Supabase connection error handling
+- [x] (03B): Add custom Supabase connection error handling
 - [ ] (03C): Implement database and storage connectivity helper
 - [ ] (03D): Preserve basic health and optionally add dependency health flag
 

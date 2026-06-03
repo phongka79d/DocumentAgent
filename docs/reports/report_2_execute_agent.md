@@ -1080,3 +1080,92 @@ complete
 - next task ID: `(03B)`
 - can proceed: yes
 - handoff notes: `get_supabase_client()` now exists and reuses one backend Supabase client. Future tasks can add custom `SupabaseConnectionError`, connection checks, and optional health behavior without exposing service-role credentials.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch03 - Backend Supabase Service and Optional Dependency Health
+
+## Task
+(03B) - Add custom Supabase connection error handling
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 8. API Design`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_2.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Backend Supabase Service and Optional Dependency Health
+- Task ID: (03B)
+- Task title: Add custom Supabase connection error handling
+
+## Completed Work
+- Task is complete.
+- Added `SupabaseConnectionError` to `backend/app/services/supabase_service.py`.
+- Wrapped missing Supabase config errors in a clear backend configuration `SupabaseConnectionError` without exposing configured values.
+- Wrapped Supabase client initialization failures in a safe operation-specific `SupabaseConnectionError`.
+- Added centralized safe helpers for future database query failures and missing storage bucket setup failures without adding `check_supabase_connection()`.
+
+## Files Created or Modified
+- `backend/app/services/supabase_service.py`
+- `docs/tasks/task_2.md`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `python -c "from app.services.supabase_service import SupabaseConnectionError; print(SupabaseConnectionError.__name__)"` from `backend` before implementation: Passed as RED validation by failing with `ImportError: cannot import name 'SupabaseConnectionError'`.
+- `python -m py_compile app\services\supabase_service.py` from `backend`: Passed.
+- `python -c "from app.services.supabase_service import SupabaseConnectionError; print(SupabaseConnectionError.__name__)"` from `backend` after implementation: Passed; printed `SupabaseConnectionError`.
+- Inline Python smoke check for missing config using Unix heredoc syntax in PowerShell: Failed due to shell syntax, not application code; rerun with PowerShell-compatible stdin.
+- Inline Python smoke check for query/storage helpers using Unix heredoc syntax in PowerShell: Failed due to shell syntax, not application code; rerun with PowerShell-compatible stdin.
+- PowerShell-compatible inline Python smoke check for missing config with mocked empty settings: Passed; raised `SupabaseConnectionError` with `Backend Supabase configuration error` and `SUPABASE_URL`, without secret values.
+- PowerShell-compatible inline Python smoke check for query and storage helper errors: Passed; query error included operation name and exception type while excluding exception detail, and missing bucket was reported as storage setup failure.
+- PowerShell-compatible inline Python smoke check for client initialization failure with mocked settings and mocked `create_client`: Passed; error included `client initialization` and exception type while excluding URL and service-role key values.
+
+## Acceptance Check
+- Task acceptance condition: Errors identify the failing operation or missing setup without leaking credentials.
+- Status: satisfied
+- Evidence: Missing config is converted to `SupabaseConnectionError` with explicit backend configuration wording; query/client errors include operation names; storage bucket helper reports setup failure; smoke checks confirmed mocked URL/key and exception detail were not included in safe messages.
+
+## Artifacts Produced
+- Safe custom Supabase connection error handling in `backend/app/services/supabase_service.py`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(03B)` is complete, but sibling Batch03 tasks `(03C)` and `(03D)` remain unchecked.
+
+## Key Implementation Decisions
+- Kept error helpers private because this task only prepares service-level error handling; public connectivity behavior belongs to `(03C)`.
+- Included exception type but not exception detail for Supabase operation failures to avoid leaking credentials or provider response details.
+- Did not add `check_supabase_connection()` or formal mocked tests because those are explicitly assigned to later tasks.
+
+## Risks or Open Issues
+- Future `(03C)` implementation must call the query and storage helpers so database and storage checks use the safe messages added here.
+- Formal mocked tests are deferred to Batch04 as specified by the task file.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; `(03A)` is checked in both task locations and prior report indicates reviewer acceptance
+- no architecture concern identified
+
+## Notes for Next Task
+- next task ID: `(03C)`
+- can proceed: yes
+- handoff notes: Use `SupabaseConnectionError`, `_raise_supabase_query_error(...)`, and `_raise_missing_storage_bucket_error(...)` when implementing `check_supabase_connection()` so database/storage failures remain safe and operation-specific.

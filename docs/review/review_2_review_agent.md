@@ -2423,3 +2423,195 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Backend Supabase Service and Optional Dependency Health
+- Task ID: (03B)
+- Task title: Add custom Supabase connection error handling
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## 8. API Design`; `## 9. Implementation Steps`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for `(03B)` and no later task report was selected or reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/supabase_service.py`
+  - `docs/reports/report_2_execute_agent.md`
+  - `docs/tasks/task_2.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/supabase_service.py`: in scope - contains `SupabaseConnectionError`, safe config/client initialization wrapping, and private query/storage error helpers.
+- `docs/tasks/task_2.md`: in scope - marks only `(03B)` complete in its task entry and progress tracker; Batch03 remains incomplete.
+- `docs/reports/report_2_execute_agent.md`: in scope - contains the appended `(03B)` execution report.
+- `backend/app/core/config.py`: in scope - dependency context for `require_supabase_settings()` error content.
+- `docs/plans/Plan_2.md`: in scope - cited source sections reviewed.
+- `docs/review/review_2_review_agent.md`: in scope - prior `(03A)` review inspected for dependency status and this review appended.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: implementation changes are limited to custom error handling around the Supabase service.
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: task tracking update is accurate for `(03B)` only.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: execution report entry was appended for `(03B)`.
+
+## Dependency Review
+- Required dependencies: (03A)
+- Dependency status: satisfied; `(03A)` is checked in `docs/tasks/task_2.md` and the prior review report shows `(03A)` was accepted.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Error handling remains backend-only, uses backend settings, preserves lazy Supabase validation, does not expose service-role values, does not add public endpoints, and does not implement `(03C)` connection-helper behavior early.
+- Failed: none
+- Uncertain: none for `(03B)` scope; formal mocked tests remain assigned to Batch04 by the task file.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `SupabaseConnectionError` is defined; missing settings are wrapped as backend configuration errors; client initialization failures are converted to operation-specific safe errors; query and missing-storage-bucket helper paths raise `SupabaseConnectionError`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Supabase URL and service-role key are still read from backend settings. Operation labels and the `documents` test bucket value appear only in validation/review context, not as credential or fixture overfitting in production runtime logic.
+
+## Validations Reviewed
+- Command/check: `python -m py_compile app\services\supabase_service.py` from `backend`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: satisfied
+- Notes: No syntax/compile issue found.
+- Command/check: `python -c "from app.services.supabase_service import SupabaseConnectionError; print(SupabaseConnectionError.__name__)"` from `backend`
+- Reported result: Passed
+- Rerun result: Passed; printed `SupabaseConnectionError`
+- Status: satisfied
+- Notes: Custom exception imports successfully.
+- Command/check: missing-config mocked smoke check from `backend`
+- Reported result: Passed
+- Rerun result: Passed; printed `missing-config-ok`
+- Status: satisfied
+- Notes: Missing `SUPABASE_URL` is wrapped in `SupabaseConnectionError` with backend configuration wording and no secret value.
+- Command/check: query/storage helper mocked smoke check from `backend`
+- Reported result: Passed
+- Rerun result: Passed; printed `query-storage-errors-ok`
+- Status: satisfied
+- Notes: Query failure includes operation name and exception type but not exception detail; missing bucket is reported as storage setup failure.
+- Command/check: client initialization failure mocked smoke check from `backend`
+- Reported result: Passed
+- Rerun result: Passed; printed `client-init-error-ok`
+- Status: satisfied
+- Notes: Error includes `client initialization` and exception type while excluding mocked URL and service-role key.
+- Command/check: failed Unix heredoc smoke attempts reported by executor
+- Reported result: Failed due to shell syntax and rerun with PowerShell-compatible stdin
+- Rerun result: not rerun as Unix heredoc; equivalent PowerShell-compatible checks passed
+- Status: satisfied
+- Notes: The failure was validation-command syntax, not application behavior, and the report disclosed it.
+
+## Acceptance Review
+- Task acceptance: Errors identify the failing operation or missing setup without leaking credentials.
+- Status: satisfied
+- Evidence: Reviewer-rerun checks confirmed safe messages for missing config, query failure, missing storage bucket, and client initialization failure.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(03B)` is checked in both task locations.
+- Batch status: accurate; Batch03 remains unchecked because `(03C)` and `(03D)` remain incomplete.
+- Execution report entry: accurate and appended.
+- Review report entry: appended by this review.
+- Other: No sibling task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The private helper `_raise_missing_storage_bucket_error(bucket_name)` includes the configured bucket name in the safe error message. This matches setup-failure reporting and does not expose credentials.
+- Formal mocked unit tests remain deferred to Batch04 as specified in the task file.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(03C)` and `(03D)` remain unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch03 - Backend Supabase Service and Optional Dependency Health",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/supabase_service.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
