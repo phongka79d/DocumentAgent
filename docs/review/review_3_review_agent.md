@@ -1476,3 +1476,188 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Document API Routes and Router Registration
+- Task ID: (03A)
+- Task title: Add document upload API route
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_3.md > ## 1. Goal; docs/plans/Plan_3.md > ## 3. Scope; docs/plans/Plan_3.md > ## 8. API Design; docs/plans/Master_Plan.md > # 13. Backend API Design > ## 13.1 Upload Document
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch03 (03A), and only this task ID was reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_3_execute_agent.md; docs/tasks/task_3.md; backend/app/api/documents.py (untracked)
+- untracked files: backend/app/api/documents.py
+
+## Files Reviewed
+- `backend/app/api/documents.py`: in scope - new documents router with upload route and HTTP error mapping.
+- `backend/app/services/document_service.py`: in scope - dependency contract reviewed for upload service and service error classes.
+- `backend/app/schemas/documents.py`: in scope - upload response schema reviewed.
+- `backend/app/utils/file_validation.py`: in scope - validation and too-large exception classes reviewed.
+- `backend/app/main.py`: in scope - confirmed documents router is not registered early; registration remains reserved for (03D).
+- `backend/app/api/__init__.py`: in scope - package marker reviewed; no export requirement for (03A).
+- `docs/tasks/task_3.md`: in scope - (03A) checkbox updated; Batch03 remains incomplete.
+- `docs/reports/report_3_execute_agent.md`: in scope - execution report appended for (03A).
+- `docs/plans/Plan_3.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited upload endpoint contract reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/api/documents.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File is untracked, so it appears in git status but not git diff --stat; content was read directly.
+- file from execution report: docs/tasks/task_3.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff only marks (03A) complete in task block and progress tracker.
+- file from execution report: docs/reports/report_3_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry for (03A) was appended.
+
+## Dependency Review
+- Required dependencies: Batch01, (02B), and (02D).
+- Dependency status: satisfied by task file progress and prior completed report history.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Backend-only FastAPI router created; route accepts multipart field `file`; calls document service; uses `DocumentUploadResponse`; maps unsupported/empty validation to 400, oversized upload to 413, and storage/metadata service failures to 500.
+- Passed: Router is defined at `/upload`, consistent with future mounting under `/api/documents` in (03D).
+- Passed: No frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior was added.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `upload_document()` route awaits `document_service.upload_document(file)` and translates concrete production exception classes to FastAPI `HTTPException` responses.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture IDs, sample filenames, or expected-answer strings are used in production route logic. Status codes are fixed by the API contract.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m compileall app/api/documents.py`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: satisfied
+- Notes: Compile command exited successfully.
+- Command/check: inline FastAPI `TestClient` mocked upload route checks
+- Reported result: Passed
+- Rerun result: Passed
+- Status: satisfied
+- Notes: Verified mounted route returns 200 for mocked success, 400 for `UploadValidationError`, 413 for `UploadTooLargeError`, and 500 for storage/metadata service errors.
+- Command/check: `cd backend; pytest tests/test_health.py -q`
+- Reported result: Passed, 1 passed
+- Rerun result: Passed, 1 passed in 0.44s
+- Status: satisfied
+- Notes: Existing health behavior remains intact.
+- Command/check: `cd backend; pytest -q`
+- Reported result: Passed, 20 passed
+- Rerun result: Passed, 20 passed in 1.16s
+- Status: satisfied
+- Notes: Existing backend regression tests passed.
+
+## Acceptance Review
+- Task acceptance: API test can upload supported files through `TestClient` with mocked service and receive the approved response.
+- Status: satisfied
+- Evidence: Rerun mocked `TestClient` check mounted `documents.router` at `/api/documents`, posted `contract.pdf`, and received `document_id`, `file_name`, and `status` matching `DocumentUploadResponse`.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (03A) is checked in the task block and progress tracker.
+- Batch status: accurate; Batch03 remains unchecked because (03B), (03C), and (03D) remain incomplete.
+- Execution report entry: present and appended for (03A).
+- Review report entry: appended by this review.
+- Other: No sibling task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found. Note that `backend/app/api/documents.py` is untracked and therefore absent from `git diff --stat`, but it is present in the repo and listed by `git status --short`.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The route is intentionally not reachable from `backend/app/main.py` until (03D) registers the documents router.
+- Persistent formal API tests remain scheduled for Batch04 and were not required to be added by (03A).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (03A) is complete in Batch03; (03B), (03C), and (03D) remain unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch03 - Document API Routes and Router Registration",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/documents.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

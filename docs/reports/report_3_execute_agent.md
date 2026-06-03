@@ -728,3 +728,95 @@ complete
 - next task ID: (03A)
 - can proceed: yes
 - handoff notes: Batch02 is complete. Upload route work can map `UploadValidationError` to 400/413 as appropriate, `DocumentStorageError` and `DocumentMetadataError` to safe HTTP 500 responses, and must keep storage/metadata failures from reporting success.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch03 - Document API Routes and Router Registration
+
+## Task
+(03A) - Add document upload API route
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 1. Goal
+- docs/plans/Plan_3.md > ## 3. Scope
+- docs/plans/Plan_3.md > ## 8. API Design
+- docs/plans/Master_Plan.md > # 13. Backend API Design > ## 13.1 Upload Document
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Document API Routes and Router Registration
+- Task ID: (03A)
+- Task title: Add document upload API route
+
+## Completed Work
+- Task is complete.
+- Created `backend/app/api/documents.py` with a documents router and `POST /upload` route intended to be mounted under `/api/documents` by future router-registration task (03D).
+- The route accepts multipart/form-data field `file` with FastAPI `UploadFile`, calls the existing document upload service, returns `DocumentUploadResponse`, and maps upload validation/storage/metadata errors to safe HTTP responses.
+
+## Files Created or Modified
+- backend/app/api/documents.py
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `python -` import check for `app.api.documents` before implementation: Failed as expected
+- evidence or reason: `ModuleNotFoundError: No module named 'app.api.documents'`
+- inline FastAPI `TestClient` mocked upload route checks: Passed
+- evidence or reason: supported upload returned HTTP 200 with `document_id`, `file_name`, and `status`; unsupported validation mapped to 400; oversized upload mapped to 413; storage and metadata failures mapped to 500.
+- `cd backend; pytest tests/test_health.py -q`: Passed
+- evidence or reason: `1 passed in 0.41s`
+- `cd backend; python -m compileall app/api/documents.py`: Passed
+- evidence or reason: exit code 0
+- `cd backend; pytest -q`: Passed
+- evidence or reason: `20 passed in 1.00s`
+
+## Acceptance Check
+- Task acceptance condition: API test can upload supported files through `TestClient` with mocked service and receive the approved response.
+- Status: satisfied
+- Evidence: Inline FastAPI `TestClient` mounted `documents.router` at `/api/documents`, mocked `document_service.upload_document`, uploaded `contract.pdf`, and received HTTP 200 with `document_id`, `file_name`, and `status` matching the approved schema.
+
+## Artifacts Produced
+- backend/app/api/documents.py
+- docs/reports/report_3_execute_agent.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (03A) acceptance and validation were satisfied; Batch03 remains incomplete because (03B), (03C), and (03D) are still unchecked.
+
+## Key Implementation Decisions
+- Kept the router unregistered in `backend/app/main.py` because router registration is explicitly reserved for task (03D).
+- Defined the route path as `/upload` so future registration under `/api/documents` exposes `/api/documents/upload` without duplicating prefixes.
+- Imported the `document_service` module rather than binding the upload function directly so Batch04 mocked route tests can patch `documents.document_service.upload_document` cleanly.
+
+## Risks or Open Issues
+- Formal persistent upload API tests are still future Batch04 work.
+- The route is not reachable from the main FastAPI app until task (03D) registers the router.
+- Live Supabase upload validation was not attempted because this task only requires mocked API validation and live setup may require user-provided Supabase configuration.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies Batch01, (02B), and (02D) were already marked complete in the task file before implementation.
+- Scope remained limited to the upload API route and required task/report progress updates; no sibling routes, router registration, frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, authentication, or multi-user behavior were implemented.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes
+- handoff notes: Add the list route in the existing `backend/app/api/documents.py` without registering the router unless executing (03D).

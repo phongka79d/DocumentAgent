@@ -345,7 +345,7 @@ Plan 3 is testable through HTTP API contracts, so the backend must provide route
 
 ### Tasks
 
-- [ ] (03A): Add document upload API route
+- [x] (03A): Add document upload API route
   - Source of Truth: `docs/plans/Plan_3.md` > `## 1. Goal`; `docs/plans/Plan_3.md` > `## 3. Scope`; `docs/plans/Plan_3.md` > `## 8. API Design`; `docs/plans/Master_Plan.md` > `# 13. Backend API Design` > `## 13.1 Upload Document`
   - Source Requirements:
     - Add `POST /api/documents/upload`.
@@ -645,7 +645,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (02D): Preserve Plan 3 failure and scope boundaries in service code
 
 #### Batch03
-- [ ] (03A): Add document upload API route
+- [x] (03A): Add document upload API route
 - [ ] (03B): Add document list API route
 - [ ] (03C): Add document detail API route
 - [ ] (03D): Register documents router without disrupting existing APIs
