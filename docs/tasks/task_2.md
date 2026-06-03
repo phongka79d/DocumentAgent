@@ -487,7 +487,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
   - Blocked Condition: None.
   - Files: `backend/tests/test_supabase_service.py`
 
-- [ ] (04B): Run backend automated validations
+- [x] (04B): Run backend automated validations
   - Source of Truth: `docs/plans/Plan_2.md` > `## 11. Required Tests`; `docs/plans/Plan_2.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_2.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Run `pytest tests/test_supabase_service.py -v`.
@@ -641,10 +641,10 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [ ] Every table includes `user_id` where required by the plan.
 - [ ] `backend/app/services/supabase_service.py` provides `get_supabase_client()`.
 - [x] `backend/app/services/supabase_service.py` provides `check_supabase_connection()`.
-- [ ] Missing Supabase config produces clear safe backend errors.
+- [x] Missing Supabase config produces clear safe backend errors.
 - [ ] Missing storage bucket is reported as setup failure.
-- [ ] Basic health works without Supabase credentials.
-- [ ] `pytest tests/test_supabase_service.py -v` passes or failure is reported honestly.
+- [x] Basic health works without Supabase credentials.
+- [x] `pytest tests/test_supabase_service.py -v` passes or failure is reported honestly.
 - [ ] Manual migration application status is reported.
 - [ ] Manual storage bucket status is reported.
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` is not referenced in frontend files.
@@ -652,7 +652,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [ ] No Auth/JWT schema or logic was added.
 - [ ] No document upload, parsing, chunking, embeddings, Qdrant, or frontend pages were added.
 - [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
-- [ ] Required commands and results are reported.
+- [x] Required commands and results are reported.
 
 ## Progress Tracker
 
@@ -690,7 +690,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 #### Batch04
 
 - [x] (04A): Add mocked Supabase service tests
-- [ ] (04B): Run backend automated validations
+- [x] (04B): Run backend automated validations
 - [ ] (04C): Perform manual Supabase database and storage checks
 - [ ] (04D): Verify scope, secret safety, and reviewer checklist items
 - [ ] (04E): Produce execution report and update progress tracker
