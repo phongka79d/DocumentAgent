@@ -506,7 +506,7 @@ Plan 3 completion depends on test evidence, negative checks, single-user filteri
   - Blocked Condition: None.
   - Files: `backend/tests/test_document_upload.py`, `backend/tests/test_document_api.py`, existing Supabase/document service tests if appropriate
 
-- [ ] (04C): Run backend regression, secret, and scope validations
+- [x] (04C): Run backend regression, secret, and scope validations
   - Source of Truth: `docs/plans/Plan_3.md` > `## 4. Out of Scope`; `docs/plans/Plan_3.md` > `## 11. Required Tests`; `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_3.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
   - Source Requirements:
     - Run required backend tests.
@@ -653,7 +653,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch04
 - [x] (04A): Add upload API tests with mocked document service
 - [x] (04B): Add document API and service tests for metadata behavior
-- [ ] (04C): Run backend regression, secret, and scope validations
+- [x] (04C): Run backend regression, secret, and scope validations
 - [ ] (04D): Perform live API and Supabase checks when user setup is available
 
 ## Completion Reporting Rules for Future Execution Agents

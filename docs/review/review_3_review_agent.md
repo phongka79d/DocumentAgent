@@ -2532,3 +2532,195 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04C)
+- Task title: Run backend regression, secret, and scope validations
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_3.md > ## 4. Out of Scope; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 15. Reviewer Checklist; docs/plans/Master_Plan.md > ## 3. Authentication Policy
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The requested task report is the last appended execution report entry and matches the requested batch/title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_3_execute_agent.md
+  - docs/tasks/task_3.md
+- untracked files: none shown by git status --short --untracked-files=all
+
+## Files Reviewed
+- `docs/reports/report_3_execute_agent.md`: in scope - selected execution report entry appended for (04C).
+- `docs/tasks/task_3.md`: in scope - marks (04C) complete in both task-list locations while leaving Batch04 and (04D) incomplete.
+- `docs/plans/Plan_3.md`: in scope - cited sections confirm required backend tests, secret/scope checks, out-of-scope limits, and reviewer checklist.
+- `docs/plans/Master_Plan.md`: in scope - cited authentication policy confirms single-user MVP and backend-only secrets.
+- `backend/tests/test_document_upload.py`: in scope for validation review - contains mocked upload API success and negative tests.
+- `backend/tests/test_document_api.py`: in scope for validation review - contains mocked list/detail API and document service behavior tests.
+- `backend/app/api/documents.py`: in scope for implementation reality spot check - routes map upload/list/detail errors without adding out-of-scope behavior.
+- `backend/app/services/document_service.py`: in scope for implementation reality spot check - service builds storage path, inserts uploaded metadata, filters reads by SINGLE_USER_ID, and returns empty chunks.
+- `backend/app/services/supabase_service.py`: in scope for implementation reality spot check - metadata helpers filter by user_id and use backend settings for service-role access.
+- `backend/app/utils/file_validation.py`: in scope for scope/hardcoding spot check - validates allowed document types and upload size without parsing content.
+- `backend/app/core/config.py`: in scope for secret/config spot check - backend-only settings include Supabase and max upload configuration.
+
+## Reported Files Cross-Check
+- file from execution report: docs/tasks/task_3.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Only task progress changed for (04C); Batch04 remains unchecked because (04D) is incomplete.
+- file from execution report: docs/reports/report_3_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry was appended for (04C).
+
+## Dependency Review
+- Required dependencies: (04A), (04B)
+- Dependency status: satisfied; both are checked complete in docs/tasks/task_3.md and prior execution reports exist.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Backend-only validation task; no frontend files changed; service-role names remain absent from frontend; API/service code remains single-user scoped; live Supabase checks were correctly left for (04D).
+- Failed: None.
+- Uncertain: The report's "git diff --name-only before progress/report edits" claim cannot be independently replayed after the fact, but current git evidence shows only the expected task/report files changed.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The selected task is validation-only. Rerun pytest commands passed against real repository tests, and inspected API/service code uses actual route/service/helper logic rather than fixed success values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses configured SINGLE_USER_ID and Supabase settings, generated UUIDs, sanitized filenames, and generic row mappings. Test UUIDs and fake service-role strings are confined to tests and documentation/review context.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_document_upload.py tests/test_document_api.py -v` from `backend`
+- Reported result: Passed, 13 tests passed with one FastAPI 413 deprecation warning.
+- Rerun result: Passed, 13 tests passed with the same warning.
+- Status: satisfied
+- Notes: Covers upload success, unsupported file, empty file, oversized upload, list/detail contracts, unknown UUID 404, metadata failure paths, and SINGLE_USER_ID filtering.
+- Command/check: `pytest -v` from `backend`
+- Reported result: Passed, 33 tests passed with one FastAPI 413 deprecation warning.
+- Rerun result: Passed, 33 tests passed with the same warning.
+- Status: satisfied
+- Notes: Full backend regression passed.
+- Command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|SHOPAIKEY_BASE_URL|SUPABASE_URL|SINGLE_USER_ID|SUPABASE_STORAGE_BUCKET" frontend`
+- Reported result: Passed, no frontend matches.
+- Rerun result: Passed, no output and exit code 1 indicating no matches.
+- Status: satisfied
+- Notes: No backend-only secret/config names found in frontend.
+- Command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|SUPABASE_URL|SUPABASE_STORAGE_BUCKET|SINGLE_USER_ID|QDRANT_API_KEY|SHOPAIKEY_API_KEY|SECRET|PRIVATE_KEY" frontend --glob "!**/node_modules/**"`
+- Reported result: Passed, no frontend matches.
+- Rerun result: Passed, no output and exit code 1 indicating no matches.
+- Status: satisfied
+- Notes: No frontend private-key/secret references found.
+- Command/check: `rg -n "service-role|service_role|supabase-service|SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|sk-[A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}" -g "!backend/.env" -g "!.env" -g "!.git/**" .`
+- Reported result: Passed, matches limited to backend config/tests and documentation/report/review placeholders or variable names.
+- Rerun result: Passed; matches were backend variable usage, fake test values, docs/plans, reports, and review text. No raw secret value was identified.
+- Status: satisfied
+- Notes: Local `.env` files were excluded as intended.
+- Command/check: `rg -n "qdrant|shopaikey|embedding|processing|ready|delete|agent|document_chunks|chunking|parse|parser|auth|jwt" backend/app backend/tests`
+- Reported result: Passed, matches limited to pre-existing schema/health/DOCX text.
+- Rerun result: Passed; matches were Plan 2 migration schema terms, health service label, and DOCX MIME text.
+- Status: satisfied
+- Notes: No out-of-scope Plan 3 runtime behavior was added by this task.
+
+## Acceptance Review
+- Task acceptance: Required tests pass or failures are reported honestly; no out-of-scope or secret exposure is found.
+- Status: satisfied
+- Evidence: Required targeted tests and full backend suite passed on rerun; frontend secret scans found no matches; current git diff shows no frontend or implementation changes for this task; (04D) live validation remains separate and pending.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (04C) is checked in the task block and progress tracker.
+- Batch status: accurate; Batch04 remains unchecked because (04D) is still unchecked.
+- Execution report entry: present and appended.
+- Review report entry: appended by this review.
+- Other: No sibling task was marked complete early.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None blocking. The only non-replayable claim is the reported pre-progress `git diff --name-only` state; current git evidence is consistent with the task's validation-only scope.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Existing FastAPI deprecation warning for `HTTP_413_REQUEST_ENTITY_TOO_LARGE` remains; it does not fail the selected validation task and does not block (04D).
+
+### Observations
+- Live API and Supabase validation is correctly deferred to (04D).
+- Batch04 must not be marked complete until (04D) is completed or properly reported as blocked according to its task rules.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Existing FastAPI deprecation warning for HTTP_413_REQUEST_ENTITY_TOO_LARGE"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

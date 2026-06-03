@@ -1258,3 +1258,102 @@ complete
 - next task ID: (04C)
 - can proceed: yes
 - handoff notes: Document upload and metadata API/service tests now pass with mocked dependencies. Next task can run broader backend regression, secret, and scope validations.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04C) - Run backend regression, secret, and scope validations
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## 4. Out of Scope
+- docs/plans/Plan_3.md > ## 11. Required Tests
+- docs/plans/Plan_3.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_3.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 3. Authentication Policy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04C)
+- Task title: Run backend regression, secret, and scope validations
+
+## Completed Work
+- Complete.
+- Ran the required document upload/API backend regression tests.
+- Ran the full backend pytest suite as the appropriate local regression check for changed backend config, main, service, and test surfaces.
+- Inspected current changed-file state and confirmed no frontend files were changed before this task's progress/report updates.
+- Searched frontend files for backend-only secret names and found no matches.
+- Searched repository files excluding local `.env` files for service-role/private-key patterns; matches were limited to backend config/tests and documentation placeholders, not raw secrets.
+- Searched backend implementation/tests for out-of-scope Plan 3 behavior. Matches were limited to pre-existing Plan 2 migration schema terms, the health service name, and DOCX MIME handling; no parsing, chunking execution, embeddings, Qdrant/ShopAIKey calls, deletion endpoint, auth, JWT, or frontend upload UI was added by this task.
+
+## Files Created or Modified
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `cd backend; pytest tests/test_document_upload.py tests/test_document_api.py -v`: Passed
+- evidence or reason: 13 tests passed in 1.19s. Covered successful supported upload, unsupported file negative case, empty file negative case, oversized upload, list/detail API contracts, unknown UUID 404, upload service success/failure paths, metadata insert failure, and SINGLE_USER_ID filtering in list/detail services. One FastAPI deprecation warning was emitted for `HTTP_413_REQUEST_ENTITY_TOO_LARGE`.
+- command/check: `cd backend; pytest -v`: Passed
+- evidence or reason: 33 tests passed in 1.18s. Covered config, document API/upload, health, Supabase service helpers, storage upload, metadata insert, list/detail filtering, and missing-config behavior. Same FastAPI 413 deprecation warning emitted.
+- command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|SHOPAIKEY_BASE_URL|SUPABASE_URL|SINGLE_USER_ID|SUPABASE_STORAGE_BUCKET" frontend`: Passed
+- evidence or reason: No matches in frontend files.
+- command/check: `rg -n "SUPABASE_SERVICE_ROLE_KEY|SUPABASE_URL|SUPABASE_STORAGE_BUCKET|SINGLE_USER_ID|QDRANT_API_KEY|SHOPAIKEY_API_KEY|SECRET|PRIVATE_KEY" frontend --glob "!**/node_modules/**"`: Passed
+- evidence or reason: No frontend matches for backend-only secret/config names.
+- command/check: `rg -n "service-role|service_role|supabase-service|SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|sk-[A-Za-z0-9]|eyJ[A-Za-z0-9_-]{20,}" -g "!backend/.env" -g "!.env" -g "!.git/**" .`: Passed
+- evidence or reason: Matches were limited to backend config/tests and documentation/report/review placeholders or variable names. No raw secret values were found in tracked application/frontend files.
+- command/check: `git diff --name-only` before progress/report edits: Passed
+- evidence or reason: No changed files were present before this task updated `docs/tasks/task_3.md` and appended this report.
+- command/check: `rg -n "qdrant|shopaikey|embedding|processing|ready|delete|agent|document_chunks|chunking|parse|parser|auth|jwt" backend/app backend/tests`: Passed
+- evidence or reason: Matches were limited to pre-existing Plan 2 migration schema terms, health service label `document-qa-agent`, and DOCX MIME text. No new out-of-scope runtime behavior was identified for Plan 3.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass or failures are reported honestly; no out-of-scope or secret exposure is found.
+- Status: satisfied
+- Evidence: Required targeted tests and full backend pytest suite passed. Frontend secret-name searches returned no matches. Scope scans found no Plan 3 out-of-scope additions. Service-role key remains read through backend settings/service code only and was not exposed to frontend files.
+
+## Artifacts Produced
+- Backend validation evidence in this execution report.
+- Updated task progress in docs/tasks/task_3.md.
+- Execution report appended to docs/reports/report_3_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (04C) acceptance and validation passed; Batch04 remains incomplete because (04D) is still unchecked.
+
+## Key Implementation Decisions
+- Used mocked/local backend tests only, per (04C). Live Supabase/curl validation belongs to sibling task (04D) and was not executed.
+- Treated frontend `rg` exit code 1 as pass because it indicates no matches for backend-only secret names.
+
+## Risks or Open Issues
+- Existing FastAPI deprecation warning for `HTTP_413_REQUEST_ENTITY_TOO_LARGE` remains. It did not fail tests and was not changed because (04C) is a validation/reporting task.
+- Live API and Supabase validation remains pending for (04D).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies (04A) and (04B) were marked complete before execution.
+- Scope remained limited to (04C); sibling task (04D) was not executed.
+
+## Notes for Next Task
+- next task ID: (04D)
+- can proceed: yes
+- handoff notes: Backend regression, secret, and scope validations passed. Next task should perform live API and Supabase checks only if required local credentials, bucket, table, and sample files are available; otherwise report the specified blocked-by-user status.
