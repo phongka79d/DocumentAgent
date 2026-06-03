@@ -1001,3 +1001,92 @@ complete
 - next task ID: (03D)
 - can proceed: yes
 - handoff notes: Register the documents router in `backend/app/main.py` under `/api/documents` without disrupting existing health behavior.
+
+---
+
+# Task Execution Report - (03D)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch03 - Document API Routes and Router Registration
+
+## Task
+(03D) - Register documents router without disrupting existing APIs
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_3.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_3.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Document API Routes and Router Registration
+- Task ID: (03D)
+- Task title: Register documents router without disrupting existing APIs
+
+## Completed Work
+- Task is complete.
+- Registered the existing documents API router in `backend/app/main.py` under `/api/documents`.
+- Preserved the existing health router registration under `/api`.
+- Did not change unrelated endpoints or implement Batch04 tests, frontend, parsing, chunking, embeddings, Qdrant, deletion, auth, or multi-user behavior.
+
+## Files Created or Modified
+- `backend/app/main.py`
+- `docs/tasks/task_3.md`
+- `docs/reports/report_3_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python - <<inline route check>>`: Failed before implementation
+- evidence or reason: `/api/documents`, `/api/documents/upload`, and `/api/documents/{document_id}` all returned HTTP 404 and the assertion failed with `documents router is not mounted`.
+- `cd backend; python - <<inline route check with mocked document_service>>`: Passed after implementation
+- evidence or reason: route table contained `/api/documents`, `/api/documents/upload`, and `/api/documents/{document_id}`; mocked `GET /api/documents`, `POST /api/documents/upload`, and `GET /api/documents/{document_id}` each returned HTTP 200.
+- `cd backend; pytest tests/test_health.py -v`: Passed
+- evidence or reason: `1 passed in 1.19s`, confirming existing health behavior remains intact.
+- `cd backend; pytest -v`: Passed
+- evidence or reason: `20 passed in 1.21s`, confirming existing backend tests still pass.
+
+## Acceptance Check
+- Task acceptance condition: Existing health tests still pass and document route tests can resolve the endpoints.
+- Status: satisfied
+- Evidence: Existing health test passed. Inline FastAPI `TestClient` route check confirmed all document routes are mounted under `/api/documents` and resolve successfully with mocked service behavior.
+
+## Artifacts Produced
+- Main FastAPI app now includes the documents router at `/api/documents`.
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: (03D) acceptance and validation were satisfied, and all Batch03 task IDs are now complete.
+
+## Key Implementation Decisions
+- Imported `documents.router` as `documents_router` in `backend/app/main.py` to match the existing health router alias pattern.
+- Mounted the router with `prefix="/api/documents"` because `backend/app/api/documents.py` already defines relative paths `""`, `"/upload"`, and `"/{document_id}"`.
+
+## Risks or Open Issues
+- Formal persistent document API tests remain future Batch04 work per task scope.
+- Live Supabase validation was not attempted because this task only requires router registration and existing/local route checks.
+
+## Minor Issues Fixed During Execution
+- None in production code.
+- The first post-change inline detail-route check used an incomplete mock response missing `updated_at`; the mock was corrected and the route check passed. No production change was needed.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies (03A), (03B), and (03C) were already marked complete in the task file before implementation.
+- Scope remained limited to router registration and required task/report progress updates.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes
+- handoff notes: Batch03 is complete. Batch04 can add persistent mocked upload API tests without needing additional router registration.

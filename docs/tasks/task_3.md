@@ -396,7 +396,7 @@ Plan 3 is testable through HTTP API contracts, so the backend must provide route
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/api/documents.py`
 
-- [ ] (03D): Register documents router without disrupting existing APIs
+- [x] (03D): Register documents router without disrupting existing APIs
   - Source of Truth: `docs/plans/Plan_3.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_3.md` > `## 9. Implementation Steps`; `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Register the documents router in `backend/app/main.py`.
@@ -627,7 +627,7 @@ Optional future tracks are outside the mandatory chain.
 
 - [x] Batch01 - Document Schemas, Upload Validation, and Configuration
 - [x] Batch02 - Supabase Storage and Document Metadata Service
-- [ ] Batch03 - Document API Routes and Router Registration
+- [x] Batch03 - Document API Routes and Router Registration
 - [ ] Batch04 - Tests, Manual Validation, and Handoff
 
 ### Task IDs
@@ -648,7 +648,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03A): Add document upload API route
 - [x] (03B): Add document list API route
 - [x] (03C): Add document detail API route
-- [ ] (03D): Register documents router without disrupting existing APIs
+- [x] (03D): Register documents router without disrupting existing APIs
 
 #### Batch04
 - [ ] (04A): Add upload API tests with mocked document service
