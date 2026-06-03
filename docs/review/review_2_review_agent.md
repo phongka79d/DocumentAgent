@@ -2986,3 +2986,171 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04A)
+- Task title: Add mocked Supabase service tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 11. Required Tests`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: Reviewed the latest matching `(04A)` execution report entry only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_2_execute_agent.md`
+  - `docs/tasks/task_2.md`
+  - `backend/tests/test_supabase_service.py` (untracked)
+- untracked files:
+  - `backend/tests/test_supabase_service.py`
+
+## Files Reviewed
+- `backend/tests/test_supabase_service.py`: in scope - new mocked Supabase service tests.
+- `backend/app/services/supabase_service.py`: in scope - verified behavior under test and mock boundaries.
+- `backend/app/core/config.py`: in scope - verified missing-config contract used by service tests.
+- `docs/tasks/task_2.md`: in scope - verified `(04A)` task details and progress tracking.
+- `docs/reports/report_2_execute_agent.md`: in scope - verified latest `(04A)` execution report.
+- `docs/plans/Plan_2.md`: in scope - verified cited source sections.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File is currently untracked and contains focused mocked tests.
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff only marks `(04A)` complete in the task block and progress tracker.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff appends the `(04A)` execution report.
+
+## Dependency Review
+- Required dependencies: Batch03 complete; Supabase service code exists with `get_supabase_client()`, `SupabaseConnectionError`, and `check_supabase_connection()`.
+- Dependency status: satisfied based on task tracker, prior report context, and service file inspection.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Tests remain backend-only and use mocks for settings, Supabase client creation, query chains, storage bucket listing, singleton reuse, and failure paths.
+- Failed: none found.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Seven pytest tests exercise missing config wrapping, singleton creation/reuse, initialization failure, database/storage success, database failure, storage list failure, and missing bucket failure. Mocks are used only in tests and do not replace production service logic.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Test fixtures use fake URL/key values only; no real Supabase credentials are present. The tests do not read real `.env` values or contact Supabase.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_supabase_service.py -v`
+- Reported result: Passed; 7 tests collected and 7 passed in 0.89s.
+- Rerun result: Passed; 7 tests collected and 7 passed in 0.86s.
+- Status: passed
+- Notes: Rerun did not require real Supabase credentials or network access.
+
+## Acceptance Review
+- Task acceptance: Tests fail if missing config is unclear, helper output is wrong, or storage/query failure is silently ignored.
+- Status: satisfied
+- Evidence: Tests assert clear `SupabaseConnectionError` messaging for missing config and operation failures, assert the success dict `{"database": True, "storage": True}`, and assert database/storage failure paths raise instead of being ignored.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the task block and Progress Tracker.
+- Batch status: Batch04 remains unchecked, correctly, because `(04B)` through `(04E)` are still unchecked.
+- Execution report entry: appended and matches repository evidence.
+- Review report entry: appended at EOF.
+- Other: No sibling Batch04 task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/tests/test_supabase_service.py` is untracked in git status, as expected for a newly created file before commit.
+- Batch04 must not be marked complete yet because `(04B)` through `(04E)` remain incomplete.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04A)` is accepted and other Batch04 task IDs remain incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Validation, Manual Setup Checks, and Handoff",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_supabase_service.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

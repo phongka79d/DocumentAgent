@@ -1342,3 +1342,83 @@ complete
 - next task ID: `(04A)`
 - can proceed: yes
 - handoff notes: Batch03 is now complete. Basic health remains unchanged and independent of Supabase credentials; Batch04 can add/run the planned validation tests without relying on a health dependency flag.
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch04 - Validation, Manual Setup Checks, and Handoff
+
+## Task
+(04A) - Add mocked Supabase service tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_2.md` > `## 11. Required Tests`
+- `docs/plans/Plan_2.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Validation, Manual Setup Checks, and Handoff
+- Task ID: (04A)
+- Task title: Add mocked Supabase service tests
+
+## Completed Work
+- Task is complete.
+- Created focused mocked unit tests for `backend/app/services/supabase_service.py` covering missing configuration errors, singleton client creation/reuse, client initialization failure, database query behavior, storage bucket success, storage list failure, database query failure, and missing bucket failure.
+- Kept tests free of real Supabase credentials and network access by patching settings, client creation, and service client behavior.
+
+## Files Created or Modified
+- backend/tests/test_supabase_service.py
+- docs/tasks/task_2.md
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed
+- evidence or reason: 7 tests collected; 7 passed in 0.89s.
+
+## Acceptance Check
+- Task acceptance condition: Tests fail if missing config is unclear, helper output is wrong, or storage/query failure is silently ignored.
+- Status: satisfied
+- Evidence: Tests assert clear `SupabaseConnectionError` messages for missing config and failure paths, assert `check_supabase_connection()` returns `{"database": True, "storage": True}` on mocked success, and assert database/storage failures and missing bucket cases raise instead of being ignored.
+
+## Artifacts Produced
+- `backend/tests/test_supabase_service.py`
+- Appended execution report in `docs/reports/report_2_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(04A)` acceptance and required validation are satisfied. Batch04 remains incomplete because sibling tasks `(04B)` through `(04E)` are still unchecked and out of scope for this execution.
+
+## Key Implementation Decisions
+- Used pytest monkeypatching and mock objects to isolate Supabase settings, client creation, database query chains, storage bucket listing, and the module-level singleton.
+- Did not modify production code because the existing service behavior satisfied the new mocked tests.
+
+## Risks or Open Issues
+- Live Supabase database/storage validation remains out of scope for `(04A)` and is still pending for later Batch04 tasks.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; Batch03 is checked complete in `docs/tasks/task_2.md` and the current dependency context says A2 accepted `(03A)`, `(03B)`, `(03C)`, and `(03D)`
+- no architecture concern identified
+
+## Notes for Next Task
+- next task ID: `(04B)`
+- can proceed: yes
+- handoff notes: Mocked Supabase service tests are present and pass with no real credentials. Next validation can run the same targeted command and any additional backend automated checks required by `(04B)`.

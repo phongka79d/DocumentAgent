@@ -470,7 +470,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 ### Tasks
 
-- [ ] (04A): Add mocked Supabase service tests
+- [x] (04A): Add mocked Supabase service tests
   - Source of Truth: `docs/plans/Plan_2.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 11. Required Tests`; `docs/plans/Plan_2.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Create `backend/tests/test_supabase_service.py`.
@@ -689,7 +689,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 
 #### Batch04
 
-- [ ] (04A): Add mocked Supabase service tests
+- [x] (04A): Add mocked Supabase service tests
 - [ ] (04B): Run backend automated validations
 - [ ] (04C): Perform manual Supabase database and storage checks
 - [ ] (04D): Verify scope, secret safety, and reviewer checklist items
