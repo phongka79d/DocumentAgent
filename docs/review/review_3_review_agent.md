@@ -2724,3 +2724,192 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04D)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04D)
+- Task title: Perform live API and Supabase checks when user setup is available
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## 1. Goal`; `## 5. Dependencies`; `## 10. Configuration and Environment Variables`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 14. Agent Report Requirement`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04D)
+- Reviewed task ID: (04D)
+- Correct selection: yes
+- Notes: The latest appended execution report is for the requested (04D) task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_3_execute_agent.md`: in scope - contains the appended (04D) execution report with live validation evidence.
+- `docs/tasks/task_3.md`: in scope - marks (04D) complete and marks Batch04 complete after all Batch04 task IDs are checked.
+- `docs/plans/Plan_3.md`: in scope - cited source sections reviewed for live API/Supabase requirements and acceptance criteria.
+- `backend/app/services/supabase_service.py`: in scope - reviewed to verify real Supabase table/storage checks and helpers.
+- `backend/app/services/document_service.py`: in scope - reviewed to verify storage path, metadata shape, single-user filtering, and empty detail chunks.
+- `backend/app/api/documents.py`: in scope - reviewed to verify upload/list/detail route mappings.
+- `backend/app/core/config.py`: in scope - reviewed to verify backend-only Supabase and upload-size settings names.
+- `backend/tests/test_document_upload.py`: in scope - reviewed as prior mocked upload API test coverage supporting Batch04.
+- `backend/tests/test_document_api.py`: in scope - reviewed as prior mocked metadata API/service test coverage supporting Batch04.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_3.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff only updates (04D) and Batch04 progress checkboxes.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff appends the (04D) execution report.
+
+## Dependency Review
+- Required dependencies: (04C), local backend test environment, valid local Supabase `.env` values, existing Supabase Storage bucket, existing `documents` table.
+- Dependency status: satisfied for review. (04C) is checked complete; safe reruns confirmed required env keys are present, Supabase database connectivity is true, and storage bucket connectivity is true.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Live checks exercised the existing backend FastAPI document API and Supabase service path; document reads remain scoped to `SINGLE_USER_ID`; storage paths use `documents/{SINGLE_USER_ID}/{document_id}/{safe_filename}`; detail responses keep `chunks` empty; no frontend, parsing, chunking, embeddings, Qdrant, ShopAIKey, deletion, auth, or multi-user work was added in this task.
+- Failed: none.
+- Uncertain: none material. The live validation rows/objects remain in Supabase because Plan 3 has no deletion or cleanup scope.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Reviewed production API/service code and reran safe live checks. Supabase connection returned `database=True` and `storage=True`; latest `sample.pdf`, `sample.docx`, `sample.txt`, and `sample.csv` rows exist with expected metadata and matching storage objects.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The execution task created temporary sample filenames for validation only. Production code generates UUIDs, uses configured `SINGLE_USER_ID` and `SUPABASE_STORAGE_BUCKET`, sanitizes filenames, and does not hardcode validation success.
+
+## Validations Reviewed
+- Command/check: `.env` presence and backend settings check without printing values.
+- Reported result: Passed.
+- Rerun result: Passed; required env names were present as booleans only.
+- Status: passed.
+- Notes: No raw secret values were printed.
+
+- Command/check: `check_supabase_connection()` through backend service.
+- Reported result: Passed with `database=True` and `storage=True`.
+- Rerun result: Passed with `database=True` and `storage=True`.
+- Status: passed.
+- Notes: Confirms table and bucket are reachable through current backend configuration.
+
+- Command/check: Supabase row/storage confirmation for `sample.pdf`, `sample.docx`, `sample.txt`, and `sample.csv`.
+- Reported result: Passed; row and storage object existed for all four uploads.
+- Rerun result: Passed; each sample had `row_exists=True`, `row_ok=True`, and `storage_exists=True`; aggregate result true.
+- Status: passed.
+- Notes: Query output was limited to safe booleans and filenames.
+
+- Command/check: Local API smoke for health, list, detail, and random UUID 404.
+- Reported result: Passed.
+- Rerun result: Passed; review-started server returned health 200, list 200, sample detail 200 with empty chunks, random UUID detail 404, and server stopped afterward.
+- Status: passed.
+- Notes: This was non-mutating.
+
+- Command/check: Local API negative upload checks for unsupported `.exe` and empty `.txt`.
+- Reported result: Passed with HTTP 400 for both.
+- Rerun result: Passed with HTTP 400 for both using a Python HTTP smoke after a PowerShell/curl wrapper attempt hit a local access error before producing HTTP evidence.
+- Status: passed.
+- Notes: No successful upload mutation was performed during review.
+
+## Acceptance Review
+- Task acceptance: Supported uploads return HTTP 200 with `document_id`; storage object and `documents` row exist; unsupported `.exe`, empty `.txt`, and random UUID checks behave as required.
+- Status: satisfied
+- Evidence: Execution report contains the required positive and negative live checks. Safe reruns independently verified Supabase connection, rows/storage objects for PDF/DOCX/TXT/CSV samples, API list/detail behavior, random UUID 404, and negative upload HTTP 400 results.
+
+## Progress Tracking
+- Selected task checkbox: checked for (04D), accurate.
+- Batch status: Batch04 checked complete, accurate because (04A), (04B), (04C), and (04D) are all checked.
+- Execution report entry: appended, accurate.
+- Review report entry: appended at EOF by this review.
+- Other: No sibling or future work was marked beyond completing Batch04 after its final task.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found. The one review-side PowerShell/curl wrapper access error was not part of the executor report and was superseded by a successful Python HTTP rerun.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live validation created real Supabase Storage objects and `documents` rows. This is disclosed in the execution report, and cleanup is outside Plan 3 because no deletion API or cleanup task exists.
+
+### Observations
+- Batch04 can be marked complete because all Batch04 task IDs are checked and (04D) is accepted.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch04 task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live validation created real Supabase Storage objects and documents rows; cleanup is outside Plan 3."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

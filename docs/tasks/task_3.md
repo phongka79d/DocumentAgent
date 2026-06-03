@@ -524,7 +524,7 @@ Plan 3 completion depends on test evidence, negative checks, single-user filteri
   - Blocked Condition: None for mocked/local tests.
   - Files: Test files and changed implementation files for inspection
 
-- [ ] (04D): Perform live API and Supabase checks when user setup is available
+- [x] (04D): Perform live API and Supabase checks when user setup is available
   - Source of Truth: `docs/plans/Plan_3.md` > `## 1. Goal`; `docs/plans/Plan_3.md` > `## 5. Dependencies`; `docs/plans/Plan_3.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_3.md` > `## 11. Required Tests`; `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_3.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Supabase Storage bucket must exist.
@@ -628,7 +628,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] Batch01 - Document Schemas, Upload Validation, and Configuration
 - [x] Batch02 - Supabase Storage and Document Metadata Service
 - [x] Batch03 - Document API Routes and Router Registration
-- [ ] Batch04 - Tests, Manual Validation, and Handoff
+- [x] Batch04 - Tests, Manual Validation, and Handoff
 
 ### Task IDs
 
@@ -654,7 +654,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (04A): Add upload API tests with mocked document service
 - [x] (04B): Add document API and service tests for metadata behavior
 - [x] (04C): Run backend regression, secret, and scope validations
-- [ ] (04D): Perform live API and Supabase checks when user setup is available
+- [x] (04D): Perform live API and Supabase checks when user setup is available
 
 ## Completion Reporting Rules for Future Execution Agents
 

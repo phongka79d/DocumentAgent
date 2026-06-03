@@ -24,7 +24,7 @@ async def upload_document(file: UploadFile = File(...)) -> DocumentUploadRespons
         return await document_service.upload_document(file)
     except UploadTooLargeError as exc:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=str(exc),
         ) from exc
     except UploadValidationError as exc:

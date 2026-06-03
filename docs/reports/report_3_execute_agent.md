@@ -1357,3 +1357,122 @@ complete
 - next task ID: (04D)
 - can proceed: yes
 - handoff notes: Backend regression, secret, and scope validations passed. Next task should perform live API and Supabase checks only if required local credentials, bucket, table, and sample files are available; otherwise report the specified blocked-by-user status.
+
+---
+
+# Task Execution Report - (04D)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04D) - Perform live API and Supabase checks when user setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_3.md` > `## 1. Goal`
+- `docs/plans/Plan_3.md` > `## 5. Dependencies`
+- `docs/plans/Plan_3.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_3.md` > `## 11. Required Tests`
+- `docs/plans/Plan_3.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_3.md` > `## 14. Agent Report Requirement`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04D)
+- Task title: Perform live API and Supabase checks when user setup is available
+
+## Completed Work
+- Completed live validation for the local FastAPI backend and configured Supabase project.
+- Confirmed required backend `.env` variable names were present without printing values.
+- Confirmed Supabase connectivity for the `documents` table and configured Storage bucket.
+- Started the local backend on `127.0.0.1:8000`, ran live curl upload/list/detail/negative checks, then stopped the server.
+- Created temporary local sample files for PDF, DOCX, TXT, CSV, unsupported `.exe`, and empty `.txt` validation. No tracked sample files were created.
+- Confirmed uploaded objects exist in Supabase Storage and matching rows exist in the `documents` table.
+
+## Files Created or Modified
+- docs/tasks/task_3.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `.env` presence check for `backend/.env`, `.env`, `backend/.env.local`, `.env.local`: Passed
+- evidence or reason: `backend/.env` and `.env` exist; `backend/.env` contains non-empty entries for `SINGLE_USER_ID`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, and `MAX_UPLOAD_BYTES`. Values were not printed.
+- command/check: sample document search with `rg --files`: Blocked / not applicable before temp setup
+- evidence or reason: No tracked sample PDF/DOCX/TXT/CSV files were found. Temporary files were created outside tracked source for live validation.
+- command/check: `GET http://localhost:8000/api/documents` before server startup: Blocked
+- evidence or reason: Local API was initially unreachable because no backend server was running.
+- command/check: Supabase setup check through backend service: Passed
+- evidence or reason: `check_supabase_connection()` returned `database=True` and `storage=True`.
+- command/check: local backend startup and health check: Passed
+- evidence or reason: `GET http://127.0.0.1:8000/api/health` returned HTTP 200.
+- command/check: `curl -X POST http://127.0.0.1:8000/api/documents/upload -F file=@sample.pdf`: Passed
+- evidence or reason: HTTP 200; `document_id` present.
+- command/check: `curl -X POST http://127.0.0.1:8000/api/documents/upload -F file=@sample.docx`: Passed
+- evidence or reason: HTTP 200; `document_id` present.
+- command/check: `curl -X POST http://127.0.0.1:8000/api/documents/upload -F file=@sample.txt`: Passed
+- evidence or reason: HTTP 200; `document_id` present.
+- command/check: `curl -X POST http://127.0.0.1:8000/api/documents/upload -F file=@sample.csv`: Passed
+- evidence or reason: HTTP 200; `document_id` present.
+- command/check: `curl http://127.0.0.1:8000/api/documents`: Passed
+- evidence or reason: HTTP 200; response contained 4 documents from the live validation uploads.
+- command/check: `curl http://127.0.0.1:8000/api/documents/<document_id>`: Passed
+- evidence or reason: HTTP 200; returned detail ID matched the uploaded PDF document ID and `chunks` was empty.
+- command/check: upload unsupported `.exe`: Passed
+- evidence or reason: HTTP 400.
+- command/check: upload empty `.txt`: Passed
+- evidence or reason: HTTP 400.
+- command/check: request random UUID detail: Passed
+- evidence or reason: HTTP 404.
+- command/check: manual Supabase Storage/PostgreSQL confirmation through safe local tooling: Passed
+- evidence or reason: For PDF, DOCX, TXT, and CSV uploads, `row_exists=True`, `row_ok=True`, and `storage_exists=True`; aggregate result `all_ok=True`.
+- command/check: server shutdown confirmation: Passed
+- evidence or reason: After stopping the server process, `GET http://127.0.0.1:8000/api/health` was not reachable.
+
+## Acceptance Check
+- Task acceptance condition: Supported upload returns HTTP 200 with `document_id`; storage object and `documents` row exist; unsupported `.exe`, empty `.txt`, and random UUID checks behave as required.
+- Status: satisfied
+- Evidence: PDF, DOCX, TXT, and CSV uploads each returned HTTP 200 with a `document_id`. Supabase row and storage checks passed for all four uploaded documents. Unsupported `.exe` returned HTTP 400, empty `.txt` returned HTTP 400, and random UUID detail returned HTTP 404.
+
+## Artifacts Produced
+- Live validation evidence in this execution report.
+- Temporary local sample files outside tracked source for live validation.
+- Four live Supabase Storage objects and four live `documents` rows created by the upload checks.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: (04D) acceptance and validation passed, and all Batch04 tasks are now complete.
+
+## Key Implementation Decisions
+- Did not print, copy, or log raw secret values; only variable presence and safe boolean validation results were reported.
+- Used temporary files outside tracked source because no tracked sample files were present.
+- Used backend service/client checks for Supabase Storage and PostgreSQL confirmation instead of requiring manual UI screenshots or exposing credentials.
+- Diagnosed PowerShell server startup failures as command/log-redirection issues and proceeded with smaller commands and no server log redirection.
+
+## Risks or Open Issues
+- Live validation created real uploaded objects and `documents` rows in the configured Supabase project. Cleanup was not performed because no deletion API or cleanup requirement is in Plan 3.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or architecture concerns identified.
+- Dependency (04C) was marked complete before execution.
+- User action requirements were satisfied by present backend `.env` entries and successful Supabase table/bucket connectivity checks.
+- Scope remained limited to (04D); no future task work was performed.
+
+## Notes for Next Task
+- next task ID: None for Plan 3 mandatory Batch04; Batch04 is complete.
+- can proceed: yes
+- handoff notes: Plan 3 live validation passed. Later cleanup of live validation rows/objects may be considered only if a future task explicitly adds cleanup or deletion scope.
