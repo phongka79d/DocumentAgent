@@ -1835,3 +1835,414 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02E)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+BLOCKED
+
+## Reviewed Scope
+- Batch: Batch02 - Database Schema Migration and Storage Assumptions
+- Task ID: (02E)
+- Task title: Record storage bucket and migration application instructions
+- Task status reported by executor: partial
+- Source of Truth: `docs/plans/Plan_2.md` > `## 1. Goal`; `## 3. Scope`; `## 9. Implementation Steps`; `## 10. Configuration and Environment Variables`; `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02E)
+- Reviewed task ID: (02E)
+- Correct selection: yes
+- Notes: The latest matching report entry is `# Task Execution Report - (02E)`. Review was limited to this task ID only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_2_execute_agent.md`
+- untracked files: None shown by `git status --short` before this review append.
+
+## Files Reviewed
+- `docs/reports/report_2_execute_agent.md`: in scope - A1 appended the `(02E)` partial execution report and did not claim live Supabase success.
+- `docs/tasks/task_2.md`: in scope - `(02E)` is unchecked in both the task entry and Batch02 progress tracker; Batch02 is unchecked.
+- `backend/.env.example`: in scope - contains backend-only placeholders and `SUPABASE_STORAGE_BUCKET=documents`.
+- `backend/app/db/migrations/001_initial_schema.sql`: in scope - migration file exists and contains the 8 table declarations plus required index statements for handoff context.
+- `docs/plans/Plan_2.md`: in scope - cited goal, scope, implementation, configuration, required-test, acceptance, failure-handling, and report sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited storage design section reviewed for bucket and object-path assumption.
+- `docs/review/review_2_review_agent.md`: in scope - review report target inspected and appended at EOF by A2.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The execution report is the only modified file in git diff, and `(02E)` explicitly allows recording instructions in the execution report and handoff notes when no appropriate existing project documentation location exists.
+
+## Dependency Review
+- Required dependencies: (01B), (02D)
+- Dependency status: satisfied for repository-side review; both dependencies are marked complete in `docs/tasks/task_2.md`.
+- Missing or invalid dependency: No repository dependency is missing. External Supabase access/bucket confirmation remains unavailable and is the blocker for completing `(02E)`.
+
+## Architecture Alignment
+- Passed: A1 did not add frontend work, upload logic, parsing/chunking, embeddings, Qdrant, Auth/JWT, or multi-user logic. Real secrets were not added to tracked files.
+- Failed: None found in repository changes for this task.
+- Uncertain: Live Supabase database and storage state cannot be verified without user-provided project access or confirmation.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: Repository-side instructions, migration status, bucket assumption, and blocked live-check status are recorded. A1 explicitly states the migration was not applied and bucket existence was not verified.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: `documents` is the plan-approved example/default bucket assumption, not an overfit secret or fabricated external resource. No real Supabase URL, project ID, or service-role key was added.
+
+## Validations Reviewed
+- Command/check: `git status --short`
+- Reported result: not listed as a validation by A1
+- Rerun result: Passed; only `M docs/reports/report_2_execute_agent.md` was shown before this review append.
+- Status: passed
+- Notes: Confirms the task did not modify unrelated implementation files.
+
+- Command/check: `git diff --stat` and `git diff`
+- Reported result: not listed as a validation by A1
+- Rerun result: Passed; diff shows the `(02E)` execution report appended to `docs/reports/report_2_execute_agent.md`.
+- Status: passed
+- Notes: No sibling task implementation was introduced by the `(02E)` diff.
+
+- Command/check: `rg -n "^SUPABASE_STORAGE_BUCKET=documents$|^SUPABASE_URL=|^SUPABASE_SERVICE_ROLE_KEY=" backend/.env.example`
+- Reported result: Passed
+- Rerun result: Passed; lines for all three backend Supabase placeholders are present and bucket is `documents`.
+- Status: passed
+- Notes: Confirms repository-side bucket assumption and backend-only placeholder names.
+
+- Command/check: `Test-Path backend/app/db/migrations/001_initial_schema.sql`
+- Reported result: Passed
+- Rerun result: Passed; returned `True`.
+- Status: passed
+- Notes: Confirms migration file exists for manual handoff.
+
+- Command/check: `rg -n "create table if not exists (documents|document_chunks|document_entities|document_relationships|chat_sessions|chat_messages|agent_runs|agent_steps)|create (unique )?index if not exists" backend/app/db/migrations/001_initial_schema.sql`
+- Reported result: Passed
+- Rerun result: Passed; found all 8 table declarations and index statements.
+- Status: passed
+- Notes: This is repository inspection only, not live database validation.
+
+- Command/check: Official Supabase CLI documentation check for `supabase db push`
+- Reported result: A1 cited Supabase documentation for `supabase db push`.
+- Rerun result: Passed; Supabase docs state `supabase db push` deploys/pushes local migrations to a linked remote database and supports `--dry-run`.
+- Status: passed
+- Notes: Sources checked: https://supabase.com/docs/guides/deployment/database-migrations and https://supabase.com/docs/reference/cli/global-flags.
+
+- Command/check: Live Supabase migration application check
+- Reported result: Blocked, `BLOCKED_BY_USER_ACTION`
+- Rerun result: Not rerun; no Supabase project access or user confirmation was provided.
+- Status: blocked
+- Notes: Missing evidence that `001_initial_schema.sql` was applied manually or by CLI and that all 8 tables exist in Supabase.
+
+- Command/check: Live Supabase storage bucket existence check
+- Reported result: Blocked, `BLOCKED_BY_USER_ACTION`
+- Rerun result: Not rerun; no Supabase project access or user confirmation was provided.
+- Status: blocked
+- Notes: Missing evidence that the configured `SUPABASE_STORAGE_BUCKET` bucket exists or was created.
+
+## Acceptance Review
+- Task acceptance: Future reviewer can tell whether the migration was applied manually, by CLI, or only added to the repository, and whether the configured bucket exists.
+- Status: blocked
+- Evidence: The report correctly records repository-only migration status and unverified bucket status, but the task source also requires verifying the bucket exists or creating it manually if missing. That live evidence is unavailable and the task remains partial/unchecked.
+
+## Progress Tracking
+- Selected task checkbox: correct; `(02E)` remains unchecked in both the main Batch02 task list and the Progress Tracker.
+- Batch status: correct; Batch02 remains unchecked.
+- Execution report entry: present and accurately marked `partial`.
+- Review report entry: appended by this review.
+- Other: A1 did not mark the whole batch accepted or complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found. A1 honestly reported partial status, blocked live checks, no task checkbox update, and no batch status update.
+
+## Issues
+
+### Blocking
+- Live Supabase migration application evidence is missing: no user-provided project access or confirmation that the migration was applied manually or by CLI.
+- Live Supabase storage bucket evidence is missing: no user-provided project access or confirmation that the configured bucket exists or was created.
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- The repository-only instruction handoff is acceptable for partial status, but it is not enough to close `(02E)` because live database/storage confirmation remains required or must be explicitly deferred by the project owner.
+
+### Observations
+- No appropriate existing setup documentation file was found under `docs/`; using the execution report and handoff notes is consistent with the task instruction fallback.
+- The task can be reviewed safely, but it cannot be accepted as complete because required external setup evidence is absent.
+
+## Decision
+- Accept selected task? no
+- Repair required? no repository repair required; user/external setup evidence is required.
+- Can next task proceed? no for closing Batch02 or standard sequential flow; repository-only future work should proceed only if the project owner explicitly accepts deferring live Supabase validation to Batch04.
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: Supabase project setup and follow-up execution report for `(02E)`
+- change: Apply `backend/app/db/migrations/001_initial_schema.sql` through Supabase SQL Editor or a linked Supabase CLI migration path, then confirm all 8 tables exist and confirm/create the bucket named by `SUPABASE_STORAGE_BUCKET`.
+- validation: Record evidence that the migration was applied manually or by CLI, all 8 tables exist, and the configured storage bucket exists; then update `(02E)` and Batch02 progress only if validations pass.
+- blocks next task: yes for closing Batch02 and standard next-task progression; no only if the project owner explicitly defers live Supabase validation to Batch04.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "BLOCKED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch02 - Database Schema Migration and Storage Assumptions",
+  "selected_task_id": "(02E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_2_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Supabase migration application check blocked by missing user/project access or confirmation",
+    "Live Supabase storage bucket existence check blocked by missing user/project access or confirmation"
+  ],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [
+    "Missing evidence that migration was applied manually or by CLI and all 8 tables exist",
+    "Missing evidence that the configured Supabase Storage bucket exists or was created"
+  ],
+  "major_issues": [],
+  "warnings": [
+    "Repository-only handoff is accurate but insufficient to close (02E) without live setup evidence or explicit deferral"
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02E)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Database Schema Migration and Storage Assumptions
+- Task ID: (02E)
+- Task title: Record storage bucket and migration application instructions
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## 1. Goal`; `## 3. Scope`; `## 9. Implementation Steps`; `## 10. Configuration and Environment Variables`; `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02E)
+- Reviewed task ID: (02E)
+- Correct selection: yes
+- Notes: The latest matching `(02E)` execution report is the retry report with status `complete`; review was limited to `(02E)` only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, `docs/tasks/task_2.md`
+- untracked files: None shown by `git status --short`.
+
+## Files Reviewed
+- `docs/reports/report_2_execute_agent.md`: in scope - contains the latest complete `(02E)` retry report with live table and bucket checks, plus the earlier partial report.
+- `docs/tasks/task_2.md`: in scope - `(02E)` is checked in both the task entry and Progress Tracker; Batch02 is checked after `(02A)` through `(02E)` are checked.
+- `docs/review/review_2_review_agent.md`: in scope - existing review history inspected; this review was appended at EOF.
+- `backend/.env.example`: in scope - contains placeholder Supabase names and `SUPABASE_STORAGE_BUCKET=documents`, with no real secrets.
+- `backend/.env`: in scope for key-presence and live-check inputs only - required keys are populated; values were not printed or recorded.
+- `backend/app/db/migrations/001_initial_schema.sql`: in scope - contains the 8 required table declarations and required indexes.
+- `docs/plans/Plan_2.md`: in scope - cited goal, scope, implementation, configuration, required tests, acceptance, report, and reviewer checklist sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited storage design section reviewed for the `documents` bucket and object-path assumption.
+- `frontend`: in scope for secret-safety spot check - no matches found for Supabase/service-role references.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Progress tracking changes are limited to checking `(02E)` and Batch02.
+
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The latest report records live evidence and setup instructions without exposing secret values.
+
+## Dependency Review
+- Required dependencies: (01B), (02D)
+- Dependency status: satisfied; both are checked in the task file, and Batch02 predecessor tasks `(02A)` through `(02D)` are checked.
+- Missing or invalid dependency: None found for `(02E)`.
+
+## Architecture Alignment
+- Passed: Scope stayed within documentation/reporting and external verification; no upload, parsing, chunking, embeddings, Qdrant, frontend, Auth/JWT, or multi-user work was introduced.
+- Failed: None found.
+- Uncertain: The exact external method used before the retry is not known as SQL Editor versus CLI, but live API checks prove the schema exists and the report states the method is unconfirmed.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Live PostgREST checks returned HTTP 200 for all 8 required table endpoints, and the live Storage bucket endpoint returned HTTP 200 using populated backend env values that were not printed.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: `documents` is the plan-approved bucket assumption and `.env.example` placeholder; no real Supabase URL, service-role key, or project secret was added to tracked files.
+
+## Validations Reviewed
+- Command/check: `git status --short`
+- Reported result: not listed as an A1 validation
+- Rerun result: Passed; tracked modifications are limited to `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, and `docs/tasks/task_2.md`; no untracked files.
+- Status: passed
+- Notes: `docs/review/review_2_review_agent.md` includes prior review history and this appended review target.
+
+- Command/check: `git diff --stat` and `git diff`
+- Reported result: not listed as an A1 validation
+- Rerun result: Passed; diff shows `(02E)` report append, prior review append, and task tracker updates for `(02E)`/Batch02.
+- Status: passed
+- Notes: No unrelated implementation files were changed by `(02E)`.
+
+- Command/check: `backend/.env` required-key presence check
+- Reported result: Passed
+- Rerun result: Passed; `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, and `SINGLE_USER_ID` are present and populated.
+- Status: passed
+- Notes: Values were not printed.
+
+- Command/check: Live Supabase table endpoints through safe in-memory HTTP client
+- Reported result: Passed; each table endpoint returned HTTP 200
+- Rerun result: Passed; `documents`, `document_chunks`, `document_entities`, `document_relationships`, `chat_sessions`, `chat_messages`, `agent_runs`, and `agent_steps` each returned HTTP 200.
+- Status: passed
+- Notes: Confirms the 8 required tables are reachable through PostgREST.
+
+- Command/check: Live Supabase Storage bucket endpoint through safe in-memory HTTP client
+- Reported result: Passed; configured bucket endpoint returned HTTP 200
+- Rerun result: Passed; configured bucket endpoint returned HTTP 200.
+- Status: passed
+- Notes: Confirms the configured bucket exists.
+
+- Command/check: `rg -n "create table if not exists ...|create (unique )?index if not exists" backend/app/db/migrations/001_initial_schema.sql`
+- Reported result: Previously reported as passed for migration handoff context
+- Rerun result: Passed; found all 8 table declarations and required index statements.
+- Status: passed
+- Notes: Repository migration content aligns with the expected schema handoff.
+
+- Command/check: Frontend secret/supabase reference search
+- Reported result: not listed as an A1 validation for `(02E)`
+- Rerun result: Passed; no frontend matches found for Supabase/service-role reference patterns.
+- Status: passed
+- Notes: Supports the backend-only secret boundary for this reviewed scope.
+
+## Acceptance Review
+- Task acceptance: Future reviewer can tell whether the migration was applied manually, by CLI, or only added to the repository, and whether the configured bucket exists.
+- Status: satisfied
+- Evidence: The retry report states the migration was applied to live Supabase before the retry and not by the agent session; live API checks confirm all 8 table endpoints and the configured bucket endpoint return HTTP 200. The report also records manual SQL Editor, CLI, and direct database command paths for handoff.
+
+## Progress Tracking
+- Selected task checkbox: checked in the main Batch02 task entry and Batch02 Progress Tracker entry.
+- Batch status: checked; valid because `(02A)` through `(02E)` are all checked.
+- Execution report entry: latest `(02E)` entry is present and marked `complete`.
+- Review report entry: appended at EOF by this review.
+- Other: Batch03 remains unchecked and was not started.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None that block acceptance. The exact external application method remains unconfirmed, but the report explicitly discloses that limitation and live checks prove the schema is applied.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- The exact external migration application method is not confirmed as SQL Editor versus CLI; live checks confirm the end state and the report discloses the uncertainty.
+
+### Observations
+- Prior A2 BLOCKED review remains valid historical evidence for the earlier partial `(02E)` report; this review evaluates the later retry report only.
+- Batch04 still owns broader Plan 2 manual validation and optional backend service helper checks after Batch03 is implemented.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, `(03A)` can proceed but was not started.
+- Should batch be marked complete? yes, only because all Batch02 task IDs `(02A)` through `(02E)` are checked and `(02E)` live evidence now passes.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch02 - Database Schema Migration and Storage Assumptions",
+  "selected_task_id": "(02E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Exact external migration application method is unconfirmed, but live database and storage checks passed and the report discloses this limitation"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

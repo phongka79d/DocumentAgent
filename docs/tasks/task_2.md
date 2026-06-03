@@ -275,7 +275,7 @@ Document upload, chunk persistence, GraphRAG metadata, chat history, and agent l
   - Blocked Condition: None for repository SQL; `BLOCKED_BY_USER_ACTION` if Supabase project access is unavailable for manual execution.
   - Files: `backend/app/db/migrations/001_initial_schema.sql`
 
-- [ ] (02E): Record storage bucket and migration application instructions
+- [x] (02E): Record storage bucket and migration application instructions
   - Source of Truth: `docs/plans/Plan_2.md` > `## 1. Goal`; `docs/plans/Plan_2.md` > `## 3. Scope`; `docs/plans/Plan_2.md` > `## 9. Implementation Steps`; `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_2.md` > `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
   - Source Requirements:
     - Document the `documents` storage bucket assumption.
@@ -659,7 +659,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 ### Batches
 
 - [x] Batch01 - Backend Supabase Configuration
-- [ ] Batch02 - Database Schema Migration and Storage Assumptions
+- [x] Batch02 - Database Schema Migration and Storage Assumptions
 - [ ] Batch03 - Backend Supabase Service and Optional Dependency Health
 - [ ] Batch04 - Validation, Manual Setup Checks, and Handoff
 
@@ -678,7 +678,7 @@ Plan 2 is only complete when code-level tests pass, schema/storage setup is conf
 - [x] (02B): Create GraphRAG entity and relationship tables
 - [x] (02C): Create chat and agent log tables
 - [x] (02D): Add required indexes
-- [ ] (02E): Record storage bucket and migration application instructions
+- [x] (02E): Record storage bucket and migration application instructions
 
 #### Batch03
 

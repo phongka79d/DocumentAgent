@@ -785,3 +785,211 @@ complete
 - next task ID: `(02E)`
 - can proceed: yes
 - handoff notes: The migration now includes all required indexes. Leave schema-application and storage-instruction work to `(02E)` and later Batch04 manual validation.
+---
+
+# Task Execution Report - (02E)
+
+## Source Task File
+`docs/tasks/task_2.md`
+
+## Report File
+`docs/reports/report_2_execute_agent.md`
+
+## Batch
+`Batch02 - Database Schema Migration and Storage Assumptions`
+
+## Task
+`(02E) - Record storage bucket and migration application instructions`
+
+## Status
+partial
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 1. Goal`
+- `docs/plans/Plan_2.md` > `## 3. Scope`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_2.md` > `## 11. Required Tests`
+- `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch02 - Database Schema Migration and Storage Assumptions`
+- Task ID: `(02E)`
+- Task title: `Record storage bucket and migration application instructions`
+
+## Completed Work
+- Partial. Recorded repository-side manual Supabase setup instructions for reviewer handoff in this execution report.
+- Confirmed `backend/.env.example` names `SUPABASE_STORAGE_BUCKET=documents`, which documents the local storage bucket assumption without real secrets.
+- Confirmed `backend/app/db/migrations/001_initial_schema.sql` exists and contains the current repository migration SQL.
+- Recorded migration application status for this run: only added to the repository; not applied manually in Supabase SQL Editor and not applied by Supabase CLI in this run.
+- Recorded storage bucket status for this run: configured bucket assumption is `documents`; live bucket existence was not verified because Supabase project access was not available.
+
+Manual setup instructions for the reviewer/user:
+- SQL Editor path: open the Supabase project dashboard, open SQL Editor, create a new query, paste the contents of `backend/app/db/migrations/001_initial_schema.sql`, run it, then confirm the 8 tables exist: `documents`, `document_chunks`, `document_entities`, `document_relationships`, `chat_sessions`, `chat_messages`, `agent_runs`, and `agent_steps`.
+- Supabase CLI migration path: install/login to Supabase CLI, run `supabase link` for the target project, create or place the SQL in a Supabase migration under `supabase/migrations/`, run `supabase db push --dry-run`, then run `supabase db push` only after confirming the target project. Official Supabase docs describe `supabase db push` as the command that pushes local migrations to a linked remote database: https://supabase.com/docs/reference/cli/global-flags and https://supabase.com/docs/guides/deployment/database-migrations.
+- Storage bucket path: in Supabase Dashboard, open Storage, confirm a bucket named by `SUPABASE_STORAGE_BUCKET` exists. For the checked-in example this is `documents`. If it is missing, create it manually in Supabase before live connection validation.
+- Storage object path assumption from the master plan: original uploads should later use `documents/{SINGLE_USER_ID}/{document_id}/{original_filename}` under the configured bucket.
+- Secret safety: put real `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` only in local untracked environment files. Do not add real credentials, project URLs, service-role keys, or bucket secrets to tracked files.
+
+## Files Created or Modified
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `Get-Content docs/tasks/task_2.md`: Passed
+- evidence or reason: Confirmed `(01B)` and `(02D)` dependencies are marked complete, and `(02E)` is the selected unchecked task.
+- `Get-Content docs/plans/Plan_2.md`: Passed
+- evidence or reason: Read the cited goal, scope, implementation, environment, and required-test sections.
+- `Get-Content docs/plans/Master_Plan.md`: Passed
+- evidence or reason: Read the cited storage design section and confirmed the suggested bucket/object path assumptions.
+- `rg -n "^SUPABASE_STORAGE_BUCKET=documents$|^SUPABASE_URL=|^SUPABASE_SERVICE_ROLE_KEY=" backend/.env.example`: Passed
+- evidence or reason: Confirmed backend env example includes Supabase placeholders and the `documents` bucket assumption only.
+- `Test-Path backend/app/db/migrations/001_initial_schema.sql`: Passed
+- evidence or reason: Confirmed the migration file exists in the repository.
+- `rg -n "create table if not exists (documents|document_chunks|document_entities|document_relationships|chat_sessions|chat_messages|agent_runs|agent_steps)|create (unique )?index if not exists" backend/app/db/migrations/001_initial_schema.sql`: Passed
+- evidence or reason: Confirmed the migration contains all 8 table declarations and required index statements for handoff context.
+- Live Supabase migration application check: Blocked
+- evidence or reason: `BLOCKED_BY_USER_ACTION`; no Supabase project access or user confirmation was provided, so the migration was not applied manually or by CLI in this run.
+- Live Supabase storage bucket existence check: Blocked
+- evidence or reason: `BLOCKED_BY_USER_ACTION`; no Supabase project access or user confirmation was provided, so the configured bucket was not verified or created in this run.
+
+## Acceptance Check
+- Task acceptance condition: Future reviewer can tell whether the migration was applied manually, by CLI, or only added to the repository, and whether the configured bucket exists.
+- Status: partially satisfied
+- Evidence: This report records that the migration is only added to the repository in this run, not applied by SQL Editor or CLI, and that bucket existence is not live-verified. Repository-side instructions are recorded, but live bucket verification remains blocked by user action.
+
+## Artifacts Produced
+- Manual Supabase setup handoff instructions in this report.
+- Migration application status: only added to repository in this run.
+- Storage bucket status: `documents` assumed from `SUPABASE_STORAGE_BUCKET`; live existence not verified.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Live Supabase access and bucket confirmation were unavailable, so `(02E)` remains partial/blocked for external verification and `Batch02` remains incomplete.
+
+## Key Implementation Decisions
+- Did not create external Supabase resources automatically.
+- Did not fabricate bucket existence or migration application success.
+- Kept real credentials and project-specific values out of tracked files.
+- Used the execution report as the handoff location because no existing root setup guide or appropriate project setup documentation file was present.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: user must provide Supabase project access or confirm they applied the migration and created/verified the configured storage bucket.
+- Batch04 manual database/storage checks still need to confirm all 8 tables and the configured bucket exist.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; `(01B)` and `(02D)` are marked complete
+- live external verification is blocked by required user action, not by repository state
+
+## Notes for Next Task
+- next task ID: `(02E)` remains the next unresolved task until Supabase setup is confirmed, or `(03A)` can proceed only if the project owner accepts that live external verification remains deferred to Batch04.
+- can proceed: no for closing Batch02; yes for repository-only future implementation if live Supabase validation is explicitly deferred
+- handoff notes: Apply `backend/app/db/migrations/001_initial_schema.sql` manually through Supabase SQL Editor or via Supabase CLI migrations, then confirm the `SUPABASE_STORAGE_BUCKET` bucket exists. For this repo's checked-in example, the bucket is `documents`. Do not store real Supabase credentials in tracked files.
+
+---
+
+# Task Execution Report - (02E)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch02 - Database Schema Migration and Storage Assumptions
+
+## Task
+(02E) - Record storage bucket and migration application instructions
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## 1. Goal`
+- `docs/plans/Plan_2.md` > `## 3. Scope`
+- `docs/plans/Plan_2.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_2.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_2.md` > `## 11. Required Tests`
+- `docs/plans/Master_Plan.md` > `## 6. Data Storage Design`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Database Schema Migration and Storage Assumptions
+- Task ID: (02E)
+- Task title: Record storage bucket and migration application instructions
+
+## Completed Work
+- Status: complete.
+- Verified `backend/.env` contains the required keys without printing values: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, and `SINGLE_USER_ID`.
+- Verified all 8 expected Supabase tables are reachable through live PostgREST checks: `documents`, `document_chunks`, `document_entities`, `document_relationships`, `chat_sessions`, `chat_messages`, `agent_runs`, and `agent_steps`.
+- Verified the configured Supabase Storage bucket exists through the live Storage API.
+- Recorded the storage bucket assumption and manual migration application paths in this report for reviewer handoff because no separate project setup guide exists in the repository.
+- Updated `(02E)` in the selected task block and progress tracker.
+- Marked Batch02 complete because `(02A)` through `(02E)` are now checked.
+- Secrets were not printed, copied, logged in the report, or written to tracked files.
+
+## Files Created or Modified
+- `docs/tasks/task_2.md`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `backend/.env` required-key presence check: Passed
+- evidence or reason: local env file exists and all required keys are populated; values were not printed.
+- Live Supabase table checks with `curl.exe`: Passed
+- evidence or reason: each of the 8 required table endpoints returned HTTP 200 with `select=id&limit=1`.
+- Live Supabase storage bucket check with `curl.exe`: Passed
+- evidence or reason: configured bucket endpoint returned HTTP 200.
+- PowerShell `Invoke-WebRequest` diagnostic attempt: Not used for acceptance
+- evidence or reason: PowerShell web cmdlet failed before returning HTTP status; `curl.exe` was used successfully for the same REST/storage checks.
+
+## Acceptance Check
+- Task acceptance condition: Future reviewer can tell whether the migration was applied manually, by CLI, or only added to the repository, and whether the configured bucket exists.
+- Status: satisfied
+- Evidence: Live table checks confirm the migration is applied in Supabase, not only added to the repository. The exact external application method was not confirmed by the user as SQL Editor versus CLI, and the agent did not apply it automatically. Live storage check confirms the configured bucket exists. Manual setup instructions for both SQL Editor and CLI paths are recorded below.
+
+## Artifacts Produced
+- Manual setup instructions for reviewer handoff:
+- SQL Editor path: open Supabase SQL Editor, run `backend/app/db/migrations/001_initial_schema.sql`, then confirm the 8 required tables exist.
+- Supabase CLI path: maintain the migration under a Supabase CLI migrations directory such as `supabase/migrations/001_initial_schema.sql`, run `supabase link --project-ref <project-ref>`, then run `supabase db push`.
+- Direct database CLI path if available: run `psql "<SUPABASE_DATABASE_URL>" -f backend/app/db/migrations/001_initial_schema.sql` using a user-managed database URL that is never committed.
+- Storage assumption: `SUPABASE_STORAGE_BUCKET` names the bucket for original uploaded files; the project example is `documents`, matching `docs/plans/Master_Plan.md`.
+- Migration application status: applied to live Supabase before this retry, confirmed by 8 HTTP 200 table checks; exact external method not confirmed.
+- Bucket status: configured bucket exists, confirmed by live Storage API HTTP 200.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: `(02E)` acceptance is satisfied by live database and storage evidence, and all Batch02 task IDs are checked.
+
+## Key Implementation Decisions
+- Did not create external Supabase resources automatically.
+- Did not apply the migration from the agent session because the user reported setup was already performed and live checks confirmed it.
+- Used the execution report as the setup-instruction handoff location because no standalone setup guide exists in the repository.
+- Kept tracked docs free of real secrets.
+
+## Risks or Open Issues
+- The exact external migration application method is not confirmed as SQL Editor versus CLI; live evidence confirms the schema exists.
+- Batch04 should still perform its broader manual database/storage checks and optional backend service helper validation after Batch03 is implemented.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no source-of-truth field issue identified
+- no dependency issue identified; `(01B)` and `(02D)` are marked complete
+- user action is now sufficiently satisfied for `(02E)` because live Supabase table and bucket checks pass
+
+## Notes for Next Task
+- next task ID: `(03A)`
+- can proceed: yes
+- handoff notes: Batch02 is complete. Use `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, and `SINGLE_USER_ID` only from local backend environment values. Do not expose the service-role key to frontend code or tracked documentation.
