@@ -711,7 +711,7 @@ Optional future tracks are outside the mandatory chain.
 
 - [x] Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
 - [x] Batch02 - Chunking Configuration and Metadata-Preserving Splitter
-- [ ] Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- [x] Batch03 - Supabase Chunk Persistence and Processing Orchestration
 - [ ] Batch04 - Tests, Manual Validation, and Handoff
 
 ### Task IDs
@@ -733,7 +733,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03A): Add Supabase helpers for processing and chunk persistence
 - [x] (03B): Implement document processing orchestration service
 - [x] (03C): Implement safe failure handling and status transitions
-- [ ] (03D): Add a backend processing trigger only where source-supported
+- [x] (03D): Add a backend processing trigger only where source-supported
 
 #### Batch04
 - [ ] (04A): Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
