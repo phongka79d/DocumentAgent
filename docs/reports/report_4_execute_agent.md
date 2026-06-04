@@ -542,3 +542,96 @@ complete
 - next task ID: (02B)
 - can proceed: yes
 - handoff notes: Backend chunk size and overlap settings are now available to the future chunking service through `Settings`/`get_settings`, with defaults and invalid-overlap validation covered by config tests.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+
+## Task
+(02B) - Implement recursive chunking service
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 1. Goal
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 6. Required Files and Folders
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.3 Chunking Strategy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- Task ID: (02B)
+- Task title: Implement recursive chunking service
+
+## Completed Work
+- Status: complete.
+- Implemented `backend/app/services/chunking_service.py` with `chunk_sections(sections, chunk_size, chunk_overlap)`.
+- Added deterministic recursive boundary-aware chunk splitting with configurable chunk size and overlap.
+- Added consistent word-based token estimation through `estimate_token_count`.
+- Produces `ChunkDraft` records with sequential `chunk_index`, content, token count, and section fields copied into the draft.
+
+## Files Created or Modified
+- backend/app/services/chunking_service.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- Inline focused smoke check for `chunk_sections`: Passed
+- Evidence: verified chunk size behavior, one-token overlap, deterministic chunk indexes, metadata carry-through, token-count consistency, and invalid overlap rejection.
+- `python -m compileall app/services/chunking_service.py`: Passed
+- Evidence: command exited 0.
+- `Test-Path tests/test_chunking_service.py`: Not run as formal pytest validation
+- Evidence or reason: returned `False`; Batch04 chunking test file is not present yet.
+- `python -m pytest tests/test_document_parser.py -v`: Passed
+- Evidence: 2 tests collected, 2 passed.
+
+## Acceptance Check
+- Task acceptance condition: Chunking service converts parsed sections into chunk drafts; chunking checks prove chunk size, overlap, deterministic order, and token count behavior.
+- Status: satisfied
+- Evidence: focused smoke check passed for chunk windows, overlap, deterministic `chunk_index`, `estimate_token_count`, and invalid overlap handling; formal `tests/test_chunking_service.py` remains a Batch04 artifact and does not exist yet.
+
+## Artifacts Produced
+- backend/app/services/chunking_service.py
+- Appended execution report in docs/reports/report_4_execute_agent.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (02B) is complete, but sibling tasks (02C) and (02D) remain unchecked.
+
+## Key Implementation Decisions
+- Used a simple word-based token estimator for MVP consistency.
+- Preferred paragraph/newline and sentence punctuation boundaries when a chunk can be split near the requested size; otherwise falls back to fixed token windows.
+- Validates `chunk_size > 0`, `chunk_overlap >= 0`, and `chunk_overlap < chunk_size` at service entry.
+
+## Risks or Open Issues
+- Formal `backend/tests/test_chunking_service.py` is still pending for Batch04.
+- Sibling tasks (02C) and (02D) remain incomplete and should cover deeper metadata and empty edge-case acceptance.
+
+## Minor Issues Fixed During Execution
+- Corrected the smoke-check expectation to reflect that the final token is already covered by the last overlapped chunk window.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or user-action requirements identified.
+- Dependencies (01B) and (02A) are checked complete in `docs/tasks/task_4.md`.
+- No embeddings, Qdrant vectors, GraphRAG, retrieval, agents, OCR, frontend changes, or database schema changes were added.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes
+- handoff notes: Recursive chunking service exists and returns ordered `ChunkDraft` objects; next task can harden metadata-specific behavior without needing to create the splitter from scratch.

@@ -260,7 +260,7 @@ Downstream embeddings, retrieval, citations, and processing status depend on dur
   - Blocked Condition: None.
   - Files: `backend/app/core/config.py`, `backend/.env.example`
 
-- [ ] (02B): Implement recursive chunking service
+- [x] (02B): Implement recursive chunking service
   - Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.3 Chunking Strategy`
   - Source Requirements:
     - Implement `chunk_sections(sections, chunk_size, chunk_overlap)`.
@@ -725,7 +725,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch02
 - [x] (02A): Add backend chunking configuration
-- [ ] (02B): Implement recursive chunking service
+- [x] (02B): Implement recursive chunking service
 - [ ] (02C): Preserve source metadata and deterministic chunk indexes
 - [ ] (02D): Handle empty parsed sections and chunking edge cases
 
