@@ -3277,3 +3277,184 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04E)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04E)
+- Task title: Perform manual API and Supabase checks when user setup is available
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_4.md > ## 1. Goal; ## 5. Dependencies; ## 8. API Design; ## 10. Configuration and Environment Variables; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 14. Agent Report Requirement
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04E)
+- Reviewed task ID: (04E)
+- Correct selection: yes
+- Notes: The final appended execution report entry is for the requested `(04E)` task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_4_execute_agent.md; docs/tasks/task_4.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_4_execute_agent.md`: in scope - latest `(04E)` execution report is appended and contains required validation evidence.
+- `docs/tasks/task_4.md`: in scope - `(04E)`, Batch04, and progress tracker are marked complete.
+- `docs/plans/Plan_4.md`: in scope - cited sections confirm manual TXT upload/process/detail and empty TXT validation requirements.
+- `backend/app/api/documents.py`: in scope - verifies upload and detail endpoints exist; no processing endpoint is exposed.
+- `backend/app/services/document_processing_service.py`: in scope - verifies direct `process_document(document_id)` is the approved processing path and sets safe failure states.
+- `backend/app/services/supabase_service.py`: in scope - verifies connectivity check, storage/database helpers, single-user filters, and chunk insert shape.
+- `backend/app/core/config.py`: in scope - verifies backend `.env` loading and required Supabase setting behavior.
+- `backend/tests/test_document_upload.py`: in scope - targeted regression coverage for upload API.
+- `backend/tests/test_document_processing.py`: in scope - targeted regression coverage for processing behavior.
+
+## Reported Files Cross-Check
+- file from execution report: docs/tasks/task_4.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Only progress checkboxes were updated for `(04E)`, Batch04, and the global tracker.
+- file from execution report: docs/reports/report_4_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The `(04E)` execution report was appended with manual validation evidence.
+
+## Dependency Review
+- Required dependencies: `(04D)` complete; valid local `.env` values, Supabase Storage bucket, `documents` and `document_chunks` tables, and local backend setup available for manual checks.
+- Dependency status: satisfied. `(04D)` is checked complete and prior review file contains ACCEPTED entries for `(04A)`, `(04B)`, `(04C)`, and `(04D)`.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Plan 4 allows no new public API endpoint, and permits running the processing function directly. The report's use of `POST /api/documents/upload`, direct `process_document(document_id)`, and `GET /api/documents/{document_id}` aligns with Plan 4.
+- Failed: none.
+- Uncertain: mutating live API upload/process/detail checks were not rerun during review to avoid creating additional Supabase rows; the report lists concrete document IDs and independent non-mutating connectivity was verified.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/api/documents.py` exposes upload/detail APIs; `backend/app/services/document_processing_service.py` performs real storage download, parsing, chunking, chunk insert, chunk count update, ready/failed status updates; `backend/app/services/supabase_service.py` uses real Supabase client helpers.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The task changed only docs/report files. Runtime code uses backend settings for `SINGLE_USER_ID` and Supabase configuration. No secrets were printed or added to tracked files.
+
+## Validations Reviewed
+- Command/check: `git status --short`; `git diff --stat`; `git diff`
+- Reported result: only docs/tasks/task_4.md and docs/reports/report_4_execute_agent.md changed for `(04E)`.
+- Rerun result: matched.
+- Status: passed.
+- Notes: No untracked files were present.
+- Command/check: backend `.env` required key presence check for `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, and `SINGLE_USER_ID`
+- Reported result: passed without printing raw values.
+- Rerun result: passed; all required key names are present.
+- Status: passed.
+- Notes: Values were not displayed.
+- Command/check: `cd backend; python -c "from app.services.supabase_service import check_supabase_connection; result = check_supabase_connection(); assert result == {'database': True, 'storage': True}; print('supabase connectivity ok')"`
+- Reported result: database=true and storage=true.
+- Rerun result: passed; printed `supabase connectivity ok`.
+- Status: passed.
+- Notes: Non-mutating live connectivity verification.
+- Command/check: `cd backend; pytest tests/test_document_upload.py tests/test_document_processing.py -q`
+- Reported result: upload and processing paths used successfully in manual validation.
+- Rerun result: passed; 15 passed in 1.16s.
+- Status: passed.
+- Notes: Targeted regression tests for API upload and processing behavior.
+- Command/check: Manual mutating upload/process/detail checks from the execution report
+- Reported result: non-empty TXT processed to ready with chunk_count 1; whitespace-only TXT processed to failed with `Parsed document is empty.`
+- Rerun result: not rerun.
+- Status: accepted with evidence.
+- Notes: Rerun would create additional live Supabase rows and storage objects; report provides concrete document IDs, and code plus non-mutating connectivity were independently verified.
+
+## Acceptance Review
+- Task acceptance: Supported TXT processing yields `ready` and `chunk_count > 0`; empty TXT processing yields `failed` with a safe `error_message`; storage and database checks confirmed when setup exists.
+- Status: satisfied
+- Evidence: Execution report records successful upload/process/detail results for document `ce7a4a1a-e843-4c9e-949c-4898831caee8` and failed empty-processing result for document `4a475b84-2c69-4e5d-ba8e-97fd62484ebf`. Independent review confirmed Supabase database/storage connectivity and relevant API/processing implementation.
+
+## Progress Tracking
+- Selected task checkbox: checked for `(04E)` in task entry and progress tracker.
+- Batch status: checked for Batch04.
+- Execution report entry: appended at EOF.
+- Review report entry: appended at EOF.
+- Other: Prior Batch04 task reviews `(04A)` through `(04D)` are ACCEPTED, so marking Batch04 complete is consistent.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Live validation intentionally left test rows and storage objects in Supabase; the execution report records the IDs for traceability.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes; there is no next task in Batch04.
+- Should batch be marked complete? yes, because `(04A)`, `(04B)`, `(04C)`, and `(04D)` already have ACCEPTED reviews and `(04E)` is accepted here.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

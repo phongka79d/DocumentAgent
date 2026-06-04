@@ -1627,3 +1627,114 @@ complete
 - next task ID: (04E)
 - can proceed: yes
 - handoff notes: Required local tests and scope checks passed. (04E) can proceed only if local backend/Supabase credentials, bucket, tables, uploaded files, or equivalent manual setup are available; otherwise it should report BLOCKED_BY_USER_ACTION.
+
+---
+
+# Task Execution Report - (04E)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04E) - Perform manual API and Supabase checks when user setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 1. Goal
+- docs/plans/Plan_4.md > ## 5. Dependencies
+- docs/plans/Plan_4.md > ## 8. API Design
+- docs/plans/Plan_4.md > ## 10. Configuration and Environment Variables
+- docs/plans/Plan_4.md > ## 11. Required Tests
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_4.md > ## 14. Agent Report Requirement
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04E)
+- Task title: Perform manual API and Supabase checks when user setup is available
+
+## Completed Work
+- Status: complete.
+- Confirmed dependency (04D) was already complete in docs/tasks/task_4.md.
+- Confirmed backend/.env contains required key names for SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET, and SINGLE_USER_ID without printing secret values.
+- Started a real local FastAPI backend on http://127.0.0.1:8000 for the manual API checks and stopped it after validation.
+- Confirmed Supabase database and storage connectivity through backend service checks.
+- Uploaded a non-empty TXT file through POST /api/documents/upload.
+- Ran the processing function directly with process_document(document_id), because no optional HTTP processing endpoint exists in backend/app/api/documents.py.
+- Called GET /api/documents/{document_id} and confirmed status ready with chunk_count greater than 0.
+- Uploaded a whitespace-only TXT file through POST /api/documents/upload to exercise parser-empty behavior after upload validation.
+- Ran the processing function directly for the whitespace-only TXT document and confirmed failed status with a safe error_message through GET /api/documents/{document_id}.
+
+## Files Created or Modified
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- Dependency check for (04D): Passed
+- evidence or reason: (04D) was checked complete in docs/tasks/task_4.md.
+- Required env key presence check in backend/.env: Passed
+- evidence or reason: required key names were present; raw values were not printed.
+- Local backend health check at GET /api/health: Passed
+- evidence or reason: uvicorn app.main:app became healthy on http://127.0.0.1:8000.
+- Supabase database/storage setup check: Passed
+- evidence or reason: check_supabase_connection returned database=true and storage=true.
+- POST /api/documents/upload for task04e-live.txt: Passed
+- evidence or reason: HTTP 200 returned document_id ce7a4a1a-e843-4c9e-949c-4898831caee8 with status uploaded.
+- process_document for task04e-live.txt: Passed
+- evidence or reason: processing returned status ready and chunk_count 1.
+- GET /api/documents/ce7a4a1a-e843-4c9e-949c-4898831caee8: Passed
+- evidence or reason: HTTP 200 returned status ready, chunk_count 1, and error_message null.
+- POST /api/documents/upload for task04e-empty.txt: Passed
+- evidence or reason: HTTP 200 returned document_id 4a475b84-2c69-4e5d-ba8e-97fd62484ebf with status uploaded.
+- process_document for task04e-empty.txt whitespace-only content: Passed
+- evidence or reason: processing raised safe DocumentProcessingError message Parsed document is empty.
+- GET /api/documents/4a475b84-2c69-4e5d-ba8e-97fd62484ebf: Passed
+- evidence or reason: HTTP 200 returned status failed, chunk_count 0, and error_message Parsed document is empty.
+
+## Acceptance Check
+- Task acceptance condition: Supported TXT processing yields ready status and chunk_count > 0; empty TXT processing yields failed with safe error_message; storage and database checks are confirmed when setup exists.
+- Status: satisfied
+- Evidence: Live Supabase/API validation passed. The non-empty TXT document was uploaded by API, processed to ready with chunk_count 1, and retrieved by API. The whitespace-only TXT document was uploaded by API, processed to failed, and retrieved by API with safe error_message Parsed document is empty. Supabase database and configured storage bucket checks returned true.
+
+## Artifacts Produced
+- Live Supabase document row and storage object for task04e-live.txt, document_id ce7a4a1a-e843-4c9e-949c-4898831caee8.
+- Live Supabase document row and storage object for task04e-empty.txt, document_id 4a475b84-2c69-4e5d-ba8e-97fd62484ebf.
+- Appended execution report in docs/reports/report_4_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: (04E) acceptance and validation were satisfied, and all Batch04 task IDs are now complete.
+
+## Key Implementation Decisions
+- Used the direct process_document(document_id) function for processing because Plan 4 does not require a public processing endpoint and this codebase does not expose one.
+- Used whitespace-only TXT content for the empty-processing negative check because POST /api/documents/upload correctly rejects true zero-byte uploads before processing; whitespace-only content reaches the parser and is empty after trimming.
+- Did not print or copy raw .env secret values.
+
+## Risks or Open Issues
+- Live validation created test rows and storage objects in the configured Supabase project. No cleanup helper was used because cleanup is outside this selected task's required scope.
+
+## Minor Issues Fixed During Execution
+- Removed temporary local uvicorn-task04e log files created during validation.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (04D) was complete before execution.
+- User setup was available through backend/.env and confirmed by live Supabase database/storage checks.
+- No architecture concerns identified. The processing path stayed within Plan 4 by using existing upload/detail APIs and the existing processing function; no optional endpoint or future pipeline stage was added.
+
+## Notes for Next Task
+- next task ID: None in Batch04
+- can proceed: yes
+- handoff notes: Batch04 is now complete. Plan 4 live API/Supabase validation has passing evidence, with test document IDs recorded above for traceability.
