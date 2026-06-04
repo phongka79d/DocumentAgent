@@ -7,3 +7,4 @@ pytest
 supabase
 pypdf
 python-docx
+python-multipart
