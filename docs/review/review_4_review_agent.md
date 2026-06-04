@@ -1289,3 +1289,182 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- Task ID: (02C)
+- Task title: Preserve source metadata and deterministic chunk indexes
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_4.md > ## 2. Why This Plan Exists; ## 3. Scope; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; ## 12. Acceptance Criteria; ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for `(02C)` and was reviewed only for this task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/services/chunking_service.py
+  - docs/reports/report_4_execute_agent.md
+  - docs/tasks/task_4.md
+  - backend/tests/test_chunking_service.py (untracked)
+- untracked files:
+  - backend/tests/test_chunking_service.py
+
+## Files Reviewed
+- `backend/app/services/chunking_service.py`: in scope - adds centralized `ChunkDraft` construction preserving copied section metadata, top-level file/page/section fields, deterministic indexes, and optional ownership from metadata.
+- `backend/tests/test_chunking_service.py`: in scope - focused tests cover stable sequential indexes and metadata preservation for PDF, DOCX, TXT, and CSV row contexts.
+- `backend/app/schemas/parsing.py`: in scope - verified existing `ParsedSection` and `ChunkDraft` fields support task requirements.
+- `docs/tasks/task_4.md`: in scope - `(02C)` checkbox and progress tracker updated; `(02D)` and batch remain incomplete.
+- `docs/reports/report_4_execute_agent.md`: in scope - appended `(02C)` execution report.
+- `docs/plans/Plan_4.md`: in scope - cited sections reviewed for metadata, chunk row shape, deterministic chunk order, and reviewer checklist requirements.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/chunking_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implementation change is limited to chunk draft creation metadata preservation.
+- file from execution report: `backend/tests/test_chunking_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File is untracked but present and contains the reported focused tests.
+- file from execution report: `docs/tasks/task_4.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Progress update for `(02C)` is accurate; batch is not marked complete.
+- file from execution report: `docs/reports/report_4_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is appended after `(02B)`.
+
+## Dependency Review
+- Required dependencies: (02B)
+- Dependency status: satisfied; `(02B)` is checked complete and previous review evidence exists in `docs/review/review_4_review_agent.md`.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Chunking remains backend-only and uses existing `ParsedSection`/`ChunkDraft` schema boundaries. Metadata is preserved on each chunk, chunk indexes are assigned sequentially in stable source order, and no database schema, processing, embedding, Qdrant, GraphRAG, retrieval, agent, OCR, frontend, or polling work was added.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_build_chunk_draft` copies section metadata, preserves top-level source fields, promotes optional `document_id` and `user_id`, and is used for every emitted chunk. Tests exercise real `chunk_sections` output rather than mocked success.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: UUIDs and source metadata values appear only in tests as deterministic fixtures. Production code does not special-case sample text, filenames, row IDs, or expected answers.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_chunking_service.py -v`
+- Reported result: Passed; 5 tests collected, 5 passed.
+- Rerun result: Passed; 5 tests collected, 5 passed in 0.14s.
+- Status: passed
+- Notes: Rerun validates reported test result and focused acceptance coverage.
+- Command/check: `rg -n "ocr|embedding|qdrant|graphrag|retrieval|agent|frontend|polling" backend/app/services/chunking_service.py backend/tests/test_chunking_service.py`
+- Reported result: Not separately reported for `(02C)`.
+- Rerun result: No matches; `rg` exited 1 because no matches were found.
+- Status: passed
+- Notes: Supports out-of-scope review.
+
+## Acceptance Review
+- Task acceptance: Chunking tests verify chunk indexes are sequential, stable, and carry available page/section/CSV metadata.
+- Status: satisfied
+- Evidence: Tests assert sequential stable indexes across repeated runs, copied source metadata for PDF/DOCX/TXT/CSV, CSV row metadata across multiple chunks, and token count preservation. Implementation assigns `chunk_index=len(chunks)` in source iteration order.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(02C)` is checked.
+- Batch status: accurate; Batch02 remains unchecked because `(02D)` is pending.
+- Execution report entry: present and appended.
+- Review report entry: appended by this review.
+- Other: No sibling or future task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `backend/tests/test_chunking_service.py` is currently untracked; this is expected for a newly created task artifact but must be included when the execution changes are committed.
+- Empty parsed section behavior remains pending for `(02D)` and was not reviewed as accepted here.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(02D)` remains pending.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch02 - Chunking Configuration and Metadata-Preserving Splitter",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/chunking_service.py",
+    "backend/tests/test_chunking_service.py",
+    "docs/tasks/task_4.md",
+    "docs/reports/report_4_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

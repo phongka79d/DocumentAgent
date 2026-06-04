@@ -635,3 +635,91 @@ complete
 - next task ID: (02C)
 - can proceed: yes
 - handoff notes: Recursive chunking service exists and returns ordered `ChunkDraft` objects; next task can harden metadata-specific behavior without needing to create the splitter from scratch.
+
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+
+## Task
+(02C) - Preserve source metadata and deterministic chunk indexes
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 2. Why This Plan Exists
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_4.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.3 Chunking Strategy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- Task ID: (02C)
+- Task title: Preserve source metadata and deterministic chunk indexes
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Updated chunk draft creation so `document_id` and `user_id` are promoted from parsed section metadata when present.
+- Preserved the full parsed section metadata dict on each chunk draft while retaining top-level file name, page number, section title, chunk index, and token count fields.
+- Added focused chunking tests proving deterministic sequential chunk indexes and metadata preservation for PDF page, DOCX section, TXT, and CSV row contexts, including CSV row metadata across multiple chunks.
+
+## Files Created or Modified
+- backend/app/services/chunking_service.py
+- backend/tests/test_chunking_service.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_chunking_service.py -v`: Passed
+- evidence or reason: 5 tests collected, 5 passed.
+
+## Acceptance Check
+- Task acceptance condition: Chunking tests verify chunk indexes are sequential, stable, and carry available page/section/CSV metadata.
+- Status: satisfied
+- Evidence: `tests/test_chunking_service.py` verifies stable sequential indexes, PDF page metadata, DOCX section title metadata, TXT metadata, CSV row metadata, and token count preservation.
+
+## Artifacts Produced
+- Metadata-preserving chunk draft behavior in backend/app/services/chunking_service.py
+- Focused chunking test coverage in backend/tests/test_chunking_service.py
+- Appended execution report in docs/reports/report_4_execute_agent.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (02C) is complete, but sibling task (02D) remains unchecked.
+
+## Key Implementation Decisions
+- Promoted `document_id` and `user_id` from `ParsedSection.metadata` onto `ChunkDraft` only when available, preserving compatibility with parser sections that do not yet have those values.
+- Kept the original section metadata unchanged on every chunk so CSV row metadata remains available even when one row splits into multiple chunks.
+
+## Risks or Open Issues
+- None for this task.
+
+## Minor Issues Fixed During Execution
+- Added the backend test path bootstrap used by existing tests so the new test file can import `app` under the repository's current pytest invocation pattern.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (02B) was checked complete before implementation.
+- No user action was required.
+- No embeddings, Qdrant vectors, GraphRAG, retrieval, agents, OCR, frontend changes, or database schema changes were added.
+
+## Notes for Next Task
+- next task ID: (02D)
+- can proceed: yes
+- handoff notes: Chunk drafts now preserve source metadata and deterministic indexes; next task can focus on empty parsed sections and chunking edge cases.

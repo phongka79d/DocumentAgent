@@ -104,6 +104,26 @@ def _validate_chunk_settings(chunk_size: int, chunk_overlap: int) -> None:
         raise ValueError("chunk_overlap must be less than chunk_size.")
 
 
+def _build_chunk_draft(
+    *,
+    section: ParsedSection,
+    content: str,
+    chunk_index: int,
+) -> ChunkDraft:
+    metadata = dict(section.metadata)
+    return ChunkDraft(
+        content=content,
+        chunk_index=chunk_index,
+        token_count=estimate_token_count(content),
+        document_id=metadata.get("document_id"),
+        user_id=metadata.get("user_id"),
+        page_number=section.page_number,
+        section_title=section.section_title,
+        file_name=section.file_name,
+        metadata=metadata,
+    )
+
+
 def chunk_sections(
     sections: list[ParsedSection],
     chunk_size: int,
@@ -120,14 +140,10 @@ def chunk_sections(
             chunk_overlap=chunk_overlap,
         ):
             chunks.append(
-                ChunkDraft(
+                _build_chunk_draft(
+                    section=section,
                     content=chunk_text,
                     chunk_index=len(chunks),
-                    token_count=estimate_token_count(chunk_text),
-                    page_number=section.page_number,
-                    section_title=section.section_title,
-                    file_name=section.file_name,
-                    metadata=dict(section.metadata),
                 )
             )
 

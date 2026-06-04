@@ -277,7 +277,7 @@ Downstream embeddings, retrieval, citations, and processing status depend on dur
   - Blocked Condition: None.
   - Files: `backend/app/services/chunking_service.py`
 
-- [ ] (02C): Preserve source metadata and deterministic chunk indexes
+- [x] (02C): Preserve source metadata and deterministic chunk indexes
   - Source of Truth: `docs/plans/Plan_4.md` > `## 2. Why This Plan Exists`; `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_4.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.3 Chunking Strategy`
   - Source Requirements:
     - Preserve document ID, file name, page number, section title, chunk index, token count, and CSV row information.
@@ -726,7 +726,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch02
 - [x] (02A): Add backend chunking configuration
 - [x] (02B): Implement recursive chunking service
-- [ ] (02C): Preserve source metadata and deterministic chunk indexes
+- [x] (02C): Preserve source metadata and deterministic chunk indexes
 - [ ] (02D): Handle empty parsed sections and chunking edge cases
 
 #### Batch03
