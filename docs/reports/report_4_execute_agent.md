@@ -166,3 +166,91 @@ complete
 - next task ID: (01C)
 - can proceed: yes
 - handoff notes: `ParsedSection` and `ChunkDraft` are importable from `app.schemas` and ready for parser dispatch and later chunking service implementation.
+
+---
+
+# Task Execution Report - (01C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+
+## Task
+(01C) - Implement parser dispatch and parser errors
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_4.md` > `## 1. Goal`
+- `docs/plans/Plan_4.md` > `## 3. Scope`
+- `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_4.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_4.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- Task ID: (01C)
+- Task title: Implement parser dispatch and parser errors
+
+## Completed Work
+- Task is complete.
+- Created `backend/app/services/document_parser.py` with `parse_document(file_bytes, file_type, file_name)` as the public parser dispatch entrypoint.
+- Added explicit parser error types for common parser failures: empty document, unsupported type, unreadable document, and decoding failure.
+- Added safe common handling for unsupported file types, non-byte content, parser decode errors, generic parser read failures, and empty parsed text after trimming whitespace.
+- Added minimal supported-type parser placeholders only at the dispatch boundary; PDF, DOCX, TXT, and CSV extraction behavior remains reserved for later parser implementation tasks.
+
+## Files Created or Modified
+- `backend/app/services/document_parser.py`
+- `docs/tasks/task_4.md`
+- `docs/reports/report_4_execute_agent.md`
+
+## Tests or Validations Run
+- Red dispatch/error smoke check before implementation: Passed as expected / evidence: failed with `ModuleNotFoundError: No module named 'app.services.document_parser'`, confirming the parser service entrypoint was missing before production code.
+- `python -` focused dispatch/error smoke check from `backend`: Passed / evidence: substituted parser callables proved supported type dispatch, empty parsed text handling, unsupported type handling, decode error wrapping, and non-byte unreadable handling.
+- `python -m compileall app\services\document_parser.py`: Passed / evidence: compiled `app\services\document_parser.py` successfully.
+- `pytest -q` from `backend`: Passed / evidence: `33 passed in 1.44s`.
+- `pytest tests/test_document_parser.py -v`: Not run / evidence or reason: `backend/tests/test_document_parser.py` does not exist yet; parser fixture tests are explicitly scheduled for Batch04, so closest feasible local checks were run instead.
+
+## Acceptance Check
+- Task acceptance condition: Supported types route to the correct parser; empty or unsupported documents raise clear parser errors.
+- Status: satisfied
+- Evidence: Focused smoke check replaced registered parsers and confirmed `parse_document` dispatches by normalized file type, raises `EmptyDocumentError` for whitespace-only parsed text, and raises `UnsupportedDocumentTypeError` for unsupported types. The service also wraps `UnicodeDecodeError` into `DocumentDecodingError` and rejects non-byte content with `UnreadableDocumentError` using safe messages.
+
+## Artifacts Produced
+- Parser service entrypoint and parser error types in `backend/app/services/document_parser.py`.
+- Appended execution report in `docs/reports/report_4_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (01C) acceptance and feasible local validation were satisfied; sibling Batch01 tasks (01D) and (01E) remain incomplete.
+
+## Key Implementation Decisions
+- Used the existing `SUPPORTED_DOCUMENT_TYPES` set from upload validation so parser dispatch recognizes the same file types as upload validation.
+- Kept parser-specific implementations as explicit not-ready placeholders to preserve dispatch boundaries without implementing PDF, DOCX, TXT, or CSV extraction behavior early.
+- Kept parser error messages safe by reporting file type and failure category only, never raw file contents.
+
+## Risks or Open Issues
+- Real PDF, DOCX, TXT, and CSV parsing is not implemented by this task and remains for (01D) and (01E).
+- Full parser fixture pytest coverage remains scheduled for Batch04.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, user-action requirements, or architecture concerns identified.
+- Dependency (01B) was confirmed complete and A2 accepted via `docs/review/review_4_review_agent.md`; commit `8f0b09b P4B1B01: Complete` exists.
+
+## Notes for Next Task
+- next task ID: (01D)
+- can proceed: yes
+- handoff notes: Replace the PDF, DOCX, and TXT placeholder parser callables in `backend/app/services/document_parser.py` with real parsers while preserving the public `parse_document` dispatch and common parser error behavior.

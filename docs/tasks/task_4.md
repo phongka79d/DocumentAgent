@@ -130,7 +130,7 @@ Chunking and processing cannot be implemented safely until each supported docume
   - Blocked Condition: None.
   - Files: `backend/app/schemas/parsing.py`, `backend/app/schemas/__init__.py`
 
-- [ ] (01C): Implement parser dispatch and parser errors
+- [x] (01C): Implement parser dispatch and parser errors
   - Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Implement `parse_document(file_bytes, file_type, file_name)`.
@@ -719,7 +719,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch01
 - [x] (01A): Add parser dependencies and fixture-friendly setup
 - [x] (01B): Add parsed section and chunk draft schemas
-- [ ] (01C): Implement parser dispatch and parser errors
+- [x] (01C): Implement parser dispatch and parser errors
 - [ ] (01D): Implement PDF, DOCX, and TXT parsers
 - [ ] (01E): Implement CSV parser with row metadata
 

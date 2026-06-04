@@ -342,3 +342,184 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- Task ID: (01C)
+- Task title: Implement parser dispatch and parser errors
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `## 3. Scope`; `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01C)
+- Reviewed task ID: (01C)
+- Correct selection: yes
+- Notes: The latest matching `(01C)` execution report was selected and reviewed only for parser dispatch and parser error scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_4_execute_agent.md`, `docs/tasks/task_4.md`
+- untracked files: `backend/app/services/document_parser.py`
+
+## Files Reviewed
+- `backend/app/services/document_parser.py`: in scope - parser dispatch entrypoint, parser error classes, supported-type registry, safe wrapping, and empty-content validation.
+- `docs/tasks/task_4.md`: in scope - `(01C)` task checkbox and progress tracker updated; sibling `(01D)` and `(01E)` remain unchecked.
+- `docs/reports/report_4_execute_agent.md`: in scope - `(01C)` execution report appended after prior reports.
+- `backend/app/schemas/parsing.py`: in scope - dependency contract for `ParsedSection` used by parser dispatch.
+- `backend/app/schemas/__init__.py`: in scope - schema export context from accepted dependency `(01B)`.
+- `backend/app/utils/file_validation.py`: in scope - source for supported document types used by parser dispatch.
+- `docs/plans/Plan_4.md`: in scope - cited source-of-truth sections reviewed.
+- `docs/review/review_4_review_agent.md`: in scope - dependency evidence and append target reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/document_parser.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Present as an untracked created file; it must be included in the task commit.
+- file from execution report: `docs/tasks/task_4.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Only `(01C)` task/progress checkboxes changed.
+- file from execution report: `docs/reports/report_4_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(01C)` report was appended, not overwritten.
+
+## Dependency Review
+- Required dependencies: `(01B)`
+- Dependency status: satisfied; prior A2 review accepted `(01B)` in `docs/review/review_4_review_agent.md`, and commit `8f0b09b P4B1B01: Complete` exists.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: The implementation creates the required backend parser service entrypoint, keeps parser extraction implementation deferred to `(01D)` and `(01E)`, reuses upload-supported file types, exposes explicit parser error classes, and avoids embeddings, Qdrant, GraphRAG, retrieval, agents, OCR, frontend polling, and database schema changes.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `parse_document(file_bytes, file_type, file_name)` normalizes file type, rejects unsupported types, dispatches through `_PARSERS`, wraps `UnicodeDecodeError` and generic parser failures into safe parser errors, rejects non-byte input, and raises `EmptyDocumentError` for empty parsed output. The supported-type parser callables are explicit not-ready placeholders, which is acceptable for `(01C)` because real PDF/DOCX/TXT/CSV extraction remains assigned to `(01D)` and `(01E)`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Dispatch keys come from `SUPPORTED_DOCUMENT_TYPES`; no fixture strings, filenames, expected answers, secrets, embeddings, or external-service values are hardcoded into runtime parser logic.
+
+## Validations Reviewed
+- Command/check: `python -m compileall app\services\document_parser.py` from `backend`
+- Reported result: passed
+- Rerun result: passed; exit code 0
+- Status: passed
+- Notes: Fresh compile validation completed successfully.
+- Command/check: `pytest -q` from `backend`
+- Reported result: passed, `33 passed in 1.44s`
+- Rerun result: passed, `33 passed in 1.12s`
+- Status: passed
+- Notes: Existing backend test suite remains green.
+- Command/check: focused dispatch/error smoke check from `backend` using substituted parser callables
+- Reported result: passed
+- Rerun result: passed, printed `dispatch smoke ok`
+- Status: passed
+- Notes: Confirmed normalized supported-type dispatch, unsupported type failure, empty parsed text failure, decode error wrapping, non-byte rejection, and generic parser failure wrapping.
+- Command/check: `pytest tests/test_document_parser.py -v`
+- Reported result: not run; file does not exist yet and parser fixture tests are scheduled for Batch04.
+- Rerun result: not run
+- Status: not applicable for `(01C)`
+- Notes: Reviewer confirmed `backend/tests/test_document_parser.py` is not present.
+
+## Acceptance Review
+- Task acceptance: Supported types route to the correct parser; empty or unsupported documents raise clear parser errors.
+- Status: satisfied
+- Evidence: The focused smoke check substituted parser callables and proved the public dispatch mechanism routes normalized supported types to registered parser functions. Unsupported file types raise `UnsupportedDocumentTypeError`; whitespace-only parsed output raises `EmptyDocumentError`; decode and unreadable failures are wrapped in safe parser error types.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(01C)` marked complete in task entry and progress tracker.
+- Batch status: accurate; Batch01 remains unchecked because `(01D)` and `(01E)` are incomplete.
+- Execution report entry: present and appended after prior reports.
+- Review report entry: appended in this file.
+- Other: No sibling task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/app/services/document_parser.py` is untracked in git status and must be included with the task artifacts before commit.
+- Real PDF, DOCX, TXT, and CSV extraction is intentionally not implemented yet and remains for `(01D)` and `(01E)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(01A)`, `(01B)`, and `(01C)` are complete; `(01D)` and `(01E)` remain incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch01 - Parser Schemas, Dependencies, and File-Type Implementations",
+  "selected_task_id": "(01C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_parser.py",
+    "docs/tasks/task_4.md",
+    "docs/reports/report_4_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
