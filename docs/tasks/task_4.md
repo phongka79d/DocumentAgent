@@ -427,7 +427,7 @@ Plan 4 is complete only when parsed chunks are durable in Supabase PostgreSQL an
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/services/document_processing_service.py`, `backend/app/services/supabase_service.py`
 
-- [ ] (03D): Add a backend processing trigger only where source-supported
+- [x] (03D): Add a backend processing trigger only where source-supported
   - Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 8. API Design`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `# 13. Backend API Design` > `## 13.1 Upload Document`
   - Source Requirements:
     - Add a backend processing function that can be called after upload or manually in tests.
@@ -559,7 +559,7 @@ Plan 4 completion depends on evidence that each supported file type parses into 
   - Details: Add mocked service tests for successful processing and representative failure paths. Prove `processing`, `ready`, and `failed` status updates happen in the correct order and chunk insert payloads are shaped correctly.
   - Dependencies: Batch03.
   - User Action: None.
-  - Agent Work: Create `backend/tests/test_document_processing.py` with deterministic mocks for Supabase, parser, and chunking behavior where appropriate.
+  - Agent Work: Create or update `backend/tests/test_document_processing.py` with deterministic mocks for Supabase, parser, and chunking behavior where appropriate. Batch03 may seed processing tests needed to validate processing service tasks; Batch04 owns final coverage review and any missing mocked processing cases.
   - Output: Processing orchestration test coverage.
   - Acceptance: Tests verify successful chunk persistence, chunk count update, safe failure status, safe error messages, and `SINGLE_USER_ID` chunk ownership.
   - Validation: `cd backend` then `pytest tests/test_document_processing.py -v`
@@ -711,7 +711,7 @@ Optional future tracks are outside the mandatory chain.
 
 - [x] Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
 - [x] Batch02 - Chunking Configuration and Metadata-Preserving Splitter
-- [ ] Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- [x] Batch03 - Supabase Chunk Persistence and Processing Orchestration
 - [ ] Batch04 - Tests, Manual Validation, and Handoff
 
 ### Task IDs
@@ -733,7 +733,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03A): Add Supabase helpers for processing and chunk persistence
 - [x] (03B): Implement document processing orchestration service
 - [x] (03C): Implement safe failure handling and status transitions
-- [ ] (03D): Add a backend processing trigger only where source-supported
+- [x] (03D): Add a backend processing trigger only where source-supported
 
 #### Batch04
 - [ ] (04A): Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input

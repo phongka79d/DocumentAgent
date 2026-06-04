@@ -1189,3 +1189,89 @@ complete
 - next task ID: (03D)
 - can proceed: yes
 - handoff notes: Safe failure handling is now in place and validated; next task can decide whether an API/background processing trigger is needed without changing this failure contract.
+
+---
+
+# Task Execution Report - (03D)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch03 - Supabase Chunk Persistence and Processing Orchestration
+
+## Task
+(03D) - Add a backend processing trigger only where source-supported
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_4.md selected (03D) task block
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 6. Required Files and Folders
+- docs/plans/Plan_4.md > ## 8. API Design
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 11. Required Tests
+- docs/plans/Master_Plan.md > # 13. Backend API Design > ## 13.1 Upload Document
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- Task ID: (03D)
+- Task title: Add a backend processing trigger only where source-supported
+
+## Completed Work
+- Task is complete.
+- Verified `backend/app/services/document_processing_service.py` already exposes `process_document(document_id)` as a directly callable processing entrypoint for tests and future pipeline code.
+- Verified Plan 4 does not require a new public endpoint and the existing upload API contract should remain `document_id`, `file_name`, and `status`.
+- Made no backend API changes because no source-supported integration point was needed beyond the existing callable service function.
+
+## Files Created or Modified
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_document_processing.py -v`: Passed
+- evidence or reason: 9 tests passed, including direct `document_processing_service.process_document(DOCUMENT_ID)` success and failure-path coverage.
+- `cd backend; pytest tests/test_document_upload.py tests/test_document_api.py -v`: Passed
+- evidence or reason: 13 tests passed, confirming upload/list/detail behavior and upload response contract remained unchanged.
+
+## Acceptance Check
+- Task acceptance condition: Processing can be invoked manually in tests; any API integration preserves the approved upload response and status behavior.
+- Status: satisfied
+- Evidence: `tests/test_document_processing.py::test_process_document_orchestrates_success_path` directly invokes `document_processing_service.process_document(DOCUMENT_ID)` and passed. Upload/API regression tests passed without changing `POST /api/documents/upload` response behavior.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_4_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: `(03D)` acceptance and validation passed; Batch03 task IDs `(03A)` through `(03D)` are now all checked complete.
+
+## Key Implementation Decisions
+- Did not add an optional development-only `/api/documents/{document_id}/process` endpoint because Plan 4 says no new public endpoint is required and the existing processing service entrypoint is already directly callable by tests.
+- Did not trigger processing from upload because that would be an optional integration and is not needed to satisfy the selected task; preserving the approved upload response contract avoids unnecessary API behavior changes.
+
+## Risks or Open Issues
+- Live manual endpoint validation was not applicable because no endpoint was added.
+- Real Supabase processing validation remains a later Batch04/manual setup concern.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(03B)` and completed Plan 3 document API were already satisfied in the task file context.
+- No frontend polling, frontend changes, embeddings, Qdrant, GraphRAG, retrieval, agents, OCR, or database schema changes were introduced.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes
+- handoff notes: Batch03 is complete. Batch04 can add/verify parser, chunking, and processing tests plus manual validation without needing a new processing API endpoint.
