@@ -1468,3 +1468,190 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02D)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- Task ID: (02D)
+- Task title: Handle empty parsed sections and chunking edge cases
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_4.md > ## 1. Goal; ## 9. Implementation Steps; ## 11. Required Tests; ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02D)
+- Reviewed task ID: (02D)
+- Correct selection: yes
+- Notes: The final appended execution report entry is for (02D), matching the requested task ID and batch.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/services/chunking_service.py
+  - backend/tests/test_chunking_service.py
+  - docs/reports/report_4_execute_agent.md
+  - docs/tasks/task_4.md
+- untracked files: none shown by `git status --short`
+
+## Files Reviewed
+- `backend/app/services/chunking_service.py`: in scope - reviewed chunk validation, whitespace-section skipping, split behavior, chunk index assignment, and metadata draft construction.
+- `backend/tests/test_chunking_service.py`: in scope - reviewed existing metadata/determinism coverage and new empty/overlap boundary tests.
+- `docs/tasks/task_4.md`: in scope - reviewed selected task entry and progress tracker updates.
+- `docs/reports/report_4_execute_agent.md`: in scope - reviewed latest (02D) execution report entry and reported validation evidence.
+- `docs/plans/Plan_4.md`: in scope - reviewed cited sections for goal, implementation steps, required tests, and failure handling.
+- `docs/review/review_4_review_agent.md`: in scope - reviewed tail and prior Batch02 review outcomes before appending.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/chunking_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds explicit usable-text guard before splitting whitespace-only parsed sections.
+
+- file from execution report: backend/tests/test_chunking_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds tests for empty section lists, whitespace-only sections, mixed empty/usable sections, overlap boundary, and invalid settings.
+
+- file from execution report: docs/tasks/task_4.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Selected task and Batch02 progress tracker were marked complete after validation; previous Batch02 task reviews are accepted.
+
+- file from execution report: docs/reports/report_4_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest report entry is appended and accurately describes changed files and validation.
+
+## Dependency Review
+- Required dependencies: (01C), (02B)
+- Dependency status: satisfied; task file shows both checked complete, and prior review records show Batch02 predecessor tasks through (02C) accepted.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Batch02 remains a backend-only chunking service change; empty sections are skipped before splitting; usable sections still produce deterministic sequential `ChunkDraft` indexes; status transition work is not implemented early and remains assigned to Batch03/Batch04.
+- Failed: none
+- Uncertain: none for selected task. Processing-level failed-status behavior cannot be validated yet because processing orchestration is future scope, and the execution report states this accurately.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `chunk_sections` now skips sections whose text trims to empty and returns an empty list when no usable parsed text remains. Tests exercise the real public service rather than mocks.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-specific branches, expected IDs, document names, sample-only runtime behavior, secrets, or fake success values were found in the changed implementation. Test constants are ordinary unit-test inputs.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_chunking_service.py -v`
+- Reported result: Passed, 12 tests passed in 0.15s
+- Rerun result: Passed, 12 tests passed in 0.12s
+- Status: passed
+- Notes: Confirms metadata, deterministic indexes, empty input, whitespace-only input, mixed empty/usable input, maximum valid overlap, and invalid boundary failures.
+
+- Command/check: `rg -n "ocr|embedding|qdrant|graphrag|retrieval|agent|frontend|supabase|storage|database" backend/app/services/chunking_service.py backend/tests/test_chunking_service.py`
+- Reported result: Not specifically reported for (02D)
+- Rerun result: No matches; `rg` exit code 1 because no matches were found
+- Status: passed
+- Notes: No out-of-scope OCR, embedding, Qdrant, GraphRAG, retrieval, frontend, Supabase, storage, or database work was introduced in changed code/test files.
+
+- Command/check: Processing failure tests in Batch04
+- Reported result: Not run because `backend/tests/test_document_processing.py` does not exist yet and Batch04 is outside selected task scope
+- Rerun result: Not run
+- Status: not applicable for selected task
+- Notes: This is honestly reported and aligns with the decomposition where Batch03/Batch04 own processing status transitions.
+
+## Acceptance Review
+- Task acceptance: Empty or whitespace-only parsed content cannot silently produce a `ready` document with zero chunks.
+- Status: satisfied
+- Evidence: The chunking service now returns `[]` for empty/whitespace-only input and produces only non-empty chunks for mixed input. Since document `ready`/`failed` status does not exist until processing orchestration, this task provides the required chunking signal for future processing to fail clearly.
+
+## Progress Tracking
+- Selected task checkbox: checked, accurate
+- Batch status: Batch02 checked, accurate because (02A), (02B), and (02C) have accepted prior reviews and (02D) is accepted here
+- Execution report entry: appended, accurate
+- Review report entry: appended by this review
+- Other: Batch03 and Batch04 remain unchecked, accurate
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Processing-level prevention of `ready` with zero chunks remains a future Batch03/Batch04 responsibility; the report states this and does not claim it has been implemented.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, only for Batch02 because all Batch02 task IDs are complete and prior Batch02 task reviews were accepted
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch02 - Chunking Configuration and Metadata-Preserving Splitter",
+  "selected_task_id": "(02D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/chunking_service.py",
+    "backend/tests/test_chunking_service.py",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

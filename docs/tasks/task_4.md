@@ -294,7 +294,7 @@ Downstream embeddings, retrieval, citations, and processing status depend on dur
   - Blocked Condition: None.
   - Files: `backend/app/services/chunking_service.py`, `backend/tests/test_chunking_service.py`
 
-- [ ] (02D): Handle empty parsed sections and chunking edge cases
+- [x] (02D): Handle empty parsed sections and chunking edge cases
   - Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 11. Required Tests`; `docs/plans/Plan_4.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Empty or unreadable documents fail with a clear status and error message.
@@ -710,7 +710,7 @@ Optional future tracks are outside the mandatory chain.
 ### Batches
 
 - [x] Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
-- [ ] Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- [x] Batch02 - Chunking Configuration and Metadata-Preserving Splitter
 - [ ] Batch03 - Supabase Chunk Persistence and Processing Orchestration
 - [ ] Batch04 - Tests, Manual Validation, and Handoff
 
@@ -727,7 +727,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (02A): Add backend chunking configuration
 - [x] (02B): Implement recursive chunking service
 - [x] (02C): Preserve source metadata and deterministic chunk indexes
-- [ ] (02D): Handle empty parsed sections and chunking edge cases
+- [x] (02D): Handle empty parsed sections and chunking edge cases
 
 #### Batch03
 - [ ] (03A): Add Supabase helpers for processing and chunk persistence

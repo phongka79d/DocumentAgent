@@ -104,6 +104,10 @@ def _validate_chunk_settings(chunk_size: int, chunk_overlap: int) -> None:
         raise ValueError("chunk_overlap must be less than chunk_size.")
 
 
+def _has_usable_text(section: ParsedSection) -> bool:
+    return bool(section.text.strip())
+
+
 def _build_chunk_draft(
     *,
     section: ParsedSection,
@@ -134,6 +138,9 @@ def chunk_sections(
 
     chunks: list[ChunkDraft] = []
     for section in sections:
+        if not _has_usable_text(section):
+            continue
+
         for chunk_text in _split_section_text(
             section.text,
             chunk_size=chunk_size,

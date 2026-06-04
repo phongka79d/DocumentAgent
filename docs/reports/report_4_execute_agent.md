@@ -723,3 +723,89 @@ complete
 - next task ID: (02D)
 - can proceed: yes
 - handoff notes: Chunk drafts now preserve source metadata and deterministic indexes; next task can focus on empty parsed sections and chunking edge cases.
+---
+
+# Task Execution Report - (02D)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+
+## Task
+(02D) - Handle empty parsed sections and chunking edge cases
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 1. Goal
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 11. Required Tests
+- docs/plans/Plan_4.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- Task ID: (02D)
+- Task title: Handle empty parsed sections and chunking edge cases
+
+## Completed Work
+- Task complete.
+- Made empty-section handling explicit in `chunk_sections` by skipping parsed sections whose text trims to empty before splitting.
+- Added chunking edge-case tests for empty section lists, whitespace-only sections, mixed empty and usable sections, valid maximum overlap, and invalid chunk/overlap boundaries.
+- Confirmed chunking returns no chunks only when no usable text remains and preserves deterministic indexes when usable text remains.
+
+## Files Created or Modified
+- backend/app/services/chunking_service.py
+- backend/tests/test_chunking_service.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_chunking_service.py -v`: Passed
+- evidence or reason: 12 tests passed in 0.15s.
+- Processing failure tests in Batch04: Not run
+- evidence or reason: `backend/tests/test_document_processing.py` does not exist yet and Batch04 is outside the selected task scope.
+
+## Acceptance Check
+- Task acceptance condition: Empty or whitespace-only parsed content cannot silently produce a `ready` document with zero chunks.
+- Status: satisfied
+- Evidence: Chunking now explicitly skips empty parsed sections, returns `[]` for no usable parsed text, and test coverage proves empty/whitespace-only input behavior. Processing-level failed status validation remains assigned to Batch04 because processing tests are not present yet.
+
+## Artifacts Produced
+- Updated chunking service behavior.
+- Added edge-case chunking tests.
+- Appended execution report.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: `(02A)`, `(02B)`, `(02C)`, and `(02D)` are now checked complete and required `(02D)` validation passed.
+
+## Key Implementation Decisions
+- Kept chunking responsible for safely skipping empty parsed sections and returning an empty chunk list when no usable text remains.
+- Did not implement processing failure/status behavior because Batch03 and Batch04 own processing orchestration and failure tests.
+
+## Risks or Open Issues
+- Processing-level prevention of a `ready` document with zero chunks still depends on the future Batch03/Batch04 processing implementation and tests.
+
+## Minor Issues Fixed During Execution
+- Corrected a new test expectation after validation showed the selected overlap settings correctly produced three chunks, not two.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(01C)` and `(02B)` were checked complete before implementation.
+- No user action was required.
+- No sibling tasks or out-of-scope processing, Supabase, embedding, Qdrant, GraphRAG, retrieval, agent, OCR, frontend, or database work was implemented.
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes
+- handoff notes: Batch02 is complete. Chunking returns deterministic chunks for usable text, skips empty sections, and returns no chunks when no usable parsed text remains; processing should treat an empty chunk result as a failed document during Batch03/Batch04.

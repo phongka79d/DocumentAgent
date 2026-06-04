@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
 from uuid import UUID
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -142,3 +143,80 @@ def test_csv_row_metadata_is_preserved_across_multiple_chunks() -> None:
             "Probation Period",
             "Official Work Date",
         ]
+
+
+def test_empty_section_list_returns_no_chunks() -> None:
+    assert chunk_sections([], chunk_size=10, chunk_overlap=2) == []
+
+
+def test_whitespace_only_sections_are_skipped_safely() -> None:
+    sections = [
+        ParsedSection(
+            text="   \n\t  ",
+            file_name="blank.txt",
+            metadata={"source_type": "txt"},
+        ),
+        ParsedSection(
+            text="\n\n",
+            file_name="blank.pdf",
+            page_number=1,
+            metadata={"source_type": "pdf"},
+        ),
+    ]
+
+    assert chunk_sections(sections, chunk_size=10, chunk_overlap=2) == []
+
+
+def test_empty_sections_do_not_shift_chunk_indexes_for_usable_text() -> None:
+    sections = [
+        ParsedSection(text="   ", file_name="blank.txt", metadata={"source_type": "txt"}),
+        ParsedSection(
+            text="Usable content remains chunkable after empty sections.",
+            file_name="source.txt",
+            metadata={"source_type": "txt"},
+        ),
+        ParsedSection(text="\n", file_name="blank.csv", metadata={"source_type": "csv"}),
+    ]
+
+    chunks = chunk_sections(sections, chunk_size=3, chunk_overlap=1)
+
+    assert [chunk.chunk_index for chunk in chunks] == [0, 1, 2]
+    assert all(chunk.file_name == "source.txt" for chunk in chunks)
+    assert all(chunk.content.strip() for chunk in chunks)
+
+
+def test_overlap_boundary_accepts_one_less_than_chunk_size() -> None:
+    section = ParsedSection(
+        text="one two three four five six",
+        file_name="boundary.txt",
+        metadata={"source_type": "txt"},
+    )
+
+    chunks = chunk_sections([section], chunk_size=3, chunk_overlap=2)
+
+    assert [chunk.content for chunk in chunks] == [
+        "one two three",
+        "two three four",
+        "three four five",
+        "four five six",
+    ]
+    assert [chunk.chunk_index for chunk in chunks] == [0, 1, 2, 3]
+
+
+@pytest.mark.parametrize(
+    ("chunk_size", "chunk_overlap", "expected_message"),
+    [
+        (0, 0, "chunk_size must be greater than 0."),
+        (3, -1, "chunk_overlap must be greater than or equal to 0."),
+        (3, 3, "chunk_overlap must be less than chunk_size."),
+    ],
+)
+def test_invalid_overlap_boundaries_fail_clearly(
+    chunk_size: int,
+    chunk_overlap: int,
+    expected_message: str,
+) -> None:
+    section = ParsedSection(text="one two three", file_name="source.txt")
+
+    with pytest.raises(ValueError, match=expected_message):
+        chunk_sections([section], chunk_size=chunk_size, chunk_overlap=chunk_overlap)
