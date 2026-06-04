@@ -77,3 +77,92 @@ complete
 - next task ID: (01B)
 - can proceed: yes
 - handoff notes: Parser dependencies are declared and importable; next task can add ParsedSection and ChunkDraft schemas.
+
+---
+
+# Task Execution Report - (01B)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+
+## Task
+(01B) - Add parsed section and chunk draft schemas
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_4.md` > `## 3. Scope`
+- `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_4.md` > `## 9. Implementation Steps`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- Task ID: (01B)
+- Task title: Add parsed section and chunk draft schemas
+
+## Completed Work
+- Status: complete.
+- Created shared parsing schemas for parsed parser output and chunk draft data.
+- Added `ParsedSection` with text, page number, section title, file name, and metadata fields.
+- Added `ChunkDraft` with insert-relevant chunk content, chunk index, token count, optional document/user IDs, page number, section title, file name, metadata, and default null `qdrant_point_id`.
+- Exported both models through the existing schemas package style.
+
+## Files Created or Modified
+- backend/app/schemas/parsing.py
+- backend/app/schemas/__init__.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -c "from app.schemas import ParsedSection, ChunkDraft; from uuid import uuid4; section = ParsedSection(text='Section text', page_number=1, section_title='Intro', file_name='sample.pdf', metadata={'source_type': 'pdf'}); chunk = ChunkDraft(document_id=uuid4(), user_id='single_user', content='Chunk text', chunk_index=0, token_count=2, page_number=section.page_number, section_title=section.section_title, file_name=section.file_name, metadata={'source_type': 'pdf', 'csv_row_index': 12}); assert section.metadata['source_type'] == 'pdf'; assert chunk.chunk_index == 0; assert chunk.qdrant_point_id is None; print('parsing schemas ok')"`: Passed
+- evidence or reason: printed `parsing schemas ok`.
+- `cd backend; python -m compileall app/schemas`: Passed
+- evidence or reason: compiled `app/schemas/__init__.py` and `app/schemas/parsing.py` successfully.
+- `cd backend; pytest tests/test_document_parser.py -v`: Not run
+- evidence or reason: selected task validation states parser and chunking tests run in Batch04; parser implementation/tests are not in scope for (01B).
+- `cd backend; pytest tests/test_chunking_service.py -v`: Not run
+- evidence or reason: selected task validation states parser and chunking tests run in Batch04; chunking implementation/tests are not in scope for (01B).
+
+## Acceptance Check
+- Task acceptance condition: Models represent the parsed section shape and chunk draft data needed for insertion into `document_chunks`.
+- Status: satisfied
+- Evidence: `ParsedSection` preserves parsed text, page number, section title, file name, and metadata for source type/CSV row context; `ChunkDraft` preserves chunk ordering, content, token count, page/section metadata, file/source metadata, optional document/user ownership for insert preparation, and null `qdrant_point_id`.
+
+## Artifacts Produced
+- backend/app/schemas/parsing.py
+- docs/reports/report_4_execute_agent.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (01B) acceptance and local validation were satisfied; sibling Batch01 tasks remain incomplete.
+
+## Key Implementation Decisions
+- Kept `metadata` as `dict[str, Any]` on both models so source type and CSV row details can be carried without adding database schema changes.
+- Made `document_id` and `user_id` optional on `ChunkDraft` so chunking can create drafts before processing attaches insert ownership, while processing can still use the same model for insert-ready data.
+
+## Risks or Open Issues
+- Parser, chunking, and processing services are not implemented by this task and remain for later task IDs.
+- Full parser and chunking pytest validation remains scheduled for Batch04.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, user-action requirements, or architecture concerns identified.
+
+## Notes for Next Task
+- next task ID: (01C)
+- can proceed: yes
+- handoff notes: `ParsedSection` and `ChunkDraft` are importable from `app.schemas` and ready for parser dispatch and later chunking service implementation.

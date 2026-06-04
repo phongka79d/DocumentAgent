@@ -4,10 +4,13 @@ from app.schemas.documents import (
     DocumentListResponse,
     DocumentUploadResponse,
 )
+from app.schemas.parsing import ChunkDraft, ParsedSection
 
 __all__ = [
+    "ChunkDraft",
     "DocumentDetailResponse",
     "DocumentListItem",
     "DocumentListResponse",
     "DocumentUploadResponse",
+    "ParsedSection",
 ]

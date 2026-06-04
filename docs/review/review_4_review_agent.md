@@ -167,3 +167,178 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01B)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- Task ID: (01B)
+- Task title: Add parsed section and chunk draft schemas
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `## 6. Required Files and Folders`; `## 7. Data Model / Schema Changes`; `## 9. Implementation Steps`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01B)
+- Reviewed task ID: (01B)
+- Correct selection: yes
+- Notes: Latest matching execution report entry is for the requested task ID and selected batch.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/schemas/__init__.py`, `docs/reports/report_4_execute_agent.md`, `docs/tasks/task_4.md`
+- untracked files: `backend/app/schemas/parsing.py`
+
+## Files Reviewed
+- `backend/app/schemas/parsing.py`: in scope - new ParsedSection and ChunkDraft Pydantic models.
+- `backend/app/schemas/__init__.py`: in scope - exports ParsedSection and ChunkDraft using existing schema package style.
+- `backend/app/schemas/documents.py`: in scope - checked existing schema style and Pydantic conventions.
+- `docs/tasks/task_4.md`: in scope - selected task and progress tracking updated only for (01B).
+- `docs/reports/report_4_execute_agent.md`: in scope - appended execution report for (01B).
+- `docs/plans/Plan_4.md`: in scope - cited source sections checked.
+- `docs/review/review_4_review_agent.md`: in scope - checked prior (01A) accepted dependency evidence and append location.
+
+## Reported Files Cross-Check
+- `backend/app/schemas/parsing.py`: present in git/repo: yes; matches task scope: yes; notes: untracked new file, content matches schema task.
+- `backend/app/schemas/__init__.py`: present in git/repo: yes; matches task scope: yes; notes: exports new models.
+- `docs/tasks/task_4.md`: present in git/repo: yes; matches task scope: yes; notes: (01B) marked complete in task entry and progress tracker only.
+- `docs/reports/report_4_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: report appended after prior (01A) report.
+
+## Dependency Review
+- Required dependencies: Completed Plan 1 schema package layout; (01A) parser dependencies accepted by A2 review per `docs/review/review_4_review_agent.md` and user-provided commit evidence `b78607c P4B1A01: Complete`.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Models are backend Pydantic schemas in the required path, exported through `app.schemas`, preserve parsed-section and chunk-draft metadata, and do not alter database schema or add out-of-scope pipeline work.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `ParsedSection` and `ChunkDraft` are concrete Pydantic models with typed fields, validation constraints for nonnegative chunk index/token count and positive page numbers, metadata default factories, and importable package exports.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture strings, fixed IDs, fake parser output, secrets, embeddings, Qdrant calls, OCR, retrieval, or frontend work added.
+
+## Validations Reviewed
+- Command/check: `python -c "from app.schemas import ParsedSection, ChunkDraft; ...; print('parsing schemas ok')"` from `backend`
+- Reported result: Passed, printed `parsing schemas ok`.
+- Rerun result: Passed, printed `parsing schemas ok`.
+- Status: passed
+- Notes: Confirms both models import and instantiate with expected metadata and default `qdrant_point_id` null.
+
+- Command/check: `python -m compileall app/schemas` from `backend`
+- Reported result: Passed.
+- Rerun result: Passed, listed `app/schemas` without errors.
+- Status: passed
+- Notes: Confirms schema package compiles.
+
+- Command/check: `pytest tests/test_document_parser.py -v`
+- Reported result: Not run.
+- Rerun result: Not run.
+- Status: not required for this task
+- Notes: Parser implementation/tests are scheduled for later Batch01/Batch04 tasks; not required for schema-only (01B).
+
+- Command/check: `pytest tests/test_chunking_service.py -v`
+- Reported result: Not run.
+- Rerun result: Not run.
+- Status: not required for this task
+- Notes: Chunking implementation/tests are scheduled for later Batch02/Batch04 tasks; not required for schema-only (01B).
+
+## Acceptance Review
+- Task acceptance: Models represent the parsed section shape and chunk draft data needed for insertion into `document_chunks`.
+- Status: satisfied
+- Evidence: `ParsedSection` includes text, page number, section title, file name, and metadata. `ChunkDraft` includes content, deterministic index field, token count, optional document/user ownership, page/section/file metadata, metadata map, and default null `qdrant_point_id`.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (01B) marked complete in task entry and progress tracker.
+- Batch status: accurate; Batch01 remains unchecked because (01C), (01D), and (01E) remain incomplete.
+- Execution report entry: present and appended after prior report.
+- Review report entry: appended in this file.
+- Other: No sibling task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/app/schemas/parsing.py` is still untracked in git status and must be included with the task artifacts before commit.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (01A) and (01B) are complete and sibling Batch01 tasks remain incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch01 - Parser Schemas, Dependencies, and File-Type Implementations",
+  "selected_task_id": "(01B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/schemas/parsing.py",
+    "backend/app/schemas/__init__.py",
+    "docs/tasks/task_4.md",
+    "docs/reports/report_4_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

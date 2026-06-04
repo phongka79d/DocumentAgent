@@ -114,7 +114,7 @@ Chunking and processing cannot be implemented safely until each supported docume
   - Blocked Condition: None.
   - Files: `backend/requirements.txt`
 
-- [ ] (01B): Add parsed section and chunk draft schemas
+- [x] (01B): Add parsed section and chunk draft schemas
   - Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Add a common parsed document structure.
@@ -718,7 +718,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch01
 - [x] (01A): Add parser dependencies and fixture-friendly setup
-- [ ] (01B): Add parsed section and chunk draft schemas
+- [x] (01B): Add parsed section and chunk draft schemas
 - [ ] (01C): Implement parser dispatch and parser errors
 - [ ] (01D): Implement PDF, DOCX, and TXT parsers
 - [ ] (01E): Implement CSV parser with row metadata
