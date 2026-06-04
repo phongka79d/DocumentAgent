@@ -2230,3 +2230,181 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- Task ID: (03C)
+- Task title: Implement safe failure handling and status transitions
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_4.md > ## 1. Goal; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; ## 12. Acceptance Criteria; ## 13. Failure Handling; ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is for the requested (03C) task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/services/document_processing_service.py
+  - backend/tests/test_document_processing.py
+  - docs/reports/report_4_execute_agent.md
+  - docs/tasks/task_4.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/document_processing_service.py`: in scope - adds failed-status handling, safe error normalization, and zero-chunk prevention inside `process_document`.
+- `backend/tests/test_document_processing.py`: in scope - adds mocked processing failure tests and preserves the success-path test.
+- `docs/tasks/task_4.md`: in scope - marks only (03C) complete in the task entry and progress tracker; (03D) remains unchecked.
+- `docs/reports/report_4_execute_agent.md`: in scope - contains the selected (03C) execution report appended after prior entries.
+- `backend/app/services/supabase_service.py`: in scope - reviewed referenced helper contracts for document lookup, storage download, chunk insert, status update, and safe Supabase errors.
+- `docs/plans/Plan_4.md`: in scope - reviewed cited source sections for status transitions, acceptance, failure handling, and reviewer checklist.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/document_processing_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Production failure handling is present.
+- file from execution report: backend/tests/test_document_processing.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Targeted processing failure tests are present.
+- file from execution report: docs/tasks/task_4.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Progress tracker update matches (03C) only.
+- file from execution report: docs/reports/report_4_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is present and appended.
+
+## Dependency Review
+- Required dependencies: (03B)
+- Dependency status: satisfied; task tracker shows (03B) complete and the success-path processing test remains present.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: `process_document(document_id)` remains the backend processing boundary, updates `processing` before work, writes `failed` with safe messages on handled failures, writes `ready` only after chunk count update, and does not add database schema, API/background trigger, frontend polling, embeddings, Qdrant vectors, GraphRAG, retrieval, agents, or OCR.
+- Failed: none
+- Uncertain: Live Supabase behavior was not validated, but this task requires mocked tests and no live setup was required.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code catches parser, storage/persistence, processing, and zero-chunk failures, updates failed status, and re-raises `DocumentProcessingError`; tests monkeypatch service collaborators but exercise the real `process_document` failure path.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses settings and service helpers. Fixed UUID/path values appear only as deterministic test fixtures and are not used by runtime logic.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_document_processing.py -v` from `backend`
+- Reported result: passed, 9 tests in 0.95s
+- Rerun result: passed, 9 tests in 1.14s
+- Status: passed
+- Notes: Covers success path plus missing storage/download failure, generic parser failure, empty parsed document, unsupported type, CSV decoding failure, empty chunk output, chunk insert failure, and empty insert response.
+- Command/check: scope and secret keyword inspection of changed production/test files
+- Reported result: no sibling (03D) trigger or out-of-scope work reported
+- Rerun result: no API/background trigger, frontend, OCR, embedding, Qdrant, GraphRAG, retrieval, agent, or hardcoded secret implementation found in changed production/test files; only expected `qdrant_point_id` assertion appears in tests.
+- Status: passed
+- Notes: `docs/tasks` and `docs/reports` contain historical/out-of-scope mentions as plan/report text, not implementation.
+
+## Acceptance Review
+- Task acceptance: Processing tests prove each failure path updates status to `failed` and never reports success with zero chunks.
+- Status: satisfied
+- Evidence: The parametrized failure test asserts `processing` then `failed`, no `ready`, and no zero chunk-count update for all selected failure cases; the success-path test still asserts `ready` only after chunk count update.
+
+## Progress Tracking
+- Selected task checkbox: accurate; (03C) is checked.
+- Batch status: accurate; Batch03 remains unchecked because (03D) is still unchecked.
+- Execution report entry: present and appended.
+- Review report entry: appended by this review.
+- Other: No sibling task (03D) completion was accepted or marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live Supabase validation was not run and is not required for this mocked-test task.
+- If writing the failed status itself fails, the implementation raises a distinct `DocumentProcessingError`; this is reported as a risk and is acceptable for this task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (03C) is accepted here and (03D) remains incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch03 - Supabase Chunk Persistence and Processing Orchestration",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_processing_service.py",
+    "backend/tests/test_document_processing.py",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

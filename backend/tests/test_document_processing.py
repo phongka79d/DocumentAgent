@@ -2,10 +2,19 @@ from pathlib import Path
 import sys
 from uuid import UUID
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.schemas.parsing import ChunkDraft, ParsedSection
 from app.services import document_processing_service
+from app.services.document_parser import (
+    DocumentDecodingError,
+    DocumentParserError,
+    EmptyDocumentError,
+    UnsupportedDocumentTypeError,
+)
+from app.services.supabase_service import SupabaseConnectionError
 
 
 class _ProcessingSettings:
@@ -14,10 +23,21 @@ class _ProcessingSettings:
     chunk_overlap_tokens = 150
 
 
+DOCUMENT_ID = UUID("00000000-0000-0000-0000-000000000123")
+DOCUMENT_ID_TEXT = str(DOCUMENT_ID)
+STORAGE_PATH = f"documents/single_user/{DOCUMENT_ID_TEXT}/sample.txt"
+
+
+def _document_row(*, file_type: str = "txt") -> dict:
+    return {
+        "id": DOCUMENT_ID_TEXT,
+        "file_name": f"sample.{file_type}",
+        "file_type": file_type,
+        "storage_path": STORAGE_PATH,
+    }
+
+
 def test_process_document_orchestrates_success_path(monkeypatch):
-    document_id = UUID("00000000-0000-0000-0000-000000000123")
-    document_id_text = str(document_id)
-    storage_path = f"documents/single_user/{document_id_text}/sample.txt"
     calls: list[tuple] = []
 
     def fake_get_settings():
@@ -25,12 +45,7 @@ def test_process_document_orchestrates_success_path(monkeypatch):
 
     def fake_get_processing_document(received_document_id: str):
         calls.append(("get_document", received_document_id))
-        return {
-            "id": received_document_id,
-            "file_name": "sample.txt",
-            "file_type": "txt",
-            "storage_path": storage_path,
-        }
+        return _document_row()
 
     def fake_update_document_status(
         received_document_id: str,
@@ -78,7 +93,7 @@ def test_process_document_orchestrates_success_path(monkeypatch):
                 content="Uploaded document text.",
                 chunk_index=0,
                 token_count=3,
-                document_id=document_id,
+                document_id=DOCUMENT_ID,
                 user_id="single_user",
                 file_name="sample.txt",
                 metadata=sections[0].metadata,
@@ -140,21 +155,21 @@ def test_process_document_orchestrates_success_path(monkeypatch):
         fake_update_document_chunk_count,
     )
 
-    result = document_processing_service.process_document(document_id)
+    result = document_processing_service.process_document(DOCUMENT_ID)
 
-    assert result.document_id == document_id
+    assert result.document_id == DOCUMENT_ID
     assert result.status == "ready"
     assert result.chunk_count == 1
     assert calls == [
-        ("get_document", document_id_text),
-        ("status", document_id_text, "processing", None),
-        ("download", storage_path),
+        ("get_document", DOCUMENT_ID_TEXT),
+        ("status", DOCUMENT_ID_TEXT, "processing", None),
+        ("download", STORAGE_PATH),
         ("parse", b"Uploaded document text.", "txt", "sample.txt"),
         (
             "chunk",
             {
                 "source_type": "txt",
-                "document_id": document_id_text,
+                "document_id": DOCUMENT_ID_TEXT,
                 "user_id": "single_user",
                 "file_name": "sample.txt",
             },
@@ -162,12 +177,192 @@ def test_process_document_orchestrates_success_path(monkeypatch):
             1000,
             150,
         ),
-        ("insert_chunks", document_id_text, calls[5][2]),
-        ("chunk_count", document_id_text, 1),
-        ("status", document_id_text, "ready", None),
+        ("insert_chunks", DOCUMENT_ID_TEXT, calls[5][2]),
+        ("chunk_count", DOCUMENT_ID_TEXT, 1),
+        ("status", DOCUMENT_ID_TEXT, "ready", None),
     ]
 
     inserted_chunks = calls[5][2]
-    assert inserted_chunks[0].document_id == document_id
+    assert inserted_chunks[0].document_id == DOCUMENT_ID
     assert inserted_chunks[0].user_id == "single_user"
     assert inserted_chunks[0].qdrant_point_id is None
+
+
+def _install_default_processing_mocks(monkeypatch, calls: list[tuple]) -> None:
+    def fake_get_settings():
+        return _ProcessingSettings()
+
+    def fake_get_processing_document(received_document_id: str):
+        calls.append(("get_document", received_document_id))
+        return _document_row()
+
+    def fake_update_document_status(
+        received_document_id: str,
+        status: str,
+        *,
+        error_message: str | None = None,
+    ):
+        calls.append(("status", received_document_id, status, error_message))
+        return {
+            "id": received_document_id,
+            "status": status,
+            "error_message": error_message,
+        }
+
+    def fake_download_original_document_file(received_storage_path: str):
+        calls.append(("download", received_storage_path))
+        return b"Uploaded document text."
+
+    def fake_parse_document(file_bytes: bytes, file_type: str, file_name: str):
+        calls.append(("parse", file_bytes, file_type, file_name))
+        return [
+            ParsedSection(
+                text="Uploaded document text.",
+                file_name=file_name,
+                metadata={"source_type": file_type},
+            )
+        ]
+
+    def fake_chunk_sections(
+        sections: list[ParsedSection],
+        chunk_size: int,
+        chunk_overlap: int,
+    ):
+        calls.append(("chunk", chunk_size, chunk_overlap))
+        return [
+            ChunkDraft(
+                content="Uploaded document text.",
+                chunk_index=0,
+                token_count=3,
+                document_id=DOCUMENT_ID,
+                user_id="single_user",
+                file_name="sample.txt",
+                metadata=sections[0].metadata,
+            )
+        ]
+
+    def fake_insert_document_chunks(
+        received_document_id: str,
+        chunks: list[ChunkDraft],
+    ):
+        calls.append(("insert_chunks", received_document_id, chunks))
+        return [{"id": "chunk-1", "chunk_index": chunks[0].chunk_index}]
+
+    def fake_update_document_chunk_count(
+        received_document_id: str,
+        chunk_count: int,
+    ):
+        calls.append(("chunk_count", received_document_id, chunk_count))
+        return {"id": received_document_id, "chunk_count": chunk_count}
+
+    monkeypatch.setattr(document_processing_service, "get_settings", fake_get_settings)
+    monkeypatch.setattr(
+        document_processing_service,
+        "get_processing_document",
+        fake_get_processing_document,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "update_document_status",
+        fake_update_document_status,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "download_original_document_file",
+        fake_download_original_document_file,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "parse_document",
+        fake_parse_document,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "chunk_sections",
+        fake_chunk_sections,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "insert_document_chunks",
+        fake_insert_document_chunks,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "update_document_chunk_count",
+        fake_update_document_chunk_count,
+    )
+
+
+@pytest.mark.parametrize(
+    ("patch_name", "failure", "expected_message"),
+    [
+        (
+            "download_original_document_file",
+            SupabaseConnectionError("Supabase operation 'storage download' failed: FileNotFoundError."),
+            "Document storage or persistence operation failed.",
+        ),
+        (
+            "parse_document",
+            DocumentParserError("Raw parser details should not leak."),
+            "Document parser failed.",
+        ),
+        (
+            "parse_document",
+            EmptyDocumentError("Parsed document is empty."),
+            "Parsed document is empty.",
+        ),
+        (
+            "parse_document",
+            UnsupportedDocumentTypeError("Unsupported document type: exe."),
+            "Unsupported document type.",
+        ),
+        (
+            "parse_document",
+            DocumentDecodingError("Could not decode CSV document."),
+            "Could not decode CSV document.",
+        ),
+        (
+            "chunk_sections",
+            [],
+            "Parsed document produced no chunks.",
+        ),
+        (
+            "insert_document_chunks",
+            SupabaseConnectionError("Supabase operation 'document chunk insert' failed: APIError."),
+            "Document storage or persistence operation failed.",
+        ),
+        (
+            "insert_document_chunks",
+            [],
+            "Chunk persistence returned no chunks.",
+        ),
+    ],
+)
+def test_process_document_marks_failures_failed(
+    monkeypatch,
+    patch_name,
+    failure,
+    expected_message,
+):
+    calls: list[tuple] = []
+    _install_default_processing_mocks(monkeypatch, calls)
+
+    if isinstance(failure, Exception):
+        def failing_replacement(*_args, **_kwargs):
+            calls.append((patch_name, "failed"))
+            raise failure
+    else:
+        def failing_replacement(*_args, **_kwargs):
+            calls.append((patch_name, "empty"))
+            return failure
+
+    monkeypatch.setattr(document_processing_service, patch_name, failing_replacement)
+
+    with pytest.raises(document_processing_service.DocumentProcessingError) as exc_info:
+        document_processing_service.process_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == expected_message
+    assert ("status", DOCUMENT_ID_TEXT, "processing", None) in calls
+    assert ("status", DOCUMENT_ID_TEXT, "failed", expected_message) in calls
+    assert ("status", DOCUMENT_ID_TEXT, "ready", None) not in calls
+    assert not any(call[0] == "chunk_count" and call[2] == 0 for call in calls)

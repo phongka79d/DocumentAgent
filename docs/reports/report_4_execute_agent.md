@@ -1104,3 +1104,88 @@ complete
 - next task ID: (03C)
 - can proceed: yes
 - handoff notes: `(03B)` now has a passing mocked success-path validation. `(03C)` should add safe failure handling and failed-status updates.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch03 - Supabase Chunk Persistence and Processing Orchestration
+
+## Task
+(03C) - Implement safe failure handling and status transitions
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 1. Goal
+- docs/plans/Plan_4.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_4.md > ## 13. Failure Handling
+- docs/plans/Plan_4.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- Task ID: (03C)
+- Task title: Implement safe failure handling and status transitions
+
+## Completed Work
+- Complete.
+- Updated process_document to set status processing before work, catch expected processing/parser/storage/chunk failures, write failed status with a safe concise error_message, and re-raise DocumentProcessingError consistently with the existing service pattern.
+- Added explicit no-success-with-zero-chunks handling for empty chunk output and empty chunk insert response.
+- Added mocked processing tests for missing storage/download failure, generic parser failure, empty parsed document, unsupported type, CSV decoding failure, empty chunk output, chunk insert failure, and empty insert response.
+
+## Files Created or Modified
+- backend/app/services/document_processing_service.py
+- backend/tests/test_document_processing.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_document_processing.py -v: Passed
+- evidence or reason: 9 tests passed in 0.95s from backend.
+
+## Acceptance Check
+- Task acceptance condition: Processing tests prove each failure path updates status to failed and never reports success with zero chunks.
+- Status: satisfied
+- Evidence: tests/test_document_processing.py covers failure status writes and asserts no ready status or zero chunk_count update for handled failure paths; required pytest command passed.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_4_execute_agent.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (03C) passed validation; Batch03 still has (03D) unchecked.
+
+## Key Implementation Decisions
+- process_document re-raises DocumentProcessingError after writing failed status, preserving the existing exception-oriented service pattern instead of returning a failed result model.
+- Safe public error messages are normalized by failure category to avoid leaking raw parser, storage, or persistence details.
+
+## Risks or Open Issues
+- If writing failed status itself fails, process_document raises a DocumentProcessingError indicating failed status could not be saved.
+- No live Supabase validation was required for this mocked-test task.
+
+## Minor Issues Fixed During Execution
+- Added targeted mocked processing failure tests required to prove the selected task acceptance.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (03B) was already marked complete.
+- No sibling (03D) API/background trigger, frontend polling, database schema change, embeddings, Qdrant, GraphRAG, retrieval, agents, or OCR work was implemented.
+
+## Notes for Next Task
+- next task ID: (03D)
+- can proceed: yes
+- handoff notes: Safe failure handling is now in place and validated; next task can decide whether an API/background processing trigger is needed without changing this failure contract.
