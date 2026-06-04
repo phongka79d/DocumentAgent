@@ -448,3 +448,97 @@ complete
 - next task ID: (02A)
 - can proceed: yes
 - handoff notes: Batch01 parser foundation is complete. Batch02 can begin chunking configuration and metadata-preserving splitting.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+
+## Task
+(02A) - Add backend chunking configuration
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 6. Required Files and Folders
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 10. Configuration and Environment Variables
+- docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.3 Chunking Strategy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- Task ID: (02A)
+- Task title: Add backend chunking configuration
+
+## Completed Work
+- Task is complete.
+- Added typed backend settings for `CHUNK_SIZE_TOKENS` and `CHUNK_OVERLAP_TOKENS` with defaults of `1000` and `150`.
+- Added validation requiring positive chunk size, non-negative overlap, and overlap less than chunk size.
+- Added optional backend-only chunk settings placeholders to `backend/.env.example`.
+- Added focused config tests for defaults, overrides, and invalid overlap.
+
+## Files Created or Modified
+- backend/app/core/config.py
+- backend/.env.example
+- backend/tests/test_config.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `pytest tests/test_config.py -v`: Passed
+- evidence: 7 tests passed.
+- `python -c "from app.core.config import Settings; s=Settings(_env_file=None); assert s.chunk_size_tokens == 1000; assert s.chunk_overlap_tokens == 150; print(f'{s.chunk_size_tokens}:{s.chunk_overlap_tokens}')"`: Passed
+- evidence: printed `1000:150`.
+- `python -c "from app.main import app; from app.core.config import Settings; s=Settings(_env_file=None); assert s.chunk_size_tokens == 1000 and s.chunk_overlap_tokens == 150; print(app.title)"`: Passed
+- evidence: printed `Document QA Agent`.
+- Red test check before implementation: Passed as expected
+- evidence: `pytest tests/test_config.py -v` initially failed because `chunk_size_tokens` was absent and invalid overlap was not rejected.
+
+## Acceptance Check
+- Task acceptance condition: App imports without real chunk env values and defaults are applied when values are absent.
+- Status: satisfied
+- Evidence: `Settings(_env_file=None)` applies `chunk_size_tokens=1000` and `chunk_overlap_tokens=150`; importing `app.main.app` succeeds without chunk env values.
+
+## Artifacts Produced
+- Updated backend chunking configuration settings.
+- Updated backend `.env.example` placeholders.
+- Focused config tests.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (02A) acceptance and validation are satisfied; Batch02 still has pending sibling tasks (02B), (02C), and (02D).
+
+## Key Implementation Decisions
+- Used Pydantic `Field` constraints for positive size and non-negative overlap.
+- Used a Pydantic `model_validator` for cross-field validation so nonsensical overlap greater than or equal to size fails during settings construction.
+- Kept settings backend-only by adding them only to backend config and backend `.env.example`.
+
+## Risks or Open Issues
+- Batch04 still needs the planned chunking service tests once the chunking service is implemented.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, user-action requirements, or architecture concerns identified.
+- Dependency on completed Plan 1/2 settings pattern is satisfied by the existing `Settings` class and config tests.
+- No sibling task behavior, chunking service implementation, embeddings, Qdrant, GraphRAG, retrieval, agents, OCR, or frontend work was added.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: Backend chunk size and overlap settings are now available to the future chunking service through `Settings`/`get_settings`, with defaults and invalid-overlap validation covered by config tests.

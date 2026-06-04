@@ -911,3 +911,197 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Chunking Configuration and Metadata-Preserving Splitter
+- Task ID: (02A)
+- Task title: Add backend chunking configuration
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.3 Chunking Strategy`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: The latest execution report entry is for requested task `(02A)` and matches the requested batch/title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/.env.example`
+  - `backend/app/core/config.py`
+  - `backend/tests/test_config.py`
+  - `docs/reports/report_4_execute_agent.md`
+  - `docs/tasks/task_4.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/core/config.py`: in scope - added `chunk_size_tokens` and `chunk_overlap_tokens` settings with defaults and validation.
+- `backend/.env.example`: in scope - added backend chunk setting placeholders only.
+- `backend/tests/test_config.py`: in scope - added focused tests for defaults, overrides, and invalid overlap.
+- `docs/tasks/task_4.md`: in scope - `(02A)` checkbox updated while sibling Batch02 tasks remain unchecked.
+- `docs/reports/report_4_execute_agent.md`: in scope - appended execution report for `(02A)`.
+- `docs/plans/Plan_4.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited chunking strategy section reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/config.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Contains typed defaults and overlap validation.
+- file from execution report: `backend/.env.example`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Contains placeholder chunk settings and no real secrets.
+- file from execution report: `backend/tests/test_config.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Covers default and override behavior plus equal overlap rejection.
+- file from execution report: `docs/tasks/task_4.md`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Progress tracking update is limited to `(02A)`.
+- file from execution report: `docs/reports/report_4_execute_agent.md`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Report entry was appended after prior `(01E)` entry.
+
+## Dependency Review
+- Required dependencies: Completed Plan 1/2 settings pattern.
+- Dependency status: satisfied; existing `Settings` class and config tests were present and used.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Backend-only config keys were added through existing Pydantic settings conventions; defaults match Plan 4; overlap validation prevents overlap greater than or equal to chunk size; no database, frontend, embedding, Qdrant, OCR, retrieval, agent, or chunking service work was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `Settings` now exposes `chunk_size_tokens` and `chunk_overlap_tokens`; Pydantic constraints enforce positive size and non-negative overlap; `model_validator` rejects overlap greater than or equal to size.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Defaults are approved configuration defaults from Plan 4, not fixture- or test-specific hardcoding. `.env.example` uses placeholders only.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_config.py -v` from `backend`
+  - Reported result: Passed, 7 tests passed.
+  - Rerun result: Passed, 7 tests passed.
+  - Status: passed
+  - Notes: Confirms config defaults, overrides, invalid overlap, and existing Supabase config behavior.
+- Command/check: `python -c "from app.core.config import Settings; s=Settings(_env_file=None); assert s.chunk_size_tokens == 1000; assert s.chunk_overlap_tokens == 150; print(f'{s.chunk_size_tokens}:{s.chunk_overlap_tokens}')"` from `backend`
+  - Reported result: Passed, printed `1000:150`.
+  - Rerun result: Passed, printed `1000:150`.
+  - Status: passed
+  - Notes: Confirms defaults without real chunk env values.
+- Command/check: `python -c "from app.main import app; from app.core.config import Settings; s=Settings(_env_file=None); assert s.chunk_size_tokens == 1000 and s.chunk_overlap_tokens == 150; print(app.title)"` from `backend`
+  - Reported result: Passed, printed `Document QA Agent`.
+  - Rerun result: Passed, printed `Document QA Agent`.
+  - Status: passed
+  - Notes: Confirms app import succeeds without chunk env values.
+- Command/check: Red test check before implementation
+  - Reported result: Passed as expected.
+  - Rerun result: not rerun
+  - Status: reviewed
+  - Notes: Pre-implementation state is not reproducible from the current working tree; current diff supports the report claim that the new settings/tests were introduced in this task.
+
+## Acceptance Review
+- Task acceptance: App imports without real chunk env values and defaults are applied when values are absent.
+- Status: satisfied
+- Evidence: Rerun default settings smoke command returned `1000:150`; app import smoke printed `Document QA Agent`; config tests passed.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(02A)` is checked in the task body and progress tracker.
+- Batch status: accurate; Batch02 remains unchecked because `(02B)`, `(02C)`, and `(02D)` are pending.
+- Execution report entry: accurate; `(02A)` entry appended.
+- Review report entry: appended by this review.
+- Other: No sibling task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Focused config tests were added ahead of Batch04, which is within scope for this configuration task and does not implement future chunking behavior.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(02A)` is complete and Batch02 still has pending task IDs.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch02 - Chunking Configuration and Metadata-Preserving Splitter",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/.env.example",
+    "backend/app/core/config.py",
+    "backend/tests/test_config.py",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

@@ -243,7 +243,7 @@ Downstream embeddings, retrieval, citations, and processing status depend on dur
 
 ### Tasks
 
-- [ ] (02A): Add backend chunking configuration
+- [x] (02A): Add backend chunking configuration
   - Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.3 Chunking Strategy`
   - Source Requirements:
     - Use configurable chunk size and overlap.
@@ -724,7 +724,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01E): Implement CSV parser with row metadata
 
 #### Batch02
-- [ ] (02A): Add backend chunking configuration
+- [x] (02A): Add backend chunking configuration
 - [ ] (02B): Implement recursive chunking service
 - [ ] (02C): Preserve source metadata and deterministic chunk indexes
 - [ ] (02D): Handle empty parsed sections and chunking edge cases
