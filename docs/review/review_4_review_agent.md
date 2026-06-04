@@ -3099,3 +3099,181 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04D)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04D)
+- Task title: Run required backend tests and scope checks
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_4.md > ## 4. Out of Scope; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 14. Agent Report Requirement; ## 15. Reviewer Checklist; docs/plans/Master_Plan.md > ## 3. Authentication Policy
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04D)
+- Reviewed task ID: (04D)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for `(04D)` and matches the requested batch and title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_4_execute_agent.md
+  - docs/tasks/task_4.md
+- untracked files: None
+
+## Files Reviewed
+- `docs/reports/report_4_execute_agent.md`: in scope - appended execution report for `(04D)` reviewed.
+- `docs/tasks/task_4.md`: in scope - `(04D)` checkbox updated in the task entry and progress tracker; Batch04 remains incomplete because `(04E)` is unchecked.
+- `docs/plans/Plan_4.md`: in scope - cited sections for out-of-scope, required tests, acceptance, reporting, and reviewer checklist reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited authentication policy reviewed for single-user and backend-only secret boundaries.
+- `backend/app/services/document_processing_service.py`: in scope - checked processing status transitions and safe failure handling referenced by `(04D)` validation scope.
+- `backend/app/services/supabase_service.py`: in scope - checked `SINGLE_USER_ID` filtering, chunk insert ownership, and `qdrant_point_id = None` persistence behavior referenced by `(04D)` validation scope.
+- `backend/tests/test_document_parser.py`: in scope - parser coverage reviewed and rerun.
+- `backend/tests/test_chunking_service.py`: in scope - chunking coverage reviewed and rerun.
+- `backend/tests/test_document_processing.py`: in scope - processing orchestration coverage reviewed and rerun.
+
+## Reported Files Cross-Check
+- file from execution report: docs/tasks/task_4.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Only progress tracking was changed for `(04D)`.
+- file from execution report: docs/reports/report_4_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended with the `(04D)` validation evidence.
+
+## Dependency Review
+- Required dependencies: `(04A)`, `(04B)`, and `(04C)` complete before `(04D)`.
+- Dependency status: satisfied; task file shows `(04A)`, `(04B)`, and `(04C)` checked complete, and prior execution reports exist.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Plan 4 remains backend-only parsing, chunking, processing, and test validation work; no public auth/JWT or frontend polling was added; chunk persistence remains single-user and backend controlled.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `(04D)` did not claim new implementation. The rerun tests exercise existing parser, chunking, processing, and Supabase-helper behavior; processing code updates `processing`, inserts chunks, updates `chunk_count`, sets `ready`, and writes `failed` on handled errors.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Secret/config search found placeholder `.env.example` values and test fake keys only. Runtime code reads settings for Supabase service role, bucket, chunk settings, and `SINGLE_USER_ID`. Expected `qdrant_point_id = None` fields are schema/persistence placeholders, not vector implementation.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_document_parser.py tests/test_chunking_service.py tests/test_document_processing.py -v`
+- Reported result: Passed, 33 passed.
+- Rerun result: Passed, 33 passed in 1.03s.
+- Status: satisfied
+- Notes: Covers parser, chunking, processing success/failure paths, deterministic chunk indexes, and `SINGLE_USER_ID` chunk ownership.
+- Command/check: `cd backend; pytest -v`
+- Reported result: Passed, 76 passed.
+- Rerun result: Passed, 76 passed in 1.32s.
+- Status: satisfied
+- Notes: Full backend regression matched the execution report.
+- Command/check: Runtime scope search for OCR, embeddings, Qdrant implementation, GraphRAG, retrieval, agents, and frontend polling across backend/frontend files.
+- Reported result: Passed.
+- Rerun result: Passed.
+- Status: satisfied
+- Notes: Hits were expected names, fixture text, existing DB schema names, test names, and `qdrant_point_id = None`; no out-of-scope runtime implementation found.
+- Command/check: Secret/config search across backend/frontend runtime, tests, and env examples.
+- Reported result: Passed.
+- Rerun result: Passed.
+- Status: satisfied
+- Notes: Hits were placeholders, setting names, fake test keys, package metadata, and token-count terminology; no real secret exposure found.
+
+## Acceptance Review
+- Task acceptance: Required tests pass or failures are reported honestly; no hardcoded secrets or out-of-scope work is found.
+- Status: satisfied
+- Evidence: Required targeted tests and full backend regression passed on rerun; diff contains only task/report documentation; scope and secret searches did not reveal prohibited runtime work.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(04D)` is checked in the task entry and progress tracker.
+- Batch status: accurate; Batch04 remains unchecked because `(04E)` is still incomplete.
+- Execution report entry: accurate and appended.
+- Review report entry: appended at EOF.
+- Other: No sibling task was incorrectly marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Live manual API/Supabase validation is correctly left to `(04E)` and is not required for `(04D)` acceptance.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(04E)` remains incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

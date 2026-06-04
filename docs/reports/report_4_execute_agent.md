@@ -1531,3 +1531,99 @@ complete
 - next task ID: (04D)
 - can proceed: yes
 - handoff notes: Processing orchestration tests pass locally. The next task can run the broader backend test and scope-check validation without needing additional processing-test setup.
+
+---
+
+# Task Execution Report - (04D)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04D) - Run required backend tests and scope checks
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 4. Out of Scope
+- docs/plans/Plan_4.md > ## 11. Required Tests
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_4.md > ## 14. Agent Report Requirement
+- docs/plans/Plan_4.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 3. Authentication Policy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04D)
+- Task title: Run required backend tests and scope checks
+
+## Completed Work
+- Task is complete.
+- Ran the required parser, chunking, and processing backend tests.
+- Ran the full backend regression suite because config, API, service, and Supabase integration behavior are in the affected surface.
+- Inspected runtime/backend and frontend files for hardcoded secrets and out-of-scope additions including OCR, embeddings, Qdrant vector implementation, GraphRAG, retrieval, agents, and frontend polling.
+- Confirmed Plan 4 remains backend-only parsing/chunking/processing scope and still aligns with the single-user backend-secret policy in Master_Plan.
+- Confirmed OCR is not implemented.
+
+## Files Created or Modified
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_document_parser.py tests/test_chunking_service.py tests/test_document_processing.py -v: Passed
+- evidence or reason: 33 passed in 1.05s. Parser results included PDF, DOCX, TXT, CSV, CSV decoding failure, empty TXT, and unreadable PDF coverage. Chunking results included sizing, overlap, metadata, deterministic index order, and empty behavior. Processing results included success, SINGLE_USER_ID-owned chunks, empty TXT failure, missing storage, parser failure, unsupported type, CSV decoding failure, no chunks, insert failure, and terminal failed status behavior.
+- cd backend; pytest -v: Passed
+- evidence or reason: 76 passed in 1.32s across parser, chunking, processing, config, document API/upload, health, and Supabase service regression tests.
+- git status --short before progress/report edits: Passed
+- evidence or reason: no changed files were reported before this task updated progress/report files.
+- rg scope search for OCR/embeddings/Qdrant/GraphRAG/retrieval/agents/secrets across backend, frontend, and planning docs: Passed
+- evidence or reason: broad search hits were documentation/source-of-truth references and expected existing schema fields such as qdrant_point_id = null.
+- narrowed runtime search across backend/app, backend/tests, backend/requirements.txt, backend/.env.example, frontend/src, frontend/package.json, and frontend/.env.example: Passed
+- evidence or reason: no OCR libraries or OCR implementation found; no embedding service, retrieval service, GraphRAG implementation, LangGraph agent implementation, or frontend polling found in Plan 4 runtime scope. Expected hits were qdrant_point_id schema/null persistence, existing agent_runs/agent_steps schema tables, health service name, and .env.example placeholders.
+- secret/config search across frontend, backend/app, backend/tests, and backend/.env.example: Passed
+- evidence or reason: only placeholder values, setting names, error messages, and token-count variable names were found; no raw private key values or frontend private secret exposure found.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass or failures are reported honestly; no hardcoded secrets or out-of-scope work is found.
+- Status: satisfied
+- Evidence: Required combined tests passed 33/33; full backend regression passed 76/76; scope and secret inspections found no hardcoded secrets, no OCR implementation, and no out-of-scope Plan 4 runtime work.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_4_execute_agent.md
+- Updated (04D) checkbox in docs/tasks/task_4.md
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (04D) acceptance and validation were satisfied. Batch04 still has unchecked task (04E), so the batch remains incomplete.
+
+## Key Implementation Decisions
+- Treated the full backend pytest suite as the relevant regression check because changed Plan 4 surfaces include config, API, service, and Supabase-helper behavior.
+- Treated qdrant_point_id = null/schema fields and existing agent_runs/agent_steps tables as architecture-approved storage fields, not out-of-scope vector, retrieval, or agent implementation.
+
+## Risks or Open Issues
+- Live manual API/Supabase validation remains outside this selected task and belongs to (04E).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (04A), (04B), and (04C) were checked complete before execution.
+- No user action was required for mocked/local tests.
+- No architecture concerns identified. The implementation remains aligned with backend-only SINGLE_USER_ID ownership and private secret boundaries from Master_Plan.
+
+## Notes for Next Task
+- next task ID: (04E)
+- can proceed: yes
+- handoff notes: Required local tests and scope checks passed. (04E) can proceed only if local backend/Supabase credentials, bucket, tables, uploaded files, or equivalent manual setup are available; otherwise it should report BLOCKED_BY_USER_ACTION.
