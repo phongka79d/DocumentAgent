@@ -188,6 +188,201 @@ def test_process_document_orchestrates_success_path(monkeypatch):
     assert inserted_chunks[0].qdrant_point_id is None
 
 
+def test_process_document_persists_real_txt_chunks_with_single_user_owner(
+    monkeypatch,
+):
+    calls: list[tuple] = []
+    inserted_chunks: list[ChunkDraft] = []
+
+    def fake_get_settings():
+        return _ProcessingSettings()
+
+    def fake_get_processing_document(received_document_id: str):
+        calls.append(("get_document", received_document_id))
+        return _document_row(file_type="txt")
+
+    def fake_update_document_status(
+        received_document_id: str,
+        status: str,
+        *,
+        error_message: str | None = None,
+    ):
+        calls.append(("status", received_document_id, status, error_message))
+        return {
+            "id": received_document_id,
+            "status": status,
+            "error_message": error_message,
+        }
+
+    def fake_download_original_document_file(received_storage_path: str):
+        calls.append(("download", received_storage_path))
+        return (
+            b"Alpha beta gamma delta. Epsilon zeta eta theta. "
+            b"Iota kappa lambda mu."
+        )
+
+    def fake_insert_document_chunks(
+        received_document_id: str,
+        chunks: list[ChunkDraft],
+    ):
+        calls.append(("insert_chunks", received_document_id, chunks))
+        inserted_chunks.extend(chunks)
+        return [
+            {"id": f"chunk-{chunk.chunk_index}", "chunk_index": chunk.chunk_index}
+            for chunk in chunks
+        ]
+
+    def fake_update_document_chunk_count(
+        received_document_id: str,
+        chunk_count: int,
+    ):
+        calls.append(("chunk_count", received_document_id, chunk_count))
+        return {"id": received_document_id, "chunk_count": chunk_count}
+
+    monkeypatch.setattr(
+        document_processing_service,
+        "get_settings",
+        fake_get_settings,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "get_processing_document",
+        fake_get_processing_document,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "update_document_status",
+        fake_update_document_status,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "download_original_document_file",
+        fake_download_original_document_file,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "insert_document_chunks",
+        fake_insert_document_chunks,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "update_document_chunk_count",
+        fake_update_document_chunk_count,
+    )
+
+    result = document_processing_service.process_document(DOCUMENT_ID)
+
+    assert result.status == "ready"
+    assert result.chunk_count == len(inserted_chunks)
+    assert len(inserted_chunks) >= 1
+    assert [chunk.chunk_index for chunk in inserted_chunks] == list(
+        range(len(inserted_chunks))
+    )
+    assert all(chunk.document_id == DOCUMENT_ID for chunk in inserted_chunks)
+    assert all(
+        chunk.user_id == _ProcessingSettings.single_user_id
+        for chunk in inserted_chunks
+    )
+    assert all(chunk.qdrant_point_id is None for chunk in inserted_chunks)
+    assert all(chunk.content.strip() for chunk in inserted_chunks)
+    assert all(chunk.token_count > 0 for chunk in inserted_chunks)
+    assert all(
+        chunk.metadata["document_id"] == DOCUMENT_ID_TEXT
+        for chunk in inserted_chunks
+    )
+    assert all(
+        chunk.metadata["user_id"] == _ProcessingSettings.single_user_id
+        for chunk in inserted_chunks
+    )
+    assert all(chunk.metadata["file_name"] == "sample.txt" for chunk in inserted_chunks)
+    assert all(chunk.metadata["source_type"] == "txt" for chunk in inserted_chunks)
+
+    status_events = [call for call in calls if call[0] == "status"]
+    assert status_events == [
+        ("status", DOCUMENT_ID_TEXT, "processing", None),
+        ("status", DOCUMENT_ID_TEXT, "ready", None),
+    ]
+    assert calls.index(("insert_chunks", DOCUMENT_ID_TEXT, inserted_chunks)) < calls.index(
+        ("chunk_count", DOCUMENT_ID_TEXT, len(inserted_chunks))
+    )
+
+
+def test_process_document_empty_txt_file_marks_document_failed(monkeypatch):
+    calls: list[tuple] = []
+
+    def fake_get_settings():
+        return _ProcessingSettings()
+
+    def fake_get_processing_document(received_document_id: str):
+        calls.append(("get_document", received_document_id))
+        return _document_row(file_type="txt")
+
+    def fake_update_document_status(
+        received_document_id: str,
+        status: str,
+        *,
+        error_message: str | None = None,
+    ):
+        calls.append(("status", received_document_id, status, error_message))
+        return {
+            "id": received_document_id,
+            "status": status,
+            "error_message": error_message,
+        }
+
+    def fake_download_original_document_file(received_storage_path: str):
+        calls.append(("download", received_storage_path))
+        return b" \n\t "
+
+    def fail_insert_document_chunks(*_args, **_kwargs):
+        pytest.fail("empty TXT processing should not insert chunks")
+
+    def fail_update_document_chunk_count(*_args, **_kwargs):
+        pytest.fail("empty TXT processing should not update chunk_count")
+
+    monkeypatch.setattr(
+        document_processing_service,
+        "get_settings",
+        fake_get_settings,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "get_processing_document",
+        fake_get_processing_document,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "update_document_status",
+        fake_update_document_status,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "download_original_document_file",
+        fake_download_original_document_file,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "insert_document_chunks",
+        fail_insert_document_chunks,
+    )
+    monkeypatch.setattr(
+        document_processing_service,
+        "update_document_chunk_count",
+        fail_update_document_chunk_count,
+    )
+
+    with pytest.raises(document_processing_service.DocumentProcessingError) as exc_info:
+        document_processing_service.process_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == "Parsed document is empty."
+    assert calls == [
+        ("get_document", DOCUMENT_ID_TEXT),
+        ("status", DOCUMENT_ID_TEXT, "processing", None),
+        ("download", STORAGE_PATH),
+        ("status", DOCUMENT_ID_TEXT, "failed", "Parsed document is empty."),
+    ]
+
+
 def _install_default_processing_mocks(monkeypatch, calls: list[tuple]) -> None:
     def fake_get_settings():
         return _ProcessingSettings()

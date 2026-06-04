@@ -1445,3 +1445,89 @@ complete
 - next task ID: (04C)
 - can proceed: yes
 - handoff notes: Chunking service tests pass locally and cover the selected task scope. The next task can focus on mocked processing orchestration tests without expanding chunking scope.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04C) - Add processing orchestration tests with mocked Supabase
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 1. Goal
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 11. Required Tests
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_4.md > ## 13. Failure Handling
+- docs/plans/Plan_4.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04C)
+- Task title: Add processing orchestration tests with mocked Supabase
+
+## Completed Work
+- Status: complete.
+- Added processing orchestration coverage that keeps Supabase storage/database interactions mocked while exercising the real TXT parser and chunking service on a successful processing path.
+- Added explicit empty TXT processing coverage that verifies status transitions to `processing` then `failed`, records the safe `Parsed document is empty.` error, and does not insert chunks or update `chunk_count`.
+- Existing mocked failure-path coverage was retained for missing storage, parser exception, empty document, chunk insert failure, unsupported type, CSV decoding failure, empty chunk output, and empty chunk persistence output.
+
+## Files Created or Modified
+- backend/tests/test_document_processing.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_document_processing.py -v`: Passed; evidence: 11 passed in 1.00s.
+
+## Acceptance Check
+- Task acceptance condition: Tests verify successful chunk persistence, chunk count update, safe failure status, safe error messages, and `SINGLE_USER_ID` chunk ownership.
+- Status: satisfied.
+- Evidence: Processing tests now prove `processing -> ready` and `processing -> failed` status ordering, inserted chunk index/content/token metadata, `chunk_count` update after insert, safe failure messages, no ready status on handled failures, and every inserted chunk carrying `single_user` ownership from `SINGLE_USER_ID`.
+
+## Artifacts Produced
+- Processing orchestration test coverage in `backend/tests/test_document_processing.py`.
+- Appended execution report in `docs/reports/report_4_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(04C)` acceptance and required validation are satisfied; Batch04 still has unchecked tasks `(04D)` and `(04E)`.
+
+## Key Implementation Decisions
+- Used mocked Supabase service boundaries and real parser/chunker behavior for the new successful TXT orchestration test to verify the processing service assembles owned chunk drafts correctly before persistence.
+- Kept failure-path assertions focused on safe public messages and terminal `failed` status instead of raw exception details.
+
+## Risks or Open Issues
+- None for `(04C)`.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency Batch03 is marked complete in `docs/tasks/task_4.md`.
+- No user action was required.
+- No architecture concerns identified for this selected task.
+
+## Notes for Next Task
+- next task ID: (04D)
+- can proceed: yes
+- handoff notes: Processing orchestration tests pass locally. The next task can run the broader backend test and scope-check validation without needing additional processing-test setup.

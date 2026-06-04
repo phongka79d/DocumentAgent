@@ -2930,3 +2930,172 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04C)
+- Task title: Add processing orchestration tests with mocked Supabase
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_4.md > ## 1. Goal; ## 3. Scope; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 13. Failure Handling; ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The latest matching `(04C)` execution report was appended after `(04B)` and matches the requested batch and title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/tests/test_document_processing.py
+  - docs/reports/report_4_execute_agent.md
+  - docs/tasks/task_4.md
+- untracked files: None
+
+## Files Reviewed
+- `backend/tests/test_document_processing.py`: in scope - new mocked processing orchestration tests cover success with real TXT parsing/chunking, empty TXT failure, and existing representative failure paths.
+- `backend/app/services/document_processing_service.py`: in scope - reviewed to verify tests target real service contracts and safe status/error behavior.
+- `backend/app/services/document_parser.py`: in scope - reviewed because the new success and empty TXT tests intentionally exercise the real parser.
+- `backend/app/services/chunking_service.py`: in scope - reviewed because the new success test intentionally exercises the real chunking service.
+- `backend/app/schemas/parsing.py`: in scope - reviewed to verify inserted `ChunkDraft` assertions match schema fields.
+- `docs/tasks/task_4.md`: in scope - progress tracking marks only `(04C)` complete and keeps Batch04 incomplete.
+- `docs/reports/report_4_execute_agent.md`: in scope - execution report entry exists and describes the changed files and validation.
+- `docs/plans/Plan_4.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_document_processing.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds only processing orchestration tests.
+
+- file from execution report: docs/tasks/task_4.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff updates `(04C)` task checkbox and progress tracker only; Batch04 remains unchecked.
+
+- file from execution report: docs/reports/report_4_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff appends the `(04C)` execution report.
+
+## Dependency Review
+- Required dependencies: Batch03 processing orchestration complete; Batch01 parser and Batch02 chunking outputs available.
+- Dependency status: satisfied
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Tests keep Supabase storage/database boundaries mocked, use the real processing service entrypoint, verify `processing -> ready` and `processing -> failed` behavior, verify chunk insertion/count update, and confirm inserted chunks use `SINGLE_USER_ID` from settings.
+- Failed: None.
+- Uncertain: None for this mocked-test task; live Supabase validation remains outside `(04C)` and belongs to `(04E)`.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The new success test does not monkeypatch `parse_document` or `chunk_sections`, so it exercises real TXT parsing and chunking while mocking only Supabase/service boundaries. Failure tests assert real service behavior around safe error mapping and terminal failed status.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Test IDs, file names, and `single_user` are deterministic fixtures for mocked tests. The ownership assertion is tied to the mocked settings value and matches the plan requirement to verify `SINGLE_USER_ID` ownership.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_document_processing.py -v`
+- Reported result: Passed; 11 passed in 1.00s.
+- Rerun result: Passed; 11 passed in 0.95s.
+- Status: satisfied
+- Notes: Rerun used the selected task's required validation command.
+
+## Acceptance Review
+- Task acceptance: Tests verify successful chunk persistence, chunk count update, safe failure status, safe error messages, and `SINGLE_USER_ID` chunk ownership.
+- Status: satisfied
+- Evidence: `test_process_document_persists_real_txt_chunks_with_single_user_owner` checks non-empty inserted chunks, deterministic chunk indexes, `document_id`, `user_id`, null `qdrant_point_id`, token counts, metadata, status order, and insert-before-count ordering. `test_process_document_empty_txt_file_marks_document_failed` checks empty TXT fails with safe message and no chunk insert/count update. Parametrized failure tests cover missing storage, parser exception, empty document, unsupported type, CSV decoding failure, empty chunk output, insert failure, and empty insert response.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(04C)` marked complete in the task entry and progress tracker.
+- Batch status: accurate; Batch04 remains incomplete.
+- Execution report entry: present and appended.
+- Review report entry: appended by this review.
+- Other: `(04D)` and `(04E)` remain unchecked, so the whole batch must not be marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `(04C)` is a mocked-test task only. Full combined backend test/scope validation remains for `(04D)`, and live Supabase/API checks remain for `(04E)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04A)`, `(04B)`, and `(04C)` are complete while `(04D)` and `(04E)` remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_document_processing.py",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
