@@ -1275,3 +1275,90 @@ complete
 - next task ID: (04A)
 - can proceed: yes
 - handoff notes: Batch03 is complete. Batch04 can add/verify parser, chunking, and processing tests plus manual validation without needing a new processing API endpoint.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04A) - Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_4.md` > `## 1. Goal`
+- `docs/plans/Plan_4.md` > `## 3. Scope`
+- `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_4.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_4.md` > `## 11. Required Tests`
+- `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_4.md` > `## 14. Agent Report Requirement`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04A)
+- Task title: Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
+
+## Completed Work
+- Task is complete.
+- Extended `backend/tests/test_document_parser.py` to verify PDF, DOCX, TXT, and CSV fixture parsing produces non-empty sections with expected metadata.
+- Added empty TXT and whitespace TXT coverage that expects `EmptyDocumentError` with the clear message `Parsed document is empty.`
+- Added unreadable PDF coverage that expects `UnreadableDocumentError` with the clear message `Could not read PDF document.`
+- Reused existing deterministic local fixture files for `sample.pdf`, `sample.docx`, `sample.txt`, and `sample.csv`.
+
+## Files Created or Modified
+- `backend/tests/test_document_parser.py`
+- `docs/tasks/task_4.md`
+- `docs/reports/report_4_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_document_parser.py -v`: Passed
+- evidence or reason: 8 tests passed. Parser fixture result coverage included PDF, DOCX, TXT, and CSV. Empty TXT, whitespace TXT, unreadable PDF, and CSV decoding failures also passed.
+
+## Acceptance Check
+- Task acceptance condition: Parser tests prove all four file types parse into non-empty sections with expected metadata and empty input fails clearly.
+- Status: satisfied
+- Evidence: `tests/test_document_parser.py` now asserts non-empty output and metadata for PDF page/source metadata, DOCX heading/paragraph metadata, TXT encoding/source metadata, and CSV row/column metadata. Empty and whitespace TXT inputs fail with `EmptyDocumentError`; unreadable PDF input fails with `UnreadableDocumentError`.
+
+## Artifacts Produced
+- Parser fixture test coverage in `backend/tests/test_document_parser.py`.
+- Existing local fixtures used: `backend/tests/fixtures/sample.pdf`, `backend/tests/fixtures/sample.docx`, `backend/tests/fixtures/sample.txt`, `backend/tests/fixtures/sample.csv`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(04A)` acceptance and validation passed. Batch04 remains unchecked because sibling tasks `(04B)` through `(04E)` are still incomplete.
+
+## Key Implementation Decisions
+- Reused existing deterministic fixture files instead of regenerating them because they already exercise extractable PDF, DOCX, TXT, and CSV parser behavior required by this task.
+- Kept the change scoped to parser tests and task/report documentation; no parser implementation, chunking, processing, API, frontend, database, embedding, Qdrant, GraphRAG, retrieval, agent, or OCR work was added.
+
+## Risks or Open Issues
+- None for `(04A)`.
+
+## Minor Issues Fixed During Execution
+- Added missing parser test coverage for supported fixture types and empty/unreadable parser failure behavior.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency Batch01 is marked complete in `docs/tasks/task_4.md`.
+- No user action was required.
+- No architecture concerns identified for this selected task.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: Parser fixture tests now pass. The next task can focus on chunking service tests without expanding parser-test scope.

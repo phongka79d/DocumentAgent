@@ -2575,3 +2575,187 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04A)
+- Task title: Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `## 3. Scope`; `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 14. Agent Report Requirement`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The latest execution report entry is for the requested `(04A)` task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/tests/test_document_parser.py`
+  - `docs/reports/report_4_execute_agent.md`
+  - `docs/tasks/task_4.md`
+- untracked files: None
+
+## Files Reviewed
+- `backend/tests/test_document_parser.py`: in scope - adds parser fixture tests for PDF, DOCX, TXT, CSV, empty/whitespace TXT, unreadable PDF, and existing CSV decoding failure.
+- `backend/app/services/document_parser.py`: in scope - reviewed parser contract and exception behavior used by tests; not changed by this task.
+- `backend/tests/fixtures/sample.pdf`: in scope - fixture present in repo.
+- `backend/tests/fixtures/sample.docx`: in scope - fixture present in repo.
+- `backend/tests/fixtures/sample.txt`: in scope - fixture present in repo.
+- `backend/tests/fixtures/sample.csv`: in scope - fixture present in repo.
+- `docs/tasks/task_4.md`: in scope - `(04A)` checkbox updated in task block and progress tracker; Batch04 remains unchecked.
+- `docs/reports/report_4_execute_agent.md`: in scope - appended execution report for `(04A)`.
+- `docs/plans/Plan_4.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_document_parser.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the expected parser fixture assertions.
+- file from execution report: `docs/tasks/task_4.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04A)` is marked complete in both the task block and progress tracker; sibling tasks remain unchecked.
+- file from execution report: `docs/reports/report_4_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04A)` report was appended.
+- file from execution report artifacts: `backend/tests/fixtures/sample.pdf`, `sample.docx`, `sample.txt`, `sample.csv`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Reused existing deterministic fixtures; not changed in this diff.
+
+## Dependency Review
+- Required dependencies: Batch01 parser implementations and fixtures.
+- Dependency status: satisfied; Batch01 is marked complete and the parser fixtures and parser service exist.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Change is test-only plus documentation progress/report updates; parser tests use local deterministic fixtures and existing parser service API.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Tests call the real `parse_document` implementation against actual local fixture bytes and assert parser outputs/metadata and failure exceptions.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixture-specific assertions are appropriate for parser tests; no runtime logic was changed or overfit.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_document_parser.py -v`
+- Reported result: Passed, 8 tests passed.
+- Rerun result: Passed, 8 tests passed in 0.28s.
+- Status: satisfied
+- Notes: Rerun covered PDF, DOCX, TXT, CSV, CSV decoding failure, empty TXT, whitespace TXT, and unreadable PDF.
+- Command/check: git status, git diff --stat, git diff
+- Reported result: Not a test command; required review evidence.
+- Rerun result: Reviewed.
+- Status: satisfied
+- Notes: Scope is limited to parser tests and task/report documentation.
+- Command/check: changed-file scope scan for out-of-scope terms/secrets
+- Reported result: Executor reported no out-of-scope implementation.
+- Rerun result: No out-of-scope implementation in changed parser test; matches in docs are scope statements/report history only.
+- Status: satisfied
+- Notes: No frontend, API, parser implementation, database, embedding, Qdrant, GraphRAG, retrieval, agent, OCR, or secret changes were added by `(04A)`.
+
+## Acceptance Review
+- Task acceptance: Parser tests prove all four file types parse into non-empty sections with expected metadata and empty input fails clearly.
+- Status: satisfied
+- Evidence: `backend/tests/test_document_parser.py` asserts non-empty PDF page text/page metadata, DOCX heading/paragraph metadata, TXT source/encoding metadata, CSV row/column metadata, empty and whitespace TXT `EmptyDocumentError`, unreadable PDF `UnreadableDocumentError`, and CSV `DocumentDecodingError`.
+
+## Progress Tracking
+- Selected task checkbox: checked for `(04A)` in the task block and progress tracker.
+- Batch status: Batch04 remains unchecked, correct because `(04B)` through `(04E)` are incomplete.
+- Execution report entry: appended and selected correctly.
+- Review report entry: appended by this review.
+- Other: No sibling task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Existing fixture files were reused rather than regenerated, which is consistent with the task and report.
+- The unreadable PDF assertion expands failure coverage beyond the minimum empty TXT requirement while remaining in parser-test scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04A)` is accepted and `(04B)` through `(04E)` remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_document_parser.py",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

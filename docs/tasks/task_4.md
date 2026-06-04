@@ -513,7 +513,7 @@ Plan 4 completion depends on evidence that each supported file type parses into 
 
 ### Tasks
 
-- [ ] (04A): Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
+- [x] (04A): Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
   - Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 11. Required Tests`; `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_4.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Add parser tests with local fixture files.
@@ -736,7 +736,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03D): Add a backend processing trigger only where source-supported
 
 #### Batch04
-- [ ] (04A): Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
+- [x] (04A): Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
 - [ ] (04B): Add chunking service tests for sizing, overlap, metadata, and empty behavior
 - [ ] (04C): Add processing orchestration tests with mocked Supabase
 - [ ] (04D): Run required backend tests and scope checks
