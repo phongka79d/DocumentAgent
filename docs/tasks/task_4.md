@@ -371,7 +371,7 @@ Plan 4 is complete only when parsed chunks are durable in Supabase PostgreSQL an
 
 ### Tasks
 
-- [ ] (03A): Add Supabase helpers for processing and chunk persistence
+- [x] (03A): Add Supabase helpers for processing and chunk persistence
   - Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 5. Dependencies`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design` > `## Table: document_chunks`
   - Source Requirements:
     - Uploaded files must exist in Supabase Storage.
@@ -730,7 +730,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (02D): Handle empty parsed sections and chunking edge cases
 
 #### Batch03
-- [ ] (03A): Add Supabase helpers for processing and chunk persistence
+- [x] (03A): Add Supabase helpers for processing and chunk persistence
 - [ ] (03B): Implement document processing orchestration service
 - [ ] (03C): Implement safe failure handling and status transitions
 - [ ] (03D): Add a backend processing trigger only where source-supported

@@ -1,6 +1,9 @@
+from typing import Any
+
 from supabase import Client, create_client
 
 from app.core.config import get_settings
+from app.schemas.parsing import ChunkDraft
 
 
 _supabase_client: Client | None = None
@@ -115,6 +118,31 @@ def _first_response_row(operation_name: str, response: object) -> dict:
     return data[0]
 
 
+def _response_rows(response: object) -> list[dict]:
+    return getattr(response, "data", None) or []
+
+
+def _get_single_user_id() -> str:
+    return get_settings().single_user_id
+
+
+def _chunk_insert_row(
+    chunk: ChunkDraft,
+    document_id: str,
+    user_id: str,
+) -> dict[str, Any]:
+    return {
+        "document_id": document_id,
+        "user_id": user_id,
+        "chunk_index": chunk.chunk_index,
+        "content": chunk.content,
+        "page_number": chunk.page_number,
+        "section_title": chunk.section_title,
+        "token_count": chunk.token_count,
+        "qdrant_point_id": None,
+    }
+
+
 def insert_document_metadata(document_row: dict) -> dict:
     client = get_supabase_client()
 
@@ -163,3 +191,80 @@ def get_document_metadata(document_id: str, user_id: str) -> dict | None:
         return None
 
     return data[0]
+
+
+def get_processing_document(document_id: str) -> dict | None:
+    """Load one document for the configured single user."""
+    return get_document_metadata(document_id, _get_single_user_id())
+
+
+def download_original_document_file(storage_path: str) -> bytes:
+    client = get_supabase_client()
+    bucket_name = _get_configured_storage_bucket()
+
+    try:
+        content = client.storage.from_(bucket_name).download(storage_path)
+    except Exception as exc:
+        _raise_supabase_query_error("storage download", exc)
+
+    if not isinstance(content, bytes):
+        raise SupabaseConnectionError(
+            _format_operation_error("storage download", "invalid response")
+        )
+
+    return content
+
+
+def insert_document_chunks(document_id: str, chunks: list[ChunkDraft]) -> list[dict]:
+    if not chunks:
+        return []
+
+    client = get_supabase_client()
+    user_id = _get_single_user_id()
+    rows = [_chunk_insert_row(chunk, document_id, user_id) for chunk in chunks]
+
+    try:
+        response = client.table("document_chunks").insert(rows).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("document chunk insert", exc)
+
+    return _response_rows(response)
+
+
+def update_document_status(
+    document_id: str,
+    status: str,
+    *,
+    error_message: str | None = None,
+) -> dict:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("documents")
+            .update({"status": status, "error_message": error_message})
+            .eq("id", document_id)
+            .eq("user_id", _get_single_user_id())
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document status update", exc)
+
+    return _first_response_row("document status update", response)
+
+
+def update_document_chunk_count(document_id: str, chunk_count: int) -> dict:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("documents")
+            .update({"chunk_count": chunk_count})
+            .eq("id", document_id)
+            .eq("user_id", _get_single_user_id())
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document chunk count update", exc)
+
+    return _first_response_row("document chunk count update", response)

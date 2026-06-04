@@ -809,3 +809,109 @@ complete
 - next task ID: (03A)
 - can proceed: yes
 - handoff notes: Batch02 is complete. Chunking returns deterministic chunks for usable text, skips empty sections, and returns no chunks when no usable parsed text remains; processing should treat an empty chunk result as a failed document during Batch03/Batch04.
+
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch03 - Supabase Chunk Persistence and Processing Orchestration
+
+## Task
+(03A) - Add Supabase helpers for processing and chunk persistence
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 5. Dependencies
+- docs/plans/Plan_4.md > ## 6. Required Files and Folders
+- docs/plans/Plan_4.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > ## 6. Data Storage Design > ## Table: document_chunks
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- Task ID: (03A)
+- Task title: Add Supabase helpers for processing and chunk persistence
+
+## Completed Work
+- The task is complete.
+- Added mockable Supabase helpers to load the processing document for the configured `SINGLE_USER_ID`, download original storage bytes, bulk insert `document_chunks` rows, update document status/error message, and update document chunk count.
+- Added focused Supabase service tests proving single-user filtering, configured storage bucket use, inserted chunk payload shape, `qdrant_point_id = None`, and safe failure messages.
+
+## Files Created or Modified
+- backend/app/services/supabase_service.py
+- backend/tests/test_supabase_service.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed
+- Evidence: 22 passed in 0.89s on final run.
+- `cd backend; pytest tests/test_supabase_service.py tests/test_document_api.py tests/test_document_upload.py tests/test_config.py tests/test_chunking_service.py tests/test_document_parser.py -v`: Passed
+- Evidence: 56 passed in 1.39s.
+- Scope inspection: Passed
+- Evidence: `rg "embedding|embeddings|GraphRAG|retrieval|agent|OCR|qdrant" backend/app/services/supabase_service.py backend/tests/test_supabase_service.py -n` found only the required `qdrant_point_id` field and related test name.
+- Batch04 mocked processing tests: Not run
+- Reason: The selected task only adds Supabase helpers; `backend/tests/test_document_processing.py` is explicitly assigned to later task (04C).
+- Live Supabase validation: Not run
+- Reason: Not required for mocked helper validation and no live credentials/bucket/document/storage setup was provided for this task.
+
+## Acceptance Check
+- Task acceptance condition: Helpers are mockable.
+- Status: satisfied
+- Evidence: Helpers are plain module functions with focused tests using monkeypatched clients/settings.
+- Task acceptance condition: Helpers apply `SINGLE_USER_ID` filters.
+- Status: satisfied
+- Evidence: `get_processing_document`, `update_document_status`, and `update_document_chunk_count` use configured `single_user_id`; inserted chunks set `user_id` from configured `single_user_id`.
+- Task acceptance condition: Helpers insert chunks with `qdrant_point_id = null`.
+- Status: satisfied
+- Evidence: `_chunk_insert_row` sets `qdrant_point_id` to `None`; tests assert inserted rows include `None`.
+- Task acceptance condition: Helpers surface failures safely.
+- Status: satisfied
+- Evidence: Storage download and chunk insert failure tests assert underlying exception details are not leaked.
+
+## Artifacts Produced
+- Supabase helper functions in `backend/app/services/supabase_service.py`.
+- Targeted helper tests in `backend/tests/test_supabase_service.py`.
+- Updated task progress in `docs/tasks/task_4.md`.
+- Execution report appended to `docs/reports/report_4_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(03A)` is complete, but `(03B)`, `(03C)`, and `(03D)` remain unchecked.
+
+## Key Implementation Decisions
+- Reused existing `SupabaseConnectionError` and safe operation error formatting instead of introducing new exception types.
+- Kept chunk insertion aligned with the existing `document_chunks` table fields; no metadata JSON column or schema change was added.
+- Returned an empty list for empty chunk input so processing orchestration can decide failure semantics in later Batch03/04 work.
+
+## Risks or Open Issues
+- Processing orchestration, status transition ordering, and processing failure handling remain future Batch03 tasks.
+- Live Supabase behavior still requires user-provided credentials, bucket, document rows, and uploaded objects before manual validation can pass.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch01 and Batch02 were already checked complete in `docs/tasks/task_4.md`.
+- No database schema, frontend, embeddings, vector storage, GraphRAG, retrieval, agent, or OCR work was implemented.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes
+- handoff notes: Supabase helper functions are ready for `document_processing_service.py`: `get_processing_document`, `download_original_document_file`, `insert_document_chunks`, `update_document_status`, and `update_document_chunk_count`.

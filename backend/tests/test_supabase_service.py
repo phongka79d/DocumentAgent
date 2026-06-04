@@ -7,6 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.schemas.parsing import ChunkDraft
 from app.services import supabase_service
 from app.services.supabase_service import SupabaseConnectionError
 
@@ -31,6 +32,7 @@ def _settings(
             "storage_bucket": storage_bucket,
         },
         supabase_storage_bucket=storage_bucket,
+        single_user_id="single_user",
     )
 
 
@@ -339,3 +341,207 @@ def test_get_document_metadata_returns_none_when_missing(
     monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
 
     assert supabase_service.get_document_metadata("document-id", "single_user") is None
+
+
+def test_get_processing_document_uses_configured_single_user(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    get_document_metadata = Mock(return_value={"id": "document-id"})
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(
+        supabase_service,
+        "get_document_metadata",
+        get_document_metadata,
+    )
+
+    result = supabase_service.get_processing_document("document-id")
+
+    assert result == {"id": "document-id"}
+    get_document_metadata.assert_called_once_with("document-id", "single_user")
+
+
+def test_download_original_document_file_uses_configured_storage_bucket(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bucket = SimpleNamespace(download=Mock(return_value=b"file bytes"))
+    storage = SimpleNamespace(from_=Mock(return_value=bucket))
+    client = SimpleNamespace(storage=storage)
+    monkeypatch.setattr(
+        supabase_service,
+        "get_settings",
+        lambda: _settings(storage_bucket="private-documents"),
+    )
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.download_original_document_file(
+        "documents/single_user/document-id/file.txt"
+    )
+
+    assert result == b"file bytes"
+    storage.from_.assert_called_once_with("private-documents")
+    bucket.download.assert_called_once_with("documents/single_user/document-id/file.txt")
+
+
+def test_download_original_document_file_reports_safe_storage_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bucket = SimpleNamespace(download=Mock(side_effect=LookupError("missing object")))
+    client = SimpleNamespace(storage=SimpleNamespace(from_=Mock(return_value=bucket)))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.download_original_document_file(
+            "documents/single_user/document-id/file.txt"
+        )
+
+    message = str(exc_info.value)
+    assert "storage download" in message
+    assert "LookupError" in message
+    assert "missing object" not in message
+
+
+def test_insert_document_chunks_inserts_single_user_rows_with_null_qdrant_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chunks = [
+        ChunkDraft(
+            content="First chunk",
+            chunk_index=0,
+            token_count=2,
+            page_number=1,
+            section_title="Intro",
+        ),
+        ChunkDraft(
+            content="Second chunk",
+            chunk_index=1,
+            token_count=2,
+            page_number=None,
+            section_title=None,
+        ),
+    ]
+    inserted_rows = [{"id": "chunk-1"}, {"id": "chunk-2"}]
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=inserted_rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_document_chunks("document-id", chunks)
+
+    assert result == inserted_rows
+    client.table.assert_called_once_with("document_chunks")
+    query.insert.assert_called_once_with(
+        [
+            {
+                "document_id": "document-id",
+                "user_id": "single_user",
+                "chunk_index": 0,
+                "content": "First chunk",
+                "page_number": 1,
+                "section_title": "Intro",
+                "token_count": 2,
+                "qdrant_point_id": None,
+            },
+            {
+                "document_id": "document-id",
+                "user_id": "single_user",
+                "chunk_index": 1,
+                "content": "Second chunk",
+                "page_number": None,
+                "section_title": None,
+                "token_count": 2,
+                "qdrant_point_id": None,
+            },
+        ]
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_insert_document_chunks_skips_empty_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = SimpleNamespace(table=Mock())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_document_chunks("document-id", [])
+
+    assert result == []
+    client.table.assert_not_called()
+
+
+def test_insert_document_chunks_reports_safe_insert_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.insert_document_chunks(
+            "document-id",
+            [ChunkDraft(content="Chunk", chunk_index=0, token_count=1)],
+        )
+
+    message = str(exc_info.value)
+    assert "document chunk insert" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message
+
+
+def test_update_document_status_filters_user_and_updates_error_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"id": "document-id", "status": "failed", "error_message": "Safe error"}
+    query = Mock()
+    query.update.return_value = query
+    query.eq.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.update_document_status(
+        "document-id",
+        "failed",
+        error_message="Safe error",
+    )
+
+    assert result == row
+    client.table.assert_called_once_with("documents")
+    query.update.assert_called_once_with(
+        {"status": "failed", "error_message": "Safe error"}
+    )
+    assert query.eq.call_args_list == [
+        (("id", "document-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.execute.assert_called_once_with()
+
+
+def test_update_document_chunk_count_filters_user(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"id": "document-id", "chunk_count": 3}
+    query = Mock()
+    query.update.return_value = query
+    query.eq.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.update_document_chunk_count("document-id", 3)
+
+    assert result == row
+    client.table.assert_called_once_with("documents")
+    query.update.assert_called_once_with({"chunk_count": 3})
+    assert query.eq.call_args_list == [
+        (("id", "document-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.execute.assert_called_once_with()

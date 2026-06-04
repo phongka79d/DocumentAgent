@@ -1655,3 +1655,194 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- Task ID: (03A)
+- Task title: Add Supabase helpers for processing and chunk persistence
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `## 5. Dependencies`; `## 6. Required Files and Folders`; `## 7. Data Model / Schema Changes`; `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## Table: document_chunks`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The last appended execution report is for `(03A)`, matching the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/supabase_service.py`
+  - `backend/tests/test_supabase_service.py`
+  - `docs/reports/report_4_execute_agent.md`
+  - `docs/tasks/task_4.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/supabase_service.py`: in scope - adds processing document lookup, storage download, chunk insert, status update, and chunk count update helpers.
+- `backend/tests/test_supabase_service.py`: in scope - adds focused mocked tests for the new Supabase helper behavior.
+- `docs/reports/report_4_execute_agent.md`: in scope - latest `(03A)` execution report is appended.
+- `docs/tasks/task_4.md`: in scope - marks only `(03A)` complete in the task entry and progress tracker; Batch03 remains incomplete.
+- `docs/plans/Plan_4.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited `document_chunks` table shape reviewed.
+
+## Reported Files Cross-Check
+- `backend/app/services/supabase_service.py`: present in git/repo: yes; matches task scope: yes; notes: implementation matches reported helper additions.
+- `backend/tests/test_supabase_service.py`: present in git/repo: yes; matches task scope: yes; notes: tests cover mockability, single-user filtering, storage bucket use, safe failures, and chunk insert payload shape.
+- `docs/tasks/task_4.md`: present in git/repo: yes; matches task scope: yes; notes: progress update is scoped to `(03A)` and the Batch03 aggregate remains unchecked.
+- `docs/reports/report_4_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: execution report was appended and accurately describes the changed files and validations.
+
+## Dependency Review
+- Required dependencies: Batch01 parser service, Batch02 chunking service, completed Plan 2/3 Supabase service behavior, existing `documents` and `document_chunks` tables; live Supabase credentials/storage objects only for live validation.
+- Dependency status: satisfied for mocked/local review; live Supabase validation was correctly not required for this helper-only task.
+- Missing or invalid dependency: none for selected task review.
+
+## Architecture Alignment
+- Passed: Helpers remain backend-only, use existing Supabase service boundaries, use existing tables, filter document operations by configured `single_user_id`, insert `document_chunks` rows with `qdrant_point_id = None`, and avoid database schema/API/frontend changes.
+- Failed: none.
+- Uncertain: live Supabase behavior was not verified because no live credentials, bucket, document rows, or uploaded objects were provided; this is acceptable for `(03A)` and remains future/manual validation scope.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production helper functions call the configured Supabase client for document lookup, storage download, chunk insert, document status update, and chunk count update. Tests monkeypatch clients/settings rather than relying on fixed success values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code reads `single_user_id` and storage bucket from settings. Test fixtures use `single_user` as controlled mocked configuration, not production hardcoding.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_supabase_service.py -v`
+- Reported result: Passed, 22 passed.
+- Rerun result: Passed, 22 passed in 0.94s.
+- Status: satisfied
+- Notes: Targeted helper tests passed locally.
+
+- Command/check: `pytest tests/test_supabase_service.py tests/test_document_api.py tests/test_document_upload.py tests/test_config.py tests/test_chunking_service.py tests/test_document_parser.py -v`
+- Reported result: Passed, 56 passed.
+- Rerun result: Passed, 56 passed in 1.42s.
+- Status: satisfied
+- Notes: Reported regression subset passed locally.
+
+- Command/check: `rg -n "embedding|embeddings|GraphRAG|retrieval|agent|OCR|qdrant" backend/app/services/supabase_service.py backend/tests/test_supabase_service.py`
+- Reported result: Passed; only required `qdrant_point_id` references found.
+- Rerun result: Only `qdrant_point_id` implementation/test references found.
+- Status: satisfied
+- Notes: No out-of-scope embeddings, vector storage, GraphRAG, retrieval, agents, or OCR work found in changed implementation/test files.
+
+- Command/check: Batch04 mocked processing tests / live Supabase validation
+- Reported result: Not run.
+- Rerun result: Not run.
+- Status: not required for `(03A)`
+- Notes: Processing orchestration tests are assigned to later tasks; live validation requires user-provided Supabase setup.
+
+## Acceptance Review
+- Task acceptance: Helpers are mockable.
+- Status: satisfied
+- Evidence: New tests monkeypatch `get_supabase_client`, `get_settings`, and `get_document_metadata` around plain helper functions.
+
+- Task acceptance: Helpers apply `SINGLE_USER_ID` filters.
+- Status: satisfied
+- Evidence: `get_processing_document`, `update_document_status`, and `update_document_chunk_count` use configured `single_user_id`; `insert_document_chunks` assigns configured `single_user_id` to chunk rows.
+
+- Task acceptance: Helpers insert chunks with `qdrant_point_id = null`.
+- Status: satisfied
+- Evidence: `_chunk_insert_row` sets `qdrant_point_id` to `None`; tests assert null payload values.
+
+- Task acceptance: Helpers surface failures safely.
+- Status: satisfied
+- Evidence: Storage download and chunk insert exceptions are wrapped as `SupabaseConnectionError` with operation/type, and tests assert sensitive underlying details are not included.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(03A)` is checked complete in the task entry and progress tracker.
+- Batch status: accurate; Batch03 remains unchecked because `(03B)`, `(03C)`, and `(03D)` are incomplete.
+- Execution report entry: appended and scoped to `(03A)`.
+- Review report entry: appended at end of `docs/review/review_4_review_agent.md`.
+- Other: No sibling Batch03 tasks were marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The helper returns an empty list for empty chunk input so later processing orchestration must still fail zero-usable-chunk documents as planned in `(03B)`/`(03C)`.
+- Live Supabase validation remains dependent on user-provided credentials, bucket, document rows, and uploaded objects.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(03A)` is complete and `(03B)`, `(03C)`, `(03D)` remain unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch03 - Supabase Chunk Persistence and Processing Orchestration",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/supabase_service.py",
+    "backend/tests/test_supabase_service.py",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
