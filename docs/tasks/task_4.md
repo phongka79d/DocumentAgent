@@ -97,7 +97,7 @@ Chunking and processing cannot be implemented safely until each supported docume
 
 ### Tasks
 
-- [ ] (01A): Add parser dependencies and fixture-friendly setup
+- [x] (01A): Add parser dependencies and fixture-friendly setup
   - Source of Truth: `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.2 Parsing Flow`
   - Source Requirements:
     - Add parser dependencies to `backend/requirements.txt`.
@@ -717,7 +717,7 @@ Optional future tracks are outside the mandatory chain.
 ### Task IDs
 
 #### Batch01
-- [ ] (01A): Add parser dependencies and fixture-friendly setup
+- [x] (01A): Add parser dependencies and fixture-friendly setup
 - [ ] (01B): Add parsed section and chunk draft schemas
 - [ ] (01C): Implement parser dispatch and parser errors
 - [ ] (01D): Implement PDF, DOCX, and TXT parsers
@@ -785,4 +785,3 @@ Optional future tracks are outside the mandatory chain.
 
 #### Notes for Next Batch
 - handoff notes
-
