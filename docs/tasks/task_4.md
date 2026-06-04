@@ -530,7 +530,7 @@ Plan 4 completion depends on evidence that each supported file type parses into 
   - Blocked Condition: None.
   - Files: `backend/tests/test_document_parser.py`, `backend/tests/fixtures/sample.pdf`, `backend/tests/fixtures/sample.docx`, `backend/tests/fixtures/sample.txt`, `backend/tests/fixtures/sample.csv`
 
-- [ ] (04B): Add chunking service tests for sizing, overlap, metadata, and empty behavior
+- [x] (04B): Add chunking service tests for sizing, overlap, metadata, and empty behavior
   - Source of Truth: `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 11. Required Tests`; `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_4.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Add chunking tests.
@@ -737,7 +737,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch04
 - [x] (04A): Add parser fixture tests for PDF, DOCX, TXT, CSV, and empty input
-- [ ] (04B): Add chunking service tests for sizing, overlap, metadata, and empty behavior
+- [x] (04B): Add chunking service tests for sizing, overlap, metadata, and empty behavior
 - [ ] (04C): Add processing orchestration tests with mocked Supabase
 - [ ] (04D): Run required backend tests and scope checks
 - [ ] (04E): Perform manual API and Supabase checks when user setup is available

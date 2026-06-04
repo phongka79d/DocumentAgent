@@ -1362,3 +1362,86 @@ complete
 - next task ID: (04B)
 - can proceed: yes
 - handoff notes: Parser fixture tests now pass. The next task can focus on chunking service tests without expanding parser-test scope.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch04 - Tests, Manual Validation, and Handoff
+
+## Task
+(04B) - Add chunking service tests for sizing, overlap, metadata, and empty behavior
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 11. Required Tests
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_4.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04B)
+- Task title: Add chunking service tests for sizing, overlap, metadata, and empty behavior
+
+## Completed Work
+- Status: complete.
+- Updated `backend/tests/test_chunking_service.py` with explicit coverage for small-section sizing and long-section splitting with configured overlap.
+- Existing chunking tests also cover deterministic chunk index ordering, page/section/file metadata, CSV row metadata, token counts, empty input, whitespace-only input, and invalid chunk settings.
+
+## Files Created or Modified
+- backend/tests/test_chunking_service.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_chunking_service.py -v`: Failed on first run after adding tests; evidence: 13 passed, 1 failed because the new test hand-counted 8 tokens while the shared estimator correctly counted 9.
+- `cd backend; pytest tests/test_chunking_service.py -v`: Passed after correcting the assertion; evidence: 14 passed in 0.13s.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove chunking behavior and metadata preservation without relying on external services.
+- Status: satisfied.
+- Evidence: `tests/test_chunking_service.py` now covers sizing, overlap, deterministic chunk indexes, page metadata, section title metadata, CSV row metadata, token count calculation, empty section lists, whitespace-only sections, and invalid chunk settings. Required validation passed with 14 tests.
+
+## Artifacts Produced
+- Chunking test coverage in `backend/tests/test_chunking_service.py`.
+- Appended execution report in `docs/reports/report_4_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(04B)` acceptance and required validation are satisfied; Batch04 still has unchecked tasks `(04C)`, `(04D)`, and `(04E)`.
+
+## Key Implementation Decisions
+- Reused the existing chunking service tests and added narrowly scoped tests for the remaining explicit sizing and overlap requirements.
+- Used `estimate_token_count` in assertions so tests verify the service's shared token-count contract instead of duplicating a fragile manual count.
+
+## Risks or Open Issues
+- None for `(04B)`.
+
+## Minor Issues Fixed During Execution
+- Corrected a new test assertion that initially used an incorrect hand-counted token total.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency Batch02 is marked complete in `docs/tasks/task_4.md`.
+- No user action was required.
+- No architecture concerns identified for this selected task.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes
+- handoff notes: Chunking service tests pass locally and cover the selected task scope. The next task can focus on mocked processing orchestration tests without expanding chunking scope.

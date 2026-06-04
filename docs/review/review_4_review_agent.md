@@ -2759,3 +2759,174 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Tests, Manual Validation, and Handoff
+- Task ID: (04B)
+- Task title: Add chunking service tests for sizing, overlap, metadata, and empty behavior
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_4.md > ## 3. Scope; ## 9. Implementation Steps; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The last appended execution report is for `(04B)` and matches the user-requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/tests/test_chunking_service.py
+  - docs/reports/report_4_execute_agent.md
+  - docs/tasks/task_4.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_chunking_service.py`: in scope - contains the new sizing and overlap tests and existing metadata/empty/index validation.
+- `backend/app/services/chunking_service.py`: in scope - reviewed to verify tests exercise the real chunking contract.
+- `backend/app/schemas/parsing.py`: in scope - reviewed to verify `ParsedSection` and `ChunkDraft` fields used by tests.
+- `docs/tasks/task_4.md`: in scope - selected task and progress tracker updated for `(04B)` only.
+- `docs/reports/report_4_execute_agent.md`: in scope - execution report appended for `(04B)`.
+- `docs/plans/Plan_4.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_chunking_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds focused tests for one-chunk sizing and long-section overlap splitting.
+- file from execution report: `docs/tasks/task_4.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04B)` checkbox and progress tracker are marked complete; Batch04 remains incomplete.
+- file from execution report: `docs/reports/report_4_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04B)` report is appended after `(04A)`.
+
+## Dependency Review
+- Required dependencies: Batch02.
+- Dependency status: satisfied; Batch02 is marked complete in `docs/tasks/task_4.md`, and `backend/app/services/chunking_service.py` exists with the expected `chunk_sections` and `estimate_token_count` contracts.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Work is test-only for the chunking service, uses local unit tests, and relies on no external services.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Tests call the real `chunk_sections` service and assert actual chunk content, overlap, deterministic indexes, token counts, metadata propagation, empty behavior, and invalid setting errors.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Test fixtures use deterministic local strings appropriate for unit testing; no production logic, secrets, external-service responses, or fake success paths were introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_chunking_service.py -v`
+- Reported result: first run failed due to an incorrect new assertion; second run passed with 14 tests.
+- Rerun result: passed, 14 tests passed in 0.15s.
+- Status: passed
+- Notes: Rerun confirms the execution report's final passing validation.
+- Command/check: scope/search review for `ocr|embedding|qdrant|graphrag|retrieval|agent|SUPABASE|SERVICE_ROLE|SECRET|API_KEY` in the changed files.
+- Reported result: not specifically reported for `(04B)`.
+- Rerun result: no out-of-scope implementation or secret exposure found in the new chunking test diff; matches are historical/task-document text references only.
+- Status: passed
+- Notes: No frontend, OCR, embedding, Qdrant, GraphRAG, retrieval, agent, or secret changes were introduced by this task.
+
+## Acceptance Review
+- Task acceptance: Tests prove chunking behavior and metadata preservation without relying on external services.
+- Status: satisfied
+- Evidence: `backend/tests/test_chunking_service.py` covers small-section sizing, long-section overlap, deterministic indexes, PDF page metadata, DOCX section title metadata, TXT metadata, CSV row metadata, token count consistency, empty input, whitespace-only input, skipped empty sections, and invalid chunk settings. The targeted pytest command passed.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(04B)` is checked.
+- Batch status: accurate; Batch04 remains unchecked because `(04C)`, `(04D)`, and `(04E)` remain unchecked.
+- Execution report entry: accurate and appended.
+- Review report entry: appended at EOF.
+- Other: No sibling Batch04 task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `(04B)` is intentionally limited to chunking tests; full Batch04 validation and manual checks remain for later task IDs.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04A)` and `(04B)` are complete while `(04C)`, `(04D)`, and `(04E)` remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch04 - Tests, Manual Validation, and Handoff",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_chunking_service.py",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

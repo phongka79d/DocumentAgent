@@ -9,6 +9,43 @@ from app.schemas.parsing import ParsedSection
 from app.services.chunking_service import chunk_sections, estimate_token_count
 
 
+def test_small_section_stays_in_one_sized_chunk_with_token_count() -> None:
+    section = ParsedSection(
+        text="  Small section fits comfortably inside the configured chunk size.  ",
+        file_name="small.txt",
+        metadata={"source_type": "txt"},
+    )
+
+    chunks = chunk_sections([section], chunk_size=20, chunk_overlap=4)
+
+    assert len(chunks) == 1
+    assert chunks[0].content == "Small section fits comfortably inside the configured chunk size."
+    assert chunks[0].chunk_index == 0
+    assert chunks[0].token_count == estimate_token_count(chunks[0].content)
+    assert chunks[0].token_count <= 20
+
+
+def test_long_section_splits_by_configured_size_and_overlap() -> None:
+    words = [f"word{i}" for i in range(1, 14)]
+    section = ParsedSection(
+        text=" ".join(words),
+        file_name="long.txt",
+        metadata={"source_type": "txt"},
+    )
+
+    chunks = chunk_sections([section], chunk_size=5, chunk_overlap=2)
+
+    assert [chunk.content.split() for chunk in chunks] == [
+        ["word1", "word2", "word3", "word4", "word5"],
+        ["word4", "word5", "word6", "word7", "word8"],
+        ["word7", "word8", "word9", "word10", "word11"],
+        ["word10", "word11", "word12", "word13"],
+    ]
+    assert [chunk.chunk_index for chunk in chunks] == [0, 1, 2, 3]
+    assert all(chunk.token_count <= 5 for chunk in chunks)
+    assert all(chunk.token_count == estimate_token_count(chunk.content) for chunk in chunks)
+
+
 def test_chunk_indexes_are_sequential_and_stable_in_source_order() -> None:
     sections = [
         ParsedSection(
