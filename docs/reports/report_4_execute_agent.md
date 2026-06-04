@@ -915,3 +915,192 @@ complete
 - next task ID: (03B)
 - can proceed: yes
 - handoff notes: Supabase helper functions are ready for `document_processing_service.py`: `get_processing_document`, `download_original_document_file`, `insert_document_chunks`, `update_document_status`, and `update_document_chunk_count`.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch03 - Supabase Chunk Persistence and Processing Orchestration
+
+## Task
+(03B) - Implement document processing orchestration service
+
+## Status
+partial
+
+## Source of Truth Used
+- `docs/plans/Plan_4.md` > `## 1. Goal`
+- `docs/plans/Plan_4.md` > `## 3. Scope`
+- `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_4.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- Task ID: (03B)
+- Task title: Implement document processing orchestration service
+
+## Completed Work
+- The implementation work for the selected task is complete, but the task is reported partial because the selected required validation target does not exist yet.
+- Created `process_document(document_id)` in `backend/app/services/document_processing_service.py`.
+- Loads the document row through the existing `get_processing_document` helper, which filters by configured `SINGLE_USER_ID`.
+- Updates document status to `processing` before storage download and parsing.
+- Downloads original file bytes from Supabase Storage through the existing helper.
+- Dispatches parsing through `parse_document`, enriches parsed metadata with document/user/file context, chunks with configured chunk settings, and bulk inserts chunks through the existing helper.
+- Updates `documents.chunk_count` to the inserted row count and marks status `ready` on success.
+- Added typed success response data with `DocumentProcessingResult`.
+- Did not implement broad failure catch-and-mark behavior assigned to (03C).
+
+## Files Created or Modified
+- `backend/app/services/document_processing_service.py`
+- `docs/reports/report_4_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_document_processing.py -v`: Failed
+- evidence or reason: required Batch04 test file `backend/tests/test_document_processing.py` does not exist, so pytest reported `file or directory not found` and collected 0 tests.
+- `cd backend; python -c "from app.services.document_processing_service import DocumentProcessingResult, process_document; ..."`: Passed
+- evidence or reason: imported the new service and instantiated `DocumentProcessingResult` successfully.
+- `cd backend; pytest tests/test_document_parser.py tests/test_chunking_service.py tests/test_supabase_service.py -v`: Passed
+- evidence or reason: 36 tests passed.
+- `cd backend; <inline mocked process_document success-path smoke>`: Passed
+- evidence or reason: mocked document lookup, status updates, storage download, parser, chunker, insert, and chunk count update; verified result status `ready`, `chunk_count == 1`, and status order starts with `processing` and ends with `ready`.
+
+## Acceptance Check
+- Task acceptance condition: Processing a supported non-empty uploaded document inserts chunks, sets chunk count to inserted row count, and marks status `ready`.
+- Status: partially satisfied
+- Evidence: Mocked success-path smoke verified the orchestration sequence and result data. Full selected validation is not satisfied because `tests/test_document_processing.py` is assigned to Batch04 and is not present yet.
+
+## Artifacts Produced
+- `backend/app/services/document_processing_service.py`
+- Appended execution report in `docs/reports/report_4_execute_agent.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: the implementation is present, but the selected required validation command cannot pass until Batch04 creates `backend/tests/test_document_processing.py`; per hard rule, progress was not marked complete without satisfied validation.
+
+## Key Implementation Decisions
+- Used a small Pydantic `DocumentProcessingResult` model for typed success response data.
+- Enriched parsed section metadata before chunking so chunk drafts carry `document_id`, `user_id`, and file context while preserving parser metadata.
+- Used configured `CHUNK_SIZE_TOKENS`, `CHUNK_OVERLAP_TOKENS`, and `SINGLE_USER_ID` through `get_settings()`.
+- Let processing errors propagate without catching and writing `failed`, because broad failure handling is assigned to sibling task (03C).
+
+## Risks or Open Issues
+- `backend/tests/test_document_processing.py` is still missing and must be added by Batch04 task (04C).
+- Failure status behavior remains incomplete by design until (03C).
+- The service currently marks `ready` with `chunk_count = 0` if the chunker returns no chunks; explicit empty/zero-chunk failure handling is assigned to (03C).
+- Live Supabase validation remains dependent on user-provided credentials, bucket, document rows, and uploaded storage objects.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (03A), Batch01, and Batch02 were checked complete in `docs/tasks/task_4.md`.
+- No sibling tasks, API trigger, broad failure handling, database schema changes, frontend polling, embeddings, Qdrant, GraphRAG, retrieval, agents, or OCR were implemented.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes
+- handoff notes: `process_document(document_id)` now exists and covers the success-path orchestration. (03C) should add safe failed-status handling for storage, parser, empty, unsupported type, and chunk insert errors without changing the success contract.
+
+---
+
+# Task Execution Report - (03B) Repair
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch03 - Supabase Chunk Persistence and Processing Orchestration
+
+## Task
+(03B) - Implement document processing orchestration service
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_4.md` > `## 1. Goal`
+- `docs/plans/Plan_4.md` > `## 3. Scope`
+- `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_4.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Supabase Chunk Persistence and Processing Orchestration
+- Task ID: (03B)
+- Task title: Implement document processing orchestration service
+
+## Completed Work
+- The repair is complete.
+- Kept the existing valid `process_document(document_id)` implementation in `backend/app/services/document_processing_service.py`.
+- Added mocked success-path orchestration coverage in `backend/tests/test_document_processing.py`.
+- The test verifies document lookup, `processing` status update before parsing, storage download, parser dispatch, metadata enrichment before chunking, chunk insert, chunk count update from inserted rows, final `ready` status update, returned success data, `SINGLE_USER_ID` propagation, and `qdrant_point_id = None`.
+- Did not implement sibling task (03C) broad failure handling.
+- Did not continue to (03C).
+
+## Files Created or Modified
+- `backend/app/services/document_processing_service.py`
+- `backend/tests/test_document_processing.py`
+- `docs/tasks/task_4.md`
+- `docs/reports/report_4_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_document_processing.py -v`: Passed
+- evidence or reason: 1 test collected and passed: `test_process_document_orchestrates_success_path`.
+
+## Acceptance Check
+- Task acceptance condition: Processing a supported non-empty uploaded document inserts chunks, sets chunk count to inserted row count, and marks status `ready`.
+- Status: satisfied
+- Evidence: mocked success-path test passed and verifies chunk insertion, inserted-row count update, and final ready status.
+
+## Artifacts Produced
+- `backend/tests/test_document_processing.py`
+- Appended repair execution report in `docs/reports/report_4_execute_agent.md`
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: `(03B)` acceptance and validation are satisfied; Batch03 remains incomplete because `(03C)` and `(03D)` are still unchecked.
+
+## Key Implementation Decisions
+- Used monkeypatched service-level collaborators to keep the test focused on `(03B)` orchestration and avoid live Supabase dependencies.
+- Verified success-path behavior only, leaving failure status handling for `(03C)`.
+- Followed existing backend test import-path style by adding the backend directory to `sys.path` in the test file.
+
+## Risks or Open Issues
+- `(03C)` failure handling is still pending by design.
+- `docs/review/review_4_review_agent.md` had pre-existing unrelated working-tree modifications and was not touched during this repair.
+- Live Supabase validation still depends on user-provided credentials, bucket, document rows, and uploaded storage objects.
+
+## Minor Issues Fixed During Execution
+- Added the missing `backend/tests/test_document_processing.py` validation target requested by A2.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(03A)`, Batch01, and Batch02 were already complete in `docs/tasks/task_4.md`.
+- No sibling task, API trigger, broad failure handling, database schema change, frontend polling, embedding, Qdrant, GraphRAG, retrieval, agent, or OCR work was implemented.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes
+- handoff notes: `(03B)` now has a passing mocked success-path validation. `(03C)` should add safe failure handling and failed-status updates.

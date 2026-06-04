@@ -388,7 +388,7 @@ Plan 4 is complete only when parsed chunks are durable in Supabase PostgreSQL an
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live Supabase validation if credentials, bucket, uploaded file, or tables are missing.
   - Files: `backend/app/services/supabase_service.py`
 
-- [ ] (03B): Implement document processing orchestration service
+- [x] (03B): Implement document processing orchestration service
   - Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Implement `process_document(document_id)`.
@@ -731,7 +731,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch03
 - [x] (03A): Add Supabase helpers for processing and chunk persistence
-- [ ] (03B): Implement document processing orchestration service
+- [x] (03B): Implement document processing orchestration service
 - [ ] (03C): Implement safe failure handling and status transitions
 - [ ] (03D): Add a backend processing trigger only where source-supported
 
