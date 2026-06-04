@@ -164,7 +164,7 @@ Chunking and processing cannot be implemented safely until each supported docume
   - Blocked Condition: None.
   - Files: `backend/app/services/document_parser.py`, `backend/tests/fixtures/sample.pdf`, `backend/tests/fixtures/sample.docx`, `backend/tests/fixtures/sample.txt`
 
-- [ ] (01E): Implement CSV parser with row metadata
+- [x] (01E): Implement CSV parser with row metadata
   - Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_4.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.2 Parsing Flow`
   - Source Requirements:
     - CSV rows are converted into readable text with column names.
@@ -709,7 +709,7 @@ Optional future tracks are outside the mandatory chain.
 
 ### Batches
 
-- [ ] Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- [x] Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
 - [ ] Batch02 - Chunking Configuration and Metadata-Preserving Splitter
 - [ ] Batch03 - Supabase Chunk Persistence and Processing Orchestration
 - [ ] Batch04 - Tests, Manual Validation, and Handoff
@@ -721,7 +721,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01B): Add parsed section and chunk draft schemas
 - [x] (01C): Implement parser dispatch and parser errors
 - [x] (01D): Implement PDF, DOCX, and TXT parsers
-- [ ] (01E): Implement CSV parser with row metadata
+- [x] (01E): Implement CSV parser with row metadata
 
 #### Batch02
 - [ ] (02A): Add backend chunking configuration

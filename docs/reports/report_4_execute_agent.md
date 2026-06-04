@@ -356,3 +356,95 @@ complete
 - next task ID: (01E)
 - can proceed: yes
 - handoff notes: Implement CSV parsing only in the next task, preserving row indexes and column-name text while leaving the PDF, DOCX, and TXT parser contracts intact.
+
+---
+
+# Task Execution Report - (01E)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+
+## Task
+(01E) - Implement CSV parser with row metadata
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_4.md > ## 1. Goal
+- docs/plans/Plan_4.md > ## 3. Scope
+- docs/plans/Plan_4.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_4.md > ## 9. Implementation Steps
+- docs/plans/Plan_4.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_4.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.2 Parsing Flow
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- Task ID: (01E)
+- Task title: Implement CSV parser with row metadata
+
+## Completed Work
+- Complete.
+- Added a standard-library CSV parser registered through the existing parser dispatch.
+- Converted each non-empty CSV data row into readable text beginning with `Row N:` and followed by `Column: value` lines.
+- Preserved CSV row metadata with `source_type`, physical `row_index`, `column_names`, and `file_name` on each parsed section.
+- Added CSV decoding failure coverage proving invalid UTF-8 raises a parser decoding error that identifies CSV.
+- Added a small CSV fixture with headers and several rows.
+
+## Files Created or Modified
+- backend/app/services/document_parser.py
+- backend/tests/fixtures/sample.csv
+- backend/tests/test_document_parser.py
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_document_parser.py -v`: Failed before implementation as expected; 2 collected tests failed because CSV still used the placeholder parser.
+- `cd backend; pytest tests/test_document_parser.py -v`: Passed after implementation; 2 passed.
+- `cd backend; pytest -v`: Passed; 35 passed.
+- `rg -n "ocr|embedding|qdrant|graphrag|retrieval|agent" backend/app/services/document_parser.py backend/tests/test_document_parser.py backend/tests/fixtures/sample.csv`: Passed; no matches in changed parser/test/fixture files.
+
+## Acceptance Check
+- Task acceptance condition: Parser tests prove CSV output includes column names, row indexes, source type, and non-empty text.
+- Status: satisfied
+- Evidence: `tests/test_document_parser.py::test_csv_parser_includes_column_names_row_indexes_and_metadata` asserts non-empty text, `Row 2:`, expected column-value lines, `metadata["source_type"] == "csv"`, `metadata["row_index"] == 2`, and expected `column_names`.
+
+## Artifacts Produced
+- backend/tests/fixtures/sample.csv
+- backend/tests/test_document_parser.py
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: (01E) acceptance and validation are satisfied, and all Batch01 task IDs are now checked.
+
+## Key Implementation Decisions
+- Used Python standard library `csv`, per task preference, with UTF-8-SIG decoding to handle ordinary UTF-8 CSV files and optional BOMs.
+- Represented each data row as one `ParsedSection` using the physical CSV row number so downstream chunks can be traced back to source rows.
+- Preserved extra CSV values beyond declared headers as readable `Extra Column N` lines while keeping declared headers in `column_names` metadata.
+
+## Risks or Open Issues
+- Batch04 still needs to expand parser fixture tests for PDF, DOCX, TXT, CSV, and empty input as scheduled.
+
+## Minor Issues Fixed During Execution
+- Added the same `sys.path` test setup pattern used by existing backend tests so the new parser test imports `app` correctly when run from `backend`.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, user-action requirements, or architecture concerns identified.
+- Dependencies (01A), (01B), and (01C) were already complete and accepted per the user-provided dependency evidence.
+- No PDF, DOCX, or TXT parser behavior was changed except registering CSV alongside existing parsers.
+
+## Notes for Next Task
+- next task ID: (02A)
+- can proceed: yes
+- handoff notes: Batch01 parser foundation is complete. Batch02 can begin chunking configuration and metadata-preserving splitting.

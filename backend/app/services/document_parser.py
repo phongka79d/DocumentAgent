@@ -1,5 +1,6 @@
+import csv
 from collections.abc import Callable
-from io import BytesIO
+from io import BytesIO, StringIO
 
 from docx import Document
 from pypdf import PdfReader
@@ -157,8 +158,51 @@ def _parse_txt(file_bytes: bytes, file_name: str) -> list[ParsedSection]:
     ]
 
 
+def _parse_csv(file_bytes: bytes, file_name: str) -> list[ParsedSection]:
+    text = file_bytes.decode("utf-8-sig")
+    reader = csv.reader(StringIO(text))
+
+    try:
+        raw_headers = next(reader)
+    except StopIteration:
+        return []
+
+    column_names = [
+        header.strip() or f"Column {column_index}"
+        for column_index, header in enumerate(raw_headers, start=1)
+    ]
+
+    sections: list[ParsedSection] = []
+    for row_index, row in enumerate(reader, start=2):
+        if not any(cell.strip() for cell in row):
+            continue
+
+        row_lines = [f"Row {row_index}:"]
+        for column_index, column_name in enumerate(column_names):
+            value = row[column_index].strip() if column_index < len(row) else ""
+            row_lines.append(f"{column_name}: {value}")
+
+        for extra_index, value in enumerate(row[len(column_names) :], start=1):
+            row_lines.append(f"Extra Column {extra_index}: {value.strip()}")
+
+        sections.append(
+            _build_section(
+                text="\n".join(row_lines),
+                file_name=file_name,
+                source_type="csv",
+                metadata={
+                    "row_index": row_index,
+                    "column_names": column_names,
+                },
+            )
+        )
+
+    return sections
+
+
 _PARSERS.update(
     {
+        "csv": _parse_csv,
         "docx": _parse_docx,
         "pdf": _parse_pdf,
         "txt": _parse_txt,
