@@ -254,3 +254,105 @@ complete
 - next task ID: (01D)
 - can proceed: yes
 - handoff notes: Replace the PDF, DOCX, and TXT placeholder parser callables in `backend/app/services/document_parser.py` with real parsers while preserving the public `parse_document` dispatch and common parser error behavior.
+
+---
+
+# Task Execution Report - (01D)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Report File
+docs/reports/report_4_execute_agent.md
+
+## Batch
+Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+
+## Task
+(01D) - Implement PDF, DOCX, and TXT parsers
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_4.md` > `## 1. Goal`
+- `docs/plans/Plan_4.md` > `## 3. Scope`
+- `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_4.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.2 Parsing Flow`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- Task ID: (01D)
+- Task title: Implement PDF, DOCX, and TXT parsers
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Implemented PDF parsing with `pypdf.PdfReader`, one parsed section per extractable-text page, and page numbers preserved when available.
+- Implemented DOCX parsing with `python-docx`, paragraph extraction, and best-effort section titles from paragraph styles whose names start with `Heading`.
+- Implemented TXT parsing with UTF-8 first and Latin-1 fallback decoding.
+- Preserved `file_name`, `metadata.source_type`, PDF `page_number`, DOCX paragraph metadata, DOCX heading metadata, and TXT encoding metadata.
+- Created deterministic local sample fixtures for PDF, DOCX, and TXT.
+- Left CSV parser behavior untouched for (01E).
+
+## Files Created or Modified
+- backend/app/services/document_parser.py
+- backend/tests/fixtures/sample.pdf
+- backend/tests/fixtures/sample.docx
+- backend/tests/fixtures/sample.txt
+- docs/tasks/task_4.md
+- docs/reports/report_4_execute_agent.md
+
+## Tests or Validations Run
+- direct parser smoke check for PDF, DOCX, and TXT fixtures before implementation: Failed as expected / evidence: current parser raised `UnreadableDocumentError: PDF parser implementation is not available yet.`
+- direct parser smoke check for PDF, DOCX, and TXT fixtures after implementation: Passed / evidence: printed `parser smoke ok`.
+- direct parser metadata and failure checks: Passed / evidence: verified PDF page number 1, DOCX heading metadata, TXT Latin-1 fallback metadata, empty TXT failure, and valid blank PDF `EmptyDocumentError`; printed `parser metadata and failure checks ok`.
+- `python -m compileall app\services\document_parser.py app\schemas\parsing.py`: Passed / evidence: exit code 0.
+- `pytest tests/test_document_parser.py -v`: Not run / evidence: `tests/test_document_parser.py is absent`; Batch04 creates this test file, so direct parser smoke checks were run instead.
+- `pytest -q`: Passed / evidence: `33 passed in 1.11s`.
+- scope inspection for `ocr|qdrant|embedding|graphrag|retrieval|agent|fitz|pymupdf` in `backend/app/services/document_parser.py`: Passed / evidence: no matches.
+
+## Acceptance Check
+- Task acceptance condition: Parser tests prove non-empty parsed sections for sample PDF, DOCX, and TXT fixtures; empty text fails with `EmptyDocumentError`.
+- Status: satisfied
+- Evidence: Batch04 pytest file is not present yet, so direct parser smoke checks against `backend/tests/fixtures/sample.pdf`, `sample.docx`, and `sample.txt` proved non-empty parsed sections and required metadata; empty TXT and valid blank PDF checks raised `EmptyDocumentError`.
+
+## Artifacts Produced
+- PDF parser implementation.
+- DOCX parser implementation.
+- TXT parser implementation.
+- `backend/tests/fixtures/sample.pdf`
+- `backend/tests/fixtures/sample.docx`
+- `backend/tests/fixtures/sample.txt`
+- Appended execution report in `docs/reports/report_4_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (01D) acceptance and feasible validation were satisfied; Batch01 remains incomplete because (01E) is still unchecked.
+
+## Key Implementation Decisions
+- Used `pypdf` because it was already selected and installed by (01A).
+- Used Latin-1 as the safe TXT fallback because it deterministically decodes arbitrary byte values without introducing extra dependencies.
+- Treated DOCX paragraph styles beginning with `Heading` as headings and applied the latest detected heading as `section_title` for following paragraphs.
+- Kept CSV parser behavior on the existing not-ready path for (01E).
+
+## Risks or Open Issues
+- Full pytest parser fixture coverage remains scheduled for Batch04 because `backend/tests/test_document_parser.py` does not exist yet.
+- PDF extraction is limited to extractable text and does not implement OCR, per scope.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, user-action requirements, or architecture concerns identified.
+- Dependencies (01A), (01B), and (01C) were confirmed complete and A2 accepted via `docs/review/review_4_review_agent.md`; commits `b78607c`, `8f0b09b`, and `08d9139` exist.
+
+## Notes for Next Task
+- next task ID: (01E)
+- can proceed: yes
+- handoff notes: Implement CSV parsing only in the next task, preserving row indexes and column-name text while leaving the PDF, DOCX, and TXT parser contracts intact.

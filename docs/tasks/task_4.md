@@ -147,7 +147,7 @@ Chunking and processing cannot be implemented safely until each supported docume
   - Blocked Condition: None.
   - Files: `backend/app/services/document_parser.py`
 
-- [ ] (01D): Implement PDF, DOCX, and TXT parsers
+- [x] (01D): Implement PDF, DOCX, and TXT parsers
   - Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `docs/plans/Plan_4.md` > `## 3. Scope`; `docs/plans/Plan_4.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_4.md` > `## 9. Implementation Steps`; `docs/plans/Plan_4.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.2 Parsing Flow`
   - Source Requirements:
     - PDF text is extracted with page numbers when possible.
@@ -720,7 +720,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01A): Add parser dependencies and fixture-friendly setup
 - [x] (01B): Add parsed section and chunk draft schemas
 - [x] (01C): Implement parser dispatch and parser errors
-- [ ] (01D): Implement PDF, DOCX, and TXT parsers
+- [x] (01D): Implement PDF, DOCX, and TXT parsers
 - [ ] (01E): Implement CSV parser with row metadata
 
 #### Batch02

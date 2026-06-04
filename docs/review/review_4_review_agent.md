@@ -523,3 +523,200 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01D)
+
+## Source Task File
+docs/tasks/task_4.md
+
+## Execution Report Reviewed
+docs/reports/report_4_execute_agent.md
+
+## Review Report File
+docs/review/review_4_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Parser Schemas, Dependencies, and File-Type Implementations
+- Task ID: (01D)
+- Task title: Implement PDF, DOCX, and TXT parsers
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_4.md` > `## 1. Goal`; `## 3. Scope`; `## 7. Data Model / Schema Changes`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.2 Parsing Flow`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01D)
+- Reviewed task ID: (01D)
+- Correct selection: yes
+- Notes: The latest matching execution report is for `(01D)` and matches the requested batch and title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/document_parser.py`
+  - `docs/reports/report_4_execute_agent.md`
+  - `docs/tasks/task_4.md`
+- untracked files:
+  - `backend/tests/fixtures/sample.docx`
+  - `backend/tests/fixtures/sample.pdf`
+  - `backend/tests/fixtures/sample.txt`
+
+## Files Reviewed
+- `backend/app/services/document_parser.py`: in scope - implements PDF, DOCX, and TXT parser helpers while preserving dispatch and parser error handling.
+- `backend/app/schemas/parsing.py`: in scope - verified `ParsedSection` fields used by parser outputs.
+- `backend/app/utils/file_validation.py`: in scope - verified supported parser types include PDF, DOCX, TXT, and CSV.
+- `backend/tests/fixtures/sample.pdf`: in scope - small extractable-text PDF fixture, verified through `pypdf` and parser smoke check.
+- `backend/tests/fixtures/sample.docx`: in scope - small DOCX fixture with heading styles and paragraphs, verified through `python-docx` and parser smoke check.
+- `backend/tests/fixtures/sample.txt`: in scope - small UTF-8 TXT fixture, verified by reading content and parser smoke check.
+- `docs/tasks/task_4.md`: in scope - progress tracking for `(01D)` updated and Batch01 remains incomplete.
+- `docs/reports/report_4_execute_agent.md`: in scope - `(01D)` execution report appended.
+- `docs/plans/Plan_4.md`: in scope - cited parser, schema, implementation, acceptance, and failure handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - parsing flow section reviewed for parser choices and CSV boundary.
+- `docs/review/review_4_review_agent.md`: in scope - prior accepted dependency reviews inspected and this review appended.
+
+## Reported Files Cross-Check
+- `backend/app/services/document_parser.py`: present in git/repo: yes; matches task scope: yes; notes: parser implementations are real and scoped to PDF, DOCX, and TXT.
+- `backend/tests/fixtures/sample.pdf`: present in git/repo: yes, untracked; matches task scope: yes; notes: extractable text verified.
+- `backend/tests/fixtures/sample.docx`: present in git/repo: yes, untracked; matches task scope: yes; notes: paragraphs and Heading styles verified.
+- `backend/tests/fixtures/sample.txt`: present in git/repo: yes, untracked; matches task scope: yes; notes: UTF-8 sample text verified.
+- `docs/tasks/task_4.md`: present in git/repo: yes; matches task scope: yes; notes: only `(01D)` checkbox and progress tracker changed.
+- `docs/reports/report_4_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: `(01D)` report appended after `(01C)`.
+
+## Dependency Review
+- Required dependencies: `(01A)`, `(01B)`, `(01C)`.
+- Dependency status: satisfied. Prior A2 reviews for `(01A)`, `(01B)`, and `(01C)` are `ACCEPTED`; commits `b78607c`, `8f0b09b`, and `08d9139` exist.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Uses approved parser libraries (`pypdf`, `python-docx`, plain TXT decoding), returns `ParsedSection` objects, preserves source metadata, keeps safe parser errors, and avoids OCR, embeddings, Qdrant, GraphRAG, retrieval, agents, and frontend work.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_parse_pdf` reads pages with `PdfReader` and assigns 1-based page numbers; `_parse_docx` reads paragraph text and style names, uses Heading-style detection, and carries paragraph metadata; `_parse_txt` decodes UTF-8 first and falls back to Latin-1. CSV remains on the existing not-ready parser path for `(01E)`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production parser logic does not branch on fixture names, expected fixture strings, row IDs, or sample content. Fixture text is confined to test fixture files.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m compileall app\services\document_parser.py app\schemas\parsing.py`
+- Reported result: Passed
+- Rerun result: Passed, exit code 0
+- Status: passed
+- Notes: No syntax or import compilation issue found.
+
+- Command/check: `cd backend; pytest -q`
+- Reported result: Passed, `33 passed in 1.11s`
+- Rerun result: Passed, `33 passed in 1.14s`
+- Status: passed
+- Notes: Existing backend regression tests pass.
+
+- Command/check: `cd backend; pytest tests/test_document_parser.py -v`
+- Reported result: Not run because `tests/test_document_parser.py` is absent
+- Rerun result: Not run; confirmed `tests/test_document_parser.py absent`
+- Status: not applicable for this task stage
+- Notes: Batch04 owns creation of the formal parser pytest file; direct parser checks were used for `(01D)` review.
+
+- Command/check: direct parser review smoke check for PDF, DOCX, TXT, Latin-1 fallback, empty TXT, invalid PDF, and CSV reserved behavior
+- Reported result: direct parser checks passed
+- Rerun result: Passed; printed `review parser checks ok 1 4 1`
+- Status: passed
+- Notes: Confirmed PDF page number 1 and source metadata, DOCX heading metadata and section titles, TXT UTF-8 and Latin-1 metadata, `EmptyDocumentError` for whitespace TXT, `UnreadableDocumentError` for invalid PDF, and CSV still raises the not-ready parser error.
+
+- Command/check: scope inspection for `ocr|qdrant|embedding|graphrag|retrieval|agent|fitz|pymupdf|csv` in `backend/app/services/document_parser.py`
+- Reported result: Passed
+- Rerun result: Passed; no matches returned
+- Status: passed
+- Notes: No out-of-scope pipeline additions or premature CSV implementation found.
+
+## Acceptance Review
+- Task acceptance: PDF, DOCX, and TXT files produce non-empty `ParsedSection` objects when extractable text exists; empty text fails with `EmptyDocumentError`.
+- Status: satisfied
+- Evidence: Direct parser checks against local fixtures produced non-empty sections for PDF, DOCX, and TXT; PDF page metadata, DOCX heading metadata, TXT encoding metadata, Latin-1 fallback, and empty TXT failure were verified. Formal parser fixture tests remain scheduled for Batch04 as documented.
+
+## Progress Tracking
+- Selected task checkbox: accurate; `(01D)` is marked complete in the task entry and progress tracker.
+- Batch status: accurate; Batch01 remains unchecked because `(01E)` is still incomplete.
+- Execution report entry: present and appended after prior reports.
+- Review report entry: appended in this file.
+- Other: No sibling or future task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The report's pre-implementation failed smoke check cannot be independently reproduced from the current working tree, but the final implementation and reported rerunnable checks match repository evidence.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/tests/fixtures/sample.pdf`, `backend/tests/fixtures/sample.docx`, and `backend/tests/fixtures/sample.txt` are untracked and must be included with the task artifacts before commit.
+- Formal `backend/tests/test_document_parser.py` coverage is still absent by design and remains scheduled for Batch04.
+- CSV parser behavior was not implemented prematurely; it still raises the existing not-ready parser error and remains for `(01E)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, because `(01E)` remains incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_4.md",
+  "execution_report_reviewed": "docs/reports/report_4_execute_agent.md",
+  "review_report_file": "docs/review/review_4_review_agent.md",
+  "selected_batch": "Batch01 - Parser Schemas, Dependencies, and File-Type Implementations",
+  "selected_task_id": "(01D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_parser.py",
+    "backend/tests/fixtures/sample.docx",
+    "backend/tests/fixtures/sample.pdf",
+    "backend/tests/fixtures/sample.txt",
+    "docs/reports/report_4_execute_agent.md",
+    "docs/tasks/task_4.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
