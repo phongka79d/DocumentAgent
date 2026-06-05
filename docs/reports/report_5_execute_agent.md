@@ -87,3 +87,85 @@ complete
 - next task ID: (01B)
 - can proceed: yes
 - handoff notes: Configuration values are now available through backend Settings; dependency work can proceed without exposing provider secrets to frontend.
+
+---
+
+# Task Execution Report - (01B)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+
+## Task
+(01B) - Add indexing dependencies without unrelated provider packages
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- `docs/plans/Master_Plan.md` > `## 2. Tech Stack`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+- Task ID: (01B)
+- Task title: Add indexing dependencies without unrelated provider packages
+
+## Completed Work
+- Task is complete.
+- Added `qdrant-client` to `backend/requirements.txt`.
+- Kept existing `httpx` as the HTTP client dependency for ShopAIKey OpenAI-compatible HTTP endpoint work; no unrelated provider packages were added.
+
+## Files Created or Modified
+- `backend/requirements.txt`
+- `docs/tasks/task_5.md`
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `python -c "import httpx; import qdrant_client; print('httpx and qdrant_client import ok')"`: Failed before dependency installation
+- evidence or reason: `ModuleNotFoundError: No module named 'qdrant_client'` confirmed the dependency was not installed in the current backend environment yet.
+- `python -m pip install -r requirements.txt`: Passed
+- evidence or reason: Installed `qdrant-client-1.18.0` and its transitive dependencies into the local Python environment.
+- `python -c "import httpx; import qdrant_client; print('httpx and qdrant_client import ok')"`: Passed
+- evidence or reason: Output was `httpx and qdrant_client import ok`.
+
+## Acceptance Check
+- Task acceptance condition: ShopAIKey and Qdrant services can import required dependencies in the backend test environment.
+- Status: satisfied
+- Evidence: Local backend Python import check passed for `httpx` and `qdrant_client` after installing from updated requirements.
+
+## Artifacts Produced
+- Updated backend dependency declaration supporting Qdrant client usage and mocked HTTP embedding tests.
+- Appended execution report.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: no
+- reason: (01B) passed acceptance and validation; Batch01 still has unchecked sibling tasks (01C) and (01D).
+
+## Key Implementation Decisions
+- Reused existing `httpx` for HTTP client behavior instead of adding another HTTP dependency.
+- Added only `qdrant-client`; no OpenAI SDK or unrelated provider package was added.
+
+## Risks or Open Issues
+- None for mocked/local dependency validation.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (01B).
+
+## Notes for Next Task
+- next task ID: (01C)
+- can proceed: yes
+- handoff notes: Backend dependencies now declare both `httpx` and `qdrant-client`; schema work can proceed without additional provider SDK assumptions.
