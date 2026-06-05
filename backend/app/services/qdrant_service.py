@@ -1,13 +1,20 @@
+from json import loads
 from typing import Any
+from uuid import UUID
 
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams
+from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 from app.core.config import get_settings
+from app.schemas.embeddings import IndexedChunkPayload
 
 
 class QdrantSetupError(RuntimeError):
     """Raised when Qdrant collection setup is missing or incompatible."""
+
+
+class QdrantUpsertError(RuntimeError):
+    """Raised when a Qdrant point upsert fails."""
 
 
 def get_qdrant_client() -> QdrantClient:
@@ -56,6 +63,70 @@ def ensure_collection(vector_size: int) -> None:
             f"Qdrant collection '{collection_name}' has incompatible distance "
             f"{existing_distance}; expected {Distance.COSINE}. Please verify collection setup."
         )
+
+
+def build_chunk_payload(
+    *,
+    user_id: str,
+    document_id: UUID | str,
+    chunk_id: UUID | str,
+    file_name: str,
+    file_type: str,
+    page_number: int | None,
+    section_title: str | None,
+    chunk_index: int,
+    content: str,
+) -> IndexedChunkPayload:
+    return IndexedChunkPayload(
+        user_id=user_id,
+        document_id=document_id,
+        chunk_id=chunk_id,
+        file_name=file_name,
+        file_type=file_type,
+        page_number=page_number,
+        section_title=section_title,
+        chunk_index=chunk_index,
+        content_preview=content[:500],
+    )
+
+
+def upsert_chunk_vector(
+    point_id: str,
+    vector: list[float],
+    payload: IndexedChunkPayload,
+) -> str:
+    if not point_id:
+        raise QdrantUpsertError("Qdrant point ID is required for chunk vector upsert.")
+
+    try:
+        settings = get_settings().require_qdrant_settings()
+    except RuntimeError as exc:
+        raise QdrantUpsertError(str(exc)) from exc
+
+    point = PointStruct(
+        id=point_id,
+        vector=vector,
+        payload=_payload_to_qdrant(payload),
+    )
+
+    try:
+        get_qdrant_client().upsert(
+            collection_name=settings["collection"],
+            points=[point],
+        )
+    except Exception as exc:
+        raise QdrantUpsertError("Qdrant chunk vector upsert failed.") from exc
+
+    return point_id
+
+
+def _payload_to_qdrant(payload: IndexedChunkPayload) -> dict[str, Any]:
+    if hasattr(payload, "model_dump"):
+        data = payload.model_dump(mode="json")
+    else:
+        data = loads(payload.json())
+
+    return data
 
 
 def _extract_vector_params(collection: Any) -> Any:

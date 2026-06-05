@@ -335,7 +335,7 @@ Chunk embeddings need durable vector storage in Qdrant before future retrieval p
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live Qdrant validation if real Qdrant setup is missing.
   - Files: `backend/app/services/qdrant_service.py`, `backend/tests/test_qdrant_service.py`
 
-- [ ] (03B): Implement Qdrant payload builder and vector upsert helper
+- [x] (03B): Implement Qdrant payload builder and vector upsert helper
   - Source of Truth: `docs/plans/Plan_5.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 7. Qdrant Cloud Design`
   - Source Requirements:
     - Add `upsert_chunk_vector(point_id, vector, payload)`.
@@ -765,7 +765,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch03
 - [x] (03A): Implement Qdrant client initialization and collection setup
-- [ ] (03B): Implement Qdrant payload builder and vector upsert helper
+- [x] (03B): Implement Qdrant payload builder and vector upsert helper
 - [ ] (03C): Handle Qdrant failures without marking chunks indexed
 
 #### Batch04

@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
+from uuid import UUID
 
 import pytest
 
@@ -166,3 +167,139 @@ def test_ensure_collection_rejects_existing_collection_mismatch(
     assert expected_message in message
     assert "document_chunks" in message
     assert "verify collection setup" in message
+
+
+def test_build_chunk_payload_includes_required_metadata_and_safe_preview() -> None:
+    document_id = UUID("11111111-1111-1111-1111-111111111111")
+    chunk_id = UUID("22222222-2222-2222-2222-222222222222")
+    content = "x" * 501
+
+    payload = qdrant_service.build_chunk_payload(
+        user_id="single_user",
+        document_id=document_id,
+        chunk_id=chunk_id,
+        file_name="contract.pdf",
+        file_type="pdf",
+        page_number=3,
+        section_title="Probation",
+        chunk_index=0,
+        content=content,
+    )
+
+    assert payload.user_id == "single_user"
+    assert payload.document_id == document_id
+    assert payload.chunk_id == chunk_id
+    assert payload.file_name == "contract.pdf"
+    assert payload.file_type == "pdf"
+    assert payload.page_number == 3
+    assert payload.section_title == "Probation"
+    assert payload.chunk_index == 0
+    assert payload.content_preview == "x" * 500
+
+
+def test_upsert_chunk_vector_uses_stable_point_id_payload_and_vector_passthrough(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    chunk_id = "22222222-2222-2222-2222-222222222222"
+    vector = [0.1, 0.2, 0.3]
+    payload = qdrant_service.build_chunk_payload(
+        user_id="single_user",
+        document_id="11111111-1111-1111-1111-111111111111",
+        chunk_id=chunk_id,
+        file_name="contract.pdf",
+        file_type="pdf",
+        page_number=None,
+        section_title=None,
+        chunk_index=4,
+        content="Chunk content",
+    )
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    point_id = qdrant_service.upsert_chunk_vector(
+        point_id=chunk_id,
+        vector=vector,
+        payload=payload,
+    )
+
+    assert point_id == chunk_id
+    client.upsert.assert_called_once()
+    assert client.upsert.call_args.kwargs["collection_name"] == "document_chunks"
+    points = client.upsert.call_args.kwargs["points"]
+    assert len(points) == 1
+    point = points[0]
+    assert point.id == chunk_id
+    assert point.vector == vector
+    assert point.payload == {
+        "user_id": "single_user",
+        "document_id": "11111111-1111-1111-1111-111111111111",
+        "chunk_id": chunk_id,
+        "file_name": "contract.pdf",
+        "file_type": "pdf",
+        "page_number": None,
+        "section_title": None,
+        "chunk_index": 4,
+        "content_preview": "Chunk content",
+    }
+    assert "qdrant_point_id" not in point.payload
+
+
+def test_upsert_chunk_vector_does_not_update_supabase_qdrant_point_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    payload = qdrant_service.build_chunk_payload(
+        user_id="single_user",
+        document_id="11111111-1111-1111-1111-111111111111",
+        chunk_id="22222222-2222-2222-2222-222222222222",
+        file_name="contract.pdf",
+        file_type="pdf",
+        page_number=1,
+        section_title="Intro",
+        chunk_index=0,
+        content="Chunk content",
+    )
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    qdrant_service.upsert_chunk_vector(
+        point_id="22222222-2222-2222-2222-222222222222",
+        vector=[0.1],
+        payload=payload,
+    )
+
+    client.upsert.assert_called_once()
+    assert not hasattr(qdrant_service, "update_chunk_qdrant_point_id")
+
+
+def test_upsert_chunk_vector_maps_qdrant_failure_to_safe_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.upsert.side_effect = RuntimeError("private provider detail")
+    payload = qdrant_service.build_chunk_payload(
+        user_id="single_user",
+        document_id="11111111-1111-1111-1111-111111111111",
+        chunk_id="22222222-2222-2222-2222-222222222222",
+        file_name="contract.pdf",
+        file_type="pdf",
+        page_number=1,
+        section_title="Intro",
+        chunk_index=0,
+        content="Chunk content",
+    )
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    with pytest.raises(qdrant_service.QdrantUpsertError) as exc_info:
+        qdrant_service.upsert_chunk_vector(
+            point_id="22222222-2222-2222-2222-222222222222",
+            vector=[0.1],
+            payload=payload,
+        )
+
+    assert str(exc_info.value) == "Qdrant chunk vector upsert failed."

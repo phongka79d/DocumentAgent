@@ -599,3 +599,86 @@ complete
 - next task ID: (03B)
 - can proceed: yes
 - handoff notes: Qdrant client initialization and collection setup are implemented and covered by mocked tests. Next task can add payload construction/vector upsert helpers without changing collection setup behavior.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch03 - Qdrant Collection and Vector Upsert Service
+
+## Task
+(03B) - Implement Qdrant payload builder and vector upsert helper
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_5.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_5.md > ## 9. Implementation Steps
+- docs/plans/Plan_5.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 7. Qdrant Cloud Design
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Qdrant Collection and Vector Upsert Service
+- Task ID: (03B)
+- Task title: Implement Qdrant payload builder and vector upsert helper
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Implemented `build_chunk_payload(...)` to return the typed `IndexedChunkPayload` with required Qdrant metadata and `content_preview` truncated to the first 500 characters.
+- Implemented `upsert_chunk_vector(point_id, vector, payload)` to create exactly one Qdrant `PointStruct`, use the stable caller-provided chunk UUID point ID, pass the vector through unchanged, and upsert to the configured collection.
+- Added minimal safe `QdrantUpsertError` wrapping for missing config, missing point ID, and Qdrant upsert failure.
+- Kept Supabase row update behavior out of the Qdrant service, so indexing orchestration can update `qdrant_point_id` only after successful upsert in a later task.
+
+## Files Created or Modified
+- backend/app/services/qdrant_service.py
+- backend/tests/test_qdrant_service.py
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_qdrant_service.py -v`: Passed
+- evidence or reason: 11 tests collected, 11 passed.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests verify stable point ID usage, all payload fields, preview truncation, vector passthrough, and no `qdrant_point_id` update behavior inside the Qdrant service.
+- Status: satisfied
+- Evidence: `tests/test_qdrant_service.py` now covers typed payload metadata, 500-character preview truncation, single-point upsert with UUID point ID, vector passthrough, payload serialization, safe upsert failure mapping, and absence of Supabase `qdrant_point_id` update behavior in the Qdrant service.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_5_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch status updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused the existing internal `IndexedChunkPayload` Pydantic schema as the typed payload contract.
+- Kept `point_id` explicit in `upsert_chunk_vector(...)` so the indexing service can pass the stable chunk UUID string and persist it separately after success.
+- Serialized the payload through Pydantic JSON-compatible output before sending it to Qdrant so UUID fields become Qdrant-safe strings.
+
+## Risks or Open Issues
+- Live Qdrant upsert was not run because this task only required mocked tests and no real Qdrant Cloud credentials/setup were provided.
+- Broader indexing failure aggregation remains intentionally out of scope for sibling task (03C)/(04B).
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependency (03A) was marked complete in docs/tasks/task_5.md before execution.
+- Scope boundaries were preserved: no Supabase `qdrant_point_id` update, indexing orchestration, retrieval, chat completion, rerank, agents, frontend behavior, or sibling task implementation was added.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes
+- handoff notes: Qdrant service now supports typed payload construction and one-point vector upsert. Next task can layer broader Qdrant failure handling without changing Supabase persistence behavior.
