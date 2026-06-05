@@ -198,6 +198,11 @@ def get_processing_document(document_id: str) -> dict | None:
     return get_document_metadata(document_id, _get_single_user_id())
 
 
+def get_indexing_document(document_id: str) -> dict | None:
+    """Load one document for indexing for the configured single user."""
+    return get_document_metadata(document_id, _get_single_user_id())
+
+
 def download_original_document_file(storage_path: str) -> bytes:
     client = get_supabase_client()
     bucket_name = _get_configured_storage_bucket()
@@ -229,6 +234,50 @@ def insert_document_chunks(document_id: str, chunks: list[ChunkDraft]) -> list[d
         _raise_supabase_query_error("document chunk insert", exc)
 
     return _response_rows(response)
+
+
+def list_chunks_needing_indexing(document_id: str) -> list[dict]:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("document_chunks")
+            .select(
+                "id, document_id, user_id, chunk_index, content, page_number, "
+                "section_title, token_count, qdrant_point_id"
+            )
+            .eq("document_id", document_id)
+            .eq("user_id", _get_single_user_id())
+            .is_("qdrant_point_id", "null")
+            .order("chunk_index")
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document chunks indexing list", exc)
+
+    return _response_rows(response)
+
+
+def update_chunk_qdrant_point_id(
+    document_id: str,
+    chunk_id: str,
+    qdrant_point_id: str,
+) -> dict:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("document_chunks")
+            .update({"qdrant_point_id": qdrant_point_id})
+            .eq("id", chunk_id)
+            .eq("document_id", document_id)
+            .eq("user_id", _get_single_user_id())
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document chunk qdrant point update", exc)
+
+    return _first_response_row("document chunk qdrant point update", response)
 
 
 def update_document_status(

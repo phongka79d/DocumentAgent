@@ -360,6 +360,23 @@ def test_get_processing_document_uses_configured_single_user(
     get_document_metadata.assert_called_once_with("document-id", "single_user")
 
 
+def test_get_indexing_document_uses_configured_single_user(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    get_document_metadata = Mock(return_value={"id": "document-id"})
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(
+        supabase_service,
+        "get_document_metadata",
+        get_document_metadata,
+    )
+
+    result = supabase_service.get_indexing_document("document-id")
+
+    assert result == {"id": "document-id"}
+    get_document_metadata.assert_called_once_with("document-id", "single_user")
+
+
 def test_download_original_document_file_uses_configured_storage_bucket(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -489,6 +506,124 @@ def test_insert_document_chunks_reports_safe_insert_failure(
 
     message = str(exc_info.value)
     assert "document chunk insert" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message
+
+
+def test_list_chunks_needing_indexing_filters_single_user_and_null_point_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [
+        {
+            "id": "chunk-1",
+            "document_id": "document-id",
+            "user_id": "single_user",
+            "chunk_index": 0,
+            "content": "Chunk text",
+            "page_number": 1,
+            "section_title": "Intro",
+            "token_count": 2,
+            "qdrant_point_id": None,
+        }
+    ]
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.is_.return_value = query
+    query.order.return_value = query
+    query.execute.return_value = SimpleNamespace(data=rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_chunks_needing_indexing("document-id")
+
+    assert result == rows
+    client.table.assert_called_once_with("document_chunks")
+    query.select.assert_called_once_with(
+        "id, document_id, user_id, chunk_index, content, page_number, "
+        "section_title, token_count, qdrant_point_id"
+    )
+    assert query.eq.call_args_list == [
+        (("document_id", "document-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.is_.assert_called_once_with("qdrant_point_id", "null")
+    query.order.assert_called_once_with("chunk_index")
+    query.execute.assert_called_once_with()
+
+
+def test_list_chunks_needing_indexing_reports_safe_query_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.is_.return_value = query
+    query.order.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.list_chunks_needing_indexing("document-id")
+
+    message = str(exc_info.value)
+    assert "document chunks indexing list" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message
+
+
+def test_update_chunk_qdrant_point_id_filters_intended_chunk_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"id": "chunk-1", "qdrant_point_id": "point-1"}
+    query = Mock()
+    query.update.return_value = query
+    query.eq.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.update_chunk_qdrant_point_id(
+        "document-id",
+        "chunk-1",
+        "point-1",
+    )
+
+    assert result == row
+    client.table.assert_called_once_with("document_chunks")
+    query.update.assert_called_once_with({"qdrant_point_id": "point-1"})
+    assert query.eq.call_args_list == [
+        (("id", "chunk-1"),),
+        (("document_id", "document-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.execute.assert_called_once_with()
+
+
+def test_update_chunk_qdrant_point_id_reports_safe_update_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.update.return_value = query
+    query.eq.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.update_chunk_qdrant_point_id(
+            "document-id",
+            "chunk-1",
+            "point-1",
+        )
+
+    message = str(exc_info.value)
+    assert "document chunk qdrant point update" in message
     assert "RuntimeError" in message
     assert "database secret" not in message
 

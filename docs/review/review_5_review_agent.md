@@ -523,3 +523,195 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (01D)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+- Task ID: (01D)
+- Task title: Add Supabase helpers for indexing reads and point ID updates
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_5.md > ## 3. Scope; ## 6. Required Files and Folders; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; docs/plans/Master_Plan.md > ## 3. Authentication Policy
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01D)
+- Reviewed task ID: (01D)
+- Correct selection: yes
+- Notes: The last appended execution report is for the requested (01D) task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/services/supabase_service.py; backend/tests/test_supabase_service.py; docs/reports/report_5_execute_agent.md; docs/tasks/task_5.md
+- untracked files: None reported by git status before review append.
+
+## Files Reviewed
+- `backend/app/services/supabase_service.py`: in scope - added indexing document lookup, chunks-needing-indexing list helper, and qdrant point update helper using existing Supabase conventions.
+- `backend/tests/test_supabase_service.py`: in scope - added mocked query-chain tests and safe failure tests for the new helpers.
+- `docs/reports/report_5_execute_agent.md`: in scope - latest execution report for (01D) was appended and matches repository evidence.
+- `docs/tasks/task_5.md`: in scope - reviewed task entry and updated only the selected (01D) checkboxes after acceptance.
+- `docs/plans/Plan_5.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - authentication policy section reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains only Supabase helper additions for indexing reads and point ID updates.
+- file from execution report: `backend/tests/test_supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains focused mocked tests for the new helpers and safe errors.
+- file from execution report: `docs/reports/report_5_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report append is present.
+
+## Dependency Review
+- Required dependencies: Completed Plan 2 Supabase schema and Plan 4 chunk persistence behavior; existing Supabase service/client conventions; configured `SINGLE_USER_ID`.
+- Dependency status: satisfied for mocked/local review.
+- Missing or invalid dependency: Live Supabase credentials/tables/chunks were not available for live validation, which is an allowed blocked-by-user condition and was reported honestly.
+
+## Architecture Alignment
+- Passed: Helpers stay in `supabase_service.py`, use existing `get_supabase_client()`, `_get_single_user_id()`, `_response_rows()`, `_first_response_row()`, and safe `SupabaseConnectionError` wrapping. No database schema changes or frontend exposure were introduced.
+- Failed: None.
+- Uncertain: Live database behavior was not verified because real Supabase setup was unavailable.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production helpers issue real Supabase table query/update chains with document, chunk, user, null-point, and ordering filters; tests mock the Supabase client only at the service boundary.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production helper filters user scope through `_get_single_user_id()` from backend settings. Test sentinel values such as `single_user`, `document-id`, and `point-1` are test-only.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_supabase_service.py -v` from `backend`
+- Reported result: Passed, 27 tests passed.
+- Rerun result: Passed, 27 tests passed in 0.86s.
+- Status: passed
+- Notes: Confirms existing Supabase service tests and new helper tests pass.
+- Command/check: `python -m py_compile app/services/supabase_service.py tests/test_supabase_service.py` from `backend`
+- Reported result: Passed.
+- Rerun result: Passed, command exited 0.
+- Status: passed
+- Notes: Confirms syntax/import compilation for changed implementation and test file.
+- Command/check: `Test-Path tests/test_embedding_service.py` from `backend`
+- Reported result: Blocked/missing, returned False.
+- Rerun result: False.
+- Status: blocked
+- Notes: Future embedding orchestration tests do not exist yet; executor reported this honestly and used focused mocked Supabase helper tests for this helper-only task.
+- Command/check: `rg "SHOPAIKEY|QDRANT" frontend -n`
+- Reported result: Not specifically reported for (01D).
+- Rerun result: No matches, command exited 1 due to no matches.
+- Status: passed
+- Notes: No frontend references to backend-only ShopAIKey or Qdrant variable names found.
+- Command/check: live Supabase database check
+- Reported result: Blocked due to missing real credentials/tables/chunks.
+- Rerun result: Not run; required user setup not available.
+- Status: blocked
+- Notes: Acceptable for mocked helper work; live validation remains a later/user-setup dependent check.
+
+## Acceptance Review
+- Task acceptance: Helpers filter by `SINGLE_USER_ID`, return enough metadata for Qdrant payload construction with the indexing document loader, and update only the intended chunk row.
+- Status: satisfied
+- Evidence: `get_indexing_document()` delegates to `get_document_metadata(document_id, _get_single_user_id())`; `list_chunks_needing_indexing()` filters `document_id`, configured `user_id`, and null `qdrant_point_id`, orders by `chunk_index`, and selects chunk content/metadata; `update_chunk_qdrant_point_id()` filters by chunk ID, document ID, and configured user ID before update.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in the task block and progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch01 checkbox remains unchecked; reviewer did not mark the batch complete.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found. The report accurately states that `tests/test_embedding_service.py` and live Supabase validation are blocked/unavailable rather than claiming them as passed.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Future embedding orchestration validation is still unavailable because `backend/tests/test_embedding_service.py` has not been created yet; this does not block (01D) helper acceptance.
+- Live Supabase validation remains dependent on user-provided credentials, tables, and chunk rows.
+
+### Observations
+- The helper implementation did not add schema changes, frontend changes, semantic search, GraphRAG, rerank, chat completion, or agent behavior.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no; do not mark Batch01 complete in this selected-task review.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers",
+  "selected_task_id": "(01D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/supabase_service.py",
+    "backend/tests/test_supabase_service.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "backend/tests/test_embedding_service.py does not exist yet",
+    "live Supabase database validation missing user-provided setup"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Future embedding orchestration validation is unavailable until later tasks create backend/tests/test_embedding_service.py",
+    "Live Supabase validation remains dependent on user setup"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

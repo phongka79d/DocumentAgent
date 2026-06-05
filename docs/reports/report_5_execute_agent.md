@@ -251,3 +251,93 @@ complete
 - next task ID: (01D)
 - can proceed: yes
 - handoff notes: Internal schema exports are available for later Supabase helper, Qdrant payload, and indexing orchestration work.
+
+---
+
+# Task Execution Report - (01D)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+
+## Task
+(01D) - Add Supabase helpers for indexing reads and point ID updates
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_5.md > ## 3. Scope
+- docs/plans/Plan_5.md > ## 6. Required Files and Folders
+- docs/plans/Plan_5.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_5.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > ## 3. Authentication Policy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+- Task ID: (01D)
+- Task title: Add Supabase helpers for indexing reads and point ID updates
+
+## Completed Work
+- Complete.
+- Added an explicit single-user indexing document loader.
+- Added a helper to list `document_chunks` rows for a document where `qdrant_point_id` is null, ordered by `chunk_index`, and returning chunk metadata needed by future Qdrant payload construction.
+- Added a helper to update one chunk row with `qdrant_point_id` after Qdrant upsert, scoped by chunk ID, document ID, and `SINGLE_USER_ID`.
+- Added mocked Supabase service tests for the new helper query chains and safe error handling.
+
+## Files Created or Modified
+- backend/app/services/supabase_service.py
+- backend/tests/test_supabase_service.py
+- docs/reports/report_5_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed
+- evidence or reason: 27 tests passed.
+- `cd backend; python -m py_compile app/services/supabase_service.py tests/test_supabase_service.py`: Passed
+- evidence or reason: command exited 0.
+- `cd backend; Test-Path tests/test_embedding_service.py`: Blocked
+- evidence or reason: returned False; the task-requested future mocked embedding service test file does not exist yet in this codebase state.
+- live Supabase database check: Blocked
+- evidence or reason: real Supabase credentials/tables/chunks were not provided for live validation; mocked helper validation was used as requested for helper-only work.
+
+## Acceptance Check
+- Task acceptance condition: Helpers filter by `SINGLE_USER_ID`, return enough metadata for Qdrant payloads, and update only the intended chunk row.
+- Status: satisfied
+- Evidence: `get_indexing_document()` delegates through configured `SINGLE_USER_ID`; `list_chunks_needing_indexing()` filters by `document_id`, `user_id`, and null `qdrant_point_id` while selecting chunk metadata; `update_chunk_qdrant_point_id()` filters by chunk ID, document ID, and configured `SINGLE_USER_ID`. Mocked tests assert each filter/update chain.
+
+## Artifacts Produced
+- Updated Supabase service helpers for indexing orchestration.
+- Focused mocked Supabase helper tests.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require leaving checkbox updates to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept helpers in `supabase_service.py` and reused existing client, `_get_single_user_id()`, `_response_rows()`, `_first_response_row()`, and safe `SupabaseConnectionError` wrapping conventions.
+- Used existing `document_chunks.qdrant_point_id` only; no migration or table change was made.
+- Scoped point ID updates by `id`, `document_id`, and `user_id` to update only the intended chunk row.
+
+## Risks or Open Issues
+- Live Supabase validation remains blocked until real credentials, tables, and chunk rows are available.
+- Future `tests/test_embedding_service.py` does not exist yet, so validation used focused mocked Supabase helper tests and syntax checks instead.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (01D).
+
+## Notes for Next Task
+- next task ID: (02A)
+- can proceed: yes
+- handoff notes: Supabase indexing helpers are available for Qdrant helper and embedding orchestration tasks; live database validation is still dependent on configured Supabase resources.
