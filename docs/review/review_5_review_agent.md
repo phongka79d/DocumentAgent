@@ -2499,3 +2499,162 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (05C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05C)
+- Task title: Add and run embedding orchestration tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05C)
+- Reviewed task ID: (05C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for the requested `(05C)` task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_embedding_service.py`, `docs/reports/report_5_execute_agent.md`, `docs/tasks/task_5.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_embedding_service.py`: in scope - Added mocked embedding orchestration tests for collection setup failure and safe error result contents; existing tests cover success, non-ready documents, no chunks, skip behavior, ShopAIKey failure, Qdrant failure, and partial continuation.
+- `backend/app/services/embedding_service.py`: in scope - Verified the tests exercise the real orchestration contract through monkeypatched Supabase, ShopAIKey, Qdrant, and persistence boundaries.
+- `docs/reports/report_5_execute_agent.md`: in scope - Contains the appended `(05C)` execution report.
+- `docs/tasks/task_5.md`: in scope - Selected `(05C)` checkbox updated after acceptance; sibling `(05D)` and `(05E)` remain unchecked and Batch05 remains unchecked.
+- `docs/plans/Plan_5.md`: in scope - Cited source sections reviewed for required files, orchestration behavior, tests, acceptance, failure handling, and reviewer checklist.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_embedding_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff shows test-only additions aligned with `(05C)`.
+- file from execution report: `docs/reports/report_5_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report append is expected.
+
+## Dependency Review
+- Required dependencies: Batch04.
+- Dependency status: satisfied; Batch04 task IDs are checked in `docs/tasks/task_5.md`.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Tests mock Supabase, ShopAIKey, and Qdrant boundaries; no production architecture, frontend behavior, semantic search, GraphRAG, retrieval scoring, chat completion, rerank, or agent workflow was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The task is test-focused. The added tests call `embedding_service.index_document_chunks()` and assert behavior through the service's real orchestration control flow with mocked external dependencies.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs and strings are test fixtures only. No production business logic changed, and no provider secrets or model/collection constants were added.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_embedding_service.py -v`
+- Reported result: passed, 9 tests collected and 9 passed.
+- Rerun result: passed, 9 tests collected and 9 passed.
+- Status: satisfied
+- Notes: Rerun output matched the execution report.
+
+## Acceptance Review
+- Task acceptance: Tests pass or failures are reported honestly; no failed chunk is marked indexed.
+- Status: satisfied
+- Evidence: Added and existing mocked tests cover successful indexing, already-indexed chunks, non-ready document rejection, no chunks, ShopAIKey failure, Qdrant upsert failure, vector-size/collection setup failure, safe result fields, long error truncation, and no point-ID update on failure.
+
+## Progress Tracking
+- Selected task checkbox: checked by reviewer after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked.
+- Execution report entry: appended and accurate for `(05C)`.
+- Review report entry: appended at EOF.
+- Other: Sibling tasks `(05D)` and `(05E)` remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(05C)` is mocked-test scope only; combined backend tests and live/manual checks remain correctly assigned to `(05D)` and `(05E)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_embedding_service.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

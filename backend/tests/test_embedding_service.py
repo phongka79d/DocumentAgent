@@ -392,6 +392,133 @@ def test_index_document_chunks_records_qdrant_failure_without_updating_point_id(
     ]
 
 
+def test_index_document_chunks_records_collection_setup_failure_without_updating_point_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+    chunks = _chunk_rows()[:1]
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: chunks,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "create_embedding",
+        lambda text: calls.append(("embedding", text)) or [1.0, 2.0, 3.0],
+    )
+
+    def fake_ensure_collection(vector_size: int):
+        calls.append(("ensure_collection", vector_size))
+        raise RuntimeError(
+            "Qdrant vector-size mismatch. Verify Qdrant collection setup."
+        )
+
+    monkeypatch.setattr(embedding_service, "ensure_collection", fake_ensure_collection)
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        lambda *_args, **_kwargs: pytest.fail(
+            "failed collection setup must not upsert vectors"
+        ),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        lambda *_args, **_kwargs: pytest.fail(
+            "failed collection setup must not update qdrant_point_id"
+        ),
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 0
+    assert result.failed_count == 1
+    assert len(result.errors) == 1
+    assert result.errors[0].chunk_id == CHUNK_ONE_ID
+    assert result.errors[0].chunk_index == 0
+    assert (
+        result.errors[0].message
+        == "Qdrant vector-size mismatch. Verify Qdrant collection setup."
+    )
+    assert calls == [
+        ("embedding", "First chunk content."),
+        ("ensure_collection", 3),
+    ]
+
+
+def test_index_document_chunks_returns_safe_result_contents_for_chunk_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chunks = _chunk_rows()[:1]
+    chunks[0]["content"] = "Sensitive full chunk text that must not appear in result."
+    long_error_message = "x" * 250
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: chunks,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "create_embedding",
+        lambda text: (_ for _ in ()).throw(RuntimeError(long_error_message)),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "ensure_collection",
+        lambda *_args, **_kwargs: pytest.fail(
+            "embedding failures must not setup Qdrant collection"
+        ),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        lambda *_args, **_kwargs: pytest.fail(
+            "embedding failures must not upsert vectors"
+        ),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        lambda *_args, **_kwargs: pytest.fail(
+            "embedding failures must not update qdrant_point_id"
+        ),
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+    result_payload = result.model_dump()
+
+    assert set(result_payload) == {
+        "document_id",
+        "indexed_count",
+        "failed_count",
+        "errors",
+    }
+    assert set(result_payload["errors"][0]) == {
+        "chunk_id",
+        "chunk_index",
+        "message",
+    }
+    assert result.indexed_count == 0
+    assert result.failed_count == 1
+    assert result.errors[0].chunk_id == CHUNK_ONE_ID
+    assert result.errors[0].chunk_index == 0
+    assert result.errors[0].message == "x" * 200
+    assert chunks[0]["content"] not in str(result_payload)
+
+
 def test_index_document_chunks_continues_after_recoverable_partial_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

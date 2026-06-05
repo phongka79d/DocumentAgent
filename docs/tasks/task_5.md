@@ -577,7 +577,7 @@ Plan 5 completion depends on evidence that mocked unit behavior passes, external
   - Blocked Condition: None for mocked tests.
   - Files: `backend/tests/test_qdrant_service.py`
 
-- [ ] (05C): Add and run embedding orchestration tests
+- [x] (05C): Add and run embedding orchestration tests
   - Source of Truth: `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 11. Required Tests`; `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_5.md` > `## 13. Failure Handling`; `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Add `backend/tests/test_embedding_service.py`.
@@ -776,7 +776,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch05
 - [x] (05A): Add and run ShopAIKey service tests
 - [x] (05B): Add and run Qdrant service tests
-- [ ] (05C): Add and run embedding orchestration tests
+- [x] (05C): Add and run embedding orchestration tests
 - [ ] (05D): Run combined backend tests and scope/security checks
 - [ ] (05E): Perform manual indexing and Qdrant/Supabase checks when user setup is available
 

@@ -1233,3 +1233,86 @@ complete
 - next task ID: (05C)
 - can proceed: yes
 - handoff notes: A2 should review `(05B)` before any checkbox update; `(05C)` remains untouched.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05C) - Add and run embedding orchestration tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_5.md` > `## 11. Required Tests`
+- `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_5.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05C)
+- Task title: Add and run embedding orchestration tests
+
+## Completed Work
+- The task is complete.
+- Updated `backend/tests/test_embedding_service.py` with additional mocked embedding orchestration coverage for Qdrant collection/vector-size setup failure behavior.
+- Added assertions that failed collection setup does not upsert vectors or mark chunks indexed.
+- Added safe result content assertions confirming orchestration error results expose only the result schema fields and truncate long error messages.
+
+## Files Created or Modified
+- `backend/tests/test_embedding_service.py`
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_embedding_service.py -v`: Passed
+- evidence or reason: 9 tests collected, 9 passed.
+
+## Acceptance Check
+- Task acceptance condition: Tests pass or failures are reported honestly; no failed chunk is marked indexed.
+- Status: satisfied
+- Evidence: Required mocked pytest command passed. Tests cover successful indexing, already-indexed chunks, non-ready document rejection, no chunks, partial ShopAIKey failure, Qdrant upsert failure, collection/vector-size setup failure, and safe result contents. Qdrant and setup failures assert `update_chunk_qdrant_point_id` is not called.
+
+## Artifacts Produced
+- Embedding orchestration test coverage in `backend/tests/test_embedding_service.py`.
+- This execution report appended to `docs/reports/report_5_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; A2 handles checkbox updates after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept the change limited to mocked orchestration tests for `(05C)`.
+- Did not add live ShopAIKey, Qdrant, or Supabase checks because this task requires mocked tests only and live smoke validation belongs to `(05E)`.
+
+## Risks or Open Issues
+- None for mocked `(05C)` validation.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency Batch04 is complete in the task file and the existing orchestration service/test file was available.
+- No sibling Batch05 tasks were implemented.
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes
+- handoff notes: A2 should review `(05C)` before any checkbox update; `(05D)` remains for combined backend tests and scope/security checks.
