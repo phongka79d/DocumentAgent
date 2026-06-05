@@ -50,6 +50,11 @@ def _chunk_error(chunk: dict, exc: Exception) -> ChunkIndexingError:
     )
 
 
+def _has_qdrant_point_id(chunk: dict) -> bool:
+    value = chunk.get("qdrant_point_id")
+    return isinstance(value, str) and bool(value.strip())
+
+
 def _index_one_chunk(
     *,
     document: dict,
@@ -103,6 +108,9 @@ def index_document_chunks(document_id: UUID | str) -> DocumentIndexingResult:
     collection_ready = False
 
     for chunk in chunks:
+        if _has_qdrant_point_id(chunk):
+            continue
+
         try:
             _, collection_ready = _index_one_chunk(
                 document=document,
@@ -112,7 +120,7 @@ def index_document_chunks(document_id: UUID | str) -> DocumentIndexingResult:
             )
         except Exception as exc:
             errors.append(_chunk_error(chunk, exc))
-            break
+            continue
 
         indexed_count += 1
 

@@ -184,3 +184,272 @@ def test_index_document_chunks_rejects_non_ready_document(
         embedding_service.index_document_chunks(DOCUMENT_ID)
 
     assert str(exc_info.value) == "Document must be ready before indexing."
+
+
+def test_index_document_chunks_skips_existing_qdrant_point_ids_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+    chunks = _chunk_rows()
+    chunks[0]["qdrant_point_id"] = "existing-point-id"
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: chunks,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "create_embedding",
+        lambda text: calls.append(("embedding", text)) or [1.0, 2.0, 3.0],
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "ensure_collection",
+        lambda vector_size: calls.append(("ensure_collection", vector_size)),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        lambda point_id, vector, payload: calls.append(("upsert", point_id)) or point_id,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        lambda received_document_id, chunk_id, point_id: calls.append(
+            ("update_point", chunk_id, point_id)
+        )
+        or {"id": chunk_id, "qdrant_point_id": point_id},
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 1
+    assert result.failed_count == 0
+    assert result.errors == []
+    assert calls == [
+        ("embedding", "Second chunk content."),
+        ("ensure_collection", 3),
+        ("upsert", str(CHUNK_TWO_ID)),
+        ("update_point", str(CHUNK_TWO_ID), str(CHUNK_TWO_ID)),
+    ]
+
+
+def test_index_document_chunks_returns_no_work_result_for_document_with_no_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: [],
+    )
+
+    def fail_provider_call(*_args, **_kwargs):
+        pytest.fail("no chunks should not call embedding or vector services")
+
+    monkeypatch.setattr(embedding_service, "create_embedding", fail_provider_call)
+    monkeypatch.setattr(embedding_service, "ensure_collection", fail_provider_call)
+    monkeypatch.setattr(embedding_service, "upsert_chunk_vector", fail_provider_call)
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        fail_provider_call,
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.document_id == DOCUMENT_ID
+    assert result.indexed_count == 0
+    assert result.failed_count == 0
+    assert result.errors == []
+
+
+def test_index_document_chunks_records_shopaikey_error_and_continues(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+    chunks = _chunk_rows()
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: chunks,
+    )
+
+    def fake_create_embedding(text: str):
+        calls.append(("embedding", text))
+        if text == "First chunk content.":
+            raise RuntimeError("ShopAIKey embedding request timed out.")
+        return [1.0, 2.0, 3.0]
+
+    monkeypatch.setattr(embedding_service, "create_embedding", fake_create_embedding)
+    monkeypatch.setattr(
+        embedding_service,
+        "ensure_collection",
+        lambda vector_size: calls.append(("ensure_collection", vector_size)),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        lambda point_id, vector, payload: calls.append(("upsert", point_id)) or point_id,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        lambda received_document_id, chunk_id, point_id: calls.append(
+            ("update_point", chunk_id, point_id)
+        )
+        or {"id": chunk_id, "qdrant_point_id": point_id},
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 1
+    assert result.failed_count == 1
+    assert len(result.errors) == 1
+    assert result.errors[0].chunk_id == CHUNK_ONE_ID
+    assert result.errors[0].chunk_index == 0
+    assert result.errors[0].message == "ShopAIKey embedding request timed out."
+    assert calls == [
+        ("embedding", "First chunk content."),
+        ("embedding", "Second chunk content."),
+        ("ensure_collection", 3),
+        ("upsert", str(CHUNK_TWO_ID)),
+        ("update_point", str(CHUNK_TWO_ID), str(CHUNK_TWO_ID)),
+    ]
+
+
+def test_index_document_chunks_records_qdrant_failure_without_updating_point_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+    chunks = _chunk_rows()[:1]
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: chunks,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "create_embedding",
+        lambda text: calls.append(("embedding", text)) or [1.0, 2.0, 3.0],
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "ensure_collection",
+        lambda vector_size: calls.append(("ensure_collection", vector_size)),
+    )
+
+    def fake_upsert_chunk_vector(point_id: str, vector: list[float], payload):
+        calls.append(("upsert", point_id))
+        raise RuntimeError("Qdrant chunk vector upsert failed.")
+
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        fake_upsert_chunk_vector,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        lambda *_args, **_kwargs: pytest.fail(
+            "failed Qdrant upserts must not update qdrant_point_id"
+        ),
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 0
+    assert result.failed_count == 1
+    assert len(result.errors) == 1
+    assert result.errors[0].chunk_id == CHUNK_ONE_ID
+    assert result.errors[0].message == "Qdrant chunk vector upsert failed."
+    assert calls == [
+        ("embedding", "First chunk content."),
+        ("ensure_collection", 3),
+        ("upsert", str(CHUNK_ONE_ID)),
+    ]
+
+
+def test_index_document_chunks_continues_after_recoverable_partial_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+    chunks = _chunk_rows()
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: chunks,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "create_embedding",
+        lambda text: calls.append(("embedding", text)) or [1.0, 2.0, 3.0],
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "ensure_collection",
+        lambda vector_size: calls.append(("ensure_collection", vector_size)),
+    )
+
+    def fake_upsert_chunk_vector(point_id: str, vector: list[float], payload):
+        calls.append(("upsert", point_id))
+        if point_id == str(CHUNK_ONE_ID):
+            raise RuntimeError("Qdrant chunk vector upsert failed.")
+        return point_id
+
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        fake_upsert_chunk_vector,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        lambda received_document_id, chunk_id, point_id: calls.append(
+            ("update_point", chunk_id, point_id)
+        )
+        or {"id": chunk_id, "qdrant_point_id": point_id},
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 1
+    assert result.failed_count == 1
+    assert result.errors[0].chunk_id == CHUNK_ONE_ID
+    assert calls == [
+        ("embedding", "First chunk content."),
+        ("ensure_collection", 3),
+        ("upsert", str(CHUNK_ONE_ID)),
+        ("embedding", "Second chunk content."),
+        ("ensure_collection", 3),
+        ("upsert", str(CHUNK_TWO_ID)),
+        ("update_point", str(CHUNK_TWO_ID), str(CHUNK_TWO_ID)),
+    ]

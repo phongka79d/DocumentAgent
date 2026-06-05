@@ -443,7 +443,7 @@ The milestone is complete only when ready document chunks without `qdrant_point_
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live indexing if real ShopAIKey, Qdrant, Supabase credentials, ready document, or chunks are missing.
   - Files: `backend/app/services/embedding_service.py`, `backend/tests/test_embedding_service.py`
 
-- [ ] (04B): Implement skip, no-work, and partial failure behavior
+- [x] (04B): Implement skip, no-work, and partial failure behavior
   - Source of Truth: `docs/plans/Plan_5.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 13. Failure Handling`; `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Skip chunks that already have `qdrant_point_id` unless an explicit reindex flag is later added.
@@ -770,7 +770,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch04
 - [x] (04A): Implement `index_document_chunks(document_id)` orchestration
-- [ ] (04B): Implement skip, no-work, and partial failure behavior
+- [x] (04B): Implement skip, no-work, and partial failure behavior
 - [ ] (04C): Add optional development-only indexing endpoint if needed
 
 #### Batch05

@@ -888,3 +888,90 @@ complete
 - Minor issue fixed after initial report append: hardened chunk-error formatting so invalid chunk IDs do not prevent returning the required indexing result model for chunk-level failures.
 - Re-run validation after the fix: `cd backend; pytest tests/test_embedding_service.py -v` passed with 2 tests.
 - Re-run related suite after the fix: `cd backend; pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v` passed with 29 tests.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch04 - Indexing Orchestration and Optional Development Trigger
+
+## Task
+(04B) - Implement skip, no-work, and partial failure behavior
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_5.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Indexing Orchestration and Optional Development Trigger
+- Task ID: (04B)
+- Task title: Implement skip, no-work, and partial failure behavior
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added defensive skip behavior for chunks that already contain a non-empty `qdrant_point_id`.
+- Changed chunk-level failure handling so recoverable per-chunk failures are recorded and indexing continues to remaining chunks.
+- Preserved the rule that `qdrant_point_id` is updated only after a successful Qdrant upsert.
+- Added mocked orchestration tests for already-indexed chunks, no chunks, ShopAIKey timeout/error, Qdrant failure, and partial success after failure.
+
+## Files Created or Modified
+- `backend/app/services/embedding_service.py`
+- `backend/tests/test_embedding_service.py`
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_embedding_service.py -v`: Failed before implementation as expected, 3 failed and 4 passed; failures proved missing skip and continue-after-failure behavior.
+- `cd backend; pytest tests/test_embedding_service.py -v`: Passed after implementation, 7 tests.
+- `cd backend; pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v`: Passed, 34 tests.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove skipped chunks are not embedded/upserted, failed chunks are counted in `failed_count`, and failed Qdrant upserts do not update `qdrant_point_id`.
+- Status: satisfied
+- Evidence: `test_index_document_chunks_skips_existing_qdrant_point_ids_by_default`, `test_index_document_chunks_records_shopaikey_error_and_continues`, `test_index_document_chunks_records_qdrant_failure_without_updating_point_id`, and `test_index_document_chunks_continues_after_recoverable_partial_failure` cover the required behavior.
+
+## Artifacts Produced
+- `backend/app/services/embedding_service.py`
+- `backend/tests/test_embedding_service.py`
+- `docs/reports/report_5_execute_agent.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; checkbox and batch status updates are reserved for A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- No-chunk documents return a clear no-work result using the existing `DocumentIndexingResult` shape: `indexed_count=0`, `failed_count=0`, and `errors=[]`. This avoids changing the already-approved result schema for `(04B)`.
+- Existing `qdrant_point_id` rows are skipped defensively in the orchestration service even though the Supabase helper already filters for null point IDs.
+- Recoverable per-chunk errors continue the loop and return safe per-chunk error summaries capped by existing `_chunk_error` behavior.
+
+## Risks or Open Issues
+- Live ShopAIKey, Qdrant, and Supabase validation was not run for this mocked-test task.
+- The result schema still has no explicit `skipped_count`; skipped rows are proven by side effects and resulting indexed/failure counts.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency `(04A)` is marked complete in `docs/tasks/task_5.md` and was reviewed as accepted.
+- No missing source-of-truth fields, user-action blockers, or architecture conflicts identified.
+- No sibling task `(04C)` endpoint or frontend indexing behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes
+- handoff notes: Optional development-only indexing endpoint remains unimplemented; service-level skip, no-work, and partial-failure behavior is now covered by mocked tests.

@@ -1804,3 +1804,173 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Indexing Orchestration and Optional Development Trigger
+- Task ID: (04B)
+- Task title: Implement skip, no-work, and partial failure behavior
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 13. Failure Handling`; `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The latest matching `(04B)` execution report was reviewed. No sibling task was reviewed as accepted.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/services/embedding_service.py`, `backend/tests/test_embedding_service.py`, `docs/reports/report_5_execute_agent.md`, `docs/tasks/task_5.md`
+- untracked files: None
+
+## Files Reviewed
+- `backend/app/services/embedding_service.py`: in scope - adds defensive skip for non-empty `qdrant_point_id` and continues after chunk-level failures while preserving point-ID update only after successful upsert.
+- `backend/tests/test_embedding_service.py`: in scope - covers skip behavior, no-work result, ShopAIKey error continuation, Qdrant failure without point-ID update, and partial success after failure.
+- `docs/reports/report_5_execute_agent.md`: in scope - contains the `(04B)` execution report.
+- `docs/tasks/task_5.md`: in scope - selected `(04B)` checkbox update only.
+- `docs/plans/Plan_5.md`: in scope - cited source-of-truth sections reviewed.
+
+## Reported Files Cross-Check
+- `backend/app/services/embedding_service.py`: present in git/repo: yes; matches task scope: yes; notes: implementation changes are limited to skip/continue behavior.
+- `backend/tests/test_embedding_service.py`: present in git/repo: yes; matches task scope: yes; notes: added mocked tests for required `(04B)` branches.
+- `docs/reports/report_5_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: report was appended and matches observed files/tests.
+
+## Dependency Review
+- Required dependencies: (04A)
+- Dependency status: satisfied; `(04A)` is marked complete and prior review accepted it.
+- Missing or invalid dependency: None
+
+## Architecture Alignment
+- Passed: Backend-only orchestration remains in `embedding_service.py`; no database schema changes, frontend indexing behavior, semantic search, GraphRAG, retrieval scoring, chat completion, rerank, or agent work was added.
+- Failed: None
+- Uncertain: Live provider/database behavior was not exercised, but mocked validation is acceptable for `(04B)`.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code skips chunks with existing non-empty `qdrant_point_id`, records chunk errors through `DocumentIndexingResult.errors`, continues after recoverable chunk failures, and updates Supabase only after `upsert_chunk_vector` returns successfully.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No embedding model, provider URL, API key, Qdrant collection name, or secret value was added in `(04B)` production code. Test UUIDs and strings are fixtures only.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_embedding_service.py -v`
+- Reported result: Passed after implementation, 7 tests.
+- Rerun result: Passed, 7 tests.
+- Status: passed
+- Notes: Covers selected service behavior.
+
+- Command/check: `cd backend; pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v`
+- Reported result: Passed, 34 tests.
+- Rerun result: Passed, 34 tests.
+- Status: passed
+- Notes: Confirms related provider and Qdrant mocked suites still pass.
+
+- Command/check: Scope/security search for frontend/backend secret and out-of-scope references
+- Reported result: Not separately reported for `(04B)`.
+- Rerun result: No new frontend ShopAIKey/Qdrant secret references or out-of-scope runtime features found in changed implementation.
+- Status: passed
+- Notes: Existing provider variable-name references remain in backend config/tests and historical reports only.
+
+## Acceptance Review
+- Task acceptance: Mocked tests prove skipped chunks are not embedded/upserted, failed chunks are counted in `failed_count`, and failed Qdrant upserts do not update `qdrant_point_id`.
+- Status: satisfied
+- Evidence: Tests assert skip call order, no-work zero counts, ShopAIKey error continuation, Qdrant failure without update call, and partial success after a failed chunk.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete
+- Execution report entry: present for `(04B)`
+- Review report entry: appended at EOF
+- Other: Sibling `(04C)` remains unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live ShopAIKey, Qdrant, and Supabase validation was not run; acceptable for the mocked `(04B)` task scope.
+
+### Observations
+- No-chunk behavior is implemented as a no-work `DocumentIndexingResult` with zero counts and no errors, which is allowed by Plan 5.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(04C)` remains unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch04 - Indexing Orchestration and Optional Development Trigger",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/embedding_service.py",
+    "backend/tests/test_embedding_service.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live ShopAIKey, Qdrant, and Supabase validation was not run; acceptable for the mocked (04B) task scope."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
