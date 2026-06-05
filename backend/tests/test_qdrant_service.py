@@ -11,6 +11,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.services import qdrant_service
 
 
+REQUIRED_PAYLOAD_FIELDS = {
+    "user_id",
+    "document_id",
+    "chunk_id",
+    "file_name",
+    "file_type",
+    "page_number",
+    "section_title",
+    "chunk_index",
+    "content_preview",
+}
+
+
 def _settings(
     *,
     url: str = "https://qdrant.test",
@@ -85,6 +98,13 @@ def test_ensure_collection_maps_missing_config_to_setup_error(
         qdrant_service.ensure_collection(vector_size=1536)
 
     assert "Missing QDRANT_COLLECTION" in str(exc_info.value)
+
+
+def test_ensure_collection_rejects_non_positive_vector_size() -> None:
+    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+        qdrant_service.ensure_collection(vector_size=0)
+
+    assert str(exc_info.value) == "Qdrant collection vector size must be greater than zero."
 
 
 def test_ensure_collection_creates_missing_collection_with_cosine_distance(
@@ -242,6 +262,7 @@ def test_build_chunk_payload_includes_required_metadata_and_safe_preview() -> No
     assert payload.section_title == "Probation"
     assert payload.chunk_index == 0
     assert payload.content_preview == "x" * 500
+    assert set(qdrant_service._payload_to_qdrant(payload)) == REQUIRED_PAYLOAD_FIELDS
 
 
 def test_upsert_chunk_vector_uses_stable_point_id_payload_and_vector_passthrough(
@@ -278,7 +299,9 @@ def test_upsert_chunk_vector_uses_stable_point_id_payload_and_vector_passthrough
     assert len(points) == 1
     point = points[0]
     assert point.id == chunk_id
+    assert UUID(point.id) == payload.chunk_id
     assert point.vector == vector
+    assert set(point.payload) == REQUIRED_PAYLOAD_FIELDS
     assert point.payload == {
         "user_id": "single_user",
         "document_id": "11111111-1111-1111-1111-111111111111",

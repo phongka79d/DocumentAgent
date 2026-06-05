@@ -1148,3 +1148,88 @@ complete
 - next task ID: (05B)
 - can proceed: yes
 - handoff notes: A2 should review `(05A)` before any checkbox update; `(05B)` remains untouched.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05B) - Add and run Qdrant service tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_5.md` > `## 11. Required Tests`
+- `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_5.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05B)
+- Task title: Add and run Qdrant service tests
+
+## Completed Work
+- Completed the selected task.
+- Updated `backend/tests/test_qdrant_service.py` with explicit required Qdrant payload field coverage.
+- Added vector-size edge coverage for non-positive collection sizes.
+- Strengthened stable point ID traceability by asserting the upserted Qdrant point ID parses back to the chunk UUID.
+- Confirmed mocked Qdrant coverage for client initialization, collection creation/verification, cosine distance, vector size handling, payload fields, content preview truncation, stable chunk UUID point IDs, and failure behavior.
+- No real Qdrant credentials or live Qdrant calls are required by these tests.
+
+## Files Created or Modified
+- `backend/tests/test_qdrant_service.py`
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_qdrant_service.py -v`: Passed.
+- Evidence: 16 tests collected, 16 passed.
+
+## Acceptance Check
+- Task acceptance condition: Tests pass or failures are reported honestly with safe error context.
+- Status: satisfied
+- Evidence: Required mocked pytest command passed; failure tests assert safe Qdrant setup/upsert errors without provider-private details.
+
+## Artifacts Produced
+- Qdrant service test coverage in `backend/tests/test_qdrant_service.py`.
+- This execution report appended to `docs/reports/report_5_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; A2 handles checkbox updates after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept the change limited to Qdrant service tests for `(05B)`.
+- Used mocked Qdrant client assertions only, because live Qdrant validation belongs to `(05E)` and requires user-provided setup.
+
+## Risks or Open Issues
+- Live Qdrant validation was not run; this task requires mocked tests only and must not require real credentials.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency Batch03 is complete in the task file and existing Qdrant service tests were available for targeted update.
+- No sibling Batch05 tasks were implemented.
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes
+- handoff notes: A2 should review `(05B)` before any checkbox update; `(05C)` remains untouched.
