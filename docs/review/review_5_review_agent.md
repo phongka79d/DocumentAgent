@@ -1078,3 +1078,196 @@ ACCEPTED
 # Task Review Correction Note - (02B)
 
 Progress tracker correction made after the ACCEPTED review: updated only the `docs/tasks/task_5.md` Progress Tracker checkbox for `(02B) Handle ShopAIKey errors and malformed responses` from `[ ]` to `[x]`. No sibling or future task checkboxes were modified, and the Batch02 batch checkbox was not marked complete.
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Qdrant Collection and Vector Upsert Service
+- Task ID: (03A)
+- Task title: Implement Qdrant client initialization and collection setup
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_5.md > ## 3. Scope; ## 6. Required Files and Folders; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; docs/plans/Master_Plan.md > ## 7. Qdrant Cloud Design
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch03 / (03A), as requested.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_5_execute_agent.md
+  - docs/tasks/task_5.md (reviewer checkbox update only)
+  - backend/app/services/qdrant_service.py (untracked)
+  - backend/tests/test_qdrant_service.py (untracked)
+- untracked files:
+  - backend/app/services/qdrant_service.py
+  - backend/tests/test_qdrant_service.py
+
+## Files Reviewed
+- `docs/reports/report_5_execute_agent.md`: in scope - selected execution report appended and reviewed.
+- `docs/tasks/task_5.md`: in scope - selected (03A) task block, dependencies, acceptance, and progress tracker reviewed; only (03A) checkbox updated after acceptance.
+- `backend/app/services/qdrant_service.py`: in scope - implements Qdrant client initialization and collection creation/verification only.
+- `backend/tests/test_qdrant_service.py`: in scope - mocked coverage for client construction, collection creation, existing collection verification, and mismatch failures.
+- `backend/app/core/config.py`: in scope - dependency evidence for existing `require_qdrant_settings()` contract.
+- `backend/.env.example`: in scope - dependency evidence for configured Qdrant variable names and placeholders.
+- `backend/requirements.txt`: in scope - dependency evidence that `qdrant-client` is available from prior task.
+- `docs/plans/Plan_5.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited Qdrant Cloud Design section reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/qdrant_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Untracked file exists and contains only client setup and collection setup/verification.
+- file from execution report: `backend/tests/test_qdrant_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Untracked test file exists and covers the reported mocked behavior.
+- file from execution report: `docs/reports/report_5_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Listed under artifacts and appended at EOF.
+
+## Dependency Review
+- Required dependencies: (01A), (01B), (01C)
+- Dependency status: satisfied; task tracker marks all three dependencies complete and repository evidence contains Qdrant settings, qdrant-client dependency, and embedding/indexing schemas.
+- Missing or invalid dependency: None found for mocked/local (03A) validation. Live Qdrant validation remains user-action dependent as documented.
+
+## Architecture Alignment
+- Passed: Uses backend-only Qdrant settings, `qdrant-client`, configured collection name, cosine distance, and explicit setup error on vector size/distance mismatch.
+- Failed: None.
+- Uncertain: Live Qdrant Cloud behavior was not verified because credentials/project were not provided, which is an allowed blocked live check for this task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `get_qdrant_client()` constructs `QdrantClient` from required settings; `ensure_collection(vector_size)` rejects non-positive sizes, creates the collection when missing, verifies existing vector size and distance, and raises `QdrantSetupError` for incompatible setup.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Qdrant URL/API key/collection are loaded from settings. Test-only fake values are confined to mocked tests. No real secrets found in touched implementation.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_qdrant_service.py -v`
+- Reported result: Passed, 7 tests passed.
+- Rerun result: Passed, 7 tests passed in 1.05s.
+- Status: passed
+- Notes: Ran from `backend` and confirmed client construction, missing config mapping, collection creation, existing collection verification, vector-size mismatch, and distance mismatch tests.
+- Command/check: scope search for premature sibling/future work (`upsert_chunk_vector`, `index_document_chunks`, retrieval, GraphRAG, rerank, chat/completions, frontend secret exposure)
+- Reported result: No 03B/03C or future behavior claimed.
+- Rerun result: Passed for touched implementation; no new payload builder/upsert helper, Supabase point-ID update from Qdrant service, indexing orchestration, retrieval/chat/rerank/agents/frontend behavior found.
+- Status: passed
+- Notes: Existing prior Supabase helper code and plan text mention `qdrant_point_id`; no new out-of-scope implementation was introduced by (03A).
+- Command/check: Live Qdrant validation
+- Reported result: Blocked by missing user-provided Qdrant Cloud setup.
+- Rerun result: Not run.
+- Status: blocked, non-blocking for mocked/local (03A) acceptance
+- Notes: The execution report documents the required user action honestly.
+
+## Acceptance Review
+- Task acceptance: Mocked tests verify client construction, collection creation, existing collection verification, and mismatch failure behavior.
+- Status: satisfied
+- Evidence: Implementation and tests match the (03A) task block. `pytest tests/test_qdrant_service.py -v` passed with 7 tests.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(03A)` only.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch03 still has unchecked sibling tasks (03B) and (03C).
+- Execution report entry: appended and accurate for selected task.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not modified.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material to acceptance. The execution report accurately states mocked validation passed and live Qdrant validation was blocked by missing user setup.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live Qdrant validation remains blocked until the user provides `QDRANT_URL`, `QDRANT_API_KEY`, and a reachable Qdrant Cloud project. This does not block (03A) because the task acceptance is mocked/local.
+
+### Observations
+- (03A) intentionally stops before payload building, vector upsert, Supabase `qdrant_point_id` persistence, and indexing orchestration, leaving sibling scope for (03B), (03C), and Batch04.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch03 - Qdrant Collection and Vector Upsert Service",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md",
+    "backend/app/services/qdrant_service.py",
+    "backend/tests/test_qdrant_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Qdrant validation blocked by missing user-provided QDRANT_URL, QDRANT_API_KEY, and reachable Qdrant Cloud project"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live Qdrant validation remains blocked until user setup is available; mocked/local acceptance passed"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+# Task Review Correction Note - (03A)
+
+Progress tracker correction made after the ACCEPTED review: updated only the docs/tasks/task_5.md Progress Tracker checkbox for (03A) from [ ] to [x]. No sibling or future task checkboxes were modified, and Batch03 was not marked complete.

@@ -316,7 +316,7 @@ Chunk embeddings need durable vector storage in Qdrant before future retrieval p
 
 ### Tasks
 
-- [ ] (03A): Implement Qdrant client initialization and collection setup
+- [x] (03A): Implement Qdrant client initialization and collection setup
   - Source of Truth: `docs/plans/Plan_5.md` > `## 3. Scope`; `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_5.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 7. Qdrant Cloud Design`
   - Source Requirements:
     - Create `backend/app/services/qdrant_service.py`.
@@ -764,7 +764,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (02B): Handle ShopAIKey errors and malformed responses
 
 #### Batch03
-- [ ] (03A): Implement Qdrant client initialization and collection setup
+- [x] (03A): Implement Qdrant client initialization and collection setup
 - [ ] (03B): Implement Qdrant payload builder and vector upsert helper
 - [ ] (03C): Handle Qdrant failures without marking chunks indexed
 

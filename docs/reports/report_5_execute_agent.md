@@ -508,3 +508,94 @@ complete
 - next task ID: (03A)
 - can proceed: yes
 - handoff notes: ShopAIKey request construction and failure handling are implemented and covered by mocked tests; next task can begin Qdrant client initialization and collection setup without changing ShopAIKey scope.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch03 - Qdrant Collection and Vector Upsert Service
+
+## Task
+(03A) - Implement Qdrant client initialization and collection setup
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_5.md > ## 3. Scope
+- docs/plans/Plan_5.md > ## 6. Required Files and Folders
+- docs/plans/Plan_5.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_5.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > ## 7. Qdrant Cloud Design
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Qdrant Collection and Vector Upsert Service
+- Task ID: (03A)
+- Task title: Implement Qdrant client initialization and collection setup
+
+## Completed Work
+- Task is complete for mocked/local acceptance.
+- Created `backend/app/services/qdrant_service.py` with `get_qdrant_client()` using backend-only Qdrant settings.
+- Added `ensure_collection(vector_size)` to create the configured collection with cosine distance when missing.
+- Added verification for existing collection vector size and distance, raising `QdrantSetupError` with a clear setup message on mismatch.
+- Added safe setup error mapping for missing Qdrant config.
+- Did not implement vector upsert, payload construction, Supabase updates, indexing orchestration, retrieval, chat completion, rerank, agents, or frontend behavior.
+
+## Files Created or Modified
+- backend/app/services/qdrant_service.py
+- backend/tests/test_qdrant_service.py
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_qdrant_service.py -v`: Passed
+- evidence or reason: 7 tests passed, covering client construction, missing config mapping, missing collection creation with cosine distance, existing collection verification, vector-size mismatch failure, and distance mismatch failure.
+- Live Qdrant validation: Blocked
+- evidence or reason: User must provide `QDRANT_URL`, `QDRANT_API_KEY`, and a reachable Qdrant Cloud project; no live credentials/setup were provided or used.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests verify client construction, collection creation, existing collection verification, and mismatch failure behavior.
+- Status: satisfied
+- Evidence: `pytest tests/test_qdrant_service.py -v` passed with 7 tests.
+
+## Artifacts Produced
+- backend/app/services/qdrant_service.py
+- backend/tests/test_qdrant_service.py
+- docs/reports/report_5_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require leaving checkbox and batch updates to A2 after `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used `qdrant-client`'s `QdrantClient`, `VectorParams`, and `Distance.COSINE` directly.
+- Kept collection name sourced from existing backend Qdrant settings, which prior Batch01 configuration requires as `QDRANT_COLLECTION` and is expected to be `document_chunks`.
+- Added `QdrantSetupError` as the clear service-level setup exception for missing config and incompatible existing collections.
+- Kept support for single unnamed-vector collections and rejected multiple named-vector configs with a setup message because this plan specifies one chunk embedding vector per point.
+
+## Risks or Open Issues
+- Live Qdrant collection creation/verification was not run because real Qdrant Cloud setup and credentials were not provided in this execution context.
+- Upsert and payload behavior remain intentionally unimplemented for sibling tasks (03B) and (03C).
+
+## Minor Issues Fixed During Execution
+- Ensured `ensure_collection()` maps missing Qdrant settings to `QdrantSetupError` instead of leaking a raw settings `RuntimeError`.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or architecture concerns identified for (03A).
+- Dependencies (01A), (01B), and (01C) were marked complete in docs/tasks/task_5.md before execution.
+- User action for live Qdrant validation remains `BLOCKED_BY_USER_ACTION`; mocked validation was not blocked.
+- Scope boundaries were preserved: no upsert payload construction, Supabase updates, indexing orchestration, retrieval, chat completion, rerank, agents, or frontend behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes
+- handoff notes: Qdrant client initialization and collection setup are implemented and covered by mocked tests. Next task can add payload construction/vector upsert helpers without changing collection setup behavior.
