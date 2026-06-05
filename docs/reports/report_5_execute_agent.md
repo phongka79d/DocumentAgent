@@ -1316,3 +1316,104 @@ complete
 - next task ID: (05D)
 - can proceed: yes
 - handoff notes: A2 should review `(05C)` before any checkbox update; `(05D)` remains for combined backend tests and scope/security checks.
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05D) - Run combined backend tests and scope/security checks
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 4. Out of Scope`
+- `docs/plans/Plan_5.md` > `## 11. Required Tests`
+- `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_5.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
+- `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Run combined backend tests and scope/security checks
+
+## Completed Work
+- Status: complete.
+- Ran the required combined mocked backend pytest command for ShopAIKey, Qdrant, and embedding orchestration tests.
+- Ran the full backend pytest regression suite because Plan 5 changed backend config, API, and service code.
+- Inspected relevant backend implementation files for architecture alignment with Plan 5 and Master Plan backend-only secret policy.
+- Searched the repository for hardcoded secrets, frontend exposure of Qdrant/ShopAIKey settings, and out-of-scope semantic search, GraphRAG, retrieval scoring, chat completion, rerank, agent, or Qdrant search behavior.
+- Did not implement `(05E)` live smoke checks or any future retrieval/agent work.
+
+## Files Created or Modified
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v`: Passed
+- evidence or reason: 38 tests collected, 38 passed.
+- `cd backend; pytest -v`: Passed
+- evidence or reason: 129 tests collected, 129 passed.
+- `git status --short`: Passed
+- evidence or reason: no uncommitted files were present before appending this report.
+- `git diff --name-only`: Passed
+- evidence or reason: no uncommitted implementation changes were present before appending this report.
+- `rg -n --hidden --glob '!**/.git/**' --glob '!**/.venv/**' --glob '!**/__pycache__/**' --glob '!**/.pytest_cache/**' 'sk-[A-Za-z0-9_-]{20,}|SHOPAIKEY_API_KEY\s*=\s*[^\s#]+|QDRANT_API_KEY\s*=\s*[^\s#]+|SUPABASE_SERVICE_ROLE_KEY\s*=\s*[^\s#]+|api[_-]?key\s*[:=]\s*[''\"][A-Za-z0-9_-]{20,}' .`: Passed
+- evidence or reason: hits were safe placeholders in `backend/.env.example`, historical report text, and dummy test values in `backend/tests/test_config.py`; no committed real secret was identified.
+- `rg -n --hidden --glob 'frontend/**' "(QDRANT|SHOPAIKEY|SUPABASE_SERVICE_ROLE_KEY|SERVICE_ROLE|API_KEY|/embeddings|/rerank|/chat/completions)" .`: Passed
+- evidence or reason: no frontend matches found.
+- `rg -n --hidden --glob 'backend/app/**' --glob 'backend/tests/**' "(semantic_search|semantic search|GraphRAG|graph rag|retrieval scoring|final_score|chat/completions|chat completion|rerank|LangGraph|search_points|query_points)" .`: Passed
+- evidence or reason: no backend app/test matches found for out-of-scope retrieval, rerank, chat completion, GraphRAG, or Qdrant search behavior.
+- `rg --files backend/app backend/tests frontend | rg "(shopaikey|qdrant|embedding|document_indexing|documents|config|supabase|agent|retrieval|rerank|chat)"`: Passed
+- evidence or reason: identified the Plan 5 inspection set; no unexpected frontend secret file or future retrieval/agent implementation file was identified.
+- Relevant file inspection: Passed
+- evidence or reason: inspected `backend/app/core/config.py`, `backend/app/services/shopaikey_service.py`, `backend/app/services/qdrant_service.py`, `backend/app/services/embedding_service.py`, `backend/app/services/supabase_service.py`, `backend/app/api/documents.py`, and `backend/.env.example` for backend-only configuration, stable Qdrant point IDs, single-user filtering, payload fields, and internal/development indexing API scope.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass or failures are reported honestly; no secret exposure or out-of-scope work is found.
+- Status: satisfied
+- Evidence: Required combined tests passed, full backend regression tests passed, no frontend Qdrant/ShopAIKey references were found, no backend app/test out-of-scope retrieval/agent/rerank/chat/Qdrant search behavior was found, and secret-pattern hits were limited to placeholders, historical report text, or dummy test values.
+
+## Artifacts Produced
+- Verification evidence appended in `docs/reports/report_5_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; A2 handles checkbox and batch updates after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Treated the relevant Plan 5 backend files and tests as the inspection set because the worktree had no uncommitted implementation changes at the start of `(05D)`.
+- Ran the full backend pytest suite as the directly relevant regression check for changed backend config, API, and service code.
+- Counted live ShopAIKey/Qdrant/Supabase smoke validation as out of scope for `(05D)` because `(05E)` owns those manual checks.
+
+## Risks or Open Issues
+- Live ShopAIKey, Qdrant, and Supabase smoke validation was not run in `(05D)`; this remains for `(05E)` when user setup is available.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependencies `(05A)`, `(05B)`, and `(05C)` were checked in `docs/tasks/task_5.md` before execution.
+- Source-of-truth fields were present for `(05D)`.
+- No task checkbox was updated due to orchestrated A1 rules.
+- No sibling task `(05E)` or future retrieval/agent work was implemented.
+- No architecture concern identified: Plan 5 remains limited to backend-only embeddings, Qdrant collection/upsert, point ID persistence, single-user filtering, and an internal/development indexing trigger.
+
+## Notes for Next Task
+- next task ID: (05E)
+- can proceed: yes, after A2 reviews and accepts `(05D)`
+- handoff notes: `(05E)` should perform or honestly block live indexing, Qdrant, and Supabase checks based on whether local user-provided credentials/setup are available.

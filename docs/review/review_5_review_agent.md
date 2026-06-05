@@ -2658,3 +2658,200 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (05D)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Run combined backend tests and scope/security checks
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 4. Out of Scope`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 14. Agent Report Requirement`; `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05D)
+- Reviewed task ID: (05D)
+- Correct selection: yes
+- Notes: The latest matching `(05D)` execution report was selected and matched the requested batch/task/title.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: initial review diff showed only `docs/reports/report_5_execute_agent.md`; after acceptance tracking, `docs/tasks/task_5.md` was also changed by reviewer.
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_5_execute_agent.md`: in scope - selected execution report and only executor-modified file for `(05D)`.
+- `docs/tasks/task_5.md`: in scope - selected task entry, dependency status, and reviewer checkbox update.
+- `docs/plans/Plan_5.md`: in scope - cited `(05D)` source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited backend-only authentication/secret policy reviewed.
+- `backend/app/core/config.py`: in scope - inspected backend-only settings and require helpers.
+- `backend/app/services/shopaikey_service.py`: in scope - inspected configurable `/embeddings` request path and safe errors.
+- `backend/app/services/qdrant_service.py`: in scope - inspected collection setup, cosine distance, payload construction, stable point IDs, and safe failures.
+- `backend/app/services/embedding_service.py`: in scope - inspected indexing orchestration, skip behavior, per-chunk errors, and update-after-upsert order.
+- `backend/app/services/supabase_service.py`: in scope - inspected `SINGLE_USER_ID` document/chunk filtering and point ID update scoping.
+- `backend/app/api/documents.py`: in scope - inspected internal/development indexing endpoint and safe response mapping.
+- `backend/.env.example`: in scope - inspected placeholder-only backend settings.
+- `backend/tests/test_shopaikey_service.py`: in scope - inspected mocked ShopAIKey coverage.
+- `backend/tests/test_qdrant_service.py`: in scope - inspected mocked Qdrant coverage.
+- `backend/tests/test_embedding_service.py`: in scope - inspected mocked orchestration coverage.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_5_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(05D)` is a validation/reporting task; no implementation files were reported as modified by the executor.
+
+## Dependency Review
+- Required dependencies: `(05A)`, `(05B)`, and `(05C)` accepted/checked before `(05D)`.
+- Dependency status: satisfied; `docs/tasks/task_5.md` shows `(05A)`, `(05B)`, and `(05C)` checked.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Backend-only ShopAIKey/Qdrant configuration boundary is preserved; Supabase indexing helpers filter by `SINGLE_USER_ID`; Qdrant point IDs are stable chunk UUIDs; payload fields match Plan 5; optional indexing route remains backend/internal and no frontend references were found.
+- Failed: none.
+- Uncertain: live provider/database validation was not assessed because `(05E)` owns those manual checks.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production services contain concrete ShopAIKey HTTP request construction, Qdrant collection/upsert behavior, Supabase filtered reads/updates, and orchestration that updates `qdrant_point_id` only after upsert succeeds. `(05D)` itself correctly added only verification evidence.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Business logic reads model, provider URLs, API keys, and collection names through backend settings. Secret scan rerun found only placeholder `.env.example` entries and historical report/review text, not real committed secrets.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v`
+- Reported result: 38 passed
+- Rerun result: 38 passed
+- Status: passed
+- Notes: Required combined mocked backend test command passed.
+
+- Command/check: `pytest -v`
+- Reported result: 129 passed
+- Rerun result: 129 passed
+- Status: passed
+- Notes: Full backend regression suite passed.
+
+- Command/check: secret-pattern repository scan
+- Reported result: passed; no committed real secret identified
+- Rerun result: passed; matches were placeholder `.env.example` values and historical report/review text
+- Status: passed
+- Notes: Local `.env` exists but was not read or exposed; committed/tracked evidence was reviewed.
+
+- Command/check: frontend secret/API exposure scan
+- Reported result: passed; no frontend matches
+- Rerun result: passed; no matches
+- Status: passed
+- Notes: `rg` returned no frontend references for Qdrant, ShopAIKey, service role keys, API keys, embeddings, rerank, or chat completions.
+
+- Command/check: backend out-of-scope retrieval/agent scan
+- Reported result: passed; no backend app/test matches
+- Rerun result: passed; no matches
+- Status: passed
+- Notes: `rg` returned no semantic search, GraphRAG, retrieval scoring, chat completion, rerank, LangGraph, or Qdrant search behavior.
+
+## Acceptance Review
+- Task acceptance: Required tests pass or failures are reported honestly; no secret exposure or out-of-scope work is found.
+- Status: satisfied
+- Evidence: Required combined tests and full backend regression reran successfully; repository scans and file inspection found no frontend secret exposure, no hardcoded real secrets, no fake success logic, and no out-of-scope retrieval/agent behavior.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked in the detailed Batch05 task list and matching progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch05 remains unchecked because `(05E)` is still open.
+- Execution report entry: appended and accurate for `(05D)`.
+- Review report entry: appended to EOF in `docs/review/review_5_review_agent.md`.
+- Other: sibling/future task `(05E)` was not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The rerun secret scan output differed slightly in exact historical matches, but confirmed the same conclusion: no real committed secret was found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(05E)` live ShopAIKey/Qdrant/Supabase smoke validation remains pending and is correctly outside `(05D)` scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(05E)` remains unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md",
+    "backend/app/core/config.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/app/services/qdrant_service.py",
+    "backend/app/services/embedding_service.py",
+    "backend/app/services/supabase_service.py",
+    "backend/app/api/documents.py",
+    "backend/.env.example",
+    "backend/tests/test_shopaikey_service.py",
+    "backend/tests/test_qdrant_service.py",
+    "backend/tests/test_embedding_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

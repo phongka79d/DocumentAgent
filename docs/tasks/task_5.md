@@ -596,7 +596,7 @@ Plan 5 completion depends on evidence that mocked unit behavior passes, external
   - Blocked Condition: None for mocked tests.
   - Files: `backend/tests/test_embedding_service.py`
 
-- [ ] (05D): Run combined backend tests and scope/security checks
+- [x] (05D): Run combined backend tests and scope/security checks
   - Source of Truth: `docs/plans/Plan_5.md` > `## 4. Out of Scope`; `docs/plans/Plan_5.md` > `## 11. Required Tests`; `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_5.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
   - Source Requirements:
     - Run required tests.
@@ -777,7 +777,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (05A): Add and run ShopAIKey service tests
 - [x] (05B): Add and run Qdrant service tests
 - [x] (05C): Add and run embedding orchestration tests
-- [ ] (05D): Run combined backend tests and scope/security checks
+- [x] (05D): Run combined backend tests and scope/security checks
 - [ ] (05E): Perform manual indexing and Qdrant/Supabase checks when user setup is available
 
 ## Completion Reporting Rules for Future Execution Agents
