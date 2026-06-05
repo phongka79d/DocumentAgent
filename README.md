@@ -1,0 +1,383 @@
+# Document QA Agent
+
+## Overview
+
+Document QA Agent is a single-user document question-answering project. The planned system lets one configured user upload documents, parse and chunk their contents, index chunks with embeddings, retrieve relevant evidence, and eventually answer questions using a multi-agent workflow grounded only in verified document evidence.
+
+This repository is a mixed workspace:
+
+- `backend/` contains the FastAPI API, service layer, Supabase persistence/storage integration, ShopAIKey embedding integration, Qdrant vector indexing, schemas, migrations, and tests.
+- `frontend/` contains a Vite React TypeScript shell with an Axios API client.
+- `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
+
+The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, and a development indexing endpoint. Retrieval APIs, GraphRAG, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
+
+## What This Folder Does
+
+This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
+
+Authoritative runtime behavior is defined primarily by:
+
+- `backend/app/main.py` for FastAPI app creation and router registration.
+- `backend/app/core/config.py` for environment-driven settings.
+- `backend/app/api/` for API routes currently exposed by the backend.
+- `backend/app/services/` for document, parsing, chunking, embedding, Supabase, ShopAIKey, and Qdrant behavior.
+- `backend/app/db/migrations/001_initial_schema.sql` for the planned Supabase PostgreSQL schema.
+- `frontend/package.json` and `frontend/src/` for the current frontend shell.
+- `docs/plans/README.md` and `docs/plans/Master_Plan.md` for the intended implementation roadmap.
+
+Do not treat `docs/plans/Master_Plan.md` as proof that a feature exists in code. It documents the target system. Check the backend routers and services before claiming a workflow is implemented.
+
+## Repository Structure
+
+```text
+.
+├── backend/
+│   ├── app/
+│   │   ├── api/          # FastAPI routers for health and documents
+│   │   ├── core/         # Settings and logging setup
+│   │   ├── db/           # SQL migrations
+│   │   ├── schemas/      # Pydantic API/service contracts
+│   │   ├── services/     # Supabase, parsing, chunking, embedding, Qdrant logic
+│   │   ├── utils/        # Upload validation helpers
+│   │   └── main.py       # FastAPI application factory and router wiring
+│   ├── tests/            # Pytest tests and sample document fixtures
+│   └── requirements.txt  # Python dependencies
+├── docs/
+│   ├── plans/            # Master plan and milestone plans
+│   ├── reports/          # Task execution reports
+│   ├── review/           # Task review reports
+│   ├── tasks/            # Task documents
+│   └── visual-overview.html
+├── frontend/
+│   ├── src/
+│   │   ├── api/client.ts # Axios client using VITE_API_BASE_URL
+│   │   ├── App.tsx      # Placeholder app shell
+│   │   ├── main.tsx     # React entrypoint
+│   │   └── styles.css   # Basic shell styling
+│   ├── package.json
+│   └── vite.config.ts
+├── .gitignore
+└── README.md
+```
+
+## Main Workflows
+
+### Backend Startup
+
+1. `backend/app/main.py` calls `setup_logging()`.
+2. `create_app()` loads settings from `backend/app/core/config.py`.
+3. The FastAPI app is created with title `Document QA Agent`.
+4. CORS allows `settings.frontend_origin`, defaulting to `http://localhost:5173`.
+5. Routers are mounted:
+   - `GET /api/health`
+   - document routes under `/api/documents`
+
+### Health Check
+
+1. `GET /api/health` is handled by `backend/app/api/health.py`.
+2. The route reads settings with `get_settings()`.
+3. It returns `status`, `service`, and `app_env`.
+
+### Document Upload
+
+1. `POST /api/documents/upload` accepts a multipart `file` in `backend/app/api/documents.py`.
+2. `backend/app/services/document_service.py` validates the upload through `backend/app/utils/file_validation.py`.
+3. Supported extensions are `pdf`, `docx`, `txt`, and `csv`; content type is checked when provided.
+4. The service creates a UUID document ID and a Supabase Storage path shaped like `documents/{user_id}/{document_id}/{safe_filename}`.
+5. `backend/app/services/supabase_service.py` uploads the original file to the configured Supabase Storage bucket.
+6. A `documents` metadata row is inserted with status `uploaded` and `chunk_count` set to `0`.
+7. The API returns `document_id`, `file_name`, and `status`.
+
+Important current limitation: upload does not automatically call `process_document()`. Processing exists as a service but is not wired into the upload route.
+
+### Document Listing and Detail
+
+1. `GET /api/documents` calls `document_service.list_documents()`.
+2. Supabase metadata is filtered by `settings.single_user_id` and ordered newest first.
+3. `GET /api/documents/{document_id}` calls `document_service.get_document_detail()`.
+4. Detail responses currently include document metadata and an empty `chunks` list.
+
+### Document Processing Service
+
+`backend/app/services/document_processing_service.py` defines the parse/chunk/persist workflow:
+
+1. Load the document row for the configured single user.
+2. Mark the document `processing`.
+3. Download the original file from Supabase Storage.
+4. Parse bytes with `document_parser.parse_document()`.
+5. Enrich parsed sections with document/user/file metadata.
+6. Split sections into `ChunkDraft` records with `chunking_service.chunk_sections()`.
+7. Insert chunks into Supabase `document_chunks`.
+8. Update document `chunk_count`.
+9. Mark the document `ready`, or mark it `failed` with a safe error message.
+
+This workflow is tested, but no public API route currently triggers it.
+
+### Parsing and Chunking
+
+`backend/app/services/document_parser.py` supports:
+
+- PDF via `pypdf.PdfReader`, preserving page numbers.
+- DOCX via `python-docx`, preserving heading-derived section titles and paragraph metadata.
+- TXT via UTF-8 with Latin-1 fallback.
+- CSV via Python `csv`, converting each non-empty row into readable text with column names and row indexes.
+
+`backend/app/services/chunking_service.py` uses a deterministic word-based token estimate, configurable chunk size and overlap, and prefers sentence/newline boundaries when splitting long sections.
+
+### Embedding and Qdrant Indexing
+
+1. `POST /api/documents/{document_id}/index` is a development/internal route in `backend/app/api/documents.py`; the route docstring says the frontend must not call it.
+2. `embedding_service.index_document_chunks()` requires the document status to be `ready`.
+3. It loads chunks without `qdrant_point_id` from Supabase.
+4. Each chunk is embedded through `shopaikey_service.create_embedding()`, which calls an OpenAI-compatible `/embeddings` endpoint.
+5. `qdrant_service.ensure_collection()` creates or validates the configured Qdrant collection using cosine distance.
+6. The chunk vector is upserted to Qdrant using the chunk UUID as the stable point ID.
+7. Supabase `document_chunks.qdrant_point_id` is updated after successful upsert.
+
+Partial failures are collected into `DocumentIndexingResult` instead of stopping all chunks immediately.
+
+## Architecture
+
+The current architecture is layered:
+
+- API layer: `backend/app/api/health.py` and `backend/app/api/documents.py` expose FastAPI routes and map service exceptions to HTTP responses.
+- Configuration layer: `backend/app/core/config.py` centralizes Pydantic settings, default values, and required external-service checks.
+- Service layer: `backend/app/services/` owns orchestration and provider-specific clients.
+- Persistence layer: `supabase_service.py` reads/writes Supabase tables and storage buckets.
+- Vector layer: `qdrant_service.py` manages collection setup, vector upsert, and vector search helpers.
+- Provider layer: `shopaikey_service.py` calls the embedding endpoint.
+- Schema layer: `backend/app/schemas/` defines Pydantic request/response and internal contracts.
+- Frontend layer: `frontend/src/` is currently a minimal React shell and Axios client.
+
+The planned architecture in `docs/plans/Master_Plan.md` adds GraphRAG, LangGraph agents, chat sessions, agent runs, agent steps, evidence APIs, and richer frontend pages. The database migration already includes tables for those future features, but the runtime code does not yet implement the full agent workflow.
+
+## Frontend
+
+The frontend is a Vite React TypeScript project in `frontend/`.
+
+Evidence:
+
+- `frontend/package.json` defines `dev`, `build`, and `preview` scripts.
+- `frontend/src/main.tsx` mounts `<App />` into `#root`.
+- `frontend/src/App.tsx` currently renders a centered placeholder with `Document QA Agent` and `Future routes placeholder`.
+- `frontend/src/api/client.ts` creates an Axios client with `baseURL: import.meta.env.VITE_API_BASE_URL`.
+- `frontend/src/styles.css` contains only basic shell styling.
+
+There are no implemented upload, document list, chat, evidence viewer, or agent log screens yet.
+
+## Backend
+
+The backend is a FastAPI project in `backend/`.
+
+Key files:
+
+- `backend/app/main.py`: app factory, CORS setup, route registration.
+- `backend/app/api/health.py`: health endpoint.
+- `backend/app/api/documents.py`: upload, list, detail, and development indexing routes.
+- `backend/app/api/retrieval.py`: currently only creates an empty `APIRouter` and is not mounted in `main.py`.
+- `backend/app/core/config.py`: settings and required provider configuration checks.
+- `backend/app/services/document_service.py`: upload/list/detail orchestration.
+- `backend/app/services/document_processing_service.py`: parse/chunk/persist workflow, not exposed through an API route.
+- `backend/app/services/document_parser.py`: parsers for PDF, DOCX, TXT, and CSV.
+- `backend/app/services/chunking_service.py`: deterministic chunk generation.
+- `backend/app/services/embedding_service.py`: document chunk indexing orchestration.
+- `backend/app/services/supabase_service.py`: Supabase database and storage operations.
+- `backend/app/services/qdrant_service.py`: Qdrant collection, upsert, and search helpers.
+- `backend/app/services/shopaikey_service.py`: embedding API calls.
+
+## Data, Storage, and External Services
+
+### Supabase
+
+Supabase is used for PostgreSQL metadata/chunk tables and original document storage. The migration at `backend/app/db/migrations/001_initial_schema.sql` defines:
+
+- `documents`
+- `document_chunks`
+- `document_entities`
+- `document_relationships`
+- `chat_sessions`
+- `chat_messages`
+- `agent_runs`
+- `agent_steps`
+
+Only some of these tables are currently used by service code. Document upload/list/detail uses `documents`; processing and indexing use `document_chunks`. Graph, chat, and agent tables are planned but not yet wired into runtime workflows.
+
+### Qdrant
+
+Qdrant stores chunk vectors. `qdrant_service.py` creates or validates a collection using cosine distance and stores payload fields including `user_id`, `document_id`, `chunk_id`, `file_name`, `file_type`, page/section metadata, chunk index, and a content preview.
+
+Vector search helpers always include a `user_id = SINGLE_USER_ID` filter and optionally filter by selected document IDs.
+
+### ShopAIKey
+
+`shopaikey_service.py` calls an OpenAI-compatible embeddings endpoint at `{SHOPAIKEY_BASE_URL}/embeddings`. The embedding model is configured through `SHOPAIKEY_EMBEDDING_MODEL`; it is not hardcoded in the service.
+
+The master plan also mentions chat completion and rerank endpoints, but current code only implements embeddings.
+
+## Configuration
+
+`backend/app/core/config.py` reads environment variables from `backend/.env` because `BACKEND_DIR` resolves to the `backend/` folder. A root `.env` exists in this workspace, but the backend settings code does not read root `.env` by default.
+
+Do not expose or copy secret values into documentation.
+
+| Variable | Required | Purpose | Source |
+| --- | --- | --- | --- |
+| `APP_ENV` | No | Runtime environment label returned by health and logged at startup. | `backend/app/core/config.py` |
+| `SINGLE_USER_ID` | No | Single-user ownership filter for documents, chunks, vectors, and future agent data. | `backend/app/core/config.py` |
+| `FRONTEND_ORIGIN` | No | Allowed CORS origin for the backend. Defaults to `http://localhost:5173`. | `backend/app/core/config.py` |
+| `SUPABASE_URL` | Yes for Supabase operations | Supabase project URL. | `Settings.require_supabase_settings()` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes for Supabase operations | Backend-only Supabase service role key. | `Settings.require_supabase_settings()` |
+| `SUPABASE_STORAGE_BUCKET` | No | Storage bucket for original uploaded documents. Defaults to `documents`. | `backend/app/core/config.py` |
+| `SHOPAIKEY_API_KEY` | Yes for embeddings | Backend-only ShopAIKey API key. | `Settings.require_shopaikey_settings()` |
+| `SHOPAIKEY_BASE_URL` | Yes for embeddings | OpenAI-compatible API base URL. | `Settings.require_shopaikey_settings()` |
+| `SHOPAIKEY_EMBEDDING_MODEL` | Yes for embeddings | Embedding model sent to the `/embeddings` endpoint. | `Settings.require_shopaikey_settings()` |
+| `QDRANT_URL` | Yes for Qdrant operations | Qdrant endpoint URL. | `Settings.require_qdrant_settings()` |
+| `QDRANT_API_KEY` | Yes for Qdrant operations | Backend-only Qdrant API key. | `Settings.require_qdrant_settings()` |
+| `QDRANT_COLLECTION` | Yes for Qdrant operations | Collection name for chunk vectors. | `Settings.require_qdrant_settings()` |
+| `RETRIEVAL_SEMANTIC_TOP_K` | No | Semantic retrieval limit, constrained from 1 to 50. Defaults to `20`. | `backend/app/core/config.py` |
+| `MAX_UPLOAD_BYTES` | No | Upload size limit in bytes. Defaults to `25000000`. | `backend/app/core/config.py` |
+| `CHUNK_SIZE_TOKENS` | No | Approximate chunk size. Defaults to `1000`. | `backend/app/core/config.py` |
+| `CHUNK_OVERLAP_TOKENS` | No | Approximate chunk overlap. Defaults to `150`; must be less than chunk size. | `backend/app/core/config.py` |
+| `VITE_API_BASE_URL` | Yes for frontend API calls | Frontend Axios base URL. | `frontend/src/api/client.ts` |
+
+## Setup
+
+### Backend
+
+From the repository root:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Create `backend/.env` with the backend variables listed above. The backend code expects provider secrets to remain backend-only.
+
+Apply the Supabase schema from:
+
+```text
+backend/app/db/migrations/001_initial_schema.sql
+```
+
+The repository does not include an automated migration runner; apply the SQL using your Supabase workflow.
+
+### Frontend
+
+From the repository root:
+
+```powershell
+cd frontend
+npm install
+```
+
+Create a frontend environment file with:
+
+```text
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+Use the actual backend URL if it differs.
+
+## Running the Project
+
+### Backend API
+
+From `backend/`:
+
+```powershell
+uvicorn app.main:app --reload
+```
+
+The expected default URL is `http://localhost:8000` when Uvicorn uses its default port.
+
+Useful endpoint:
+
+```text
+GET http://localhost:8000/api/health
+```
+
+### Frontend Dev Server
+
+From `frontend/`:
+
+```powershell
+npm run dev
+```
+
+Vite commonly serves at `http://localhost:5173`. The backend CORS default is configured for that origin.
+
+### Production Frontend Build
+
+From `frontend/`:
+
+```powershell
+npm run build
+```
+
+This runs `tsc --noEmit` and `vite build` according to `frontend/package.json`.
+
+## Testing and Validation
+
+Backend tests are under `backend/tests/`. From `backend/`:
+
+```powershell
+pytest
+```
+
+The tests cover settings validation, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding error handling, Supabase service behavior, Qdrant service behavior, embedding/indexing orchestration, and the development indexing API.
+
+Frontend validation commands from `frontend/package.json`:
+
+```powershell
+npm run build
+npm run preview
+```
+
+There is no frontend test script in `frontend/package.json`.
+
+## Development Notes for AI Agents
+
+Read these first:
+
+- `docs/plans/README.md` for the milestone order and planned scope.
+- `docs/plans/Master_Plan.md` for target architecture and non-goals.
+- `backend/app/main.py` to see what API routes are actually mounted.
+- `backend/app/core/config.py` before changing environment behavior.
+- `backend/app/api/documents.py` and `backend/app/services/document_service.py` before changing upload/list/detail behavior.
+- `backend/app/services/document_processing_service.py`, `document_parser.py`, and `chunking_service.py` before changing parsing or chunk persistence.
+- `backend/app/services/embedding_service.py`, `shopaikey_service.py`, and `qdrant_service.py` before changing indexing or retrieval behavior.
+- `backend/app/db/migrations/001_initial_schema.sql` before changing persistence contracts.
+
+Important coordination rules:
+
+- Keep `SINGLE_USER_ID` filtering intact unless the project explicitly moves to multi-user auth. The MVP plan says no Auth/JWT.
+- Never move backend-only secrets into frontend code. Supabase service role, Qdrant key, and ShopAIKey key must remain backend-only.
+- If you add API routes, update `backend/app/main.py`; adding a router file alone does not expose it.
+- If you change document/chunk schemas, coordinate Pydantic schemas, Supabase SQL, service row builders, tests, and any Qdrant payload expectations.
+- If you wire processing into upload, account for status transitions: `uploaded`, `processing`, `ready`, `failed`.
+- If you implement retrieval, note that `backend/app/api/retrieval.py` is currently empty and not mounted.
+- If you implement frontend features, expand beyond the current placeholder in `frontend/src/App.tsx` and keep `frontend/src/api/client.ts` aligned with backend routes.
+- Ignore generated and dependency folders such as `node_modules/`, `__pycache__/`, `.pytest_cache/`, `dist/`, `build/`, `.venv/`, and `venv/`.
+
+Validation before claiming completion:
+
+- Run `pytest` from `backend/` for backend changes.
+- Run `npm run build` from `frontend/` for frontend changes.
+- For provider integrations, prefer mocked tests unless the task explicitly requires live Supabase, Qdrant, or ShopAIKey validation.
+- Do not claim GraphRAG, LangGraph agents, chat, evidence viewer, or agent logs are implemented unless corresponding routes/services/tests exist in code.
+
+## Known Gaps or Unclear Areas
+
+- The backend reads `backend/.env`, but this workspace currently has a root `.env`; root `.env` is not loaded by `SettingsConfigDict` in `backend/app/core/config.py`.
+- Upload stores the original file and metadata but does not automatically trigger parsing/chunking.
+- `document_processing_service.process_document()` exists and is tested but is not exposed through a route or background worker.
+- The development indexing route exists at `POST /api/documents/{document_id}/index`; its docstring says the frontend must not call it.
+- `backend/app/api/retrieval.py` is empty and not mounted in `backend/app/main.py`.
+- `backend/app/schemas/retrieval.py` defines retrieval contracts, and `qdrant_service.search_vectors()` exists, but no retrieval API workflow is implemented yet.
+- GraphRAG entity extraction, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
+- The database migration includes future chat/agent/graph tables that current services do not yet use.
+- The frontend is currently a placeholder shell, not a working upload/chat UI.
+- No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.
