@@ -138,7 +138,7 @@ The semantic retrieval endpoint depends on a typed default Top-K setting, valida
   - Blocked Condition: None.
   - Files: `backend/app/schemas/retrieval.py`, `backend/app/schemas/__init__.py`
 
-- [ ] (01C): Prepare retrieval API module without adding behavior outside scope
+- [x] (01C): Prepare retrieval API module without adding behavior outside scope
   - Source of Truth: `docs/plans/Plan_6.md` > `## 3. Scope`; `docs/plans/Plan_6.md` > `## 4. Out of Scope`; `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_6.md` > `## 8. API Design`
   - Source Requirements:
     - Add `backend/app/api/retrieval.py`.
@@ -743,7 +743,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch01
 - [x] (01A): Add semantic retrieval Top-K backend configuration
 - [x] (01B): Create retrieval request and response schemas
-- [ ] (01C): Prepare retrieval API module without adding behavior outside scope
+- [x] (01C): Prepare retrieval API module without adding behavior outside scope
 
 #### Batch02
 - [ ] (02A): Implement Qdrant semantic vector search with mandatory user filter
