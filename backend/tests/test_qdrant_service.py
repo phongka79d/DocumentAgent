@@ -381,6 +381,60 @@ def test_search_vectors_uses_configured_collection_and_mandatory_user_filter(
     assert user_conditions[0].match.value == "single_user"
 
 
+def test_search_vectors_omits_document_filter_for_empty_document_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.query_points.return_value = SimpleNamespace(points=[])
+    settings = _settings()
+    settings.single_user_id = "single_user"
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    qdrant_service.search_vectors(
+        query_vector=[0.1, 0.2, 0.3],
+        top_k=3,
+        document_ids=[],
+    )
+
+    query_filter = client.query_points.call_args.kwargs["query_filter"]
+    assert [condition.key for condition in query_filter.must] == ["user_id"]
+    assert query_filter.must[0].match.value == "single_user"
+
+
+def test_search_vectors_filters_selected_documents_by_payload_document_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.query_points.return_value = SimpleNamespace(points=[])
+    settings = _settings()
+    settings.single_user_id = "single_user"
+    first_document_id = UUID("11111111-1111-1111-1111-111111111111")
+    second_document_id = UUID("22222222-2222-2222-2222-222222222222")
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    qdrant_service.search_vectors(
+        query_vector=[0.1, 0.2, 0.3],
+        top_k=3,
+        document_ids=[first_document_id, second_document_id],
+    )
+
+    query_filter = client.query_points.call_args.kwargs["query_filter"]
+    document_conditions = [
+        condition
+        for condition in query_filter.must
+        if getattr(condition, "key", None) == "document_id"
+    ]
+    assert len(document_conditions) == 1
+    assert document_conditions[0].match.any == [
+        str(first_document_id),
+        str(second_document_id),
+    ]
+
+
 def test_upsert_chunk_vector_maps_qdrant_failure_to_safe_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

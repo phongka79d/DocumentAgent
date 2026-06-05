@@ -226,7 +226,7 @@ Semantic retrieval must never query Qdrant without the `SINGLE_USER_ID` filter, 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live non-empty retrieval if Qdrant collection or indexed chunks are unavailable.
   - Files: `backend/app/services/qdrant_service.py`
 
-- [ ] (02B): Add optional document ID filtering through Qdrant payload
+- [x] (02B): Add optional document ID filtering through Qdrant payload
   - Source of Truth: `docs/plans/Plan_6.md` > `## 1. Goal`; `docs/plans/Plan_6.md` > `## 3. Scope`; `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 7. Qdrant Cloud Design`
   - Source Requirements:
     - If `document_ids` is provided, filter `document_id` in the provided list.
@@ -747,7 +747,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch02
 - [x] (02A): Implement Qdrant semantic vector search with mandatory user filter
-- [ ] (02B): Add optional document ID filtering through Qdrant payload
+- [x] (02B): Add optional document ID filtering through Qdrant payload
 - [ ] (02C): Normalize Qdrant score semantics and failure behavior
 
 #### Batch03

@@ -7,6 +7,7 @@ from qdrant_client.http.models import (
     Distance,
     FieldCondition,
     Filter,
+    MatchAny,
     MatchValue,
     PointStruct,
     ScoredPoint,
@@ -156,16 +157,21 @@ def search_vectors(
     except RuntimeError as exc:
         raise QdrantSetupError(str(exc)) from exc
 
-    # Populated document filtering is intentionally left for task (02B).
-    _ = document_ids
-    query_filter = Filter(
-        must=[
+    filter_conditions = [
+        FieldCondition(
+            key="user_id",
+            match=MatchValue(value=settings.single_user_id),
+        )
+    ]
+    if document_ids:
+        filter_conditions.append(
             FieldCondition(
-                key="user_id",
-                match=MatchValue(value=settings.single_user_id),
+                key="document_id",
+                match=MatchAny(any=[str(document_id) for document_id in document_ids]),
             )
-        ]
-    )
+        )
+
+    query_filter = Filter(must=filter_conditions)
 
     response = get_qdrant_client().query_points(
         collection_name=qdrant_settings["collection"],

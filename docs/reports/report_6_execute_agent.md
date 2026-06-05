@@ -341,3 +341,94 @@ complete
 - next task ID: (02B)
 - can proceed: yes
 - handoff notes: `search_vectors` now guarantees the mandatory user filter and configured collection; `(02B)` can add populated `document_ids` payload filtering on top of the existing `Filter.must` list.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch02 - Qdrant Filtered Search Helper
+
+## Task
+(02B) - Add optional document ID filtering through Qdrant payload
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_6.md > ## 1. Goal
+- docs/plans/Plan_6.md > ## 3. Scope
+- docs/plans/Plan_6.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_6.md > ## 8. API Design
+- docs/plans/Plan_6.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 7. Qdrant Cloud Design
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Qdrant Filtered Search Helper
+- Task ID: (02B)
+- Task title: Add optional document ID filtering through Qdrant payload
+
+## Completed Work
+- Complete.
+- Added optional Qdrant payload filtering for non-empty `document_ids` in `search_vectors`.
+- Kept omitted and empty `document_ids` searches limited to the mandatory `user_id = SINGLE_USER_ID` payload filter.
+- Converted UUID/string document IDs to strings for Qdrant payload `document_id` matching.
+- Added focused mocked Qdrant service tests for empty and populated document ID lists.
+
+## Files Created or Modified
+- backend/app/services/qdrant_service.py
+- backend/tests/test_qdrant_service.py
+- docs/reports/report_6_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_qdrant_service.py -k "search_vectors" -v`: Passed, red/green evidence: populated document filter test initially failed with no `document_id` condition, then passed after implementation.
+- `cd backend; pytest tests/test_qdrant_service.py -v`: Passed, 19 passed.
+- `git diff --check`: Passed with line-ending warnings only for existing Git CRLF normalization behavior.
+- `cd backend; pytest tests/test_retrieval_service.py -v`: Not run; `backend/tests/test_retrieval_service.py` and `backend/app/services/retrieval_service.py` do not exist yet, so the closest focused Qdrant service tests were used per task instruction.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove selected documents are represented in the Qdrant payload filter and that omitted/empty filters still include the user filter.
+- Status: satisfied
+- Evidence: `test_search_vectors_filters_selected_documents_by_payload_document_id` asserts a `document_id` payload condition with stringified IDs; `test_search_vectors_omits_document_filter_for_empty_document_ids` asserts only the `user_id` condition remains for an empty list; existing mandatory-user-filter test still passes.
+
+## Artifacts Produced
+- Updated Qdrant search helper with optional selected-document payload filtering.
+- Mocked Qdrant service tests covering omitted, empty, and populated document ID filter behavior.
+- Execution report appended to `docs/reports/report_6_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run requested A2 to update checkboxes only after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used Qdrant `MatchAny` on payload key `document_id` only when `document_ids` is non-empty.
+- Stringified all incoming UUID/string IDs before filter construction to match the existing Qdrant payload serialization.
+- Used `backend/tests/test_qdrant_service.py` instead of creating `backend/tests/test_retrieval_service.py` because retrieval service files do not exist yet and the task permits the closest focused Qdrant service tests.
+
+## Risks or Open Issues
+- Qdrant score normalization and Qdrant failure behavior remain intentionally unimplemented for `(02C)`.
+- Retrieval service orchestration and API behavior remain future tasks.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependency `(02A)` is marked complete in `docs/tasks/task_6.md`.
+- Retrieval request schema exists at `backend/app/schemas/retrieval.py`.
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- No task checkbox was updated because this is an orchestrated run.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes
+- handoff notes: `search_vectors` now applies mandatory `user_id` filtering plus optional payload `document_id` filtering for non-empty selections; `(02C)` can address score semantics and Qdrant failure behavior without needing to change document filter construction.
