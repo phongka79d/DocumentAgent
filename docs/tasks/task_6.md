@@ -242,7 +242,7 @@ Semantic retrieval must never query Qdrant without the `SINGLE_USER_ID` filter, 
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/services/qdrant_service.py`, `backend/tests/test_retrieval_service.py`
 
-- [ ] (02C): Normalize Qdrant score semantics and failure behavior
+- [x] (02C): Normalize Qdrant score semantics and failure behavior
   - Source of Truth: `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`; `docs/plans/Plan_6.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Convert Qdrant scores to `semantic_similarity`.
@@ -748,7 +748,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch02
 - [x] (02A): Implement Qdrant semantic vector search with mandatory user filter
 - [x] (02B): Add optional document ID filtering through Qdrant payload
-- [ ] (02C): Normalize Qdrant score semantics and failure behavior
+- [x] (02C): Normalize Qdrant score semantics and failure behavior
 
 #### Batch03
 - [ ] (03A): Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration

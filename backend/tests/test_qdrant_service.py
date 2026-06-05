@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -349,8 +350,14 @@ def test_search_vectors_uses_configured_collection_and_mandatory_user_filter(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = Mock()
-    expected_points = [SimpleNamespace(id="point-id", score=0.87, payload={})]
-    client.query_points.return_value = SimpleNamespace(points=expected_points)
+    qdrant_points = [
+        SimpleNamespace(
+            id="point-id",
+            score=0.87,
+            payload={"chunk_id": "22222222-2222-2222-2222-222222222222"},
+        )
+    ]
+    client.query_points.return_value = SimpleNamespace(points=qdrant_points)
     settings = _settings()
     settings.single_user_id = "single_user"
 
@@ -363,7 +370,10 @@ def test_search_vectors_uses_configured_collection_and_mandatory_user_filter(
         document_ids=None,
     )
 
-    assert results == expected_points
+    assert len(results) == 1
+    assert results[0].point_id == "point-id"
+    assert results[0].payload == {"chunk_id": "22222222-2222-2222-2222-222222222222"}
+    assert results[0].semantic_similarity == 0.87
     client.query_points.assert_called_once()
     search_kwargs = client.query_points.call_args.kwargs
     assert search_kwargs["collection_name"] == "document_chunks"
@@ -379,6 +389,36 @@ def test_search_vectors_uses_configured_collection_and_mandatory_user_filter(
     ]
     assert len(user_conditions) == 1
     assert user_conditions[0].match.value == "single_user"
+
+
+def test_search_vectors_maps_qdrant_failure_to_safe_error_and_safe_log(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = Mock()
+    client.query_points.side_effect = RuntimeError(
+        "private provider detail with qdrant-secret-token"
+    )
+    settings = _settings()
+    settings.single_user_id = "single_user"
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    with caplog.at_level(logging.ERROR, logger=qdrant_service.__name__):
+        with pytest.raises(qdrant_service.QdrantSearchError) as exc_info:
+            qdrant_service.search_vectors(
+                query_vector=[0.1, 0.2, 0.3],
+                top_k=3,
+                document_ids=None,
+            )
+
+    assert str(exc_info.value) == "Qdrant vector search failed."
+    assert "qdrant-secret-token" not in str(exc_info.value)
+    assert "private provider detail" not in str(exc_info.value)
+    assert "Qdrant vector search failed." in caplog.text
+    assert "qdrant-secret-token" not in caplog.text
+    assert "private provider detail" not in caplog.text
 
 
 def test_search_vectors_omits_document_filter_for_empty_document_ids(

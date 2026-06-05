@@ -1,3 +1,5 @@
+import logging
+from dataclasses import dataclass
 from json import loads
 from typing import Any
 from uuid import UUID
@@ -10,12 +12,14 @@ from qdrant_client.http.models import (
     MatchAny,
     MatchValue,
     PointStruct,
-    ScoredPoint,
     VectorParams,
 )
 
 from app.core.config import get_settings
 from app.schemas.embeddings import IndexedChunkPayload
+
+
+logger = logging.getLogger(__name__)
 
 
 class QdrantSetupError(RuntimeError):
@@ -24,6 +28,17 @@ class QdrantSetupError(RuntimeError):
 
 class QdrantUpsertError(RuntimeError):
     """Raised when a Qdrant point upsert fails."""
+
+
+class QdrantSearchError(RuntimeError):
+    """Raised when a Qdrant vector search fails with a safe public message."""
+
+
+@dataclass(frozen=True)
+class QdrantSearchResult:
+    point_id: Any
+    payload: dict[str, Any]
+    semantic_similarity: float
 
 
 def get_qdrant_client() -> QdrantClient:
@@ -150,7 +165,7 @@ def search_vectors(
     query_vector: list[float],
     top_k: int,
     document_ids: list[UUID | str] | None = None,
-) -> list[ScoredPoint]:
+) -> list[QdrantSearchResult]:
     try:
         settings = get_settings()
         qdrant_settings = settings.require_qdrant_settings()
@@ -173,14 +188,23 @@ def search_vectors(
 
     query_filter = Filter(must=filter_conditions)
 
-    response = get_qdrant_client().query_points(
-        collection_name=qdrant_settings["collection"],
-        query=query_vector,
-        query_filter=query_filter,
-        limit=top_k,
-        with_payload=True,
-    )
-    return response.points
+    try:
+        response = get_qdrant_client().query_points(
+            collection_name=qdrant_settings["collection"],
+            query=query_vector,
+            query_filter=query_filter,
+            limit=top_k,
+            with_payload=True,
+        )
+    except QdrantSetupError:
+        raise
+    except Exception as exc:
+        logger.error(
+            "Qdrant vector search failed. Provider details were suppressed for safety."
+        )
+        raise QdrantSearchError("Qdrant vector search failed.") from exc
+
+    return [_scored_point_to_search_result(point) for point in response.points]
 
 
 def _payload_to_qdrant(payload: IndexedChunkPayload) -> dict[str, Any]:
@@ -190,6 +214,36 @@ def _payload_to_qdrant(payload: IndexedChunkPayload) -> dict[str, Any]:
         data = loads(payload.json())
 
     return data
+
+
+def _scored_point_to_search_result(point: Any) -> QdrantSearchResult:
+    payload = getattr(point, "payload", None) or {}
+    if not isinstance(payload, dict):
+        payload = dict(payload)
+
+    return QdrantSearchResult(
+        point_id=getattr(point, "id", None),
+        payload=payload,
+        semantic_similarity=_qdrant_score_to_semantic_similarity(float(point.score)),
+    )
+
+
+def _qdrant_score_to_semantic_similarity(
+    score: float,
+    *,
+    is_distance: bool = False,
+) -> float:
+    """Normalize Qdrant scoring into the response's semantic_similarity field.
+
+    Qdrant's query API returns higher-is-better scores for the configured collection.
+    This service creates/verifies the collection with cosine distance, so the Qdrant
+    score is already cosine semantic similarity. If a future client path returns raw
+    distance values, convert distance to a bounded higher-is-better similarity with
+    1 / (1 + distance) before assigning it to semantic_similarity.
+    """
+    if is_distance:
+        return 1.0 / (1.0 + max(score, 0.0))
+    return score
 
 
 def _extract_vector_params(collection: Any) -> Any:

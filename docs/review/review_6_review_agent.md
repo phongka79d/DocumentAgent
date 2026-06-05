@@ -926,3 +926,387 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch02 - Qdrant Filtered Search Helper
+- Task ID: (02C)
+- Task title: Normalize Qdrant score semantics and failure behavior
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 8. API Design`; `## 9. Implementation Steps`; `## 13. Failure Handling`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C)
+- Correct selection: yes
+- Notes: The last appended execution report entry is for `(02C)` and matches the requested task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/qdrant_service.py`
+  - `backend/tests/test_qdrant_service.py`
+  - `docs/reports/report_6_execute_agent.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/qdrant_service.py`: in scope - adds `QdrantSearchResult`, score conversion, and `QdrantSearchError`; however `logger.exception(...)` logs provider exception details and can leak secrets.
+- `backend/tests/test_qdrant_service.py`: in scope - verifies score mapping and failure wrapping, but asserts `qdrant-secret-token` appears in backend logs.
+- `docs/reports/report_6_execute_agent.md`: in scope - latest execution report reviewed and cross-checked.
+- `docs/tasks/task_6.md`: in scope - selected task remains unchecked.
+- `docs/plans/Plan_6.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/qdrant_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implementation is in the expected helper module.
+- file from execution report: `backend/tests/test_qdrant_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Focused Qdrant tests are acceptable because retrieval service files do not exist yet, but the failure-log assertion violates the task security requirement.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report was appended.
+
+## Dependency Review
+- Required dependencies: `(02A)` per selected task; `(02B)` by task order.
+- Dependency status: satisfied; both prior Batch02 tasks are checked in `docs/tasks/task_6.md`.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Score conversion to `semantic_similarity` is explicit in `QdrantSearchResult` and `_qdrant_score_to_semantic_similarity`; public exception message is project-specific and safe; no Batch03 retrieval orchestration or Batch04 API route behavior was added.
+- Failed: Backend logging is not safe for provider exception details. The implementation uses `logger.exception("Qdrant vector search failed.")`, which includes the original exception and stack trace, and the test asserts a secret-like token appears in logs.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: `search_vectors` now returns typed `QdrantSearchResult` objects with `semantic_similarity`, and wraps query failures in `QdrantSearchError`; however safe backend logging is incorrectly implemented/tested.
+
+## Hardcoding Review
+- Hardcoding found: no production hardcoding; test fixture contains `qdrant-secret-token` intentionally.
+- Evidence: The token appears in `backend/tests/test_qdrant_service.py` as a test fixture, not production code, but the test currently requires that token to appear in logs.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_qdrant_service.py -v`
+- Reported result: passed, 20 tests
+- Rerun result: passed, 20 passed in 0.96s
+- Status: passed but insufficient
+- Notes: The passing suite includes an assertion that backend logs contain `private provider detail with qdrant-secret-token`, which is contrary to the user and plan requirement that backend logs not expose secrets.
+- Command/check: `git diff --check -- backend\app\services\qdrant_service.py backend\tests\test_qdrant_service.py`
+- Reported result: passed with CRLF warnings only
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: No whitespace issue was material to the rejection.
+- Command/check: scope search for Batch03/API/frontend/agent terms in changed project files
+- Reported result: no out-of-scope behavior added
+- Rerun result: confirmed no new retrieval service orchestration, API route behavior, GraphRAG, LangGraph, rerank, chat, frontend, or answer-generation implementation in the selected task diff
+- Status: passed
+- Notes: Existing unrelated project files contain chat/frontend terms, but not from this task.
+
+## Acceptance Review
+- Task acceptance: Convert Qdrant scores to `semantic_similarity`.
+- Status: satisfied
+- Evidence: `QdrantSearchResult.semantic_similarity` is populated via `_qdrant_score_to_semantic_similarity(float(point.score))`, and tests assert the mapped value.
+- Task acceptance: If Qdrant returns distance instead of similarity, normalize consistently and document conversion.
+- Status: satisfied
+- Evidence: `_qdrant_score_to_semantic_similarity(..., is_distance=True)` documents and implements `1 / (1 + distance)`.
+- Task acceptance: Qdrant search failure returns future-safe HTTP 500 behavior through safe project error and detailed backend log without leaking secrets.
+- Status: not satisfied
+- Evidence: Public `QdrantSearchError("Qdrant vector search failed.")` is safe, but `logger.exception(...)` logs the original exception detail; the test asserts `qdrant-secret-token` is present in `caplog.text`.
+
+## Progress Tracking
+- Selected task checkbox: unchecked
+- Checkbox updated by reviewer: no
+- Batch status: not marked complete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: Correctly did not update sibling or future task checkboxes.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report claims acceptance is satisfied, but its own cited evidence says backend logs include provider detail containing `qdrant-secret-token`, which violates the explicit no-secret-leak requirement.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `backend/app/services/qdrant_service.py` and `backend/tests/test_qdrant_service.py`: Qdrant failure handling leaks provider exception detail into backend logs. `logger.exception("Qdrant vector search failed.")` includes the original exception text, and the test asserts `qdrant-secret-token` appears in `caplog.text`. This violates Plan 6 safe logging and the user’s explicit instruction to ensure neither public errors nor backend logs leak secrets.
+
+### Minor
+- None
+
+### Warnings
+- The focused tests pass, but they currently encode the unsafe logging behavior as expected behavior.
+
+### Observations
+- No Batch03 retrieval orchestration, Batch04 API route behavior, frontend UI, GraphRAG, LangGraph, rerank, chat, agents, or answer generation was implemented early.
+- The public `QdrantSearchError` message itself is safe and suitable for future HTTP 500 mapping after the logging issue is repaired.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/app/services/qdrant_service.py`
+- change: Replace `logger.exception(...)` behavior for Qdrant search failures with safe logging that does not include raw provider exception strings, API keys, tokens, URLs with credentials, request headers, or stack traces containing secret-bearing messages. Keep the public `QdrantSearchError` message safe.
+- validation: Update `backend/tests/test_qdrant_service.py::test_search_vectors_maps_qdrant_failure_to_safe_error_and_logs_detail` so it asserts `qdrant-secret-token` and the raw provider message are absent from both the public error and `caplog.text`, while still confirming a safe backend error log is emitted. Rerun `cd backend; pytest tests/test_qdrant_service.py -v`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch02 - Qdrant Filtered Search Helper",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/qdrant_service.py",
+    "backend/tests/test_qdrant_service.py",
+    "docs/reports/report_6_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "Backend Qdrant failure logs leak provider exception detail containing qdrant-secret-token; tests assert the leak."
+  ],
+  "warnings": [
+    "Focused Qdrant tests pass while encoding unsafe logging behavior."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Qdrant Filtered Search Helper
+- Task ID: (02C)
+- Task title: Normalize Qdrant score semantics and failure behavior
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 8. API Design`; `## 9. Implementation Steps`; `## 13. Failure Handling`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C) repair entry
+- Correct selection: yes
+- Notes: The latest appended execution report is `Task Execution Report - (02C) Repair`, matching the requested task and A1 repair summary.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/qdrant_service.py`
+  - `backend/tests/test_qdrant_service.py`
+  - `docs/reports/report_6_execute_agent.md`
+  - `docs/review/review_6_review_agent.md`
+  - `docs/tasks/task_6.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/qdrant_service.py`: in scope - Qdrant search now returns `QdrantSearchResult` with `semantic_similarity`, wraps provider failures in `QdrantSearchError`, and logs a static safe error without exception details or stack trace.
+- `backend/tests/test_qdrant_service.py`: in scope - tests score mapping and verifies public error plus backend logs omit `qdrant-secret-token` and raw provider detail.
+- `docs/reports/report_6_execute_agent.md`: in scope - original and repair execution reports reviewed.
+- `docs/review/review_6_review_agent.md`: in scope - prior rejection reviewed; this acceptance report appended.
+- `docs/tasks/task_6.md`: in scope - only `(02C)` task checkboxes were updated after acceptance; `Batch02` remains unchecked.
+- `docs/plans/Plan_6.md`: in scope - cited source sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/qdrant_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair replaces unsafe `logger.exception(...)` with static `logger.error(...)` and keeps safe `QdrantSearchError`.
+- file from execution report: `backend/tests/test_qdrant_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair test now asserts both token and raw provider detail are absent from public error and backend logs.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair execution report was appended.
+
+## Dependency Review
+- Required dependencies: `(02A)` per selected task; `(02B)` by task order.
+- Dependency status: satisfied; both prior Batch02 tasks are checked in `docs/tasks/task_6.md`.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Score conversion to `semantic_similarity` is explicit and documented; Qdrant query failures are wrapped in a project-safe `QdrantSearchError`; backend logs no longer include raw provider exception text or `qdrant-secret-token`; no Batch03 retrieval orchestration or Batch04 API route behavior was implemented early.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `search_vectors` builds the existing Qdrant filters, calls `query_points`, converts returned points into typed results, and wraps query failures with safe public/log behavior.
+
+## Hardcoding Review
+- Hardcoding found: no production hardcoding
+- Evidence: `qdrant-secret-token` appears only as a negative test fixture. Current assertions require it to be absent from both the public exception string and `caplog.text`.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_qdrant_service.py::test_search_vectors_maps_qdrant_failure_to_safe_error_and_safe_log -v`
+- Reported result: passed, 1 test
+- Rerun result: not rerun separately; covered by full test file rerun
+- Status: passed by report and covered
+- Notes: Focused repair test verifies safe error/log behavior.
+- Command/check: `cd backend; pytest tests/test_qdrant_service.py -v`
+- Reported result: passed, 20 tests
+- Rerun result: passed, 20 passed in 0.99s
+- Status: passed
+- Notes: Full Qdrant service suite verifies score mapping, filters, and safe failure behavior.
+- Command/check: `git diff --check -- backend\app\services\qdrant_service.py backend\tests\test_qdrant_service.py`
+- Reported result: passed with CRLF warnings only
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: No whitespace issue affects acceptance.
+- Command/check: scope/security search over changed implementation/test/report files
+- Reported result: no out-of-scope behavior added
+- Rerun result: confirmed no new retrieval service orchestration, API route behavior, frontend UI, GraphRAG, LangGraph, rerank, chat, agents, or answer generation in the selected task implementation diff
+- Status: passed
+- Notes: Existing report text contains prior rejected evidence for audit history; current implementation/test behavior is safe.
+
+## Acceptance Review
+- Task acceptance: Convert Qdrant scores to `semantic_similarity`.
+- Status: satisfied
+- Evidence: `QdrantSearchResult.semantic_similarity` is populated via `_qdrant_score_to_semantic_similarity(float(point.score))`, and the test asserts `0.87` maps explicitly.
+- Task acceptance: If Qdrant returns distance instead of similarity, normalize consistently and document conversion.
+- Status: satisfied
+- Evidence: `_qdrant_score_to_semantic_similarity(..., is_distance=True)` documents and implements `1 / (1 + distance)`.
+- Task acceptance: Qdrant search failure returns future-safe HTTP 500 behavior through safe project error and detailed backend log without leaking secrets.
+- Status: satisfied
+- Evidence: Public `QdrantSearchError("Qdrant vector search failed.")` is safe; backend log uses a static safe message without `exc_info` or exception interpolation; tests assert `qdrant-secret-token` and raw provider detail are absent from both public error and logs.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: Sibling and future task checkboxes were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none for the repair entry.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Future API route work still needs to map `QdrantSearchError` to HTTP 500 with the safe public message; this is correctly left to later tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch02 - Qdrant Filtered Search Helper",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/qdrant_service.py",
+    "backend/tests/test_qdrant_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/review/review_6_review_agent.md",
+    "docs/tasks/task_6.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
