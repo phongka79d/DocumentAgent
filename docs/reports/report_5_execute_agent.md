@@ -795,3 +795,96 @@ Live Qdrant credentials and connectivity are valid. The live `document_chunks` c
 
 ## Required Follow-Up
 Run a live ShopAIKey embedding call, derive `vector_size = len(embedding)`, then run `ensure_collection(vector_size)` to create or verify the live Qdrant `document_chunks` collection.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch04 - Indexing Orchestration and Optional Development Trigger
+
+## Task
+(04A) - Implement `index_document_chunks(document_id)` orchestration
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_5.md` > `(04A)` selected task block
+- `docs/plans/Plan_5.md` > `## 1. Goal`
+- `docs/plans/Plan_5.md` > `## 3. Scope`
+- `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Indexing Orchestration and Optional Development Trigger
+- Task ID: (04A)
+- Task title: Implement `index_document_chunks(document_id)` orchestration
+
+## Completed Work
+- Status: complete.
+- Created `backend/app/services/embedding_service.py` with `index_document_chunks(document_id)` orchestration.
+- The service loads the target document through the single-user indexing helper, rejects non-ready documents, lists chunks missing `qdrant_point_id`, creates embeddings, ensures the Qdrant collection from the first vector size, upserts chunk vectors, and persists each returned Qdrant point ID.
+- The service returns the required `DocumentIndexingResult` shape: `document_id`, `indexed_count`, `failed_count`, and `errors`.
+- Added mocked tests for successful indexing and ready-status rejection.
+
+## Files Created or Modified
+- `backend/app/services/embedding_service.py`
+- `backend/tests/test_embedding_service.py`
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_embedding_service.py -v`: Passed
+- Evidence: 2 tests passed.
+- `cd backend; pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v`: Passed
+- Evidence: 29 tests passed.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove successful indexing updates each unindexed chunk after Qdrant upsert and returns the required result shape.
+- Status: satisfied
+- Evidence: `test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids` verifies embedding generation, collection ensure, Qdrant upsert, Supabase point ID update after upsert, and result counts/errors.
+
+## Artifacts Produced
+- `backend/app/services/embedding_service.py`
+- `backend/tests/test_embedding_service.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; checkbox and batch status updates are reserved for A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Collection setup runs once using the vector size from the first generated embedding, matching the selected task details.
+- Document-level invalid states raise `DocumentIndexingError`; successful indexing returns the required `DocumentIndexingResult` model.
+- Detailed skip/no-work/partial-failure test coverage was left for sibling task `(04B)`.
+
+## Risks or Open Issues
+- Live indexing still requires real ShopAIKey, Qdrant, Supabase credentials, a ready document, and chunks.
+- Detailed partial failure behavior remains to be expanded by `(04B)`.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependencies Batch01, Batch02, and Batch03 were checked in `docs/tasks/task_5.md` and are marked complete.
+- No missing source-of-truth fields or dependency issues identified.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: Extend `embedding_service.py` and `test_embedding_service.py` for skip, no-work, and recoverable partial-failure behavior without changing the completed `(04A)` success-path contract.
+
+## Execution Report Addendum - (04A)
+- Minor issue fixed after initial report append: hardened chunk-error formatting so invalid chunk IDs do not prevent returning the required indexing result model for chunk-level failures.
+- Re-run validation after the fix: `cd backend; pytest tests/test_embedding_service.py -v` passed with 2 tests.
+- Re-run related suite after the fix: `cd backend; pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v` passed with 29 tests.

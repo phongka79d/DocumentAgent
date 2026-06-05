@@ -1629,3 +1629,178 @@ Batch03 mocked/local implementation remains accepted. The live Qdrant credential
 
 ## Follow-Up Needed
 Run a live ShopAIKey embedding call, use `len(embedding)` as the vector size, then run Qdrant `ensure_collection(vector_size)` for the configured `document_chunks` collection.
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Indexing Orchestration and Optional Development Trigger
+- Task ID: (04A)
+- Task title: Implement `index_document_chunks(document_id)` orchestration
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 1. Goal`; `## 3. Scope`; `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The latest matching `(04A)` execution report and its addendum were reviewed. No sibling task was reviewed as accepted.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_5_execute_agent.md`; reviewer later updated `docs/tasks/task_5.md`
+- untracked files: `backend/app/services/embedding_service.py`, `backend/tests/test_embedding_service.py`
+
+## Files Reviewed
+- `backend/app/services/embedding_service.py`: in scope - implements `index_document_chunks(document_id)` orchestration, ready-status rejection, embedding, collection ensure, Qdrant upsert, and Supabase point-ID persistence after upsert.
+- `backend/tests/test_embedding_service.py`: in scope - covers successful indexing/update order and non-ready document rejection.
+- `docs/reports/report_5_execute_agent.md`: in scope - contains the `(04A)` execution report and addendum.
+- `docs/tasks/task_5.md`: in scope - selected task entry and reviewer checkbox update only.
+- `backend/app/services/supabase_service.py`: in scope - dependency contract confirms single-user document/chunk filtering and scoped point-ID update.
+- `backend/app/services/qdrant_service.py`: in scope - dependency contract confirms collection setup, payload building, upsert, and stable point ID return.
+- `backend/app/services/shopaikey_service.py`: in scope - dependency contract confirms embedding service surface.
+- `backend/app/schemas/embeddings.py`: in scope - confirms result and chunk-error model shape.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/embedding_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New untracked file contains the selected orchestration service.
+- file from execution report: `backend/tests/test_embedding_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New untracked file contains focused mocked tests for `(04A)` acceptance.
+- file from execution report: `docs/reports/report_5_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and matches current evidence.
+
+## Dependency Review
+- Required dependencies: Batch01, Batch02, Batch03
+- Dependency status: satisfied; required prior task IDs are marked complete in `docs/tasks/task_5.md`, and their service contracts are present.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Backend-only indexing orchestration; document and chunk access stays behind Supabase helpers filtered by `SINGLE_USER_ID`; Qdrant point ID is persisted only after upsert succeeds; no frontend, retrieval, semantic search, GraphRAG, chat completion, rerank, or agent behavior was added.
+- Failed: None.
+- Uncertain: Live indexing remains dependent on real ShopAIKey, Qdrant, Supabase, ready document, and chunks, as reported.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The service calls real dependency functions for document load, chunk listing, embedding creation, collection setup, payload building, vector upsert, and point-ID update. Tests monkeypatch dependencies appropriately rather than production code returning fixed success.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No provider keys, model names, collection names, or URLs are hardcoded in the new service. Stable point IDs use chunk UUID strings as required.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_embedding_service.py -v`
+- Reported result: Passed, 2 tests.
+- Rerun result: Passed, 2 tests.
+- Status: passed
+- Notes: Covers selected task acceptance for success path and ready-status rejection.
+- Command/check: `cd backend; pytest tests/test_shopaikey_service.py tests/test_qdrant_service.py tests/test_embedding_service.py -v`
+- Reported result: Passed, 29 tests.
+- Rerun result: Passed, 29 tests.
+- Status: passed
+- Notes: Confirms related ShopAIKey, Qdrant, and orchestration contracts still pass.
+
+## Acceptance Review
+- Task acceptance: Mocked tests prove successful indexing updates each unindexed chunk after Qdrant upsert and returns the required result shape.
+- Status: satisfied
+- Evidence: `test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids` verifies document/chunk lookup, embedding generation, one collection ensure from vector size, per-chunk upsert, Supabase update after upsert, and `DocumentIndexingResult` counts/errors.
+
+## Progress Tracking
+- Selected task checkbox: checked by reviewer
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete
+- Execution report entry: present and appended
+- Review report entry: appended by reviewer
+- Other: Sibling tasks `(04B)` and `(04C)` remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. `git diff --stat` does not include untracked files, but `git status --short` and direct file review confirm the reported created files.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live end-to-end indexing was not run; this is acceptable for `(04A)` because the task validation is mocked and live setup is explicitly deferred/blocked by required provider and data prerequisites.
+
+### Observations
+- `(04B)` should expand skip, no-work, and recoverable partial-failure behavior as planned.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch04 - Indexing Orchestration and Optional Development Trigger",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/embedding_service.py",
+    "backend/tests/test_embedding_service.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live end-to-end indexing was not run; acceptable for (04A) mocked validation scope."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

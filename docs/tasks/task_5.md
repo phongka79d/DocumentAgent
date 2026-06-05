@@ -424,7 +424,7 @@ The milestone is complete only when ready document chunks without `qdrant_point_
 
 ### Tasks
 
-- [ ] (04A): Implement `index_document_chunks(document_id)` orchestration
+- [x] (04A): Implement `index_document_chunks(document_id)` orchestration
   - Source of Truth: `docs/plans/Plan_5.md` > `## 1. Goal`; `docs/plans/Plan_5.md` > `## 3. Scope`; `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Create `backend/app/services/embedding_service.py`.
@@ -769,7 +769,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03C): Handle Qdrant failures without marking chunks indexed
 
 #### Batch04
-- [ ] (04A): Implement `index_document_chunks(document_id)` orchestration
+- [x] (04A): Implement `index_document_chunks(document_id)` orchestration
 - [ ] (04B): Implement skip, no-work, and partial failure behavior
 - [ ] (04C): Add optional development-only indexing endpoint if needed
 
