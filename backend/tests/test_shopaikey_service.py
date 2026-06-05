@@ -1,8 +1,10 @@
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import Mock
 
+import httpx
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -106,3 +108,123 @@ def test_create_embedding_authorization_header_does_not_expose_key_in_errors(
     message = str(exc_info.value)
     assert secret_key not in message
     assert "embedding vector" in message
+
+
+@pytest.mark.parametrize(
+    ("post_error", "expected_message"),
+    [
+        (httpx.TimeoutException("timed out"), "timed out"),
+        (httpx.ConnectError("provider unavailable"), "request failed"),
+    ],
+)
+def test_create_embedding_maps_network_failures_to_safe_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    post_error: httpx.RequestError,
+    expected_message: str,
+) -> None:
+    secret_key = "private-shopaikey-key"
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings(api_key=secret_key))
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock(side_effect=post_error))
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.create_embedding("text")
+
+    message = str(exc_info.value)
+    assert expected_message in message
+    assert secret_key not in message
+    assert "provider unavailable" not in message
+
+
+def test_create_embedding_maps_non_success_status_to_safe_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    secret_key = "private-shopaikey-key"
+    request = httpx.Request("POST", "https://api.shopaikey.test/v1/embeddings")
+    response = httpx.Response(
+        status_code=500,
+        content=b'{"error":"very long provider body with details"}',
+        request=request,
+    )
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings(api_key=secret_key))
+    monkeypatch.setattr(
+        shopaikey_service.httpx,
+        "post",
+        Mock(return_value=response),
+    )
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.create_embedding("text")
+
+    message = str(exc_info.value)
+    assert "status 500" in message
+    assert secret_key not in message
+    assert "very long provider body" not in message
+
+
+def test_create_embedding_maps_malformed_json_to_clear_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    response = Mock()
+    response.raise_for_status = Mock()
+    response.json.side_effect = ValueError("raw invalid json")
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock(return_value=response))
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.create_embedding("text")
+
+    message = str(exc_info.value)
+    assert "malformed JSON" in message
+    assert "raw invalid json" not in message
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"data": []},
+        {"data": [{"embedding": None}]},
+        {"data": [{"embedding": ["not-a-number"]}]},
+    ],
+)
+def test_create_embedding_maps_missing_or_invalid_vector_to_clear_error(
+    monkeypatch: pytest.MonkeyPatch,
+    payload: dict[str, Any],
+) -> None:
+    response = Mock()
+    response.raise_for_status = Mock()
+    response.json.return_value = payload
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock(return_value=response))
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.create_embedding("text")
+
+    assert "embedding vector" in str(exc_info.value)
+
+
+def test_create_embedding_maps_missing_config_to_clear_backend_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        shopaikey_service,
+        "get_settings",
+        lambda: SimpleNamespace(
+            require_shopaikey_settings=Mock(
+                side_effect=RuntimeError(
+                    "Missing SHOPAIKEY_API_KEY. Configure ShopAIKey settings in the backend environment before using embedding services."
+                )
+            )
+        ),
+    )
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.create_embedding("text")
+
+    message = str(exc_info.value)
+    assert "Missing SHOPAIKEY_API_KEY" in message
+    assert "backend environment" in message

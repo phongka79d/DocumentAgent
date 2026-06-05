@@ -893,3 +893,188 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02B)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - ShopAIKey Embedding Client
+- Task ID: (02B)
+- Task title: Handle ShopAIKey errors and malformed responses
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_5.md > ## 9. Implementation Steps; docs/plans/Plan_5.md > ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02B)
+- Reviewed task ID: (02B)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for the requested Batch02 task (02B), and review scope was limited to that task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/services/shopaikey_service.py
+  - backend/tests/test_shopaikey_service.py
+  - docs/reports/report_5_execute_agent.md
+  - docs/tasks/task_5.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/shopaikey_service.py`: in scope - ShopAIKey service now maps missing config, timeout, request failure, non-2xx response, malformed JSON, and invalid/missing embedding vector to safe service errors.
+- `backend/tests/test_shopaikey_service.py`: in scope - Mocked tests cover request construction plus the (02B) failure modes and safe message behavior.
+- `docs/reports/report_5_execute_agent.md`: in scope - Latest execution report entry for (02B) was appended and matches the repository evidence.
+- `docs/tasks/task_5.md`: in scope - Reviewer updated only the selected (02B) checkbox after acceptance.
+- `docs/plans/Plan_5.md`: in scope - Cited source sections were checked for implementation and failure-handling requirements.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/shopaikey_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains only ShopAIKey error-handling changes for the existing embedding request path.
+- file from execution report: backend/tests/test_shopaikey_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains mocked failure-mode tests required by the task.
+- file from execution report: docs/reports/report_5_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The (02B) execution report was appended.
+
+## Dependency Review
+- Required dependencies: (02A) Implement ShopAIKey embedding request construction
+- Dependency status: satisfied; (02A) is marked complete and the request contract remains present.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Backend-only ShopAIKey service boundary preserved; configurable model/base URL/API key are still loaded from backend settings; no frontend references or public behavior were added; no Qdrant/indexing orchestration, retrieval, chat completion, rerank, or agent work was added.
+- Failed: none
+- Uncertain: Live ShopAIKey behavior was not validated because real provider credentials are not part of this mocked task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code catches concrete `httpx` timeout/request/status errors, malformed JSON, and response-shape failures, then raises `ShopAIKeyServiceError` with bounded messages. Vector extraction validates list shape and numeric values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Business logic uses configured `base_url`, `api_key`, and `embedding_model`; no provider key, model, raw response body, retrieval behavior, or fixture-only success branch is hardcoded.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_shopaikey_service.py -v` from `backend`
+- Reported result: Passed; executor reported 12 passed in 0.27s after an expected TDD red run.
+- Rerun result: Passed; 12 passed in 0.28s.
+- Status: passed
+- Notes: Covers endpoint path, configured model, auth header behavior, vector return, timeout, request failure, non-2xx response, malformed JSON, missing/invalid vector, and missing config.
+- Command/check: `rg -n "SHOPAIKEY|QDRANT|ShopAIKey|Qdrant" frontend backend/app/services/shopaikey_service.py backend/tests/test_shopaikey_service.py docs/reports/report_5_execute_agent.md`
+- Reported result: No frontend references reported for (02B).
+- Rerun result: No frontend matches; matches were limited to backend tests/service and report text.
+- Status: passed
+- Notes: Confirms no frontend provider-secret exposure in this task scope.
+- Command/check: `rg -n "semantic search|GraphRAG|retrieval scoring|chat completion|rerank|LangGraph|agent|qdrant_service|embedding_service|index_document_chunks|upsert|collection" backend/app backend/tests frontend docs/reports/report_5_execute_agent.md`
+- Reported result: Executor reported no Batch03 Qdrant, indexing orchestration, retrieval, chat completion, rerank, agent, or frontend behavior.
+- Rerun result: No new changed implementation for those forbidden scopes; matches are existing prior code/report/package references, not (02B) implementation.
+- Status: passed
+- Notes: Scope boundary is preserved.
+
+## Acceptance Review
+- Task acceptance: Mocked tests prove timeout, non-2xx, malformed JSON, missing vector, and missing config are handled with clear safe errors.
+- Status: satisfied
+- Evidence: `create_embedding` maps all required failure modes into `ShopAIKeyServiceError`, avoids raw provider bodies and transport details in messages, and focused tests pass.
+
+## Progress Tracking
+- Selected task checkbox: checked after reviewer acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch02 should not be marked complete by this review because only the selected task checkbox was in scope and future batches remain unchecked.
+- Execution report entry: appended and accurate
+- Review report entry: appended at EOF
+- Other: Sibling and future task checkboxes were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live ShopAIKey validation remains dependent on user-provided backend `.env` credentials and was not required for this mocked task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch02 - ShopAIKey Embedding Client",
+  "selected_task_id": "(02B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/shopaikey_service.py",
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Correction Note - (02B)
+
+Progress tracker correction made after the ACCEPTED review: updated only the `docs/tasks/task_5.md` Progress Tracker checkbox for `(02B) Handle ShopAIKey errors and malformed responses` from `[ ]` to `[x]`. No sibling or future task checkboxes were modified, and the Batch02 batch checkbox was not marked complete.

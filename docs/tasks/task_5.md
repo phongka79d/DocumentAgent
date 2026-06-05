@@ -246,7 +246,7 @@ Indexing cannot proceed until chunk text can be converted into embedding vectors
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live embedding calls if `SHOPAIKEY_API_KEY` or related config is missing.
   - Files: `backend/app/services/shopaikey_service.py`, `backend/tests/test_shopaikey_service.py`
 
-- [ ] (02B): Handle ShopAIKey errors and malformed responses
+- [x] (02B): Handle ShopAIKey errors and malformed responses
   - Source of Truth: `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Handle HTTP timeout.
@@ -761,7 +761,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch02
 - [x] (02A): Implement ShopAIKey embedding request construction
-- [ ] (02B): Handle ShopAIKey errors and malformed responses
+- [x] (02B): Handle ShopAIKey errors and malformed responses
 
 #### Batch03
 - [ ] (03A): Implement Qdrant client initialization and collection setup

@@ -426,3 +426,85 @@ complete
 - next task ID: (02B)
 - can proceed: yes
 - handoff notes: ShopAIKey request construction and valid vector return are implemented and tested; next task should add timeout, non-2xx, malformed JSON, and missing vector failure handling coverage without changing the request contract.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch02 - ShopAIKey Embedding Client
+
+## Task
+(02B) - Handle ShopAIKey errors and malformed responses
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_5.md > ## 9. Implementation Steps
+- docs/plans/Plan_5.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - ShopAIKey Embedding Client
+- Task ID: (02B)
+- Task title: Handle ShopAIKey errors and malformed responses
+
+## Completed Work
+- Task is complete.
+- Added safe exception mapping in the ShopAIKey embedding service for missing backend config, HTTP timeout, network/provider request failure, non-2xx provider responses, malformed JSON responses, and missing or invalid embedding vectors.
+- Added mocked tests for timeout, non-2xx response, malformed JSON, missing/invalid vector, and missing ShopAIKey config.
+- Kept provider response bodies, raw transport details, and full API keys out of raised service error messages.
+
+## Files Created or Modified
+- backend/app/services/shopaikey_service.py
+- backend/tests/test_shopaikey_service.py
+- docs/reports/report_5_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_shopaikey_service.py -v: Failed first as expected during TDD red run; evidence: 5 failed and 7 passed before service error mapping was implemented.
+- cd backend; pytest tests/test_shopaikey_service.py -v: Passed; evidence: 12 passed in 0.27s.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove timeout, non-2xx, malformed JSON, missing vector, and missing config are handled with clear safe errors.
+- Status: satisfied
+- Evidence: `pytest tests/test_shopaikey_service.py -v` passed with 12 tests covering request construction plus all selected failure modes.
+
+## Artifacts Produced
+- Safe ShopAIKey service failure handling.
+- Focused mocked ShopAIKey service tests.
+- Execution report appended to docs/reports/report_5_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch status updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused the existing `ShopAIKeyServiceError` as the safe backend exception surface for provider/config/response failures.
+- Preserved the existing request contract from (02A), including endpoint path, bearer auth, configured model, and timeout constant.
+- Report non-2xx failures by status code only to avoid leaking excessive provider response bodies.
+
+## Risks or Open Issues
+- Live ShopAIKey validation was not run and remains dependent on user-provided real backend `.env` credentials; this task only required mocked tests.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (02B).
+- Dependency (02A) was marked complete in docs/tasks/task_5.md before execution.
+- No Batch03 Qdrant, indexing orchestration, retrieval, chat completion, rerank, agent, or frontend behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes
+- handoff notes: ShopAIKey request construction and failure handling are implemented and covered by mocked tests; next task can begin Qdrant client initialization and collection setup without changing ShopAIKey scope.
