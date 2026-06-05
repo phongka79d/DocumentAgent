@@ -975,3 +975,93 @@ complete
 - next task ID: (04C)
 - can proceed: yes
 - handoff notes: Optional development-only indexing endpoint remains unimplemented; service-level skip, no-work, and partial-failure behavior is now covered by mocked tests.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch04 - Indexing Orchestration and Optional Development Trigger
+
+## Task
+(04C) - Add optional development-only indexing endpoint if needed
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 8. API Design`
+- `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Indexing Orchestration and Optional Development Trigger
+- Task ID: (04C)
+- Task title: Add optional development-only indexing endpoint if needed
+
+## Completed Work
+- State: complete.
+- Added backend-only development/internal `POST /api/documents/{document_id}/index` route wired to `index_document_chunks(document_id)`.
+- Marked the route as development/internal in the handler name and docstring, with no frontend calls or frontend references added.
+- Returned the existing `DocumentIndexingResult` shape for successful and partial-success indexing results.
+- Mapped document-not-found indexing errors to 404.
+- Mapped no-work/no chunks results to 400.
+- Mapped total chunk indexing failure, including ShopAIKey and Qdrant failure results, to 500 with safe per-chunk error details.
+- Added route-level tests for success, document not found, no chunks, ShopAIKey failure, Qdrant failure, and partial failure behavior.
+
+## Files Created or Modified
+- `backend/app/api/documents.py`
+- `backend/tests/test_document_indexing_api.py`
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_document_indexing_api.py -v`: Failed first as RED validation because the endpoint dependency did not exist; passed after implementation, 6 tests.
+- `cd backend; pytest tests/test_embedding_service.py -v`: Passed, 7 tests.
+- `cd backend; pytest tests/test_document_api.py tests/test_document_indexing_api.py -v`: Passed, 15 tests.
+
+## Acceptance Check
+- Task acceptance condition: If added, endpoint returns required result shape and safe errors.
+- Status: satisfied.
+- Evidence: Route tests verify the `DocumentIndexingResult` JSON shape on success and partial failure, plus safe HTTP responses for document not found, no chunks, ShopAIKey failure, and Qdrant failure.
+
+## Artifacts Produced
+- Development/internal backend endpoint: `POST /api/documents/{document_id}/index`.
+- Route test file: `backend/tests/test_document_indexing_api.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; checkbox and batch status updates are reserved for A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Added the optional endpoint because it is useful for local development smoke testing and the documents router was already mounted under `/api/documents`.
+- Kept the endpoint backend-only and internal/development by naming the handler `internal_development_index_document` and documenting that the frontend must not call it.
+- Treated `indexed_count=0`, `failed_count=0`, and no errors as the route-level no-chunks/no-work condition and returned 400, while leaving the already-approved service-level no-work result unchanged.
+- Returned 200 for partial success because the service completed recoverable work and includes per-chunk errors in the existing result shape.
+- Returned 500 for total chunk indexing failure so ShopAIKey and Qdrant failures are surfaced as safe backend errors.
+
+## Risks or Open Issues
+- Live endpoint smoke validation was not run because real ShopAIKey, Qdrant, Supabase credentials, a ready document, and ready chunks are required.
+- The route-level 400 no-chunks mapping relies on the service no-work result; the current service result shape does not distinguish an actually chunkless document from a document with no remaining unindexed chunks.
+
+## Minor Issues Fixed During Execution
+- Corrected route insertion placement after an initial syntax error during test collection.
+
+## Workflow Integrity Check
+- Dependencies `(04A)` and `(04B)` are marked complete in `docs/tasks/task_5.md` and were reviewed as accepted.
+- No public API requirement was introduced beyond the optional development/internal endpoint allowed by the task.
+- No frontend calls, semantic search, retrieval, GraphRAG, chat completion, rerank, agents, or Batch05 checks were implemented.
+
+## Notes for Next Task
+- next task ID: Batch04 A2 review / batch approval gate
+- can proceed: yes
+- handoff notes: Review the new internal endpoint and route tests, then A2 can update the `(04C)` checkbox if accepted.

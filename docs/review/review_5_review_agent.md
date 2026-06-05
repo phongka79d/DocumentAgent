@@ -1974,3 +1974,181 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Indexing Orchestration and Optional Development Trigger
+- Task ID: (04C)
+- Task title: Add optional development-only indexing endpoint if needed
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 8. API Design`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: Reviewed the latest matching `(04C)` execution report only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/api/documents.py`; `docs/reports/report_5_execute_agent.md`; reviewer later updated `docs/tasks/task_5.md`
+- untracked files: `backend/tests/test_document_indexing_api.py`
+
+## Files Reviewed
+- `backend/app/api/documents.py`: in scope - adds backend documents router `POST /{document_id}/index`, names the handler `internal_development_index_document`, documents it as development/internal, calls `embedding_service.index_document_chunks(document_id)`, and maps required safe response cases.
+- `backend/tests/test_document_indexing_api.py`: in scope - route-level tests cover success, document not found, no chunks/no-work, total ShopAIKey failure, total Qdrant failure, and partial failure.
+- `backend/app/services/embedding_service.py`: in scope dependency - confirms endpoint is wired to the previously implemented orchestration service and existing result/error contract.
+- `backend/app/main.py`: in scope dependency - confirms the documents router is already backend-mounted under `/api/documents`; no new frontend wiring was added.
+- `docs/reports/report_5_execute_agent.md`: in scope - contains the `(04C)` execution report.
+- `docs/tasks/task_5.md`: in scope - selected task checkbox and progress tracker updated by reviewer only after acceptance.
+
+## Reported Files Cross-Check
+- `backend/app/api/documents.py`: present in git/repo: yes; matches task scope: yes; notes: contains optional backend indexing endpoint and safe response mapping.
+- `backend/tests/test_document_indexing_api.py`: present in git/repo: yes; matches task scope: yes; notes: untracked test file, as expected for new route tests.
+- `docs/reports/report_5_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: execution report appended.
+
+## Dependency Review
+- Required dependencies: `(04A)` indexing orchestration and `(04B)` skip/no-work/partial failure behavior.
+- Dependency status: satisfied; both task entries and progress tracker are checked and prior review reports show ACCEPTED.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Endpoint is backend-only, uses the existing documents router, is clearly named/documented as internal/development, returns the required `DocumentIndexingResult` shape for success/partial success, and is not wired into frontend behavior.
+- Failed: None.
+- Uncertain: The development-only boundary is represented by route naming/docstring rather than an environment/auth gate; Plan 5 required clear marking and no frontend use, which is satisfied.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Route invokes `embedding_service.index_document_chunks(document_id)` and maps real `DocumentIndexingResult`/`DocumentIndexingError` outcomes instead of returning fixed success data.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No provider URLs, API keys, embedding models, Qdrant collection names, sample document IDs, semantic search, retrieval, rerank, chat completion, or agent behavior were added to production code. UUID constants are test fixtures only.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_document_indexing_api.py -v`
+- Reported result: failed first as RED validation, then passed with 6 tests
+- Rerun result: passed, 6 tests
+- Status: passed
+- Notes: Confirms route response mapping.
+
+- Command/check: `cd backend; pytest tests/test_embedding_service.py -v`
+- Reported result: passed, 7 tests
+- Rerun result: passed, 7 tests
+- Status: passed
+- Notes: Confirms underlying indexing service behavior remains intact.
+
+- Command/check: `cd backend; pytest tests/test_document_api.py tests/test_document_indexing_api.py -v`
+- Reported result: passed, 15 tests
+- Rerun result: passed, 15 tests
+- Status: passed
+- Notes: Confirms existing document API behavior plus new route tests.
+
+- Command/check: `rg` scope search for frontend indexing calls, frontend ShopAIKey/Qdrant references, semantic search, GraphRAG, rerank, chat completion, and agent work
+- Reported result: no frontend calls or out-of-scope implementation claimed
+- Rerun result: passed for reviewed scope; only backend config/test references and pre-existing migration/table names matched.
+- Status: passed
+- Notes: No frontend indexing call was added.
+
+## Acceptance Review
+- Task acceptance: If added, endpoint returns required result shape and safe errors; endpoint must be development/internal and not used by frontend.
+- Status: satisfied
+- Evidence: `POST /api/documents/{document_id}/index` returns the required result shape on success and partial failure, maps document not found to 404, no-work/no chunks to 400, total ShopAIKey/Qdrant failures to 500 with safe error details, and has no frontend references.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete by reviewer.
+- Execution report entry: present for `(04C)`.
+- Review report entry: appended at EOF.
+- Other: Batch04 now has `(04A)`, `(04B)`, and `(04C)` accepted, so the batch is ready for the orchestrator approval gate; A2 did not mark the batch complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- The internal/development boundary is documented in code naming/docstring and by absence of frontend wiring, not enforced by an environment/auth gate; acceptable for `(04C)` as written.
+- Live endpoint smoke validation was not run; acceptable because real ShopAIKey, Qdrant, Supabase credentials, a ready document, and chunks are required.
+
+### Observations
+- Partial failures intentionally return 200 with the existing result shape, while total failures return 500; this is consistent with the service-level partial failure contract from `(04B)` and Plan 5's safe-error requirement.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to Batch04 approval gate / Batch05 after orchestrator approval
+- Should batch be marked complete? yes, all Batch04 task IDs are accepted; not marked by A2 per instruction.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch04 - Indexing Orchestration and Optional Development Trigger",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/documents.py",
+    "backend/tests/test_document_indexing_api.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "The internal/development boundary is documented in code naming/docstring and by absence of frontend wiring, not enforced by an environment/auth gate; acceptable for (04C) as written.",
+    "Live endpoint smoke validation was not run; acceptable because real ShopAIKey, Qdrant, Supabase credentials, a ready document, and chunks are required."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

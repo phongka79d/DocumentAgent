@@ -2,16 +2,24 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
+from app.schemas.embeddings import DocumentIndexingResult
 from app.schemas.documents import (
     DocumentDetailResponse,
     DocumentListResponse,
     DocumentUploadResponse,
 )
-from app.services import document_service
+from app.services import document_service, embedding_service
 from app.utils.file_validation import UploadTooLargeError, UploadValidationError
 
 
 router = APIRouter()
+
+
+def _indexing_error_detail(result: DocumentIndexingResult) -> dict:
+    return {
+        "message": "Indexing failed for all chunks.",
+        "errors": [error.model_dump(mode="json") for error in result.errors],
+    }
 
 
 @router.post(
@@ -75,3 +83,42 @@ def get_document_detail(document_id: UUID) -> DocumentDetailResponse:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(exc),
         ) from exc
+
+
+@router.post(
+    "/{document_id}/index",
+    response_model=DocumentIndexingResult,
+    status_code=status.HTTP_200_OK,
+)
+def internal_development_index_document(
+    document_id: UUID,
+) -> DocumentIndexingResult:
+    """Development/internal indexing trigger; frontend must not call this route."""
+    try:
+        result = embedding_service.index_document_chunks(document_id)
+    except embedding_service.DocumentIndexingError as exc:
+        error_message = str(exc)
+        if error_message == "Document not found.":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=error_message,
+            ) from exc
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message,
+        ) from exc
+
+    if result.indexed_count == 0 and result.failed_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Document has no chunks to index.",
+        )
+
+    if result.indexed_count == 0 and result.failed_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_indexing_error_detail(result),
+        )
+
+    return result

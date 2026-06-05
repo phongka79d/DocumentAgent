@@ -461,7 +461,7 @@ The milestone is complete only when ready document chunks without `qdrant_point_
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/services/embedding_service.py`, `backend/tests/test_embedding_service.py`
 
-- [ ] (04C): Add optional development-only indexing endpoint if needed
+- [x] (04C): Add optional development-only indexing endpoint if needed
   - Source of Truth: `docs/plans/Plan_5.md` > `## 8. API Design`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - No required public API endpoints in this plan.
@@ -771,7 +771,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch04
 - [x] (04A): Implement `index_document_chunks(document_id)` orchestration
 - [x] (04B): Implement skip, no-work, and partial failure behavior
-- [ ] (04C): Add optional development-only indexing endpoint if needed
+- [x] (04C): Add optional development-only indexing endpoint if needed
 
 #### Batch05
 - [ ] (05A): Add and run ShopAIKey service tests
