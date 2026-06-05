@@ -185,8 +185,8 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
-
 ---
+
 
 # Task Review Report - (01B)
 
@@ -352,7 +352,6 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
-
 ---
 
 # Task Review Report - (01C)
@@ -1607,3 +1606,26 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Post-Batch Review Clarification - Qdrant Live Validation
+
+## Date
+2026-06-05
+
+## Clarification
+The user later confirmed that backend `.env` contains Qdrant credentials and permitted a live Qdrant validation. A live check was run through backend settings without printing secrets.
+
+## Evidence Reviewed
+- Qdrant settings loaded from `backend/.env`: yes
+- Qdrant URL/API key configured: yes
+- Qdrant connection/authentication: passed
+- Configured collection: `document_chunks`
+- Configured collection exists: no
+
+## Review Interpretation
+Batch03 mocked/local implementation remains accepted. The live Qdrant credential/connectivity check succeeded, but live collection setup is not yet complete because the collection requires a vector size. Per Plan 5, vector size should be derived from a live ShopAIKey embedding response before calling `ensure_collection(vector_size)`.
+
+## Follow-Up Needed
+Run a live ShopAIKey embedding call, use `len(embedding)` as the vector size, then run Qdrant `ensure_collection(vector_size)` for the configured `document_chunks` collection.

@@ -765,3 +765,33 @@ complete
 - next task ID: (04A)
 - can proceed: yes
 - handoff notes: Qdrant service now raises safe setup/upsert exceptions and does not persist point IDs. The indexing orchestrator can catch QdrantUpsertError per chunk and QdrantSetupError as setup/vector-size failure.
+
+---
+
+# Post-Batch Live Validation Note - Qdrant Connectivity
+
+## Date
+2026-06-05
+
+## Context
+After Batch03 completion, the user confirmed that backend `.env` contains Qdrant credentials and explicitly permitted reading `.env` for live Qdrant validation.
+
+## Live Validation Run
+- Command context: `cd backend`
+- Validation type: live Qdrant settings load, authentication/connectivity check, and configured collection existence check.
+- Secret handling: Qdrant URL and API key were loaded through backend settings but were not printed.
+
+## Result
+- Qdrant settings loaded from `backend/.env`: yes
+- Qdrant URL configured: yes
+- Qdrant API key configured: yes
+- Qdrant connection/authentication: passed
+- Configured collection: `document_chunks`
+- Visible collection count: 0
+- Configured collection exists: no
+
+## Clarification
+Live Qdrant credentials and connectivity are valid. The live `document_chunks` collection was not created during this check because `ensure_collection(vector_size)` requires the embedding vector size, and Plan 5 requires that size to be derived from the first real ShopAIKey embedding response rather than guessed.
+
+## Required Follow-Up
+Run a live ShopAIKey embedding call, derive `vector_size = len(embedding)`, then run `ensure_collection(vector_size)` to create or verify the live Qdrant `document_chunks` collection.
