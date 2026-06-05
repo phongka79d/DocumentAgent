@@ -1065,3 +1065,86 @@ complete
 - next task ID: Batch04 A2 review / batch approval gate
 - can proceed: yes
 - handoff notes: Review the new internal endpoint and route tests, then A2 can update the `(04C)` checkbox if accepted.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05A) - Add and run ShopAIKey service tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_5.md` > `## 11. Required Tests`
+- `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_5.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05A)
+- Task title: Add and run ShopAIKey service tests
+
+## Completed Work
+- Completed the selected task.
+- Reviewed existing `backend/tests/test_shopaikey_service.py` coverage for mocked ShopAIKey behavior.
+- Updated the embedding request test to explicitly validate `/embeddings` endpoint construction with both trailing-slash and non-trailing-slash base URLs.
+- Confirmed mocked coverage for request payloads, configurable model, safe authorization handling, vector extraction, timeout, request error, non-2xx response, malformed JSON, missing/invalid embedding vector, and missing config.
+- No real ShopAIKey credentials or live HTTP calls are required by these tests.
+
+## Files Created or Modified
+- `backend/tests/test_shopaikey_service.py`
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_shopaikey_service.py -v`: Passed.
+- Evidence: 13 tests collected, 13 passed.
+
+## Acceptance Check
+- Task acceptance condition: Tests pass or failures are reported honestly with safe error context.
+- Status: satisfied
+- Evidence: Required mocked pytest command passed; tested error messages avoid exposing the configured API key.
+
+## Artifacts Produced
+- ShopAIKey service test coverage in `backend/tests/test_shopaikey_service.py`.
+- This execution report appended to `docs/reports/report_5_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; A2 handles checkbox updates after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept the change limited to ShopAIKey service tests for `(05A)`.
+- Added explicit endpoint normalization coverage instead of changing service behavior, because the current implementation already satisfies the selected requirements.
+
+## Risks or Open Issues
+- Live ShopAIKey validation was not run; this task requires mocked tests only and must not require real credentials.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency Batch02 is present in the task plan and `backend/app/services/shopaikey_service.py` plus `backend/tests/test_shopaikey_service.py` already exist.
+- No sibling Batch05 tasks were implemented.
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: A2 should review `(05A)` before any checkbox update; `(05B)` remains untouched.

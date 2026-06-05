@@ -27,8 +27,17 @@ def _settings(
     )
 
 
+@pytest.mark.parametrize(
+    ("base_url", "expected_url"),
+    [
+        ("https://api.shopaikey.test/v1", "https://api.shopaikey.test/v1/embeddings"),
+        ("https://api.shopaikey.test/v1/", "https://api.shopaikey.test/v1/embeddings"),
+    ],
+)
 def test_create_embedding_posts_openai_style_request_with_configured_values(
     monkeypatch: pytest.MonkeyPatch,
+    base_url: str,
+    expected_url: str,
 ) -> None:
     response = Mock()
     response.json.return_value = {
@@ -41,14 +50,16 @@ def test_create_embedding_posts_openai_style_request_with_configured_values(
     response.raise_for_status = Mock()
     post = Mock(return_value=response)
 
-    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(
+        shopaikey_service, "get_settings", lambda: _settings(base_url=base_url)
+    )
     monkeypatch.setattr(shopaikey_service.httpx, "post", post)
 
     vector = shopaikey_service.create_embedding("chunk text")
 
     assert vector == [0.1, 2.0, -0.3]
     post.assert_called_once_with(
-        "https://api.shopaikey.test/v1/embeddings",
+        expected_url,
         headers={
             "Authorization": "Bearer private-shopaikey-key",
         },

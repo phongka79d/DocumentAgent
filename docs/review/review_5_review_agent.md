@@ -185,6 +185,7 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
 ---
 
 
@@ -2152,3 +2153,177 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05A)
+- Task title: Add and run ShopAIKey service tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: Reviewed the latest matching `(05A)` execution report only. Sibling Batch05 tasks were not reviewed as accepted.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_shopaikey_service.py`, `docs/reports/report_5_execute_agent.md`; reviewer later updated `docs/tasks/task_5.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_shopaikey_service.py`: in scope - mocked ShopAIKey tests cover request payload, endpoint normalization, configurable model, safe auth/error handling, timeout/request failure, non-2xx, malformed JSON, missing/invalid vector, and missing config.
+- `backend/app/services/shopaikey_service.py`: in scope - implementation under test uses configured base URL/model/key, posts to normalized `/embeddings`, maps failures to safe service errors, and extracts numeric vectors.
+- `docs/reports/report_5_execute_agent.md`: in scope - contains the `(05A)` execution report.
+- `docs/tasks/task_5.md`: in scope - selected `(05A)` checkbox update only after acceptance.
+- `docs/plans/Plan_5.md`: in scope - cited source-of-truth sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_shopaikey_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds explicit trailing-slash/non-trailing-slash `/embeddings` URL coverage; existing tests cover the remaining required ShopAIKey service behavior.
+- file from execution report: `docs/reports/report_5_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes the selected task.
+
+## Dependency Review
+- Required dependencies: Batch02 ShopAIKey service implementation and existing `backend/tests/test_shopaikey_service.py`.
+- Dependency status: satisfied; Batch02 tasks are marked complete and the service/test files exist.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Work remains backend test-only, uses mocked HTTP, keeps ShopAIKey credentials backend-only, and does not add frontend behavior or retrieval/search features.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Tests call the real `create_embedding` function with mocked settings and mocked `httpx.post`, asserting concrete request construction and provider failure behavior.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Test sentinel values are fixtures only; production service uses configured `SHOPAIKEY_BASE_URL`, `SHOPAIKEY_API_KEY`, and `SHOPAIKEY_EMBEDDING_MODEL`.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_shopaikey_service.py -v`
+- Reported result: passed, 13 tests
+- Rerun result: passed, 13 tests
+- Status: satisfied
+- Notes: Rerun completed successfully with all ShopAIKey service tests passing.
+
+## Acceptance Review
+- Task acceptance: Add/update mocked ShopAIKey service tests and run `pytest tests/test_shopaikey_service.py -v` with honest reporting.
+- Status: satisfied
+- Evidence: The test suite passes and covers `/embeddings`, configurable model, request payload, safe auth/error handling, timeout/request failures, non-2xx, malformed JSON, missing/invalid vector, and missing config.
+
+## Progress Tracking
+- Selected task checkbox: checked after this accepted review
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete; Batch05 has remaining unchecked tasks `(05B)`, `(05C)`, `(05D)`, and `(05E)`.
+- Execution report entry: present and appended
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live ShopAIKey validation was not run; acceptable for `(05A)` because the selected task requires mocked tests only.
+
+### Observations
+- The new diff is narrow and limited to endpoint normalization coverage plus the execution report.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, remaining Batch05 task IDs are incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live ShopAIKey validation was not run; acceptable for (05A) because the selected task requires mocked tests only."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Correction Note - (05A)
+
+## Correction
+Updated the Progress Tracker copy under `#### Batch05` from unchecked to checked for only `(05A): Add and run ShopAIKey service tests`.
+
+## Scope
+- Detailed `(05A)` task checkbox was already checked and unchanged.
+- Sibling/future task checkboxes `(05B)`, `(05C)`, `(05D)`, and `(05E)` were not updated.
+- Batch05 batch checkbox/status was not updated.
+- Implementation files were not modified.
