@@ -200,3 +200,177 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Retrieval Configuration, Schemas, and Router Foundation
+- Task ID: (01B)
+- Task title: Create retrieval request and response schemas
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `## 7. Data Model / Schema Changes`; `## 8. API Design`; `## 9. Implementation Steps`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01B)
+- Reviewed task ID: (01B)
+- Correct selection: yes
+- Notes: The last appended execution report is for (01B), matching the requested task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/schemas/__init__.py`, `docs/reports/report_6_execute_agent.md`, `backend/app/schemas/retrieval.py` (untracked)
+- untracked files: `backend/app/schemas/retrieval.py`
+
+## Files Reviewed
+- `docs/tasks/task_6.md`: in scope - selected task requirements and progress tracker reviewed; only (01B) was updated after acceptance.
+- `docs/reports/report_6_execute_agent.md`: in scope - latest execution report for (01B) reviewed.
+- `docs/plans/Plan_6.md`: in scope - cited sections 6, 7, 8, and 9 reviewed.
+- `backend/app/schemas/retrieval.py`: in scope - defines `SearchRequest`, `RetrievalResult`, and `SearchResponse`.
+- `backend/app/schemas/__init__.py`: in scope - exports retrieval schemas through the schema package.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/schemas/retrieval.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New schema module exists and contains the requested models.
+- file from execution report: `backend/app/schemas/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Package exports match existing schema package style.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and describes the selected task.
+
+## Dependency Review
+- Required dependencies: Existing schema package style; prior Batch01 configuration task already accepted in task file.
+- Dependency status: satisfied
+- Missing or invalid dependency: None
+
+## Architecture Alignment
+- Passed: Models are isolated to `backend/app/schemas/retrieval.py`, exported through `app.schemas`, use UUID typing for identifiers, and do not introduce service/API/router behavior early.
+- Failed: None
+- Uncertain: None
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Pydantic models define concrete request/response fields matching Plan 6 and can be imported/constructed.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Schema definitions contain no provider secrets, user IDs, collection names, sample-only branching, or fixture-specific logic.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m compileall app/schemas`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Schema package compiled without syntax errors.
+- Command/check: inline import/model validation from `backend`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Imported all three models through `app.schemas`, constructed request/result/response models, and verified invalid `document_ids` UUID input raises `pydantic.ValidationError`.
+- Command/check: `pytest tests/test_retrieval_api.py -v`
+- Reported result: Not run because `backend/tests/test_retrieval_api.py` does not exist yet.
+- Rerun result: Not rerun; file absence confirmed.
+- Status: not applicable for this task
+- Notes: The selected task states this validation runs after API implementation, so absence of the API test file does not block (01B).
+
+## Acceptance Review
+- Task acceptance: API and service tests can import the models; schema fields match Plan 6 request and response contracts.
+- Status: satisfied
+- Evidence: `SearchRequest` includes `question`, optional `document_ids`, and optional `top_k`; `SearchResponse` includes `question` and `results`; `RetrievalResult` includes chunk/document IDs, file metadata, content/preview, page/section metadata, chunk index, and `semantic_similarity`.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked after acceptance for (01B) in the task list and progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch01 remains unchecked because sibling task (01C) is not accepted.
+- Execution report entry: appended and accurate for (01B)
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- API-specific Top-K and empty-question HTTP 400 handling is intentionally deferred to later service/API tasks, consistent with the task scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch01 - Retrieval Configuration, Schemas, and Router Foundation",
+  "selected_task_id": "(01B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/schemas/retrieval.py",
+    "backend/app/schemas/__init__.py",
+    "docs/reports/report_6_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

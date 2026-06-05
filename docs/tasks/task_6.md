@@ -121,7 +121,7 @@ The semantic retrieval endpoint depends on a typed default Top-K setting, valida
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/core/config.py`, `backend/.env.example`
 
-- [ ] (01B): Create retrieval request and response schemas
+- [x] (01B): Create retrieval request and response schemas
   - Source of Truth: `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Create `SearchRequest`, `RetrievalResult`, and `SearchResponse` models.
@@ -742,7 +742,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch01
 - [x] (01A): Add semantic retrieval Top-K backend configuration
-- [ ] (01B): Create retrieval request and response schemas
+- [x] (01B): Create retrieval request and response schemas
 - [ ] (01C): Prepare retrieval API module without adding behavior outside scope
 
 #### Batch02

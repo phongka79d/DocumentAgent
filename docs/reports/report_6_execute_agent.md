@@ -81,3 +81,89 @@ complete
 - next task ID: (01B)
 - can proceed: yes
 - handoff notes: Retrieval schema work can use `get_settings().retrieval_semantic_top_k` later when default Top-K behavior is wired through the retrieval service/API.
+
+---
+
+# Task Execution Report - (01B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch01 - Retrieval Configuration, Schemas, and Router Foundation
+
+## Task
+(01B) - Create retrieval request and response schemas
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 9. Implementation Steps`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Retrieval Configuration, Schemas, and Router Foundation
+- Task ID: (01B)
+- Task title: Create retrieval request and response schemas
+
+## Completed Work
+- Status: complete.
+- Added retrieval API request/response Pydantic models: `SearchRequest`, `RetrievalResult`, and `SearchResponse`.
+- Added UUID typing for `document_ids`, `chunk_id`, and `document_id` so invalid UUID values fail Pydantic/FastAPI validation.
+- Allowed nullable result metadata fields that Qdrant payloads may omit, including file metadata, content/preview, page/section metadata, and chunk index.
+- Exported the retrieval schemas through `app.schemas` using the existing schema package style.
+
+## Files Created or Modified
+- `backend/app/schemas/retrieval.py`
+- `backend/app/schemas/__init__.py`
+- `docs/reports/report_6_execute_agent.md`
+
+## Tests or Validations Run
+- Inline schema import/model validation from `backend`: Passed
+- Evidence: constructed `SearchRequest`, `RetrievalResult`, and `SearchResponse` through `app.schemas`; verified invalid `document_ids` UUID input raises `pydantic.ValidationError`.
+- `python -m compileall app/schemas`: Passed
+- Evidence: schema package compiled without syntax errors.
+- `pytest tests/test_retrieval_api.py -v`: Not run
+- Reason: `backend/tests/test_retrieval_api.py` does not exist yet; the selected task states this validation runs after API implementation.
+
+## Acceptance Check
+- Task acceptance condition: API and service tests can import the models; schema fields match Plan 6 request and response contracts.
+- Status: satisfied
+- Evidence: `app.schemas` exports the models; the inline validation imported all three models and exercised the required request, result, and response fields.
+
+## Artifacts Produced
+- Retrieval schema module at `backend/app/schemas/retrieval.py`.
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch status updates are left to A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept `question` and `top_k` as plain schema fields so later API/service tasks can return the Plan 6 required HTTP 400 for empty questions and Top-K bounds instead of automatic FastAPI 422 responses.
+- Used UUID fields for request document IDs and result identifiers to preserve FastAPI/Pydantic validation behavior for malformed UUIDs.
+- Made optional Qdrant payload-derived metadata nullable to tolerate missing optional payload fields.
+
+## Risks or Open Issues
+- API-specific validation and `pytest tests/test_retrieval_api.py -v` remain pending for later Batch04/Batch05 tasks.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+
+## Notes for Next Task
+- next task ID: (01C)
+- can proceed: yes
+- handoff notes: Retrieval schemas are available from `app.schemas` for the retrieval API module foundation.

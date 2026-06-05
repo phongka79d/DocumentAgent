@@ -12,6 +12,7 @@ from app.schemas.embeddings import (
     IndexedChunkPayload,
 )
 from app.schemas.parsing import ChunkDraft, ParsedSection
+from app.schemas.retrieval import RetrievalResult, SearchRequest, SearchResponse
 
 __all__ = [
     "ChunkIndexingError",
@@ -25,4 +26,7 @@ __all__ = [
     "EmbeddingResult",
     "IndexedChunkPayload",
     "ParsedSection",
+    "RetrievalResult",
+    "SearchRequest",
+    "SearchResponse",
 ]
