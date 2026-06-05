@@ -341,3 +341,88 @@ complete
 - next task ID: (02A)
 - can proceed: yes
 - handoff notes: Supabase indexing helpers are available for Qdrant helper and embedding orchestration tasks; live database validation is still dependent on configured Supabase resources.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch02 - ShopAIKey Embedding Client
+
+## Task
+(02A) - Implement ShopAIKey embedding request construction
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_5.md > ## 3. Scope
+- docs/plans/Plan_5.md > ## 6. Required Files and Folders
+- docs/plans/Plan_5.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.4 Embedding Flow
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - ShopAIKey Embedding Client
+- Task ID: (02A)
+- Task title: Implement ShopAIKey embedding request construction
+
+## Completed Work
+- Status: complete.
+- Created `backend/app/services/shopaikey_service.py` with typed `create_embedding(text: str) -> list[float]`.
+- Built OpenAI-style `POST {SHOPAIKEY_BASE_URL}/embeddings` requests using backend configuration, bearer authentication, configured `SHOPAIKEY_EMBEDDING_MODEL`, input text, and a 30 second timeout.
+- Added a provider-specific `ShopAIKeyServiceError` and minimal valid-path response vector extraction required for downstream indexing.
+- Added mocked tests for request construction, configured model usage, authorization header behavior without exposing the key in service errors, input inclusion, endpoint path, timeout, and vector return.
+
+## Files Created or Modified
+- backend/app/services/shopaikey_service.py
+- backend/tests/test_shopaikey_service.py
+- docs/reports/report_5_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_shopaikey_service.py -v`: Passed
+- evidence or reason: 3 tests collected and 3 passed.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests verify endpoint path, authorization header behavior without exposing the key, configured model usage, input text inclusion, and vector return.
+- Status: satisfied
+- Evidence: `pytest tests/test_shopaikey_service.py -v` passed with tests covering `/embeddings` URL construction, bearer header construction, configured model, request input text, safe service error text, and returned vector values.
+
+## Artifacts Produced
+- backend/app/services/shopaikey_service.py
+- backend/tests/test_shopaikey_service.py
+- docs/reports/report_5_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This is an orchestrated run; checkbox and batch updates are left for A2 after accepted review.
+
+## Key Implementation Decisions
+- Used the existing `get_settings().require_shopaikey_settings()` configuration contract so the API key, base URL, and embedding model remain backend-configured and not hardcoded.
+- Used direct `httpx.post` with a module timeout constant to keep the public function small and easy to mock.
+- Limited failure handling to the minimum needed for valid response extraction and testability; detailed timeout/non-2xx/malformed-response handling remains in sibling task (02B).
+
+## Risks or Open Issues
+- Live ShopAIKey calls remain blocked until the user provides real `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, and `SHOPAIKEY_EMBEDDING_MODEL` values in backend `.env`.
+- Detailed provider failure mapping is intentionally deferred to (02B).
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (02A).
+- Dependencies (01A), (01B), and (01C) were marked complete in `docs/tasks/task_5.md` before execution.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: ShopAIKey request construction and valid vector return are implemented and tested; next task should add timeout, non-2xx, malformed JSON, and missing vector failure handling coverage without changing the request contract.

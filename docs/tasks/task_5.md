@@ -228,7 +228,7 @@ Indexing cannot proceed until chunk text can be converted into embedding vectors
 
 ### Tasks
 
-- [ ] (02A): Implement ShopAIKey embedding request construction
+- [x] (02A): Implement ShopAIKey embedding request construction
   - Source of Truth: `docs/plans/Plan_5.md` > `## 3. Scope`; `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.4 Embedding Flow`
   - Source Requirements:
     - Create `backend/app/services/shopaikey_service.py`.
@@ -760,7 +760,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01D): Add Supabase helpers for indexing reads and point ID updates
 
 #### Batch02
-- [ ] (02A): Implement ShopAIKey embedding request construction
+- [x] (02A): Implement ShopAIKey embedding request construction
 - [ ] (02B): Handle ShopAIKey errors and malformed responses
 
 #### Batch03

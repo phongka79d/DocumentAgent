@@ -715,3 +715,181 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - ShopAIKey Embedding Client
+- Task ID: (02A)
+- Task title: Implement ShopAIKey embedding request construction
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_5.md > ## 3. Scope; docs/plans/Plan_5.md > ## 6. Required Files and Folders; docs/plans/Plan_5.md > ## 9. Implementation Steps; docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.4 Embedding Flow
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: The latest matching execution report for (02A) was reviewed exactly; no sibling task was reviewed for acceptance.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_5_execute_agent.md; docs/tasks/task_5.md after reviewer checkbox update
+- untracked files: backend/app/services/shopaikey_service.py; backend/tests/test_shopaikey_service.py
+
+## Files Reviewed
+- `backend/app/services/shopaikey_service.py`: in scope - implements ShopAIKey embedding request construction, configured model usage, bearer auth, timeout, and valid response vector extraction.
+- `backend/tests/test_shopaikey_service.py`: in scope - mocked tests cover URL/path, auth header, configured model, input payload, timeout constant, vector return, and secret-safe service error message.
+- `backend/app/core/config.py`: in scope - reviewed dependency contract from (01A), including `require_shopaikey_settings()`.
+- `docs/reports/report_5_execute_agent.md`: in scope - selected execution report was appended and matched implementation evidence.
+- `docs/tasks/task_5.md`: in scope - selected task block, dependency state, and checkbox update reviewed.
+- `docs/plans/Plan_5.md`: in scope - cited sections and adjacent failure-handling boundary reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited embedding flow reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/shopaikey_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File is untracked but present and implements the selected task.
+- file from execution report: backend/tests/test_shopaikey_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File is untracked but present and validation passes.
+- file from execution report: docs/reports/report_5_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is appended.
+
+## Dependency Review
+- Required dependencies: (01A), (01B), (01C)
+- Dependency status: satisfied; task file shows (01A), (01B), and (01C) checked complete before (02A) review.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Backend-only service uses configured ShopAIKey settings, OpenAI-compatible `/embeddings` endpoint, bearer authentication, configured model, and no frontend exposure.
+- Failed: None.
+- Uncertain: Live ShopAIKey behavior was not validated because real credentials are user-provided and not required for this mocked task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `create_embedding(text: str) -> list[float]` performs an `httpx.post`, calls `raise_for_status()`, parses `response.json()`, validates numeric vector shape, and returns floats.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: API key, base URL, and embedding model come from `get_settings().require_shopaikey_settings()`. The only fixed values are the `/embeddings` path and 30 second timeout, both task-aligned.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_shopaikey_service.py -v` from `backend`
+- Reported result: Passed; 3 tests collected and 3 passed.
+- Rerun result: Passed; 3 tests collected and 3 passed.
+- Status: satisfied
+- Notes: Mocked validation is appropriate for (02A); live provider calls remain blocked by user-provided credentials.
+- Command/check: scope inspection for chat completion, rerank, retrieval, agents, and frontend secret exposure
+- Reported result: no out-of-scope behavior reported
+- Rerun result: reviewed `shopaikey_service.py`, `test_shopaikey_service.py`, and searched relevant frontend/backend changed scope; no chat completion, rerank, retrieval API, agent workflow, or frontend ShopAIKey/Qdrant secret reference was added.
+- Status: satisfied
+- Notes: Matches Plan 5 out-of-scope boundary.
+
+## Acceptance Review
+- Task acceptance: Mocked tests verify endpoint path, authorization header behavior without exposing the key in service errors, configured model usage, input text inclusion, and vector return.
+- Status: satisfied
+- Evidence: Tests assert `https://api.shopaikey.test/v1/embeddings`, bearer auth header construction, configured model payload, input text payload, timeout constant, returned vector coercion, and no API key in `ShopAIKeyServiceError` for an invalid vector response.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in the detailed Batch02 task list and Progress Tracker Task IDs section.
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete; Batch02 still has unchecked (02B).
+- Execution report entry: appended and present.
+- Review report entry: appended by this review.
+- Other: Sibling and future task checkboxes were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The report correctly states detailed timeout/non-2xx/malformed response handling is deferred to (02B). Minimal missing-vector validation exists in (02A) as part of safe vector extraction and does not complete the broader (02B) failure-mode scope.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live ShopAIKey validation remains dependent on user-provided `.env` credentials and was not required for mocked (02A) acceptance.
+- (02B) failure-mode handling remains intentionally pending for timeout, non-2xx, malformed JSON, and missing config tests.
+
+### Observations
+- `backend/app/services/shopaikey_service.py` and `backend/tests/test_shopaikey_service.py` are currently untracked; this is expected evidence for newly created task files but must be included in the eventual commit.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch02 - ShopAIKey Embedding Client",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/shopaikey_service.py",
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "live ShopAIKey validation missing user-provided credentials"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live ShopAIKey validation remains dependent on user-provided credentials",
+    "(02B) timeout, non-2xx, malformed JSON, and missing config failure-mode handling remains pending by design"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
