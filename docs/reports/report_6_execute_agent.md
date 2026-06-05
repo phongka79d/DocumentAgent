@@ -1,5 +1,3 @@
----
-
 # Task Execution Report - (01A)
 
 ## Source Task File
