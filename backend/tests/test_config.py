@@ -19,9 +19,22 @@ def test_settings_allow_missing_supabase_values_for_basic_app_usage() -> None:
     assert settings.qdrant_url is None
     assert settings.qdrant_api_key is None
     assert settings.qdrant_collection is None
+    assert settings.retrieval_semantic_top_k == 20
     assert settings.max_upload_bytes == 25_000_000
     assert settings.chunk_size_tokens == 1000
     assert settings.chunk_overlap_tokens == 150
+
+
+def test_settings_allow_retrieval_semantic_top_k_override() -> None:
+    settings = Settings(_env_file=None, retrieval_semantic_top_k=8)
+
+    assert settings.retrieval_semantic_top_k == 8
+
+
+@pytest.mark.parametrize("top_k", [0, 51])
+def test_settings_reject_retrieval_semantic_top_k_outside_plan_bounds(top_k: int) -> None:
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, retrieval_semantic_top_k=top_k)
 
 
 def test_settings_allow_upload_size_override() -> None:

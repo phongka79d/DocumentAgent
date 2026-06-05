@@ -105,7 +105,7 @@ The semantic retrieval endpoint depends on a typed default Top-K setting, valida
 
 ### Tasks
 
-- [ ] (01A): Add semantic retrieval Top-K backend configuration
+- [x] (01A): Add semantic retrieval Top-K backend configuration
   - Source of Truth: `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.3 Top-K Settings`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`
   - Source Requirements:
     - Add `RETRIEVAL_SEMANTIC_TOP_K` to backend settings and `.env.example`.
@@ -741,7 +741,7 @@ Optional future tracks are outside the mandatory chain.
 ### Task IDs
 
 #### Batch01
-- [ ] (01A): Add semantic retrieval Top-K backend configuration
+- [x] (01A): Add semantic retrieval Top-K backend configuration
 - [ ] (01B): Create retrieval request and response schemas
 - [ ] (01C): Prepare retrieval API module without adding behavior outside scope
 

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     qdrant_url: str | None = None
     qdrant_api_key: str | None = None
     qdrant_collection: str | None = None
+    retrieval_semantic_top_k: int = Field(default=20, ge=1, le=50)
     max_upload_bytes: int | None = 25_000_000
     chunk_size_tokens: int = Field(default=1000, gt=0)
     chunk_overlap_tokens: int = Field(default=150, ge=0)
