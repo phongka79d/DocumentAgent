@@ -13,6 +13,12 @@ def test_settings_allow_missing_supabase_values_for_basic_app_usage() -> None:
 
     assert settings.supabase_url is None
     assert settings.supabase_service_role_key is None
+    assert settings.shopaikey_api_key is None
+    assert settings.shopaikey_base_url is None
+    assert settings.shopaikey_embedding_model is None
+    assert settings.qdrant_url is None
+    assert settings.qdrant_api_key is None
+    assert settings.qdrant_collection is None
     assert settings.max_upload_bytes == 25_000_000
     assert settings.chunk_size_tokens == 1000
     assert settings.chunk_overlap_tokens == 150
@@ -76,4 +82,64 @@ def test_require_supabase_settings_returns_values_when_configured() -> None:
         "url": "https://example.supabase.co",
         "service_role_key": "service-role-key",
         "storage_bucket": "custom-bucket",
+    }
+
+
+def test_require_shopaikey_settings_raises_clear_error_without_secret_values() -> None:
+    settings = Settings(
+        _env_file=None,
+        shopaikey_api_key="private-shopaikey-value",
+        shopaikey_embedding_model="text-embedding-ada-002",
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        settings.require_shopaikey_settings()
+
+    message = str(exc_info.value)
+    assert "SHOPAIKEY_BASE_URL" in message
+    assert "private-shopaikey-value" not in message
+
+
+def test_require_shopaikey_settings_returns_values_when_configured() -> None:
+    settings = Settings(
+        _env_file=None,
+        shopaikey_api_key="shopaikey-key",
+        shopaikey_base_url="https://api.shopaikey.com/v1",
+        shopaikey_embedding_model="text-embedding-ada-002",
+    )
+
+    assert settings.require_shopaikey_settings() == {
+        "api_key": "shopaikey-key",
+        "base_url": "https://api.shopaikey.com/v1",
+        "embedding_model": "text-embedding-ada-002",
+    }
+
+
+def test_require_qdrant_settings_raises_clear_error_without_secret_values() -> None:
+    settings = Settings(
+        _env_file=None,
+        qdrant_api_key="private-qdrant-value",
+        qdrant_collection="document_chunks",
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        settings.require_qdrant_settings()
+
+    message = str(exc_info.value)
+    assert "QDRANT_URL" in message
+    assert "private-qdrant-value" not in message
+
+
+def test_require_qdrant_settings_returns_values_when_configured() -> None:
+    settings = Settings(
+        _env_file=None,
+        qdrant_url="https://example-cluster.qdrant.io",
+        qdrant_api_key="qdrant-key",
+        qdrant_collection="document_chunks",
+    )
+
+    assert settings.require_qdrant_settings() == {
+        "url": "https://example-cluster.qdrant.io",
+        "api_key": "qdrant-key",
+        "collection": "document_chunks",
     }

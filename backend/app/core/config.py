@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     supabase_url: str | None = None
     supabase_service_role_key: str | None = None
     supabase_storage_bucket: str = "documents"
+    shopaikey_api_key: str | None = None
+    shopaikey_base_url: str | None = None
+    shopaikey_embedding_model: str | None = None
+    qdrant_url: str | None = None
+    qdrant_api_key: str | None = None
+    qdrant_collection: str | None = None
     max_upload_bytes: int | None = 25_000_000
     chunk_size_tokens: int = Field(default=1000, gt=0)
     chunk_overlap_tokens: int = Field(default=150, ge=0)
@@ -46,6 +52,46 @@ class Settings(BaseSettings):
             "url": self.supabase_url,
             "service_role_key": self.supabase_service_role_key,
             "storage_bucket": self.supabase_storage_bucket,
+        }
+
+    def require_shopaikey_settings(self) -> dict[str, Any]:
+        missing = []
+        if not self.shopaikey_api_key:
+            missing.append("SHOPAIKEY_API_KEY")
+        if not self.shopaikey_base_url:
+            missing.append("SHOPAIKEY_BASE_URL")
+        if not self.shopaikey_embedding_model:
+            missing.append("SHOPAIKEY_EMBEDDING_MODEL")
+
+        if missing:
+            raise RuntimeError(
+                f"Missing {', '.join(missing)}. Configure ShopAIKey settings in the backend environment before using embedding services."
+            )
+
+        return {
+            "api_key": self.shopaikey_api_key,
+            "base_url": self.shopaikey_base_url,
+            "embedding_model": self.shopaikey_embedding_model,
+        }
+
+    def require_qdrant_settings(self) -> dict[str, Any]:
+        missing = []
+        if not self.qdrant_url:
+            missing.append("QDRANT_URL")
+        if not self.qdrant_api_key:
+            missing.append("QDRANT_API_KEY")
+        if not self.qdrant_collection:
+            missing.append("QDRANT_COLLECTION")
+
+        if missing:
+            raise RuntimeError(
+                f"Missing {', '.join(missing)}. Configure Qdrant settings in the backend environment before using vector indexing services."
+            )
+
+        return {
+            "url": self.qdrant_url,
+            "api_key": self.qdrant_api_key,
+            "collection": self.qdrant_collection,
         }
 
 

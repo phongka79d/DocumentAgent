@@ -104,7 +104,7 @@ ShopAIKey, Qdrant, and indexing orchestration all depend on typed backend settin
 
 ### Tasks
 
-- [ ] (01A): Add backend-only ShopAIKey and Qdrant configuration
+- [x] (01A): Add backend-only ShopAIKey and Qdrant configuration
   - Source of Truth: `docs/plans/Plan_5.md` > `## 9. Implementation Steps`; `docs/plans/Plan_5.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`
   - Source Requirements:
     - Add `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, `SHOPAIKEY_EMBEDDING_MODEL`, `QDRANT_URL`, `QDRANT_API_KEY`, and `QDRANT_COLLECTION` to backend settings and `.env.example`.
@@ -754,7 +754,7 @@ Optional future tracks are outside the mandatory chain.
 ### Task IDs
 
 #### Batch01
-- [ ] (01A): Add backend-only ShopAIKey and Qdrant configuration
+- [x] (01A): Add backend-only ShopAIKey and Qdrant configuration
 - [ ] (01B): Add indexing dependencies without unrelated provider packages
 - [ ] (01C): Add internal embedding and indexing schemas
 - [ ] (01D): Add Supabase helpers for indexing reads and point ID updates
