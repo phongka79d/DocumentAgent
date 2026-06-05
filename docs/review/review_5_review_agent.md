@@ -352,3 +352,174 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (01C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+- Task ID: (01C)
+- Task title: Add internal embedding and indexing schemas
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_5.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (01C)
+- Reviewed task ID: (01C)
+- Correct selection: yes
+- Notes: The `(01C)` execution report is the last appended task execution report and matches the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/schemas/__init__.py`, `docs/reports/report_5_execute_agent.md`; after accepted reviewer update also `docs/tasks/task_5.md`
+- untracked files: `backend/app/schemas/embeddings.py`
+
+## Files Reviewed
+- `backend/app/schemas/embeddings.py`: in scope - new internal Pydantic schema models for embedding input/result, indexed chunk payload, per-chunk errors, and document indexing result.
+- `backend/app/schemas/__init__.py`: in scope - exports new schema classes through the package style used by existing schemas.
+- `docs/reports/report_5_execute_agent.md`: in scope - latest appended execution report for `(01C)` reviewed and cross-checked.
+- `docs/tasks/task_5.md`: in scope - selected task definition and progress tracker reviewed; `(01C)` checkbox updated after acceptance only.
+- `docs/plans/Plan_5.md`: in scope - cited sections `## 6`, `## 7`, and `## 9` reviewed for source-of-truth alignment.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/schemas/embeddings.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File is untracked but present in the working tree and contains the required schema models.
+- file from execution report: `backend/app/schemas/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff exports the new schema models and does not introduce unrelated exports.
+
+## Dependency Review
+- Required dependencies: Existing Pydantic and schema package style; previous `(01A)` and `(01B)` completed.
+- Dependency status: satisfied
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Schema-only changes stay inside `backend/app/schemas`, use Pydantic `BaseModel`/`Field` patterns already present, include Plan 5 payload/result fields, and avoid database/service/frontend changes.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Models define concrete typed fields and validation constraints, including required payload metadata, non-empty text/vector fields, non-negative counts, and `content_preview` maximum length of 500.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No provider keys, URLs, model names, collection names, sample IDs, or runtime success constants were added to production schema code.
+
+## Validations Reviewed
+- Command/check: `python -c` schema import/model validation reported by executor
+- Reported result: Passed
+- Rerun result: Passed via stdin Python validation: `schema import and validation ok`
+- Status: passed
+- Notes: Confirmed package exports, model construction, required result top-level keys, 500-character preview acceptance, and rejection of a 501-character preview.
+- Command/check: `python -m py_compile app/schemas/embeddings.py app/schemas/__init__.py`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Python compilation completed without errors.
+- Command/check: `pytest tests/test_embedding_service.py -v`
+- Reported result: Not run
+- Rerun result: Not run
+- Status: not applicable for this schema-only task
+- Notes: `backend/tests/test_embedding_service.py` does not exist yet; the task file states that validation is to be run after service implementation.
+
+## Acceptance Review
+- Task acceptance: Services and tests can import and use schemas; result models match required Plan 5 response shape.
+- Status: satisfied
+- Evidence: `app.schemas` imports work, `DocumentIndexingResult` serializes with `document_id`, `indexed_count`, `failed_count`, and `errors`, and payload model includes all required Qdrant metadata fields from Plan 5.
+
+## Progress Tracking
+- Selected task checkbox: checked after acceptance in both the detailed Batch01 task list and the Progress Tracker Task IDs section.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch01 still has unchecked `(01D)`.
+- Execution report entry: appended and accurate for `(01C)`.
+- Review report entry: appended to EOF.
+- Other: No sibling or future task checkboxes were updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The report honestly notes the absent future service test and limits validation to schema import/serialization and compile checks.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/app/schemas/embeddings.py` is still untracked and must be included when committing the accepted task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(01D)` remains unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers",
+  "selected_task_id": "(01C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/schemas/embeddings.py",
+    "backend/app/schemas/__init__.py",
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

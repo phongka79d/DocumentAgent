@@ -167,3 +167,87 @@ complete
 - next task ID: (01C)
 - can proceed: yes
 - handoff notes: Backend dependencies now declare both `httpx` and `qdrant-client`; schema work can proceed without additional provider SDK assumptions.
+
+---
+
+# Task Execution Report - (01C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+
+## Task
+(01C) - Add internal embedding and indexing schemas
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_5.md > (01C) selected task block
+- docs/plans/Plan_5.md > ## 6. Required Files and Folders
+- docs/plans/Plan_5.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_5.md > ## 9. Implementation Steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch01 - Backend Configuration, Dependencies, Schemas, and Supabase Helpers
+- Task ID: (01C)
+- Task title: Add internal embedding and indexing schemas
+
+## Completed Work
+- Task is complete.
+- Created internal embedding/indexing schema models for embedding input, embedding result vectors, Qdrant indexed chunk payloads, per-chunk indexing errors, and document indexing results.
+- Exported the new schema models through the existing `app.schemas` package style.
+- Kept the result model shape aligned with Plan 5: `document_id`, `indexed_count`, `failed_count`, and `errors`.
+
+## Files Created or Modified
+- backend/app/schemas/embeddings.py
+- backend/app/schemas/__init__.py
+
+## Tests or Validations Run
+- `cd backend; python -c "from uuid import uuid4; from app.schemas import DocumentIndexingResult, ChunkIndexingError, EmbeddingInput, EmbeddingResult, IndexedChunkPayload; document_id=uuid4(); chunk_id=uuid4(); payload=IndexedChunkPayload(user_id='single_user', document_id=document_id, chunk_id=chunk_id, file_name='contract.pdf', file_type='pdf', page_number=3, section_title='Probation', chunk_index=0, content_preview='x'*500); result=DocumentIndexingResult(document_id=document_id, indexed_count=1, failed_count=1, errors=[ChunkIndexingError(chunk_id=chunk_id, chunk_index=0, message='safe error')]); EmbeddingInput(text='hello'); EmbeddingResult(text='hello', vector=[0.1, 0.2]); data=result.model_dump(mode='json') if hasattr(result, 'model_dump') else result.dict(); assert set(data.keys()) == {'document_id','indexed_count','failed_count','errors'}; assert len(payload.content_preview) == 500; print(data)"`: Passed
+- evidence or reason: Models imported from `app.schemas`, instantiated successfully, `content_preview` accepted 500 characters, and document indexing result serialized with exactly the required top-level keys.
+- `cd backend; python -m py_compile app/schemas/embeddings.py app/schemas/__init__.py`: Passed
+- evidence or reason: Python compilation completed with no errors.
+- `cd backend; pytest tests/test_embedding_service.py -v`: Not run
+- evidence or reason: `backend/tests/test_embedding_service.py` does not exist yet in this schema-only task; that validation is intended after service implementation in later tasks.
+
+## Acceptance Check
+- Task acceptance condition: Services and tests can import and use schemas; result models match the required Plan 5 response shape.
+- Status: satisfied
+- Evidence: Import/model validation passed for direct package exports and `DocumentIndexingResult` serialized as `document_id`, `indexed_count`, `failed_count`, and `errors`.
+
+## Artifacts Produced
+- backend/app/schemas/embeddings.py
+- Appended execution report in docs/reports/report_5_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require leaving checkbox updates to A2 after an `ACCEPTED` review; Batch01 still has unchecked sibling task (01D).
+
+## Key Implementation Decisions
+- Used Pydantic `BaseModel` and `Field` conventions already present in the schema package.
+- Modeled Qdrant payload fields exactly from Plan 5, with `content_preview` limited to 500 characters and no provider secrets or low-level client objects.
+- Used UUID-typed document and chunk IDs to match existing document schema conventions.
+
+## Risks or Open Issues
+- Future embedding service tests are not available yet, so only schema import, serialization, and syntax validation were run for this task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (01C).
+
+## Notes for Next Task
+- next task ID: (01D)
+- can proceed: yes
+- handoff notes: Internal schema exports are available for later Supabase helper, Qdrant payload, and indexing orchestration work.

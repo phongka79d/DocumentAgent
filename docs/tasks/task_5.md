@@ -136,7 +136,7 @@ ShopAIKey, Qdrant, and indexing orchestration all depend on typed backend settin
   - Blocked Condition: None for mocked/local tests.
   - Files: `backend/requirements.txt`
 
-- [ ] (01C): Add internal embedding and indexing schemas
+- [x] (01C): Add internal embedding and indexing schemas
   - Source of Truth: `docs/plans/Plan_5.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_5.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_5.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Create `backend/app/schemas/embeddings.py`.
@@ -756,7 +756,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch01
 - [x] (01A): Add backend-only ShopAIKey and Qdrant configuration
 - [x] (01B): Add indexing dependencies without unrelated provider packages
-- [ ] (01C): Add internal embedding and indexing schemas
+- [x] (01C): Add internal embedding and indexing schemas
 - [ ] (01D): Add Supabase helpers for indexing reads and point ID updates
 
 #### Batch02
