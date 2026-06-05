@@ -615,7 +615,7 @@ Plan 5 completion depends on evidence that mocked unit behavior passes, external
   - Blocked Condition: None for mocked/local tests.
   - Files: Test files and changed implementation files for inspection
 
-- [ ] (05E): Perform manual indexing and Qdrant/Supabase checks when user setup is available
+- [x] (05E): Perform manual indexing and Qdrant/Supabase checks when user setup is available
   - Source of Truth: `docs/plans/Plan_5.md` > `## 1. Goal`; `docs/plans/Plan_5.md` > `## 5. Dependencies`; `docs/plans/Plan_5.md` > `## 8. API Design`; `docs/plans/Plan_5.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_5.md` > `## 11. Required Tests`; `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_5.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Upload and process a TXT document.
@@ -778,7 +778,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (05B): Add and run Qdrant service tests
 - [x] (05C): Add and run embedding orchestration tests
 - [x] (05D): Run combined backend tests and scope/security checks
-- [ ] (05E): Perform manual indexing and Qdrant/Supabase checks when user setup is available
+- [x] (05E): Perform manual indexing and Qdrant/Supabase checks when user setup is available
 
 ## Completion Reporting Rules for Future Execution Agents
 

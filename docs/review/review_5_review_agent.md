@@ -2855,3 +2855,192 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05E)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05E)
+- Task title: Perform manual indexing and Qdrant/Supabase checks when user setup is available
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_5.md` > `## 1. Goal`; `## 5. Dependencies`; `## 8. API Design`; `## 10. Configuration and Environment Variables`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 14. Agent Report Requirement`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05E)
+- Reviewed task ID: (05E)
+- Correct selection: yes
+- Notes: The requested `(05E)` report is the last appended execution report entry and matches the task title and Batch05 scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_5_execute_agent.md`, `docs/tasks/task_5.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_5_execute_agent.md`: in scope - selected `(05E)` execution evidence was appended; no implementation files were changed by the executor for this task.
+- `docs/tasks/task_5.md`: in scope - selected task block and progress tracker were reviewed; only `(05E)` was updated by reviewer after acceptance.
+- `docs/plans/Plan_5.md`: in scope - cited sections were checked for goal, dependencies, API design, required tests, acceptance, and reporting requirements.
+- `backend/app/core/config.py`: in scope - reviewed to confirm backend-only config loading and safe required-settings helpers.
+- `backend/app/services/embedding_service.py`: in scope - reviewed to confirm the live service path indexes ready documents, skips indexed chunks, and updates point IDs only after Qdrant upsert.
+- `backend/app/services/qdrant_service.py`: in scope - reviewed to confirm Qdrant collection/upsert behavior and required payload handling.
+- `backend/app/services/supabase_service.py`: in scope - reviewed to confirm single-user document/chunk filters and `qdrant_point_id` update query.
+- `backend/.env.example`: in scope - reviewed by secret-pattern scan; only placeholder values were detected.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_5_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The executor only appended validation evidence for `(05E)`, which is expected because this task required live checks rather than implementation changes.
+
+## Dependency Review
+- Required dependencies: `(05D)`, valid local backend `.env`, Qdrant Cloud project/API key, ShopAIKey API key, Supabase setup, and TXT document/chunk data.
+- Dependency status: satisfied for review; `(05D)` was already checked in the task file and read-only live checks confirmed configured environment values, Supabase rows, and Qdrant points exist without printing secrets.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: The task used backend service functions, not frontend behavior, and verified Supabase, ShopAIKey, Qdrant, payload fields, and point ID persistence within Plan 5 scope.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Read-only live validation found both reported documents for the configured single user, each with one chunk and one non-null `qdrant_point_id`; Qdrant retrieved the corresponding points with required payload keys.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Qdrant collection and provider settings are loaded from backend configuration. Secret scan found only safe placeholders in `backend/.env.example`; report text did not expose real API keys or secret-bearing URLs.
+
+## Validations Reviewed
+- Command/check: `git status --short`
+- Reported result: executor reported no implementation changes before appending `(05E)` report.
+- Rerun result: after reviewer acceptance update, changed files are `docs/reports/report_5_execute_agent.md` and `docs/tasks/task_5.md` only.
+- Status: passed
+- Notes: No untracked files were present.
+
+- Command/check: `git diff --stat` and `git diff`
+- Reported result: executor reported only execution report artifact changes for `(05E)`.
+- Rerun result: execution report added 102 lines; reviewer changed only `(05E)` checkbox occurrences in task block and progress tracker.
+- Status: passed
+- Notes: No implementation diff was present for `(05E)`.
+
+- Command/check: Safe secret scan over report/task/env example/backend app/tests
+- Reported result: no secret values printed in execution report.
+- Rerun result: only placeholder key-pattern hits in `backend/.env.example`; no real API key or secret-bearing URL was found in reviewed tracked files.
+- Status: passed
+- Notes: Local `.env` values were not printed.
+
+- Command/check: Frontend exposure search for Qdrant, ShopAIKey, service-role/API-key, embedding/rerank/chat endpoints
+- Reported result: no frontend exposure or frontend indexing behavior.
+- Rerun result: no matches.
+- Status: passed
+- Notes: Confirms backend-only secret boundary for this task.
+
+- Command/check: Out-of-scope backend search for semantic search, GraphRAG, retrieval scoring, chat completion, rerank, LangGraph, and Qdrant search APIs
+- Reported result: no out-of-scope retrieval/agent work.
+- Rerun result: no matches.
+- Status: passed
+- Notes: Scope boundary preserved.
+
+- Command/check: Read-only live Supabase/Qdrant verification script for reported document IDs
+- Reported result: both existing and newly uploaded TXT smoke documents indexed successfully; Qdrant points and Supabase point IDs present.
+- Rerun result: `safe_env_check missing_count=0 placeholder_count=0`; `qdrant_collection_exists=True`; both reported document IDs found with `status=ready`, `chunk_count=1`, `chunks_seen=1`, `non_null_point_ids=1`; Qdrant retrieved one point for each and payload keys `chunk_id`, `content_preview`, `document_id`, `file_name`, `user_id` were present with no missing required keys.
+- Status: passed
+- Notes: Read-only check did not re-upload or re-index, and did not print secrets.
+
+## Acceptance Review
+- Task acceptance: Ready TXT document chunks are indexed, `indexed_count` equals chunk count, Qdrant points have required payload fields, and Supabase `document_chunks.qdrant_point_id` is non-null.
+- Status: satisfied
+- Evidence: Execution report claims are corroborated by read-only live Supabase/Qdrant checks for `182c2dcf-927a-4940-943b-3ca2981617fb` and `63421bbc-5a46-4cb4-8876-36f8eaf8b1b5`.
+
+## Progress Tracking
+- Selected task checkbox: checked after acceptance in the task block and progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; batch checkbox remains unchecked.
+- Execution report entry: appended and accurate for selected task.
+- Review report entry: appended to physical end of `docs/review/review_5_review_agent.md`.
+- Other: No sibling or future task checkbox was changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live smoke validation left persistent Supabase/Qdrant smoke artifacts, as reported; this preserves validation evidence and is not a blocker for `(05E)`.
+- There is no remaining task ID in Batch05 after `(05E)`; batch-level completion remains outside this selected-task review.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes; no remaining Batch05 task is pending, and downstream handoff may proceed under the orchestrator workflow.
+- Should batch be marked complete? no by this review; all Batch05 task IDs are checked, but batch-level completion was intentionally not updated.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_5_execute_agent.md",
+    "docs/tasks/task_5.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

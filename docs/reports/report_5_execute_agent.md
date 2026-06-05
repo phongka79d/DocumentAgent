@@ -1417,3 +1417,105 @@ complete
 - next task ID: (05E)
 - can proceed: yes, after A2 reviews and accepts `(05D)`
 - handoff notes: `(05E)` should perform or honestly block live indexing, Qdrant, and Supabase checks based on whether local user-provided credentials/setup are available.
+
+---
+
+# Task Execution Report - (05E)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05E) - Perform manual indexing and Qdrant/Supabase checks when user setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_5.md` > `## 1. Goal`
+- `docs/plans/Plan_5.md` > `## 5. Dependencies`
+- `docs/plans/Plan_5.md` > `## 8. API Design`
+- `docs/plans/Plan_5.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_5.md` > `## 11. Required Tests`
+- `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_5.md` > `## 14. Agent Report Requirement`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05E)
+- Task title: Perform manual indexing and Qdrant/Supabase checks when user setup is available
+
+## Completed Work
+- Status: complete.
+- Confirmed `backend/.env` contained non-placeholder values for the required Supabase, ShopAIKey, Qdrant, and `SINGLE_USER_ID` settings without printing any secret values.
+- Probed Supabase for ready TXT documents and found local user-provided setup was available.
+- Ran one live indexing service smoke check against an existing ready TXT document, `sample.txt`, with one unindexed chunk.
+- Ran a full live TXT upload, process, and index flow using a new smoke document named `task05e-live-20260605112345.txt`.
+- Confirmed live indexing result `indexed_count=1`, `failed_count=0`, and `indexed_count == chunk_count` for the newly uploaded and processed TXT document.
+- Confirmed Qdrant collection existence for the configured collection.
+- Retrieved the indexed Qdrant point and confirmed required payload fields were present: `user_id`, `document_id`, `chunk_id`, `file_name`, and `content_preview`.
+- Queried Supabase `document_chunks` after indexing and confirmed `qdrant_point_id` was non-null for the indexed chunk.
+- Did not implement retrieval, search, chat, rerank, GraphRAG, agent work, or frontend indexing behavior.
+
+## Files Created or Modified
+- `docs/reports/report_5_execute_agent.md`
+
+## Tests or Validations Run
+- Safe environment presence check: Passed
+- evidence or reason: root `.env` did not contain all required values, but `backend/.env` was present and had non-placeholder values for `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, `SHOPAIKEY_EMBEDDING_MODEL`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SINGLE_USER_ID`; no secret values were printed.
+- Supabase ready document/chunk probe: Passed
+- evidence or reason: Supabase query found two ready TXT candidates with chunk rows and unindexed chunks; no secrets were printed.
+- Existing ready TXT indexing smoke check: Passed
+- evidence or reason: selected document `182c2dcf-927a-4940-943b-3ca2981617fb` (`sample.txt`), `chunk_count=1`, `indexed_count=1`, `failed_count=0`, `indexed_equals_chunk_count=True`, Qdrant collection existed, one Qdrant point was found, required payload fields were present, and Supabase had one non-null `qdrant_point_id` after indexing.
+- Full TXT upload/process/index smoke check: Passed
+- evidence or reason: uploaded document `63421bbc-5a46-4cb4-8876-36f8eaf8b1b5` (`task05e-live-20260605112345.txt`), processed status `ready`, `processed_chunk_count=1`, `indexed_count=1`, `failed_count=0`, `indexed_equals_chunk_count=True`, configured Qdrant collection existed, one Qdrant point was found, required payload fields were present, and Supabase had one non-null `qdrant_point_id` after indexing.
+- Qdrant dashboard/client check: Passed via Qdrant client
+- evidence or reason: `collection_exists=True`; retrieved indexed point by stored point ID with required payload field keys `chunk_id`, `content_preview`, `document_id`, `file_name`, and `user_id`.
+- Database check for `document_chunks.qdrant_point_id`: Passed
+- evidence or reason: Supabase `document_chunks` query for the smoke document returned one chunk row and one non-null `qdrant_point_id`.
+
+## Acceptance Check
+- Task acceptance condition: Ready TXT document chunks are indexed, `indexed_count` equals `chunk_count`, Qdrant points have required payload fields, and chunk rows have non-null point IDs.
+- Status: satisfied
+- Evidence: Full live TXT upload/process/index smoke check passed with `processed_chunk_count=1`, `indexed_count=1`, `failed_count=0`, Qdrant collection existence confirmed, required payload fields confirmed on the retrieved point, and Supabase `document_chunks.qdrant_point_id` confirmed non-null.
+
+## Artifacts Produced
+- Live validation evidence appended in `docs/reports/report_5_execute_agent.md`.
+- Live Supabase document row and Qdrant point were created by the smoke test for document `63421bbc-5a46-4cb4-8876-36f8eaf8b1b5`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 run; A2 handles checkbox and batch updates after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used backend service functions instead of starting a local HTTP server because the task allows the service function or optional development endpoint, and service invocation exercised the same upload, processing, indexing, Supabase, ShopAIKey, and Qdrant integration paths without exposing secrets.
+- Reported only safe setup presence, IDs, counts, booleans, file names, and safe error types; no secret values were printed.
+- Ran an additional full TXT upload/process/index smoke check after the first existing-document indexing check so the explicit upload and process requirement had direct live evidence.
+
+## Risks or Open Issues
+- Live smoke validation created persistent Supabase/Qdrant test artifacts for `task05e-live-20260605112345.txt`; cleanup was not performed because deletion/cleanup is outside this task and could remove validation evidence.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency `(05D)` was checked in `docs/tasks/task_5.md` and was already marked complete before this run.
+- Source-of-truth fields were present for `(05E)`.
+- No task checkbox was updated due to orchestrated A1 rules.
+- No sibling task or future retrieval/search/chat/rerank/GraphRAG/agent/frontend work was implemented.
+- No workflow integrity issue identified.
+
+## Notes for Next Task
+- next task ID: None in Batch05 after `(05E)`.
+- can proceed: yes, after A2 reviews and accepts `(05E)`.
+- handoff notes: A2 can review the live validation evidence above. If accepted, A2 may update `(05E)` and Batch05 progress according to the orchestrator workflow.
