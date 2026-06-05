@@ -345,6 +345,42 @@ def test_upsert_chunk_vector_does_not_update_supabase_qdrant_point_id(
     assert not hasattr(qdrant_service, "update_chunk_qdrant_point_id")
 
 
+def test_search_vectors_uses_configured_collection_and_mandatory_user_filter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    expected_points = [SimpleNamespace(id="point-id", score=0.87, payload={})]
+    client.query_points.return_value = SimpleNamespace(points=expected_points)
+    settings = _settings()
+    settings.single_user_id = "single_user"
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    results = qdrant_service.search_vectors(
+        query_vector=[0.1, 0.2, 0.3],
+        top_k=3,
+        document_ids=None,
+    )
+
+    assert results == expected_points
+    client.query_points.assert_called_once()
+    search_kwargs = client.query_points.call_args.kwargs
+    assert search_kwargs["collection_name"] == "document_chunks"
+    assert search_kwargs["query"] == [0.1, 0.2, 0.3]
+    assert search_kwargs["limit"] == 3
+    assert search_kwargs["with_payload"] is True
+
+    query_filter = search_kwargs["query_filter"]
+    user_conditions = [
+        condition
+        for condition in query_filter.must
+        if getattr(condition, "key", None) == "user_id"
+    ]
+    assert len(user_conditions) == 1
+    assert user_conditions[0].match.value == "single_user"
+
+
 def test_upsert_chunk_vector_maps_qdrant_failure_to_safe_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

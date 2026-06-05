@@ -3,7 +3,15 @@ from typing import Any
 from uuid import UUID
 
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, PointStruct, VectorParams
+from qdrant_client.http.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointStruct,
+    ScoredPoint,
+    VectorParams,
+)
 
 from app.core.config import get_settings
 from app.schemas.embeddings import IndexedChunkPayload
@@ -135,6 +143,38 @@ def upsert_chunk_vector(
         raise QdrantUpsertError("Qdrant chunk vector upsert failed.") from exc
 
     return point_id
+
+
+def search_vectors(
+    query_vector: list[float],
+    top_k: int,
+    document_ids: list[UUID | str] | None = None,
+) -> list[ScoredPoint]:
+    try:
+        settings = get_settings()
+        qdrant_settings = settings.require_qdrant_settings()
+    except RuntimeError as exc:
+        raise QdrantSetupError(str(exc)) from exc
+
+    # Populated document filtering is intentionally left for task (02B).
+    _ = document_ids
+    query_filter = Filter(
+        must=[
+            FieldCondition(
+                key="user_id",
+                match=MatchValue(value=settings.single_user_id),
+            )
+        ]
+    )
+
+    response = get_qdrant_client().query_points(
+        collection_name=qdrant_settings["collection"],
+        query=query_vector,
+        query_filter=query_filter,
+        limit=top_k,
+        with_payload=True,
+    )
+    return response.points
 
 
 def _payload_to_qdrant(payload: IndexedChunkPayload) -> dict[str, Any]:

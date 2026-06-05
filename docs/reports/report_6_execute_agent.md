@@ -248,3 +248,96 @@ complete
 - next task ID: (02A) after A2 review accepts (01C) and updates progress.
 - can proceed: yes
 - handoff notes: Retrieval API module imports cleanly and exposes a router ready for later route implementation/registration.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch02 - Qdrant Filtered Search Helper
+
+## Task
+(02A) - Implement Qdrant semantic vector search with mandatory user filter
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_6.md > (02A) selected task block
+- docs/plans/Plan_6.md > ## 3. Scope
+- docs/plans/Plan_6.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_6.md > ## 9. Implementation Steps
+- docs/plans/Plan_6.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 7. Qdrant Cloud Design
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Qdrant Filtered Search Helper
+- Task ID: (02A)
+- Task title: Implement Qdrant semantic vector search with mandatory user filter
+
+## Completed Work
+- Status: complete.
+- Added `search_vectors(query_vector, top_k, document_ids)` to `backend/app/services/qdrant_service.py`.
+- The helper uses existing backend Qdrant settings and client initialization.
+- The helper builds a Qdrant payload filter that always includes `user_id = settings.single_user_id`.
+- The helper searches the configured Qdrant collection using the installed Qdrant client's `query_points` vector API and returns `response.points` scored point results.
+- Populated document ID filtering was intentionally not implemented because `(02B)` owns that behavior; the parameter is accepted for the required signature only.
+
+## Files Created or Modified
+- backend/app/services/qdrant_service.py
+- backend/tests/test_qdrant_service.py
+- docs/reports/report_6_execute_agent.md
+
+## Tests or Validations Run
+- `pytest tests/test_qdrant_service.py::test_search_vectors_uses_configured_collection_and_mandatory_user_filter -v`: Passed after implementation; also failed first for the expected missing helper / old-client-API reasons during TDD.
+- `pytest tests/test_qdrant_service.py -v`: Passed; 17 passed.
+- `Test-Path backend/tests/test_retrieval_service.py`: Passed as environment check; output `False`, so the selected task's fallback to closest existing Qdrant service tests was used.
+- `python -c "from qdrant_client import QdrantClient; print(hasattr(QdrantClient, 'query_points'))"`: Passed; output `True`.
+- `git diff --check -- backend\app\services\qdrant_service.py backend\tests\test_qdrant_service.py`: Passed; no whitespace errors reported. Git warned that LF will be replaced by CRLF when Git next touches the files.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove the user filter is present on every search request and the configured collection is used.
+- Status: satisfied.
+- Evidence: `test_search_vectors_uses_configured_collection_and_mandatory_user_filter` asserts `collection_name == "document_chunks"`, query vector/top-k passthrough, payload return enabled, and exactly one `user_id` filter condition with value `single_user`.
+
+## Artifacts Produced
+- Qdrant semantic vector search helper returning scored Qdrant points from `query_points(...).points`.
+- Mocked Qdrant service test covering mandatory user filter and configured collection usage.
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch status updates are left to A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used `QdrantClient.query_points` instead of `search` because the installed Qdrant client exposes `query_points` and does not expose `search`.
+- Returned raw scored point objects from `response.points`; score normalization and semantic response mapping remain assigned to later tasks.
+- Did not add populated `document_ids` filtering in this task to avoid implementing sibling task `(02B)` early.
+
+## Risks or Open Issues
+- Live retrieval returning non-empty results remains `BLOCKED_BY_USER_ACTION` until the user has a configured Qdrant collection with indexed chunks.
+- Optional document ID filtering remains for `(02B)`.
+- Qdrant score normalization and failure behavior remain for `(02C)`.
+
+## Minor Issues Fixed During Execution
+- Adjusted the helper to the installed Qdrant client's `query_points` API after verification showed `QdrantClient.search` is unavailable.
+
+## Workflow Integrity Check
+- Dependency `(01A)` is marked complete in `docs/tasks/task_6.md`.
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- No task checkbox was updated because this is an orchestrated run.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: `search_vectors` now guarantees the mandatory user filter and configured collection; `(02B)` can add populated `document_ids` payload filtering on top of the existing `Filter.must` list.

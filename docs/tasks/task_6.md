@@ -209,7 +209,7 @@ Semantic retrieval must never query Qdrant without the `SINGLE_USER_ID` filter, 
 
 ### Tasks
 
-- [ ] (02A): Implement Qdrant semantic vector search with mandatory user filter
+- [x] (02A): Implement Qdrant semantic vector search with mandatory user filter
   - Source of Truth: `docs/plans/Plan_6.md` > `## 3. Scope`; `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 7. Qdrant Cloud Design`
   - Source Requirements:
     - Add `search_vectors(query_vector, top_k, document_ids)` in `backend/app/services/qdrant_service.py`.
@@ -746,7 +746,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01C): Prepare retrieval API module without adding behavior outside scope
 
 #### Batch02
-- [ ] (02A): Implement Qdrant semantic vector search with mandatory user filter
+- [x] (02A): Implement Qdrant semantic vector search with mandatory user filter
 - [ ] (02B): Add optional document ID filtering through Qdrant payload
 - [ ] (02C): Normalize Qdrant score semantics and failure behavior
 
