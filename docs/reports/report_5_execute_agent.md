@@ -682,3 +682,86 @@ complete
 - next task ID: (03C)
 - can proceed: yes
 - handoff notes: Qdrant service now supports typed payload construction and one-point vector upsert. Next task can layer broader Qdrant failure handling without changing Supabase persistence behavior.
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Report File
+docs/reports/report_5_execute_agent.md
+
+## Batch
+Batch03 - Qdrant Collection and Vector Upsert Service
+
+## Task
+(03C) - Handle Qdrant failures without marking chunks indexed
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_5.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_5.md > ## 13. Failure Handling
+- docs/plans/Plan_5.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Qdrant Collection and Vector Upsert Service
+- Task ID: (03C)
+- Task title: Handle Qdrant failures without marking chunks indexed
+
+## Completed Work
+- Task is complete.
+- Converted Qdrant collection check, collection creation, and collection lookup failures into safe QdrantSetupError exceptions.
+- Converted Qdrant upsert vector-size mismatch failures into a loud QdrantSetupError that instructs the agent to verify collection setup.
+- Kept generic Qdrant upsert failures mapped to QdrantUpsertError so indexing orchestration can record chunk-level failures without treating failed chunks as indexed.
+- Confirmed the Qdrant service does not mutate Supabase or persist qdrant_point_id.
+
+## Files Created or Modified
+- backend/app/services/qdrant_service.py
+- backend/tests/test_qdrant_service.py
+
+## Tests or Validations Run
+- pytest tests/test_qdrant_service.py -v: Passed
+- evidence or reason: 15 tests passed in 1.04s from backend.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove upsert failure surfaces to the indexing service and no point ID persistence occurs from Qdrant service code.
+- Status: satisfied
+- Evidence: Tests cover safe setup errors, generic upsert failure, vector-size upsert failure, and absence of qdrant_point_id persistence/Supabase mutation from qdrant_service.
+
+## Artifacts Produced
+- Updated Qdrant service failure handling.
+- Updated mocked Qdrant service tests.
+- Appended execution report in docs/reports/report_5_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept Qdrant service free of Supabase writes and limited it to safe setup/upsert exceptions.
+- Treated vector-size failures during upsert as setup failures because they require collection/model setup verification rather than point-ID persistence.
+- Avoided exposing provider exception details in public service exception messages.
+
+## Risks or Open Issues
+- Broader indexing orchestration recording behavior remains out of scope for Batch04/Batch05 orchestration tests.
+- Vector-size upsert detection is based on common Qdrant exception wording; existing ensure_collection size checks remain the primary deterministic guard.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies (03A) and (03B) were marked complete in docs/tasks/task_5.md before execution.
+- Scope boundaries were preserved: no indexing orchestration, Supabase point-ID persistence, retrieval, chat completion, rerank, agents, or frontend behavior was added.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes
+- handoff notes: Qdrant service now raises safe setup/upsert exceptions and does not persist point IDs. The indexing orchestrator can catch QdrantUpsertError per chunk and QdrantSetupError as setup/vector-size failure.

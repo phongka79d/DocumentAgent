@@ -106,6 +106,53 @@ def test_ensure_collection_creates_missing_collection_with_cosine_distance(
     assert vectors_config.distance == qdrant_service.Distance.COSINE
 
 
+def test_ensure_collection_maps_connection_failure_to_safe_setup_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.collection_exists.side_effect = RuntimeError("private connection detail")
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+        qdrant_service.ensure_collection(vector_size=1536)
+
+    assert str(exc_info.value) == "Qdrant collection check failed."
+
+
+def test_ensure_collection_maps_collection_creation_failure_to_safe_setup_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.collection_exists.return_value = False
+    client.create_collection.side_effect = RuntimeError("private collection detail")
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+        qdrant_service.ensure_collection(vector_size=1536)
+
+    assert str(exc_info.value) == "Qdrant collection creation failed."
+
+
+def test_ensure_collection_maps_collection_lookup_failure_to_safe_setup_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.collection_exists.return_value = True
+    client.get_collection.side_effect = RuntimeError("private lookup detail")
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+        qdrant_service.ensure_collection(vector_size=1536)
+
+    assert str(exc_info.value) == "Qdrant collection configuration lookup failed."
+
+
 def test_ensure_collection_accepts_existing_collection_with_matching_config(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -303,3 +350,38 @@ def test_upsert_chunk_vector_maps_qdrant_failure_to_safe_error(
         )
 
     assert str(exc_info.value) == "Qdrant chunk vector upsert failed."
+
+
+def test_upsert_chunk_vector_maps_vector_size_failure_to_setup_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.upsert.side_effect = RuntimeError(
+        "Wrong vector dimension: expected dim: 1536, got 768"
+    )
+    payload = qdrant_service.build_chunk_payload(
+        user_id="single_user",
+        document_id="11111111-1111-1111-1111-111111111111",
+        chunk_id="22222222-2222-2222-2222-222222222222",
+        file_name="contract.pdf",
+        file_type="pdf",
+        page_number=1,
+        section_title="Intro",
+        chunk_index=0,
+        content="Chunk content",
+    )
+
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+        qdrant_service.upsert_chunk_vector(
+            point_id="22222222-2222-2222-2222-222222222222",
+            vector=[0.1],
+            payload=payload,
+        )
+
+    message = str(exc_info.value)
+    assert "vector-size mismatch" in message
+    assert "verify collection setup" in message
+    assert "1536" not in message

@@ -353,7 +353,7 @@ Chunk embeddings need durable vector storage in Qdrant before future retrieval p
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/services/qdrant_service.py`, `backend/tests/test_qdrant_service.py`
 
-- [ ] (03C): Handle Qdrant failures without marking chunks indexed
+- [x] (03C): Handle Qdrant failures without marking chunks indexed
   - Source of Truth: `docs/plans/Plan_5.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_5.md` > `## 13. Failure Handling`; `docs/plans/Plan_5.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Qdrant connection failure records an indexing error and does not update `qdrant_point_id`.
@@ -766,7 +766,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch03
 - [x] (03A): Implement Qdrant client initialization and collection setup
 - [x] (03B): Implement Qdrant payload builder and vector upsert helper
-- [ ] (03C): Handle Qdrant failures without marking chunks indexed
+- [x] (03C): Handle Qdrant failures without marking chunks indexed
 
 #### Batch04
 - [ ] (04A): Implement `index_document_chunks(document_id)` orchestration

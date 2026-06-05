@@ -40,14 +40,26 @@ def ensure_collection(vector_size: int) -> None:
     collection_name = settings["collection"]
     client = get_qdrant_client()
 
-    if not client.collection_exists(collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
-        )
+    try:
+        collection_exists = client.collection_exists(collection_name)
+    except Exception as exc:
+        raise QdrantSetupError("Qdrant collection check failed.") from exc
+
+    if not collection_exists:
+        try:
+            client.create_collection(
+                collection_name=collection_name,
+                vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
+            )
+        except Exception as exc:
+            raise QdrantSetupError("Qdrant collection creation failed.") from exc
         return
 
-    collection = client.get_collection(collection_name)
+    try:
+        collection = client.get_collection(collection_name)
+    except Exception as exc:
+        raise QdrantSetupError("Qdrant collection configuration lookup failed.") from exc
+
     existing_vector = _extract_vector_params(collection)
     existing_size = _get_vector_value(existing_vector, "size")
     existing_distance = _get_vector_value(existing_vector, "distance")
@@ -115,6 +127,11 @@ def upsert_chunk_vector(
             points=[point],
         )
     except Exception as exc:
+        if _looks_like_vector_size_error(exc):
+            raise QdrantSetupError(
+                "Qdrant vector-size mismatch during chunk vector upsert. "
+                "Please verify collection setup."
+            ) from exc
         raise QdrantUpsertError("Qdrant chunk vector upsert failed.") from exc
 
     return point_id
@@ -149,3 +166,12 @@ def _get_vector_value(vector_params: Any, name: str) -> Any:
 def _normalize_distance(distance: Any) -> str:
     value = getattr(distance, "value", distance)
     return str(value).lower()
+
+
+def _looks_like_vector_size_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    vector_terms = ("vector", "dimension", "dimensions")
+    size_terms = ("size", "dim", "expected")
+    return any(term in message for term in vector_terms) and any(
+        term in message for term in size_terms
+    )

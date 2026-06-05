@@ -1442,3 +1442,168 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_5.md
+
+## Execution Report Reviewed
+docs/reports/report_5_execute_agent.md
+
+## Review Report File
+docs/review/review_5_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Qdrant Collection and Vector Upsert Service
+- Task ID: (03C)
+- Task title: Handle Qdrant failures without marking chunks indexed
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_5.md > ## 12. Acceptance Criteria; ## 13. Failure Handling; ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch03 task (03C).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/services/qdrant_service.py; backend/tests/test_qdrant_service.py; docs/reports/report_5_execute_agent.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/qdrant_service.py`: in scope - Qdrant setup and upsert failure handling only; no Supabase mutation or point ID persistence.
+- `backend/tests/test_qdrant_service.py`: in scope - mocked Qdrant service tests cover setup failures, upsert failures, vector-size mismatch, and no qdrant_point_id persistence in Qdrant payload/service.
+- `docs/reports/report_5_execute_agent.md`: in scope - execution report was appended for (03C) and matches repo evidence.
+- `docs/tasks/task_5.md`: in scope - reviewed selected task block and updated only (03C) checkbox after acceptance.
+- `docs/plans/Plan_5.md`: in scope - reviewed cited acceptance, failure handling, and reviewer checklist sections.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/qdrant_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements safe Qdrant setup/upsert exception behavior without Supabase writes.
+- file from execution report: backend/tests/test_qdrant_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover the reported failure handling behavior.
+
+## Dependency Review
+- Required dependencies: (03A), (03B)
+- Dependency status: satisfied; both are checked complete in docs/tasks/task_5.md.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Qdrant service remains backend-only, uses configured collection/settings, raises service-level errors, and does not mutate Supabase or persist qdrant_point_id.
+- Failed: none
+- Uncertain: live Qdrant behavior not verified because this task only required mocked tests.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `ensure_collection()` maps collection check/create/lookup failures to `QdrantSetupError`; `upsert_chunk_vector()` maps generic upsert failures to `QdrantUpsertError` and likely vector-size failures to loud `QdrantSetupError`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code reads Qdrant settings from backend config; test-only fake URL/key/collection values are mocks.
+
+## Validations Reviewed
+- Command/check: pytest tests/test_qdrant_service.py -v
+- Reported result: Passed, 15 tests passed
+- Rerun result: Passed, 15 passed in 0.97s from backend
+- Status: passed
+- Notes: Rerun confirms the reported mocked Qdrant validation.
+- Command/check: scope search for qdrant_point_id/Supabase/orchestration/retrieval/chat/rerank/agents/frontend in changed service/test code and backend app
+- Reported result: no out-of-scope implementation claimed
+- Rerun result: passed for selected scope; changed files do not add indexing orchestration, retrieval/chat/rerank/agent/frontend behavior
+- Status: passed
+- Notes: Existing unrelated Supabase helpers and agent table migrations predate this task and were not changed by (03C).
+
+## Acceptance Review
+- Task acceptance: Mocked tests prove upsert failure surfaces to indexing service and no point ID persistence occurs from Qdrant service code.
+- Status: satisfied
+- Evidence: Upsert failures raise `QdrantUpsertError`; vector-size mismatch raises `QdrantSetupError` with verify-collection guidance; Qdrant service has no Supabase import/write path and payload excludes `qdrant_point_id`.
+
+## Progress Tracking
+- Selected task checkbox: checked after accepted review in both selected task block and progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: not updated
+- Execution report entry: appended and accurate
+- Review report entry: appended at EOF
+- Other: sibling and future task checkboxes were not changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Vector-size upsert detection depends on provider exception wording, but `ensure_collection()` remains the deterministic primary guard and the report discloses this limitation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no; batch status was intentionally not updated by this selected-task review.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_5.md",
+  "execution_report_reviewed": "docs/reports/report_5_execute_agent.md",
+  "review_report_file": "docs/review/review_5_review_agent.md",
+  "selected_batch": "Batch03 - Qdrant Collection and Vector Upsert Service",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/qdrant_service.py",
+    "backend/tests/test_qdrant_service.py",
+    "docs/reports/report_5_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
