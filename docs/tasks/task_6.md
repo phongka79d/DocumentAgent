@@ -734,7 +734,7 @@ Optional future tracks are outside the mandatory chain.
 
 - [x] Batch01 - Retrieval Configuration, Schemas, and Router Foundation
 - [x] Batch02 - Qdrant Filtered Search Helper
-- [ ] Batch03 - Semantic Retrieval Service and Result Mapping
+- [x] Batch03 - Semantic Retrieval Service and Result Mapping
 - [ ] Batch04 - Retrieval API Route and Error Handling
 - [ ] Batch05 - Tests, Smoke Checks, and Handoff
 
