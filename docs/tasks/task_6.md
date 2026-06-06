@@ -314,7 +314,7 @@ The API route should stay thin. The retrieval service owns the semantic search w
 
 ### Tasks
 
-- [ ] (03A): Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration
+- [x] (03A): Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration
   - Source of Truth: `docs/plans/Plan_6.md` > `## 1. Goal`; `docs/plans/Plan_6.md` > `## 3. Scope`; `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Create `backend/app/services/retrieval_service.py`.
@@ -333,7 +333,7 @@ The API route should stay thin. The retrieval service owns the semantic search w
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live retrieval if `SHOPAIKEY_API_KEY` or provider setup is missing.
   - Files: `backend/app/services/retrieval_service.py`, `backend/tests/test_retrieval_service.py`
 
-- [ ] (03B): Map Qdrant payload fields into retrieval results
+- [x] (03B): Map Qdrant payload fields into retrieval results
   - Source of Truth: `docs/plans/Plan_6.md` > `## 3. Scope`; `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 7. Qdrant Cloud Design`
   - Source Requirements:
     - Return chunk content and metadata from Supabase/Qdrant payload.
@@ -349,7 +349,7 @@ The API route should stay thin. The retrieval service owns the semantic search w
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/services/retrieval_service.py`, `backend/app/schemas/retrieval.py`, `backend/tests/test_retrieval_service.py`
 
-- [ ] (03C): Fetch full chunk content from Supabase when Qdrant payload has only preview
+- [x] (03C): Fetch full chunk content from Supabase when Qdrant payload has only preview
   - Source of Truth: `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`; `docs/plans/Master_Plan.md` > `## 6.2 Supabase PostgreSQL Tables` > `## Table: document_chunks`
   - Source Requirements:
     - If full chunk content is not stored in Qdrant payload, fetch it from Supabase by `chunk_id`.
@@ -365,7 +365,7 @@ The API route should stay thin. The retrieval service owns the semantic search w
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live content enrichment if Supabase setup or chunk rows are missing.
   - Files: `backend/app/services/retrieval_service.py`, `backend/app/services/supabase_service.py`, `backend/tests/test_retrieval_service.py`
 
-- [ ] (03D): Handle ShopAIKey failures, empty result sets, and safe logging
+- [x] (03D): Handle ShopAIKey failures, empty result sets, and safe logging
   - Source of Truth: `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 11. Required Tests`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`; `docs/plans/Plan_6.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - ShopAIKey embedding failure returns HTTP 500 with a safe public message and detailed backend log.
@@ -732,8 +732,8 @@ Optional future tracks are outside the mandatory chain.
 
 ### Batches
 
-- [ ] Batch01 - Retrieval Configuration, Schemas, and Router Foundation
-- [ ] Batch02 - Qdrant Filtered Search Helper
+- [x] Batch01 - Retrieval Configuration, Schemas, and Router Foundation
+- [x] Batch02 - Qdrant Filtered Search Helper
 - [ ] Batch03 - Semantic Retrieval Service and Result Mapping
 - [ ] Batch04 - Retrieval API Route and Error Handling
 - [ ] Batch05 - Tests, Smoke Checks, and Handoff
@@ -751,10 +751,10 @@ Optional future tracks are outside the mandatory chain.
 - [x] (02C): Normalize Qdrant score semantics and failure behavior
 
 #### Batch03
-- [ ] (03A): Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration
-- [ ] (03B): Map Qdrant payload fields into retrieval results
-- [ ] (03C): Fetch full chunk content from Supabase when Qdrant payload has only preview
-- [ ] (03D): Handle ShopAIKey failures, empty result sets, and safe logging
+- [x] (03A): Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration
+- [x] (03B): Map Qdrant payload fields into retrieval results
+- [x] (03C): Fetch full chunk content from Supabase when Qdrant payload has only preview
+- [x] (03D): Handle ShopAIKey failures, empty result sets, and safe logging
 
 #### Batch04
 - [ ] (04A): Implement `POST /api/retrieval/search`

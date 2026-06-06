@@ -258,6 +258,30 @@ def list_chunks_needing_indexing(document_id: str) -> list[dict]:
     return _response_rows(response)
 
 
+def get_chunk_content_by_ids(chunk_ids: list[str]) -> dict[str, str | None]:
+    if not chunk_ids:
+        return {}
+
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("document_chunks")
+            .select("id, content")
+            .in_("id", chunk_ids)
+            .eq("user_id", _get_single_user_id())
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document chunk content lookup", exc)
+
+    return {
+        str(row["id"]): row.get("content")
+        for row in _response_rows(response)
+        if row.get("id") is not None
+    }
+
+
 def update_chunk_qdrant_point_id(
     document_id: str,
     chunk_id: str,

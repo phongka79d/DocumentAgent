@@ -10,7 +10,7 @@ This repository is a mixed workspace:
 - `frontend/` contains a Vite React TypeScript shell with an Axios API client.
 - `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
 
-The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, and a development indexing endpoint. Retrieval APIs, GraphRAG, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
+The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, and a development indexing endpoint. Retrieval APIs, GraphRAG, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
 
 ## What This Folder Does
 
@@ -21,7 +21,7 @@ Authoritative runtime behavior is defined primarily by:
 - `backend/app/main.py` for FastAPI app creation and router registration.
 - `backend/app/core/config.py` for environment-driven settings.
 - `backend/app/api/` for API routes currently exposed by the backend.
-- `backend/app/services/` for document, parsing, chunking, embedding, Supabase, ShopAIKey, and Qdrant behavior.
+- `backend/app/services/` for document, parsing, chunking, embedding, Supabase, ShopAIKey, Qdrant, and semantic retrieval behavior.
 - `backend/app/db/migrations/001_initial_schema.sql` for the planned Supabase PostgreSQL schema.
 - `frontend/package.json` and `frontend/src/` for the current frontend shell.
 - `docs/plans/README.md` and `docs/plans/Master_Plan.md` for the intended implementation roadmap.
@@ -137,6 +137,22 @@ This workflow is tested, but no public API route currently triggers it.
 
 Partial failures are collected into `DocumentIndexingResult` instead of stopping all chunks immediately.
 
+### Semantic Retrieval Service
+
+`backend/app/services/retrieval_service.py` defines the current service-level semantic search workflow:
+
+1. `semantic_search(question, document_ids=None, top_k=None)` trims and validates the question.
+2. It resolves omitted `top_k` from `RETRIEVAL_SEMANTIC_TOP_K` and enforces the 1 through 50 bounds.
+3. It embeds the question with `shopaikey_service.create_embedding()`.
+4. It searches Qdrant through `qdrant_service.search_vectors()`, including the existing single-user and optional document filters owned by the Qdrant service.
+5. It maps Qdrant payload fields into `RetrievalResult` objects, tolerating malformed optional fields and skipping unsafe points that cannot be identified or scored.
+6. If Qdrant only has `content_preview`, it fetches full chunk content from Supabase `document_chunks` with `SINGLE_USER_ID` filtering.
+7. No-match searches return `SearchResponse(results=[])`.
+
+ShopAIKey embedding failures are wrapped as `RetrievalDependencyError` with the safe public message `Semantic retrieval is temporarily unavailable.` so the later API layer can map the failure without leaking provider details.
+
+Important current limitation: this retrieval workflow exists only as a service. `POST /api/retrieval/search` is not implemented or mounted yet.
+
 ## Architecture
 
 The current architecture is layered:
@@ -185,6 +201,7 @@ Key files:
 - `backend/app/services/supabase_service.py`: Supabase database and storage operations.
 - `backend/app/services/qdrant_service.py`: Qdrant collection, upsert, and search helpers.
 - `backend/app/services/shopaikey_service.py`: embedding API calls.
+- `backend/app/services/retrieval_service.py`: semantic retrieval orchestration, result mapping, Supabase content fallback, and safe dependency failure wrapping.
 
 ## Data, Storage, and External Services
 
@@ -327,7 +344,7 @@ Backend tests are under `backend/tests/`. From `backend/`:
 pytest
 ```
 
-The tests cover settings validation, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding error handling, Supabase service behavior, Qdrant service behavior, embedding/indexing orchestration, and the development indexing API.
+The tests cover settings validation, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding error handling, Supabase service behavior, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, and the development indexing API.
 
 Frontend validation commands from `frontend/package.json`:
 
@@ -348,7 +365,7 @@ Read these first:
 - `backend/app/core/config.py` before changing environment behavior.
 - `backend/app/api/documents.py` and `backend/app/services/document_service.py` before changing upload/list/detail behavior.
 - `backend/app/services/document_processing_service.py`, `document_parser.py`, and `chunking_service.py` before changing parsing or chunk persistence.
-- `backend/app/services/embedding_service.py`, `shopaikey_service.py`, and `qdrant_service.py` before changing indexing or retrieval behavior.
+- `backend/app/services/embedding_service.py`, `shopaikey_service.py`, `qdrant_service.py`, and `retrieval_service.py` before changing indexing or retrieval behavior.
 - `backend/app/db/migrations/001_initial_schema.sql` before changing persistence contracts.
 
 Important coordination rules:
@@ -358,7 +375,7 @@ Important coordination rules:
 - If you add API routes, update `backend/app/main.py`; adding a router file alone does not expose it.
 - If you change document/chunk schemas, coordinate Pydantic schemas, Supabase SQL, service row builders, tests, and any Qdrant payload expectations.
 - If you wire processing into upload, account for status transitions: `uploaded`, `processing`, `ready`, `failed`.
-- If you implement retrieval, note that `backend/app/api/retrieval.py` is currently empty and not mounted.
+- If you implement retrieval API behavior, note that `backend/app/api/retrieval.py` is currently empty and not mounted. The service-level workflow already lives in `backend/app/services/retrieval_service.py`.
 - If you implement frontend features, expand beyond the current placeholder in `frontend/src/App.tsx` and keep `frontend/src/api/client.ts` aligned with backend routes.
 - Ignore generated and dependency folders such as `node_modules/`, `__pycache__/`, `.pytest_cache/`, `dist/`, `build/`, `.venv/`, and `venv/`.
 
@@ -376,7 +393,7 @@ Validation before claiming completion:
 - `document_processing_service.process_document()` exists and is tested but is not exposed through a route or background worker.
 - The development indexing route exists at `POST /api/documents/{document_id}/index`; its docstring says the frontend must not call it.
 - `backend/app/api/retrieval.py` is empty and not mounted in `backend/app/main.py`.
-- `backend/app/schemas/retrieval.py` defines retrieval contracts, and `qdrant_service.search_vectors()` exists, but no retrieval API workflow is implemented yet.
+- `backend/app/schemas/retrieval.py`, `qdrant_service.search_vectors()`, and `retrieval_service.semantic_search()` exist, but no retrieval API route workflow is implemented yet.
 - GraphRAG entity extraction, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
 - The database migration includes future chat/agent/graph tables that current services do not yet use.
 - The frontend is currently a placeholder shell, not a working upload/chat UI.

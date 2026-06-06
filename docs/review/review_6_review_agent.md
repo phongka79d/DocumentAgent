@@ -1310,3 +1310,737 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03A)
+- Task title: Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 1. Goal`; `## 3. Scope`; `## 6. Required Files and Folders`; `## 8. API Design`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The latest matching report entry is the appended `(03A)` execution report for Batch03.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_6_execute_agent.md`; reviewer also updated `docs/tasks/task_6.md` and appended this review report after acceptance
+- untracked files: `backend/app/services/retrieval_service.py`, `backend/tests/test_retrieval_service.py`
+
+## Files Reviewed
+- `docs/reports/report_6_execute_agent.md`: in scope - contains the selected `(03A)` execution report appended after prior accepted history.
+- `docs/tasks/task_6.md`: in scope - selected task entry, dependencies, acceptance, and progress tracker reviewed; only `(03A)` checkbox updated after acceptance.
+- `docs/plans/Plan_6.md`: in scope - cited source sections reviewed for 03A requirements.
+- `backend/app/services/retrieval_service.py`: in scope - new semantic retrieval orchestration service.
+- `backend/tests/test_retrieval_service.py`: in scope - mocked tests for 03A orchestration contract.
+- `backend/app/services/qdrant_service.py`: in scope - dependency contract for `search_vectors` reviewed.
+- `backend/app/services/shopaikey_service.py`: in scope - dependency contract for `create_embedding` reviewed.
+- `backend/app/schemas/retrieval.py`: in scope - response model contract reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements `semantic_search`, input validation, default Top-K resolution, embedding call, Qdrant delegation, and minimal response construction.
+- file from execution report: `backend/tests/test_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers empty question rejection, omitted Top-K default, bounds validation, trimmed embedding input, Qdrant delegation, and minimal result mapping.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report was appended and accurately describes the selected task evidence.
+
+## Dependency Review
+- Required dependencies: (01A), (01B), Batch02, completed Plan 5 ShopAIKey embedding service.
+- Dependency status: satisfied for mocked 03A validation; prior required task IDs are marked complete and required service/schema contracts exist.
+- Missing or invalid dependency: None for this task. Live retrieval still depends on user-provided provider setup, which is outside 03A mocked acceptance.
+
+## Architecture Alignment
+- Passed: Service owns validation/orchestration, trims before embedding, uses backend settings for omitted `top_k`, delegates vector search to Qdrant helper, returns existing response schema, and does not add API route, frontend, chat, GraphRAG, rerank, LangGraph, agents, or answer generation.
+- Failed: None.
+- Uncertain: None for 03A scope; fuller payload tolerance and Supabase fallback are explicitly assigned to sibling tasks.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code calls `create_embedding(trimmed_question)`, then `search_vectors(query_vector=..., top_k=..., document_ids=...)`, and builds a real `SearchResponse` from returned Qdrant search results.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Top-K default comes from `get_settings().retrieval_semantic_top_k`; bounds constants match Plan 6 limits; no IDs, provider secrets, expected answers, or fixture-only runtime branches were found.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_service.py -v`
+- Reported result: Passed, 7 tests passed in 2.81s.
+- Rerun result: Passed, 7 tests passed in 0.88s.
+- Status: passed
+- Notes: Tests are mocked appropriately for 03A and cover the stated acceptance contract.
+- Command/check: `git diff --check -- backend/app/services/retrieval_service.py backend/tests/test_retrieval_service.py`
+- Reported result: Passed.
+- Rerun result: Passed with no output.
+- Status: passed
+- Notes: No whitespace errors detected.
+- Command/check: scope/security term search on new service and test files
+- Reported result: Not explicitly reported.
+- Rerun result: Passed; no matches for backend secret names or out-of-scope feature terms.
+- Status: passed
+- Notes: `rg` returned no matches.
+
+## Acceptance Review
+- Task acceptance: Mocked tests prove empty question rejection, default Top-K, Top-K bounds, embedding call input, and Qdrant delegation.
+- Status: satisfied
+- Evidence: Tests assert validation happens before dependency calls, omitted `top_k` resolves to settings, invalid `top_k` values 0 and 51 are rejected, the trimmed question is passed to embedding, and Qdrant receives the produced vector, resolved Top-K, and selected document IDs.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(03A)` only.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked; sibling tasks `(03B)`, `(03C)`, and `(03D)` remain unchecked.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: No sibling, future task, or batch completion checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Direct payload mapping is minimal and can raise on missing required payload keys, but this is acceptable for 03A because malformed payload tolerance, richer mapping, Supabase content fallback, and dependency error handling are assigned to sibling Batch03 tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(03A)` is accepted in Batch03 and sibling task IDs remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch03 - Semantic Retrieval Service and Result Mapping",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/retrieval_service.py",
+    "backend/tests/test_retrieval_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/review/review_6_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03B)
+- Task title: Map Qdrant payload fields into retrieval results
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 3. Scope`; `## 7. Data Model / Schema Changes`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 7. Qdrant Cloud Design`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest matching report entry is the appended `(03B)` execution report for Batch03. Prior accepted uncommitted `(03A)` changes are present in the same files/history and were treated as dependency context, not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_6_execute_agent.md`, `docs/review/review_6_review_agent.md`, `docs/tasks/task_6.md`, `backend/app/services/retrieval_service.py` (untracked), `backend/tests/test_retrieval_service.py` (untracked)
+- untracked files: `backend/app/services/retrieval_service.py`, `backend/tests/test_retrieval_service.py`
+
+## Files Reviewed
+- `docs/reports/report_6_execute_agent.md`: in scope - contains the selected `(03B)` execution report appended after prior accepted history.
+- `docs/tasks/task_6.md`: in scope - selected task entry, dependencies, acceptance, and progress tracker reviewed; only `(03B)` checkbox updated after acceptance.
+- `docs/review/review_6_review_agent.md`: in scope - existing file tail inspected before appending this report; prior `(03A)` review content was left intact.
+- `docs/plans/Plan_6.md`: in scope - cited source sections reviewed for 03B mapping and malformed payload requirements.
+- `docs/plans/Master_Plan.md`: in scope - cited Qdrant payload fields reviewed.
+- `backend/app/services/retrieval_service.py`: in scope - contains prior `(03A)` orchestration plus selected `(03B)` payload-to-result mapper.
+- `backend/tests/test_retrieval_service.py`: in scope - contains prior `(03A)` service tests plus selected `(03B)` mapping and malformed payload tests.
+- `backend/app/schemas/retrieval.py`: in scope - response model contract reviewed for nullable metadata and required IDs.
+- `backend/app/services/qdrant_service.py`: in scope - dependency contract reviewed for `QdrantSearchResult.payload` and `semantic_similarity`.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements direct Qdrant payload mapping, required UUID parsing, nullable optional metadata handling, score propagation, and safe skipping/logging for unsafe points.
+- file from execution report: `backend/tests/test_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers complete payload mapping, missing optional fields, malformed optional fields, malformed required identity fields, non-mapping payloads, and score propagation.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report was appended and accurately describes selected task work and intentional exclusions.
+
+## Dependency Review
+- Required dependencies: (01B), Batch02, and (03A).
+- Dependency status: satisfied for mocked `(03B)` validation; prior required task IDs are marked complete and the required schema, Qdrant result contract, and semantic service entry point exist.
+- Missing or invalid dependency: None for this task.
+
+## Architecture Alignment
+- Passed: Mapping stays inside retrieval service, returns existing `RetrievalResult` schema, uses Qdrant payload fields directly when present, treats malformed nullable fields as `None`, skips unsafe required identity/score cases with safe logs, and does not add API routing, Supabase fallback, GraphRAG, hybrid scoring, rerank, agents, chat, LangGraph, answer generation, or frontend UI.
+- Failed: None.
+- Uncertain: None for 03B scope; full Supabase content fallback remains assigned to `(03C)` and broader dependency failure handling remains assigned to `(03D)`/Batch04.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code maps payload fields into `RetrievalResult`, parses required `chunk_id` and `document_id` as UUIDs, converts `semantic_similarity` to float, logs malformed optional fields, and skips points that cannot be safely identified or scored.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime code contains no fixed user IDs, document IDs, filenames, fixture answers, provider secrets, or result-order overfitting. UUID/string values appear only in tests as fixtures.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_service.py -v`
+- Reported result: Passed, 14 tests passed in 0.92s.
+- Rerun result: Passed, 14 tests passed in 0.90s.
+- Status: passed
+- Notes: Mocked tests are appropriate for this service-mapping task and cover the stated acceptance contract.
+- Command/check: `git diff --check -- backend/app/services/retrieval_service.py backend/tests/test_retrieval_service.py`
+- Reported result: Not reported for `(03B)`.
+- Rerun result: Passed with no output.
+- Status: passed
+- Notes: No whitespace errors detected.
+- Command/check: scope/security term search on selected implementation and tests
+- Reported result: Not reported for `(03B)`.
+- Rerun result: Passed; `rg` returned no matches for backend secret names or out-of-scope feature terms.
+- Status: passed
+- Notes: No frontend/provider secret exposure or prohibited feature terms found in the selected files.
+
+## Acceptance Review
+- Task acceptance: Tests verify payload field mapping, nullable metadata behavior, and no crash on malformed optional payload fields.
+- Status: satisfied
+- Evidence: `test_semantic_search_maps_complete_qdrant_payload_to_response_shape` verifies all required response fields and score propagation; missing optional field and malformed optional field tests verify nullable behavior; malformed identity and non-mapping payload tests verify unsafe points are skipped and logged instead of crashing.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(03B)` only.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked; sibling tasks `(03C)` and `(03D)` remain unchecked.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: No sibling, future task, or batch completion checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Supabase fallback for full chunk content is intentionally not present in this task and remains assigned to `(03C)`.
+- ShopAIKey/Qdrant dependency error mapping is intentionally not present in this task and remains assigned to `(03D)` and Batch04 API handling.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(03A)` and `(03B)` are accepted in Batch03 and sibling task IDs remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch03 - Semantic Retrieval Service and Result Mapping",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/retrieval_service.py",
+    "backend/tests/test_retrieval_service.py",
+    "backend/app/schemas/retrieval.py",
+    "backend/app/services/qdrant_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/review/review_6_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03C)
+- Task title: Fetch full chunk content from Supabase when Qdrant payload has only preview
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`; `docs/plans/Master_Plan.md` > `## 6.2 Supabase PostgreSQL Tables` > `## Table: document_chunks`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest matching `(03C)` execution report was reviewed. Prior accepted `(03A)` and `(03B)` work is still uncommitted and was treated as dependency/background evidence, not as part of this selected task review.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/services/supabase_service.py`, `docs/reports/report_6_execute_agent.md`, `docs/review/review_6_review_agent.md`, `docs/tasks/task_6.md`
+- untracked files: `backend/app/services/retrieval_service.py`, `backend/tests/test_retrieval_service.py`
+
+## Files Reviewed
+- `backend/app/services/retrieval_service.py`: in scope - reviewed Supabase enrichment path, preview-only selection, missing-row skip behavior, and preservation of existing mapping behavior.
+- `backend/app/services/supabase_service.py`: in scope - reviewed `get_chunk_content_by_ids` query, selected columns, empty input behavior, safe Supabase error wrapping, and `SINGLE_USER_ID` filter.
+- `backend/tests/test_retrieval_service.py`: in scope - reviewed focused tests for content merge, missing row non-crash/empty result behavior, and single-user Supabase filtering.
+- `docs/reports/report_6_execute_agent.md`: in scope - reviewed selected execution report and cross-checked reported claims against repository evidence.
+- `docs/tasks/task_6.md`: in scope - reviewed selected task block, dependencies, source requirements, and updated only `(03C)` task checkboxes after acceptance.
+- `docs/plans/Plan_6.md`: in scope - reviewed cited data model, implementation, and failure handling requirements.
+- `docs/plans/Master_Plan.md`: in scope - reviewed cited single-user authentication policy and `document_chunks` table fields.
+- `docs/review/review_6_review_agent.md`: in scope - inspected EOF before appending this review report; existing prior review entries were not modified.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains preview-only Supabase enrichment through `_enrich_missing_content_from_supabase`.
+- file from execution report: `backend/app/services/supabase_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `get_chunk_content_by_ids` with `.eq("user_id", _get_single_user_id())`.
+- file from execution report: `backend/tests/test_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains focused mocked tests for merge, absent-row behavior, and single-user ownership filtering.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes mocked/local validation only.
+
+## Dependency Review
+- Required dependencies: `(03B)`, existing Supabase service patterns.
+- Dependency status: satisfied; `(03B)` is marked accepted in the task file and the mapper/result schema exists in the working tree.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Supabase content lookup is backend-only, uses existing service/client patterns, queries the existing `document_chunks` table, preserves `SINGLE_USER_ID` filtering, and does not add database schema changes or out-of-scope retrieval features.
+- Failed: None.
+- Uncertain: Live Supabase/Qdrant/ShopAIKey enrichment was not run because the selected task only requires mocked validation and live setup is user-dependent.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `semantic_search` maps Qdrant results, calls `get_chunk_content_by_ids` only for results with `content is None` and `content_preview is not None`, merges returned content into `RetrievalResult`, and skips preview-only points whose Supabase row is absent. `get_chunk_content_by_ids` performs a real Supabase table query against `document_chunks`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The helper reads the configured single user through `_get_single_user_id()` / `get_settings().single_user_id`; no literal user ID, API key, provider URL, Qdrant collection, or fixture-specific production logic was added.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_service.py -v`
+- Reported result: Passed, 17 tests passed.
+- Rerun result: Passed, 17 tests passed in 1.56s.
+- Status: passed
+- Notes: Covers selected `(03C)` behavior plus prior retrieval service behavior.
+- Command/check: `cd backend; pytest tests/test_supabase_service.py -v`
+- Reported result: Passed, 27 tests passed.
+- Rerun result: Passed, 27 tests passed in 0.91s.
+- Status: passed
+- Notes: Regression coverage for existing Supabase service behavior around the modified service module.
+- Command/check: `git diff --check -- backend/app/services/retrieval_service.py backend/app/services/supabase_service.py backend/tests/test_retrieval_service.py docs/tasks/task_6.md docs/reports/report_6_execute_agent.md`
+- Reported result: Not specifically reported for `(03C)`.
+- Rerun result: Passed with Git CRLF normalization warnings only.
+- Status: passed
+- Notes: No whitespace errors were reported.
+
+## Acceptance Review
+- Task acceptance: Mocked tests prove chunk content lookup is filtered by `SINGLE_USER_ID` and merged correctly; missing rows do not crash retrieval.
+- Status: satisfied
+- Evidence: `test_semantic_search_fetches_missing_full_content_from_supabase` verifies Supabase content merge and preview preservation; `test_semantic_search_omits_preview_only_points_when_supabase_row_is_absent` verifies missing rows return an empty result list without crashing; `test_get_chunk_content_by_ids_filters_single_user` verifies `.eq("user_id", "single_user")` on the Supabase query.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked by reviewer in both the task block and progress tracker for `(03C)` only.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked because `(03D)` is still incomplete.
+- Execution report entry: appended and accurate for `(03C)`.
+- Review report entry: appended at EOF.
+- Other: Existing `(03A)` and `(03B)` accepted checkbox changes were preserved and not re-reviewed as selected work.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Live content enrichment remains dependent on user-provided Supabase/Qdrant/ShopAIKey setup and indexed chunks, as correctly reported by the executor.
+- `backend/app/services/retrieval_service.py` and `backend/tests/test_retrieval_service.py` are still untracked in git status because earlier accepted Batch03 work has not been committed yet.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(03D)` remains unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch03 - Semantic Retrieval Service and Result Mapping",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/retrieval_service.py",
+    "backend/app/services/supabase_service.py",
+    "backend/tests/test_retrieval_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/review/review_6_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03D)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03D)
+- Task title: Handle ShopAIKey failures, empty result sets, and safe logging
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 11. Required Tests`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`; `docs/plans/Plan_6.md` > `## 14. Agent Report Requirement`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03D)
+- Reviewed task ID: (03D)
+- Correct selection: yes
+- Notes: The latest matching `(03D)` execution report was reviewed. Prior accepted uncommitted `(03A)`, `(03B)`, and `(03C)` work remains in the same working tree and was treated as dependency/background evidence, not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/services/supabase_service.py`, `docs/reports/report_6_execute_agent.md`, `docs/review/review_6_review_agent.md`, `docs/tasks/task_6.md`
+- untracked files: `backend/app/services/retrieval_service.py`, `backend/tests/test_retrieval_service.py`
+
+## Files Reviewed
+- `backend/app/services/retrieval_service.py`: in scope - reviewed `RetrievalDependencyError`, ShopAIKey embedding wrapper, safe logging call, no-match Qdrant result flow, and Supabase lookup skip for empty results.
+- `backend/tests/test_retrieval_service.py`: in scope - reviewed mocked tests for empty Qdrant matches and ShopAIKey failure wrapping/no leakage.
+- `backend/app/services/shopaikey_service.py`: in scope - reviewed provider exception type and confirmed retrieval service catches `ShopAIKeyServiceError` from the embedding dependency.
+- `docs/reports/report_6_execute_agent.md`: in scope - reviewed selected execution report and verified it includes a mocked semantic response example and mocked-only note.
+- `docs/tasks/task_6.md`: in scope - reviewed selected task block, dependencies, source requirements, and updated only `(03D)` task checkboxes after acceptance.
+- `docs/plans/Plan_6.md`: in scope - reviewed cited API design, required tests, failure handling, and agent report requirements.
+- `backend/app/services/supabase_service.py`: questionable - changed by prior accepted `(03C)` work and not part of selected `(03D)` implementation except as background dependency.
+- `docs/review/review_6_review_agent.md`: in scope - inspected EOF before appending this review report; existing prior review entries were not modified.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `RetrievalDependencyError`, `_create_query_embedding`, and safe ShopAIKey failure wrapping without logging exception details.
+- file from execution report: `backend/tests/test_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `test_semantic_search_returns_empty_results_for_no_qdrant_matches` and `test_semantic_search_wraps_shopaikey_failure_with_safe_error_and_log`.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report was appended and accurately lists mocked/local validation, a mocked empty-results response example, and live-check limitations.
+
+## Dependency Review
+- Required dependencies: `(03A)` semantic search orchestration and `(03B)` result mapping; `(03C)` exists as prior accepted background for Supabase enrichment.
+- Dependency status: satisfied for selected mocked validation; `(03A)`, `(03B)`, and `(03C)` are marked accepted in the task file and the required retrieval service/test files exist in the working tree.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: ShopAIKey failure handling stays in the retrieval service, exposes a service-level `RetrievalDependencyError` with a safe public message for later Batch04 HTTP mapping, avoids API route work, returns normal `SearchResponse` objects with `results: []` for no-match Qdrant responses, and does not add frontend UI, chat, GraphRAG, hybrid scoring, rerank, LangGraph, agents, or answer generation.
+- Failed: None.
+- Uncertain: Live ShopAIKey/Qdrant/Supabase retrieval was not run because the task uses mocked/local validation and real credentials/indexed chunks are user-dependent.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_create_query_embedding` calls the real imported `create_embedding`, catches only `ShopAIKeyServiceError`, logs a static safety-oriented message plus exception type, raises `RetrievalDependencyError("Semantic retrieval is temporarily unavailable.")`, and preserves exception chaining for internal inspection. Empty Qdrant results flow through mapping/enrichment to `SearchResponse(results=[])` without Supabase lookup.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code contains no literal API keys, provider secrets, user IDs, document IDs, fixture filenames, or answer overfitting. The fixed safe public message is appropriate error-contract text, and the simulated secret appears only in a test fixture used to prove non-leakage.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_service.py -v`
+- Reported result: Passed, 19 tests passed in 1.46s.
+- Rerun result: Passed, 19 tests passed in 1.55s.
+- Status: passed
+- Notes: Covers selected `(03D)` behavior plus prior retrieval service behavior.
+- Command/check: `git diff --check -- backend/app/services/retrieval_service.py backend/tests/test_retrieval_service.py docs/tasks/task_6.md docs/reports/report_6_execute_agent.md`
+- Reported result: Not specifically reported for `(03D)`.
+- Rerun result: Passed with Git CRLF normalization warnings only.
+- Status: passed
+- Notes: No whitespace errors were reported.
+- Command/check: production-only secret/logging scan on `backend/app/services/retrieval_service.py`
+- Reported result: Not reported.
+- Rerun result: Passed; `rg` found no `sk-`, authorization/header, backend secret variable, `secret`, `exc_info`, or traceback terms in production retrieval service code.
+- Status: passed
+- Notes: The broader test/report search includes an intentional simulated secret in the test fixture and historical report text, but production logging code does not include provider details.
+- Command/check: execution report mocked response requirement
+- Reported result: Mocked response example included.
+- Rerun result: Passed; report includes `{"question":"No matching chunks?","results":[]}` and states only mocked/local tests were run.
+- Status: passed
+- Notes: Satisfies Plan 6 agent report requirement for this selected task.
+
+## Acceptance Review
+- Task acceptance: Tests verify ShopAIKey failure handling, empty result list behavior, and no secret leakage in public errors.
+- Status: satisfied
+- Evidence: `test_semantic_search_wraps_shopaikey_failure_with_safe_error_and_log` verifies `ShopAIKeyServiceError` is wrapped as `RetrievalDependencyError`, public and string messages are the safe generic text, Qdrant search is not called, the original error is chained internally, and the simulated secret is absent from public error text and captured logs. `test_semantic_search_returns_empty_results_for_no_qdrant_matches` verifies a no-match Qdrant response returns `{"question":"No matching chunks?","results":[]}` and does not call Supabase content lookup.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked by reviewer in both the task block and progress tracker for `(03D)` only.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked per explicit user instruction not to mark the batch complete.
+- Execution report entry: appended and accurate for `(03D)`.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not changed by this review; prior accepted uncommitted checkbox changes for `(03A)` through `(03C)` were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Batch04 still needs to translate `RetrievalDependencyError` into the required public-safe HTTP 500 response; this was correctly kept out of scope for `(03D)`.
+- Live semantic retrieval remains dependent on user-provided ShopAIKey credentials, Qdrant/Supabase setup, and indexed chunks, as correctly reported by the executor.
+- `backend/app/services/retrieval_service.py` and `backend/tests/test_retrieval_service.py` remain untracked in git status because prior accepted Batch03 work has not been committed yet.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, per explicit user instruction not to mark the batch complete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch03 - Semantic Retrieval Service and Result Mapping",
+  "selected_task_id": "(03D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/retrieval_service.py",
+    "backend/tests/test_retrieval_service.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/app/services/supabase_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/review/review_6_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

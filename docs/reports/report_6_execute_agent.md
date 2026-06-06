@@ -613,3 +613,368 @@ complete
 - next task ID: (03A)
 - can proceed: yes, after A2 accepts this repair
 - handoff notes: Qdrant search failure logs now emit only a safe static message and the test enforces that raw provider detail and `qdrant-secret-token` are absent from both public error and backend logs.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch03 - Semantic Retrieval Service and Result Mapping
+
+## Task
+(03A) - Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 1. Goal`
+- `docs/plans/Plan_6.md` > `## 3. Scope`
+- `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03A)
+- Task title: Implement `semantic_search(question, document_ids=None, top_k=None)` orchestration
+
+## Completed Work
+- Task is complete.
+- Created `backend/app/services/retrieval_service.py` with typed `semantic_search(question, document_ids=None, top_k=None)` orchestration.
+- Trimmed and validated questions before embedding.
+- Resolved omitted `top_k` from `RETRIEVAL_SEMANTIC_TOP_K` via backend settings.
+- Enforced `top_k` bounds from 1 through 50.
+- Called `create_embedding(trimmed_question)` from the ShopAIKey service.
+- Delegated vector search to `qdrant_service.search_vectors(query_vector, top_k, document_ids)`.
+- Returned the existing `SearchResponse` / `RetrievalResult` schema with direct Qdrant payload mapping only; Supabase fallback, richer malformed-payload handling, dependency error mapping, and API HTTP mapping remain for sibling tasks.
+- Added mocked service tests for the 03A orchestration contract.
+
+## Files Created or Modified
+- `backend/app/services/retrieval_service.py`
+- `backend/tests/test_retrieval_service.py`
+- `docs/reports/report_6_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_service.py -v`: Passed
+- evidence or reason: collected 7 items and all 7 passed in 2.81s.
+- `git diff --check -- backend/app/services/retrieval_service.py backend/tests/test_retrieval_service.py`: Passed
+- evidence or reason: command exited 0 with no whitespace errors.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove empty question rejection, default Top-K, Top-K bounds, embedding call input, and Qdrant delegation.
+- Status: satisfied
+- Evidence: `backend/tests/test_retrieval_service.py` covers whitespace-only question rejection before dependency calls, omitted `top_k` defaulting to settings, `top_k` values 0 and 51 rejected before embedding, trimmed question passed to `create_embedding`, query vector/document IDs/top_k passed to `search_vectors`, and minimal response mapping from Qdrant payload.
+
+## Artifacts Produced
+- Semantic retrieval service entry point in `backend/app/services/retrieval_service.py`.
+- Mocked retrieval service tests in `backend/tests/test_retrieval_service.py`.
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly requested that checkbox updates be left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Added `RetrievalValidationError` for service-level invalid question and Top-K validation so Batch04 can later translate it to HTTP 400 without embedding FastAPI behavior into the service.
+- Kept result mapping limited to direct Qdrant payload fields already represented by `RetrievalResult`; did not implement Supabase fallback, malformed payload tolerance, dependency failure handling, API route behavior, GraphRAG, hybrid scoring, rerank, agents, chat, LangGraph, answer generation, or frontend UI.
+
+## Risks or Open Issues
+- Live retrieval remains blocked until the user provides valid ShopAIKey/Qdrant/Supabase setup and indexed chunks; this task used mocked tests only.
+- Sibling tasks still need to implement fuller payload mapping behavior, Supabase content fallback, safe dependency failure handling, and API HTTP error mapping.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependencies `(01A)`, `(01B)`, and Batch02 were present in the codebase before implementation.
+- User action for a real ShopAIKey API key is not required for mocked validation and remains required for live retrieval.
+- Existing report file was appended at EOF; task checkboxes were not modified.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 reviews and accepts `(03A)`.
+- handoff notes: `semantic_search` now returns `SearchResponse` and uses direct Qdrant payload mapping; `(03B)` can expand and harden result mapping without changing orchestration semantics.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch03 - Semantic Retrieval Service and Result Mapping
+
+## Task
+(03B) - Map Qdrant payload fields into retrieval results
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 3. Scope`
+- `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_6.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_6.md` > `## 13. Failure Handling`
+- `docs/plans/Master_Plan.md` > `## 7. Qdrant Cloud Design`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03B)
+- Task title: Map Qdrant payload fields into retrieval results
+
+## Completed Work
+- Status: complete.
+- Implemented Qdrant result mapping into `RetrievalResult` objects using direct payload fields when present.
+- Mapped chunk ID, document ID, file name, file type, content, content preview, page number, section title, chunk index, and `semantic_similarity`.
+- Added tolerant optional metadata mapping so missing or malformed nullable fields become `None` instead of crashing response construction.
+- Added safe malformed-point logging and skipped points that cannot be safely identified by required `chunk_id`, required `document_id`, payload object shape, or score.
+- Kept work scoped to mapping; did not implement Supabase fallback fetching, broad dependency error handling, API routing, GraphRAG, hybrid scoring, rerank, agents, chat, LangGraph, answer generation, or frontend UI.
+
+## Files Created or Modified
+- `backend/app/services/retrieval_service.py`
+- `backend/tests/test_retrieval_service.py`
+- `docs/reports/report_6_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_service.py -v`: Passed
+- Evidence: 14 tests passed in 0.92s.
+
+## Acceptance Check
+- Task acceptance condition: Tests verify payload field mapping, nullable metadata behavior, and no crash on malformed optional payload fields.
+- Status: satisfied
+- Evidence: Added and passed mocked retrieval service tests for complete payload mapping, missing optional fields, malformed optional fields, malformed required identity fields, non-mapping payloads, and score propagation.
+
+## Artifacts Produced
+- Updated semantic retrieval mapper in `backend/app/services/retrieval_service.py`.
+- Updated mocked service coverage in `backend/tests/test_retrieval_service.py`.
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly requested that checkbox updates be left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Required identity fields `chunk_id` and `document_id` are parsed as UUIDs; points missing either required ID or containing invalid IDs are skipped and logged because they cannot be safely identified.
+- Optional nullable payload fields are type-checked before schema construction; malformed optional values are logged and returned as `None`.
+- `semantic_similarity` is copied from the Qdrant search result and converted to `float`; missing or invalid score values cause the point to be skipped and logged.
+
+## Risks or Open Issues
+- Supabase fallback content fetching is intentionally not implemented here because it belongs to sibling task `(03C)`.
+- Broader ShopAIKey/Qdrant dependency error handling is intentionally not implemented here because it belongs to sibling task `(03D)` and Batch04 API error mapping.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependencies `(01B)`, Batch02, and `(03A)` were present in the task file/codebase context before implementation.
+- User action is not required for mocked tests.
+- Existing dirty/uncommitted changes were preserved; task checkboxes were not modified.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes, after A2 reviews and accepts `(03B)`.
+- handoff notes: Result mapping now tolerates partial/malformed Qdrant payload metadata and skips unsafe points; `(03C)` can add Supabase content fallback without changing the mapper's required identity behavior.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch03 - Semantic Retrieval Service and Result Mapping
+
+## Task
+(03C) - Fetch full chunk content from Supabase when Qdrant payload has only preview
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_6.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_6.md` > `## 13. Failure Handling`
+- `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
+- `docs/plans/Master_Plan.md` > `## 6.2 Supabase PostgreSQL Tables` > `## Table: document_chunks`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03C)
+- Task title: Fetch full chunk content from Supabase when Qdrant payload has only preview
+
+## Completed Work
+- Completed the selected task.
+- Added a focused Supabase helper to fetch `document_chunks.id, content` by chunk IDs while filtering by the configured `SINGLE_USER_ID`.
+- Updated semantic retrieval mapping to fetch full Supabase content only for preview-only Qdrant payloads, preserve `content_preview`, and omit preview-only results when the backing chunk row is absent.
+- Added mocked tests proving Supabase content is merged, missing chunk rows do not crash retrieval and produce an empty result for preview-only orphaned points, and the Supabase lookup preserves single-user ownership.
+
+## Files Created or Modified
+- backend/app/services/retrieval_service.py
+- backend/app/services/supabase_service.py
+- backend/tests/test_retrieval_service.py
+- docs/reports/report_6_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_service.py -v`: Passed
+- evidence or reason: Final run collected 17 tests; 17 passed in 1.47s.
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed
+- evidence or reason: Additional focused validation for the modified Supabase service collected 27 tests; 27 passed in 0.86s.
+- Red test run: Failed as expected before implementation
+- evidence or reason: New 03C tests failed because content fallback/helper behavior was absent.
+
+## Acceptance Check
+- Task acceptance condition: Mocked tests prove chunk content lookup is filtered by `SINGLE_USER_ID` and merged correctly; missing rows do not crash retrieval.
+- Status: satisfied
+- Evidence: `test_semantic_search_fetches_missing_full_content_from_supabase`, `test_semantic_search_omits_preview_only_points_when_supabase_row_is_absent`, and `test_get_chunk_content_by_ids_filters_single_user` pass in `tests/test_retrieval_service.py`.
+
+## Artifacts Produced
+- Updated semantic retrieval service with Supabase content enrichment for preview-only Qdrant payloads.
+- Added `get_chunk_content_by_ids` Supabase helper.
+- Updated mocked retrieval service tests.
+- Only mocked/local tests were run; no live Supabase/Qdrant/ShopAIKey content enrichment check was performed.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly requested that checkbox updates be left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Fallback lookup is limited to results where Qdrant has `content_preview` but no full `content`, preserving prior nullable behavior for points that simply omit optional payload fields.
+- Preview-only points whose Supabase chunk rows are absent are omitted, yielding an empty results list when all matched indexed chunks are stale/orphaned.
+- Supabase lookup returns a chunk-id-to-content map and filters by `SINGLE_USER_ID` inside `supabase_service.py`, not at the caller.
+
+## Risks or Open Issues
+- Live content enrichment still requires user Supabase setup and indexed chunks before it can be validated against real services.
+- Broader ShopAIKey/Qdrant dependency error handling and API HTTP mapping were intentionally not implemented because they belong to sibling task `(03D)` and Batch04.
+
+## Minor Issues Fixed During Execution
+- Narrowed content fallback to preview-only payloads so existing nullable optional-field behavior from `(03B)` remains intact.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependencies `(03B)` and existing Supabase service patterns were present before implementation.
+- User action is not required for mocked validation; live enrichment remains dependent on user-provided Supabase/Qdrant/ShopAIKey setup and indexed chunks.
+- Existing dirty/uncommitted changes were preserved; task checkboxes were not modified.
+
+## Notes for Next Task
+- next task ID: (03D)
+- can proceed: yes, after A2 reviews and accepts `(03C)`.
+- handoff notes: Retrieval results now contain Supabase full content for preview-only Qdrant payloads when the single-user chunk row exists; orphaned preview-only Qdrant points are skipped without crashing.
+
+---
+
+# Task Execution Report - (03D)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch03 - Semantic Retrieval Service and Result Mapping
+
+## Task
+(03D) - Handle ShopAIKey failures, empty result sets, and safe logging
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_6.md > ## 8. API Design
+- docs/plans/Plan_6.md > ## 11. Required Tests
+- docs/plans/Plan_6.md > ## 13. Failure Handling
+- docs/plans/Plan_6.md > ## 14. Agent Report Requirement
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Semantic Retrieval Service and Result Mapping
+- Task ID: (03D)
+- Task title: Handle ShopAIKey failures, empty result sets, and safe logging
+
+## Completed Work
+- Status: complete.
+- Added a service-level `RetrievalDependencyError` carrying a safe `public_message` for later API HTTP 500 mapping.
+- Wrapped `ShopAIKeyServiceError` from question embedding so provider failures do not leak raw provider details or secrets through public service errors.
+- Added safe backend logging for ShopAIKey embedding failures that records the failure stage and exception type while suppressing provider details.
+- Added mocked tests for no-match Qdrant responses returning `results: []` and for ShopAIKey failure wrapping/no secret leakage.
+
+## Files Created or Modified
+- backend/app/services/retrieval_service.py
+- backend/tests/test_retrieval_service.py
+- docs/reports/report_6_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_service.py -v`: Passed
+- evidence or reason: 19 tests passed in 1.46s.
+- TDD RED check `cd backend; pytest tests/test_retrieval_service.py -v`: Failed as expected before implementation because `RetrievalDependencyError` did not exist; 18 passed, 1 failed.
+
+## Acceptance Check
+- Task acceptance condition: Tests verify ShopAIKey failure handling, empty result list behavior, and no secret leakage in public errors.
+- Status: satisfied
+- Evidence: `test_semantic_search_wraps_shopaikey_failure_with_safe_error_and_log` verifies `ShopAIKeyServiceError` is wrapped as `RetrievalDependencyError`, the public message is `Semantic retrieval is temporarily unavailable.`, Qdrant search is not called, and the simulated secret is absent from public error text and captured logs. `test_semantic_search_returns_empty_results_for_no_qdrant_matches` verifies a no-match Qdrant response produces `{"question":"No matching chunks?","results":[]}` and skips Supabase content lookup.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_6_execute_agent.md.
+- Mocked semantic search response example: `{"question":"No matching chunks?","results":[]}`.
+- Only mocked/local tests were run; no live ShopAIKey/Qdrant/Supabase semantic response was produced because real credentials and indexed chunks were not provided.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly requested checkbox updates be left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept HTTP mapping out of scope for Batch04 by exposing a service-level dependency error with a safe public message.
+- Logged ShopAIKey failures without `exc_info` or exception message text so provider details and secrets embedded in upstream exception messages are not emitted.
+- Preserved existing empty-list behavior for Qdrant no-match responses and added a regression test around it.
+
+## Risks or Open Issues
+- Live semantic retrieval remains `BLOCKED_BY_USER_ACTION` until the user provides valid ShopAIKey credentials, Qdrant/Supabase setup, and indexed chunks.
+- Batch04 still needs to translate `RetrievalDependencyError` into the required public-safe HTTP 500 response.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependencies `(03A)` and `(03B)` were already checked in docs/tasks/task_6.md before execution.
+- Existing dirty/uncommitted changes were preserved; task checkboxes were not modified.
+- No Batch04 API route or HTTP response mapping was implemented.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes, after A2 reviews and accepts `(03D)`.
+- handoff notes: The retrieval service now raises `RetrievalDependencyError(public_message="Semantic retrieval is temporarily unavailable.")` for ShopAIKey embedding failures, suitable for later API 500 mapping.
