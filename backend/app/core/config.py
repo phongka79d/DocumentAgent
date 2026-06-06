@@ -18,7 +18,9 @@ class Settings(BaseSettings):
     supabase_storage_bucket: str = "documents"
     shopaikey_api_key: str | None = None
     shopaikey_base_url: str | None = None
+    shopaikey_chat_model: str | None = None
     shopaikey_embedding_model: str | None = None
+    graph_extraction_enabled: bool = True
     qdrant_url: str | None = None
     qdrant_api_key: str | None = None
     qdrant_collection: str | None = None

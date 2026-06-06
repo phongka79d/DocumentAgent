@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.schemas.parsing import ChunkDraft
+from app.schemas.graph import EntityDraft, RelationshipDraft
 from app.services import supabase_service
 from app.services.supabase_service import SupabaseConnectionError
 
@@ -680,3 +681,221 @@ def test_update_document_chunk_count_filters_user(
         (("user_id", "single_user"),),
     ]
     query.execute.assert_called_once_with()
+
+
+def test_get_graph_document_loads_single_user_document(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    document = {"id": "document-id", "user_id": "single_user"}
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    get_document_metadata = Mock(return_value=document)
+    monkeypatch.setattr(
+        supabase_service,
+        "get_document_metadata",
+        get_document_metadata,
+    )
+
+    result = supabase_service.get_graph_document("document-id")
+
+    assert result == document
+    get_document_metadata.assert_called_once_with("document-id", "single_user")
+
+
+def test_list_document_chunks_filters_single_user_and_orders_by_index(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [{"id": "chunk-1", "document_id": "document-id"}]
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.execute.return_value = SimpleNamespace(data=rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_document_chunks("document-id")
+
+    assert result == rows
+    client.table.assert_called_once_with("document_chunks")
+    query.select.assert_called_once_with(
+        "id, document_id, user_id, chunk_index, content, page_number, "
+        "section_title, token_count, qdrant_point_id"
+    )
+    assert query.eq.call_args_list == [
+        (("document_id", "document-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.order.assert_called_once_with("chunk_index")
+    query.execute.assert_called_once_with()
+
+
+def test_clear_document_graph_rows_deletes_relationships_before_entities(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relationship_query = Mock()
+    relationship_query.delete.return_value = relationship_query
+    relationship_query.eq.return_value = relationship_query
+    relationship_query.execute.return_value = SimpleNamespace(data=[])
+    entity_query = Mock()
+    entity_query.delete.return_value = entity_query
+    entity_query.eq.return_value = entity_query
+    entity_query.execute.return_value = SimpleNamespace(data=[])
+    client = SimpleNamespace(
+        table=Mock(side_effect=[relationship_query, entity_query])
+    )
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    supabase_service.clear_document_graph_rows("document-id")
+
+    assert client.table.call_args_list == [
+        (("document_relationships",),),
+        (("document_entities",),),
+    ]
+    relationship_query.delete.assert_called_once_with()
+    relationship_query.eq.assert_called_once_with("document_id", "document-id")
+    entity_query.delete.assert_called_once_with()
+    assert entity_query.eq.call_args_list == [
+        (("document_id", "document-id"),),
+        (("user_id", "single_user"),),
+    ]
+
+
+def test_insert_document_entities_inserts_validated_single_user_rows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entity = EntityDraft(
+        entity_name="Probation Period",
+        entity_type="contract term",
+        description="Trial period",
+        chunk_id="11111111-1111-1111-1111-111111111111",
+    )
+    inserted_rows = [{"id": "entity-1"}]
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=inserted_rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_document_entities("document-id", [entity])
+
+    assert result == inserted_rows
+    client.table.assert_called_once_with("document_entities")
+    query.insert.assert_called_once_with(
+        [
+            {
+                "document_id": "document-id",
+                "chunk_id": "11111111-1111-1111-1111-111111111111",
+                "user_id": "single_user",
+                "entity_name": "Probation Period",
+                "entity_type": "contract term",
+                "description": "Trial period",
+            }
+        ]
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_find_document_entity_filters_single_user_name_and_type(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"id": "entity-1", "entity_name": "Probation Period"}
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.limit.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.find_document_entity(
+        "document-id",
+        "  Probation Period  ",
+        "contract term",
+    )
+
+    assert result == row
+    client.table.assert_called_once_with("document_entities")
+    assert query.eq.call_args_list == [
+        (("document_id", "document-id"),),
+        (("user_id", "single_user"),),
+        (("entity_name", "Probation Period"),),
+        (("entity_type", "contract term"),),
+    ]
+    query.limit.assert_called_once_with(1)
+
+
+def test_insert_document_relationships_inserts_validated_rows_without_user_filter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relationship = RelationshipDraft(
+        source_type="chunk",
+        source_id="chunk-1",
+        target_type="entity",
+        target_id="entity-1",
+        relationship_type="chunk_mentions_entity",
+        weight=1.0,
+        description="mentions",
+    )
+    inserted_rows = [{"id": "relationship-1"}]
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=inserted_rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_document_relationships(
+        "document-id",
+        [relationship],
+    )
+
+    assert result == inserted_rows
+    client.table.assert_called_once_with("document_relationships")
+    query.insert.assert_called_once_with(
+        [
+            {
+                "document_id": "document-id",
+                "source_type": "chunk",
+                "source_id": "chunk-1",
+                "target_type": "entity",
+                "target_id": "entity-1",
+                "relationship_type": "chunk_mentions_entity",
+                "weight": 1.0,
+                "description": "mentions",
+            }
+        ]
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_insert_document_relationships_reports_safe_insert_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.insert_document_relationships(
+            "document-id",
+            [
+                RelationshipDraft(
+                    source_type="chunk",
+                    source_id="chunk-1",
+                    target_type="entity",
+                    target_id="entity-1",
+                    relationship_type="chunk_mentions_entity",
+                    weight=1.0,
+                )
+            ],
+        )
+
+    message = str(exc_info.value)
+    assert "document relationship insert" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message

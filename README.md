@@ -10,7 +10,7 @@ This repository is a mixed workspace:
 - `frontend/` contains a Vite React TypeScript shell with an Axios API client.
 - `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
 
-The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, and a development indexing endpoint. GraphRAG, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
+The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, and Supabase graph helper contracts. Graph extraction orchestration, graph build execution, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
 
 ## What This Folder Does
 
@@ -164,6 +164,16 @@ The route accepts `question`, optional `document_ids`, and optional `top_k`, the
 - ShopAIKey and Qdrant dependency failures return HTTP 500 with a safe public message.
 - No matching indexed chunks return HTTP 200 with an empty `results` list.
 
+### Graph Configuration and Persistence Contracts
+
+Plan 7 graph groundwork is partially implemented in backend-only code:
+
+1. `backend/app/core/config.py` exposes `SHOPAIKEY_CHAT_MODEL` and `GRAPH_EXTRACTION_ENABLED`.
+2. `backend/app/schemas/graph.py` defines allowed graph entity and relationship types, validated extraction output models, persistence draft models, and graph build result/error contracts.
+3. `backend/app/services/supabase_service.py` includes helper contracts for graph document lookup, chunk listing, graph row clearing, entity insertion/lookup, and relationship insertion.
+
+There is not yet a graph extraction service, graph builder orchestration service, public graph API, or frontend graph workflow.
+
 ## Architecture
 
 The current architecture is layered:
@@ -174,7 +184,7 @@ The current architecture is layered:
 - Persistence layer: `supabase_service.py` reads/writes Supabase tables and storage buckets.
 - Vector layer: `qdrant_service.py` manages collection setup, vector upsert, and vector search helpers.
 - Provider layer: `shopaikey_service.py` calls the embedding endpoint.
-- Schema layer: `backend/app/schemas/` defines Pydantic request/response and internal contracts.
+- Schema layer: `backend/app/schemas/` defines Pydantic request/response and internal contracts, including graph extraction and graph build contracts.
 - Frontend layer: `frontend/src/` is currently a minimal React shell and Axios client.
 
 The planned architecture in `docs/plans/Master_Plan.md` adds GraphRAG, LangGraph agents, chat sessions, agent runs, agent steps, evidence APIs, and richer frontend pages. The database migration already includes tables for those future features, but the runtime code does not yet implement the full agent workflow.
@@ -229,7 +239,7 @@ Supabase is used for PostgreSQL metadata/chunk tables and original document stor
 - `agent_runs`
 - `agent_steps`
 
-Only some of these tables are currently used by service code. Document upload/list/detail uses `documents`; processing and indexing use `document_chunks`. Graph, chat, and agent tables are planned but not yet wired into runtime workflows.
+Only some of these tables are currently used by service code. Document upload/list/detail uses `documents`; processing and indexing use `document_chunks`. Graph helper contracts can read chunks and write `document_entities` and `document_relationships`, but graph extraction and graph build orchestration are not yet implemented. Chat and agent tables are planned but not yet wired into runtime workflows.
 
 ### Qdrant
 
@@ -243,7 +253,7 @@ For live semantic retrieval checks, the Qdrant collection must support keyword p
 
 `shopaikey_service.py` calls an OpenAI-compatible embeddings endpoint at `{SHOPAIKEY_BASE_URL}/embeddings`. The embedding model is configured through `SHOPAIKEY_EMBEDDING_MODEL`; it is not hardcoded in the service.
 
-The master plan also mentions chat completion and rerank endpoints, but current code only implements embeddings.
+The backend settings also include `SHOPAIKEY_CHAT_MODEL` for upcoming graph extraction work, but the ShopAIKey service currently only implements embeddings. Chat completion and rerank endpoints are still planned.
 
 ## Configuration
 
@@ -261,7 +271,9 @@ Do not expose or copy secret values into documentation.
 | `SUPABASE_STORAGE_BUCKET` | No | Storage bucket for original uploaded documents. Defaults to `documents`. | `backend/app/core/config.py` |
 | `SHOPAIKEY_API_KEY` | Yes for embeddings | Backend-only ShopAIKey API key. | `Settings.require_shopaikey_settings()` |
 | `SHOPAIKEY_BASE_URL` | Yes for embeddings | OpenAI-compatible API base URL. | `Settings.require_shopaikey_settings()` |
+| `SHOPAIKEY_CHAT_MODEL` | Yes when LLM graph extraction is enabled later | Chat model intended for graph entity extraction. | `backend/app/core/config.py` |
 | `SHOPAIKEY_EMBEDDING_MODEL` | Yes for embeddings | Embedding model sent to the `/embeddings` endpoint. | `Settings.require_shopaikey_settings()` |
+| `GRAPH_EXTRACTION_ENABLED` | No | Enables future live graph extraction; can be disabled for deterministic fallback tests/local development. Defaults to `true`. | `backend/app/core/config.py` |
 | `QDRANT_URL` | Yes for Qdrant operations | Qdrant endpoint URL. | `Settings.require_qdrant_settings()` |
 | `QDRANT_API_KEY` | Yes for Qdrant operations | Backend-only Qdrant API key. | `Settings.require_qdrant_settings()` |
 | `QDRANT_COLLECTION` | Yes for Qdrant operations | Collection name for chunk vectors. | `Settings.require_qdrant_settings()` |
@@ -357,7 +369,7 @@ Backend tests are under `backend/tests/`. From `backend/`:
 pytest
 ```
 
-The tests cover settings validation, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding error handling, Supabase service behavior, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, retrieval API contract/error behavior, and the development indexing API.
+The tests cover settings validation, graph schema validation, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding error handling, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, retrieval API contract/error behavior, and the development indexing API.
 
 Frontend validation commands from `frontend/package.json`:
 
@@ -406,7 +418,7 @@ Validation before claiming completion:
 - `document_processing_service.process_document()` exists and is tested but is not exposed through a route or background worker.
 - The development indexing route exists at `POST /api/documents/{document_id}/index`; its docstring says the frontend must not call it.
 - `backend/app/api/retrieval.py` is mounted in `backend/app/main.py` and exposes `POST /api/retrieval/search`, but there is still no frontend retrieval or chat UI.
-- GraphRAG entity extraction, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
-- The database migration includes future chat/agent/graph tables that current services do not yet use.
+- Graph schemas and Supabase graph helper contracts exist, but graph entity extraction, graph builder orchestration, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
+- The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
 - The frontend is currently a placeholder shell, not a working upload/chat UI.
 - No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.
