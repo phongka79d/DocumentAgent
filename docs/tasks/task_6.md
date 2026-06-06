@@ -554,7 +554,7 @@ Plan 6 completion depends on evidence that mocked behavior passes, external-serv
 
 ### Tasks
 
-- [ ] (05A): Add and run retrieval service tests
+- [x] (05A): Add and run retrieval service tests
   - Source of Truth: `docs/plans/Plan_6.md` > `## 3. Scope`; `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_6.md` > `## 11. Required Tests`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`; `docs/plans/Plan_6.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Add `backend/tests/test_retrieval_service.py`.
@@ -573,7 +573,7 @@ Plan 6 completion depends on evidence that mocked behavior passes, external-serv
   - Blocked Condition: None for mocked tests.
   - Files: `backend/tests/test_retrieval_service.py`
 
-- [ ] (05B): Add and run retrieval API tests
+- [x] (05B): Add and run retrieval API tests
   - Source of Truth: `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 11. Required Tests`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add `backend/tests/test_retrieval_api.py`.
@@ -590,7 +590,7 @@ Plan 6 completion depends on evidence that mocked behavior passes, external-serv
   - Blocked Condition: None for mocked tests.
   - Files: `backend/tests/test_retrieval_api.py`
 
-- [ ] (05C): Run combined backend tests and scope/security checks
+- [x] (05C): Run combined backend tests and scope/security checks
   - Source of Truth: `docs/plans/Plan_6.md` > `## 4. Out of Scope`; `docs/plans/Plan_6.md` > `## 11. Required Tests`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_6.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_6.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
   - Source Requirements:
     - Run required tests.
@@ -609,7 +609,7 @@ Plan 6 completion depends on evidence that mocked behavior passes, external-serv
   - Blocked Condition: None for mocked/local tests.
   - Files: Test files and changed implementation files for inspection
 
-- [ ] (05D): Perform manual semantic retrieval checks when user setup is available
+- [x] (05D): Perform manual semantic retrieval checks when user setup is available
   - Source of Truth: `docs/plans/Plan_6.md` > `## 1. Goal`; `docs/plans/Plan_6.md` > `## 5. Dependencies`; `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_6.md` > `## 11. Required Tests`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_6.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Run the API check curl command.
@@ -762,10 +762,10 @@ Optional future tracks are outside the mandatory chain.
 - [x] (04C): Map validation and dependency errors to required HTTP responses
 
 #### Batch05
-- [ ] (05A): Add and run retrieval service tests
-- [ ] (05B): Add and run retrieval API tests
-- [ ] (05C): Run combined backend tests and scope/security checks
-- [ ] (05D): Perform manual semantic retrieval checks when user setup is available
+- [x] (05A): Add and run retrieval service tests
+- [x] (05B): Add and run retrieval API tests
+- [x] (05C): Run combined backend tests and scope/security checks
+- [x] (05D): Perform manual semantic retrieval checks when user setup is available
 
 ## Completion Reporting Rules for Future Execution Agents
 

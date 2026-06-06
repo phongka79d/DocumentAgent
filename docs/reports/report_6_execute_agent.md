@@ -1231,3 +1231,502 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after A2 reviews and accepts `(04C)` and the orchestrator advances beyond Batch04.
 - handoff notes: Retrieval API error mapping now matches Plan 6 and targeted API tests pass.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05A) - Add and run retrieval service tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_6.md > Batch05 > (05A)
+- docs/plans/Plan_6.md > ## 3. Scope
+- docs/plans/Plan_6.md > ## 6. Required Files and Folders
+- docs/plans/Plan_6.md > ## 11. Required Tests
+- docs/plans/Plan_6.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_6.md > ## 13. Failure Handling
+- docs/plans/Plan_6.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05A)
+- Task title: Add and run retrieval service tests
+
+## Completed Work
+- Status: complete.
+- Updated `backend/tests/test_retrieval_service.py` with additional mocked retrieval service coverage.
+- Added dependency call-order coverage for settings, ShopAIKey embedding, Qdrant search, and Supabase content enrichment.
+- Added Qdrant failure coverage confirming Supabase lookup is not attempted after vector search failure.
+- Added Qdrant filter tests confirming searches always include the `user_id` filter, including omitted, empty, and populated document filters.
+- Added selected-document filter coverage confirming Qdrant payload field `document_id` is used.
+- Added a score-semantics documentation check for `_qdrant_score_to_semantic_similarity`.
+- Only mocked tests were run; no live ShopAIKey, Qdrant, or Supabase calls were made.
+
+## Files Created or Modified
+- backend/tests/test_retrieval_service.py
+- docs/reports/report_6_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_service.py -v`: Passed
+- evidence or reason: 26 tests passed in 1.68s.
+
+## Acceptance Check
+- Task acceptance condition: Tests pass or failures are reported honestly with safe error context.
+- Status: satisfied
+- Evidence: Required validation passed with `26 passed`; added mocked coverage for empty question, default Top-K, Top-K bounds, document filter, Qdrant result mapping, dependency errors, mandatory user filter, payload `document_id` filtering, malformed payload tolerance, empty results, and documented score semantics.
+
+## Artifacts Produced
+- Retrieval service test coverage in `backend/tests/test_retrieval_service.py`.
+- Command result: `pytest tests/test_retrieval_service.py -v` passed.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch status updates are reserved for A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept runtime code unchanged because the targeted test coverage passed against existing service and Qdrant behavior.
+- Added Qdrant filter assertions to the retrieval service test file to satisfy the selected task's reviewer checklist while preserving the existing dedicated Qdrant service tests.
+
+## Risks or Open Issues
+- None identified for (05A).
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependencies Batch02 and Batch03 were marked complete in `docs/tasks/task_6.md`.
+- No user action was required.
+- Scope was limited to (05A); (05B), (05C), and (05D) were not implemented.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes, after A2 reviews and accepts (05A)
+- handoff notes: Retrieval service tests are in place and pass with mocked dependencies. API tests, combined backend checks, and manual smoke checks remain for later task IDs.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05B) - Add and run retrieval API tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 11. Required Tests`
+- `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_6.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05B)
+- Task title: Add and run retrieval API tests
+
+## Completed Work
+- Status: complete.
+- Updated retrieval API tests with mocked retrieval service coverage for omitted optional request fields.
+- Confirmed existing API tests cover response contract, request field delegation, router registration, empty question HTTP 400, `top_k = 0` HTTP 400, `top_k = 1000` HTTP 400, invalid document UUID HTTP 422, dependency failures HTTP 500, and empty results HTTP 200.
+
+## Files Created or Modified
+- `backend/tests/test_retrieval_api.py`
+- `docs/reports/report_6_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_api.py -v`: Passed
+- evidence or reason: 11 tests passed in 1.77s.
+
+## Acceptance Check
+- Task acceptance condition: Tests pass or failures are reported honestly.
+- Status: satisfied
+- Evidence: Required validation passed with `11 passed`; API tests use monkeypatched retrieval service responses/errors and do not require real ShopAIKey, Qdrant, or Supabase credentials.
+
+## Artifacts Produced
+- Retrieval API test coverage in `backend/tests/test_retrieval_api.py`.
+- Command result: `pytest tests/test_retrieval_api.py -v` passed.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch status updates are reserved for A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept runtime API/service code unchanged because the API contract tests passed against existing implementation.
+- Added only a narrow mocked API test for omitted optional fields to strengthen request contract coverage.
+
+## Risks or Open Issues
+- None identified for (05B).
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependency Batch04 was marked complete in `docs/tasks/task_6.md`.
+- No user action was required.
+- Scope was limited to (05B); (05C) and (05D) were not implemented.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes, after A2 reviews and accepts (05B)
+- handoff notes: Retrieval API tests are in place and pass with mocked dependencies. Combined backend checks and manual smoke checks remain for later task IDs.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05C) - Run combined backend tests and scope/security checks
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_6.md > ## 4. Out of Scope
+- docs/plans/Plan_6.md > ## 11. Required Tests
+- docs/plans/Plan_6.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_6.md > ## 14. Agent Report Requirement
+- docs/plans/Plan_6.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 3. Authentication Policy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05C)
+- Task title: Run combined backend tests and scope/security checks
+
+## Completed Work
+- Task is complete.
+- Ran the required combined mocked backend retrieval tests.
+- Ran directly relevant backend regression tests for changed retrieval-adjacent config, API, ShopAIKey, embedding, Qdrant, and health behavior.
+- Inspected changed files and relevant backend/frontend areas for hardcoded secrets, frontend secret exposure, GraphRAG, hybrid scoring, rerank, Agent 1, chat, LangGraph, answer generation, frontend UI work, and fake success.
+- No runtime behavior was changed for this task.
+- No live/manual semantic retrieval checks were run because that belongs to (05D), which was explicitly out of scope for this execution.
+- Only mocked tests were run for semantic retrieval in this task.
+
+## Files Created or Modified
+- docs/reports/report_6_execute_agent.md - appended this execution report.
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_retrieval_service.py tests/test_retrieval_api.py -v`: Passed
+- evidence or reason: 37 tests collected, 37 passed in 1.82s.
+- command/check: `cd backend` then `pytest tests/test_config.py tests/test_health.py tests/test_shopaikey_service.py tests/test_embedding_service.py tests/test_qdrant_service.py -v`: Passed
+- evidence or reason: 57 tests collected, 57 passed in 1.74s.
+- command/check: `git diff --name-only`: Passed
+- evidence or reason: changed files were `backend/tests/test_retrieval_api.py`, `backend/tests/test_retrieval_service.py`, `docs/reports/report_6_execute_agent.md`, `docs/review/review_6_review_agent.md`, and `docs/tasks/task_6.md` before this report append.
+- command/check: changed backend app/frontend diff inspection: Passed
+- evidence or reason: `git diff --name-only -- backend/app frontend` returned no changed backend app or frontend implementation files.
+- command/check: frontend backend-only secret reference scan: Passed
+- evidence or reason: search for ShopAIKey, Qdrant, Supabase service-role, and public frontend secret patterns under `frontend` returned no matches.
+- command/check: changed-file secret-like value scan: Passed
+- evidence or reason: one false positive was reviewed in `backend/tests/test_retrieval_service.py`; it is a fake mocked Qdrant key fixture, not a real credential or runtime value.
+- command/check: out-of-scope feature scan: Passed
+- evidence or reason: no changed backend app/frontend implementation files add GraphRAG, hybrid scoring, rerank, Agent 1, LangGraph, chat endpoint, answer generation, final answer generation, or frontend search UI. Search hits were limited to pre-existing database migration names/columns, and that migration has no current diff.
+- command/check: fake-success scan: Passed
+- evidence or reason: no `pytest.skip`, `xfail`, `assert True`, `return True`, `NotImplemented`, or TODO-based test bypasses were found in retrieval service/API tests; only legitimate test names containing the word `skips` matched.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass or failures are reported honestly; no secret exposure or out-of-scope work is found.
+- Status: satisfied
+- Evidence: Combined retrieval tests and relevant backend regressions passed. Static inspection found no hardcoded live secrets, no frontend provider secret exposure, no fake success, and no added out-of-scope runtime behavior. Architecture remains backend-only for provider secrets as required by `docs/plans/Master_Plan.md` authentication policy.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This was an orchestrated A1 execution; checkbox and batch updates are left to A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- No runtime or test repairs were required because all required validations passed.
+- Did not run manual/live semantic retrieval checks because they are explicitly reserved for (05D).
+
+## Risks or Open Issues
+- Live semantic retrieval remains unvalidated in this task by design; (05D) covers that only when user setup is available.
+- Existing working tree changes from prior accepted tasks remain present and were preserved.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependencies (05A) and (05B) were checked in `docs/tasks/task_6.md`, and the latest review report accepted (05B) with next task allowed to proceed.
+- No user action was required.
+- No architecture concerns were found for (05C).
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes, after A2 reviews and accepts (05C)
+- handoff notes: Combined mocked tests and relevant backend regressions passed. Scope/security checks found no hardcoded live secrets, frontend secret exposure, fake success, or out-of-scope implementation. Manual/live semantic retrieval checks were not run and remain for (05D).
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05D) - Perform manual semantic retrieval checks when user setup is available
+
+## Status
+blocked
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 1. Goal`
+- `docs/plans/Plan_6.md` > `## 5. Dependencies`
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_6.md` > `## 11. Required Tests`
+- `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_6.md` > `## 14. Agent Report Requirement`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Perform manual semantic retrieval checks when user setup is available
+
+## Completed Work
+- Status: blocked with `BLOCKED_BY_USER_ACTION`.
+- Checked local setup signals without printing secrets: `backend/.env` exists, required backend variables are present and look non-placeholder, the local backend is running from this repo's backend virtual environment, and `/api/health` returns HTTP 200.
+- Ran valid manual curl-based checks against `http://localhost:8000/api/retrieval/search` using temporary JSON body files to avoid Windows PowerShell quote mutation.
+- Confirmed ShopAIKey embedding responded successfully during live search, but Qdrant rejected the required filtered search.
+- Identified the safe blocker: Qdrant returns HTTP 400 because the collection lacks a keyword payload index for `user_id`, so the required `SINGLE_USER_ID` filter cannot run. Indexed chunk presence could not be confirmed because the same missing index also blocks a filtered Qdrant count.
+- Did not fabricate a selected document ID or semantic search success response.
+
+## Files Created or Modified
+- `docs/reports/report_6_execute_agent.md`
+
+## Tests or Validations Run
+- setup check: Passed
+- evidence or reason: `backend/.env` exists; required keys `SINGLE_USER_ID`, Supabase, ShopAIKey, Qdrant, and `RETRIEVAL_SEMANTIC_TOP_K` are present and look non-placeholder. Values were not printed.
+- local backend availability: Passed
+- evidence or reason: a Uvicorn process from `backend/.venv` is listening on `127.0.0.1:8000`; `curl http://localhost:8000/api/health` returned HTTP 200 with healthy service JSON.
+- API check curl: Blocked
+- evidence or reason: valid POST to `/api/retrieval/search` with `{"question":"What is the probation period?","top_k":5}` returned HTTP 500 and safe public detail `Semantic retrieval is temporarily unavailable.` Backend logs and safe diagnostics show ShopAIKey embedding returned HTTP 200, then Qdrant rejected the vector search with HTTP 400 because `user_id` lacks a required keyword payload index.
+- selected document check curl: Blocked / not run
+- evidence or reason: no successful live API result was available to provide a real `document_id`; running this check with a fabricated ID would violate the task rules.
+- negative check, empty question: Passed
+- evidence or reason: valid POST with whitespace-only question returned HTTP 400 and detail `Question must be non-empty.`
+- negative check, `top_k = 0`: Passed
+- evidence or reason: valid POST returned HTTP 400 and detail `top_k must be between 1 and 50.`
+- negative check, `top_k = 1000`: Passed
+- evidence or reason: valid POST returned HTTP 400 and detail `top_k must be between 1 and 50.`
+- safe Qdrant diagnostic: Blocked
+- evidence or reason: embedding dimension is 1536; Qdrant collection distance is cosine and vector size is 1536. Qdrant query and filtered count both returned HTTP 400 with safe reason: missing keyword payload index for `user_id`.
+
+## Acceptance Check
+- Task acceptance condition: Search returns scored chunks filtered by `SINGLE_USER_ID`; selected document filtering works; negative checks return required status codes.
+- Status: blocked
+- Evidence: Negative checks returned the required HTTP 400 statuses. Live scored chunk search and selected-document filtering are blocked because Qdrant rejects the required `user_id = SINGLE_USER_ID` filter until the collection has a keyword payload index for `user_id`. No live semantic search success response was produced.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+- Mocked-only note: no live example semantic search response could be included because live retrieval is blocked by Qdrant setup; prior mocked test evidence remains in earlier `(05A)` through `(05C)` reports.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This is an orchestrated A1 execution, and the task is blocked. Checkbox and batch updates are left to A2 only after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used the already-running local backend instead of starting another server.
+- Used temporary JSON body files for curl requests because PowerShell command-line quote handling was mutating inline JSON into malformed request bodies.
+- Did not print secrets, did not commit `.env`, and did not modify runtime code.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: Qdrant collection setup must be updated so `user_id` has a keyword payload index compatible with the required filter.
+- After the Qdrant index/setup is fixed, rerun the API check, selected-document check with a real returned `document_id`, and the negative curl checks.
+- Indexed chunks for the configured `SINGLE_USER_ID` remain unconfirmed because Qdrant filtered count is blocked by the missing `user_id` index.
+
+## Minor Issues Fixed During Execution
+- Corrected the local curl execution method after initial PowerShell-escaped inline JSON requests were rejected as malformed JSON. No project files were changed for this.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependency `(05C)` is checked in `docs/tasks/task_6.md`.
+- Required user setup is not fully available: Qdrant is reachable, but its collection is missing the required keyword payload index for `user_id`, blocking live retrieval validation.
+- No out-of-scope implementation work was performed.
+
+## Notes for Next Task
+- next task ID: None in Batch05 after `(05D)`
+- can proceed: no
+- handoff notes: User must fix Qdrant collection setup by adding the required keyword payload index for `user_id` or rebuilding/reindexing the collection with that index, then rerun `(05D)` live retrieval checks. Do not mark Batch05 complete from this blocked result.
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch05 - Tests, Smoke Checks, and Handoff
+
+## Task
+(05D) - Perform manual semantic retrieval checks when user setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 1. Goal`
+- `docs/plans/Plan_6.md` > `## 5. Dependencies`
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_6.md` > `## 11. Required Tests`
+- `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_6.md` > `## 14. Agent Report Requirement`
+
+## Supplemental Documents Used
+- None
+- User-provided setup confirmation used: Qdrant keyword payload indexes for `user_id` and `document_id` were created/verified, and all tests passed after that.
+
+## Selected Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Perform manual semantic retrieval checks when user setup is available
+
+## Completed Work
+- Status: complete.
+- Verified local setup signals without printing secrets: `backend/.env` exists and required backend variable names are present with non-placeholder-looking values.
+- Used the local backend at `http://localhost:8000`; `/api/health` returned HTTP 200.
+- Ran the Plan 6 manual API check against `POST /api/retrieval/search` with a safe sample question.
+- Discovered a real `document_id` from the successful API check response and used it for the selected-document curl check.
+- Ran negative curl checks for empty question, `top_k = 0`, and `top_k = 1000`.
+- Did not modify runtime code, did not print secrets, did not commit `.env`, and did not implement out-of-scope behavior.
+
+## Files Created or Modified
+- `docs/reports/report_6_execute_agent.md`
+
+## Tests or Validations Run
+- setup check: Passed
+- evidence or reason: `backend/.env` exists; required keys `SINGLE_USER_ID`, Supabase, ShopAIKey, Qdrant, and `RETRIEVAL_SEMANTIC_TOP_K` are present and not placeholder-like. Values were not printed.
+- local backend availability: Passed
+- evidence or reason: `curl http://localhost:8000/api/health` returned HTTP 200 with healthy service JSON.
+- API check curl: Passed
+- command/check: `curl.exe -X POST http://localhost:8000/api/retrieval/search -H "Content-Type: application/json" --data-binary @api_check.json`
+- evidence or reason: request body was `{"question":"What is the probation period?","top_k":5}`; response returned HTTP 200 with 4 results.
+- selected document check curl: Passed
+- command/check: `curl.exe -X POST http://localhost:8000/api/retrieval/search -H "Content-Type: application/json" --data-binary @selected_document.json`
+- evidence or reason: used discovered document ID `641523b4-d6d6-4279-9f3f-40baf09c2b3c`; response returned HTTP 200 with 1 result, and all returned results matched the selected document ID.
+- negative check, empty question: Passed
+- evidence or reason: response returned HTTP 400 with detail `Question must be non-empty.`
+- negative check, `top_k = 0`: Passed
+- evidence or reason: response returned HTTP 400 with detail `top_k must be between 1 and 50.`
+- negative check, `top_k = 1000`: Passed
+- evidence or reason: response returned HTTP 400 with detail `top_k must be between 1 and 50.`
+- unit/mock tests: Not run in this execution
+- evidence or reason: this selected task only required manual curl checks; user reported all tests passed after creating/verifying the Qdrant payload indexes, and prior `(05C)` covered combined mocked tests.
+
+## Acceptance Check
+- Task acceptance condition: Search returns scored chunks filtered by `SINGLE_USER_ID`; selected document filtering works; negative checks return required status codes.
+- Status: satisfied
+- Evidence: The live search returned HTTP 200 with scored chunk results. The selected-document request returned HTTP 200 and only returned results for the discovered document ID. Empty question, `top_k = 0`, and `top_k = 1000` each returned HTTP 400.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+- Temporary curl request/response files under `%TEMP%\docagent_retrieval_05d`.
+- Example semantic search response summary, with content omitted for safety:
+
+```json
+{
+  "question": "What is the probation period?",
+  "result_count": 4,
+  "first_result": {
+    "chunk_id": "07c352dd-321b-48da-a04f-770d19633544",
+    "document_id": "641523b4-d6d6-4279-9f3f-40baf09c2b3c",
+    "file_name": "mvp-smoke.txt",
+    "file_type": "txt",
+    "page_number": null,
+    "section_title": null,
+    "chunk_index": 0,
+    "semantic_similarity": 0.11802471,
+    "content_present": true,
+    "content_preview_present": true
+  }
+}
+```
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This is an orchestrated A1 execution. Checkbox and batch updates are left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used temporary JSON body files for curl requests to avoid PowerShell command-line JSON quoting issues.
+- Used a document ID discovered from a successful live retrieval response for the selected-document check.
+- Omitted retrieved chunk content from the report to avoid exposing document text unnecessarily.
+
+## Risks or Open Issues
+- None identified for this selected task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependency `(05C)` is checked in `docs/tasks/task_6.md`.
+- User setup was confirmed sufficiently for live retrieval checks by successful API and selected-document responses.
+- No out-of-scope implementation work was performed.
+
+## Notes for Next Task
+- next task ID: None in Batch05 after `(05D)`
+- can proceed: yes, for A2 review of `(05D)`
+- handoff notes: A2 should review the appended report and live validation evidence. Do not mark Batch05 complete until the orchestrator's review and batch process allow it.

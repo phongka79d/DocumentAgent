@@ -2577,3 +2577,746 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05A)
+- Task title: Add and run retrieval service tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_6.md > ## 3. Scope; ## 6. Required Files and Folders; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 13. Failure Handling; ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The last appended execution report entry is for Batch05 (05A), matching the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_retrieval_service.py; docs/reports/report_6_execute_agent.md; docs/tasks/task_6.md after reviewer checkbox update
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_6_execute_agent.md`: in scope - latest (05A) execution report entry reviewed and matched to requested task.
+- `docs/tasks/task_6.md`: in scope - selected task entry, dependencies, and progress tracker reviewed; only (05A) checkbox updated after acceptance.
+- `backend/tests/test_retrieval_service.py`: in scope - added mocked retrieval service/Qdrant filter/score-semantics coverage reviewed.
+- `backend/app/services/retrieval_service.py`: in scope - service contracts under test reviewed for semantic search behavior and failure paths.
+- `backend/app/services/qdrant_service.py`: in scope - Qdrant filter and score-semantics behavior under new tests reviewed.
+- `docs/plans/Plan_6.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - authentication and Qdrant architecture sections reviewed because Plan 6 reviewer checklist references it.
+- `docs/review/review_6_review_agent.md`: in scope - appended this review at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds focused mocked service and Qdrant behavior tests for (05A).
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended with the (05A) entry.
+
+## Dependency Review
+- Required dependencies: Batch02 and Batch03 per task entry; prior Batch04 completion also present before Batch05.
+- Dependency status: satisfied; prior task checkboxes through (04C) were already checked.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Tests use mocked ShopAIKey/Qdrant/Supabase dependencies; Qdrant checks enforce mandatory `user_id` filter and payload `document_id`; no frontend, chat, GraphRAG, rerank, LangGraph, Agent 1, or answer generation work was added.
+- Failed: none
+- Uncertain: none for mocked (05A) scope; live checks remain future (05D) scope.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Test assertions exercise actual `retrieval_service.semantic_search`, `qdrant_service.search_vectors`, and `_qdrant_score_to_semantic_similarity` contracts with mocks only at dependency boundaries.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production code was changed. Test UUIDs, collection names, and fake key strings are mocked fixtures, not runtime hardcoding or real secrets.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_service.py -v`
+- Reported result: passed; 26 tests passed in 1.68s
+- Rerun result: passed; 26 tests passed in 1.50s
+- Status: satisfied
+- Notes: Rerun output covered empty-question validation, default Top-K, Top-K bounds, dependency call order, Qdrant failure behavior, mandatory user filter, document payload filter, result mapping, malformed payload tolerance, Supabase content enrichment, and score-semantics documentation.
+
+## Acceptance Review
+- Task acceptance: Add/update retrieval service tests and run the focused validation honestly.
+- Status: satisfied
+- Evidence: `backend/tests/test_retrieval_service.py` has the required mocked coverage, the focused pytest command passed on rerun, and the execution report accurately notes that only mocked tests were run.
+
+## Progress Tracking
+- Selected task checkbox: checked in task body and progress tracker after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked
+- Execution report entry: appended, not overwritten
+- Review report entry: appended, not overwritten
+- Other: sibling tasks (05B), (05C), and (05D) remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The report's broad coverage statement includes both existing and newly added tests, but the changed-file diff and validation support the selected task acceptance.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected task is limited to mocked retrieval service tests; API tests, combined backend checks, and manual/live smoke checks remain assigned to (05B), (05C), and (05D).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A) is accepted and (05B)-(05D) remain unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/plans/Plan_6.md",
+    "docs/plans/Master_Plan.md",
+    "backend/app/services/retrieval_service.py",
+    "backend/app/services/qdrant_service.py",
+    "docs/review/review_6_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05B)
+- Task title: Add and run retrieval API tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `## 8. API Design`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is for Batch05 `(05B)`, matching the requested task ID. Prior `(05A)` report/review changes remain uncommitted but were treated as already accepted sibling work, not as part of selected `(05B)` implementation.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_retrieval_api.py`; `backend/tests/test_retrieval_service.py`; `docs/reports/report_6_execute_agent.md`; `docs/review/review_6_review_agent.md`; `docs/tasks/task_6.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_retrieval_api.py`: in scope - selected `(05B)` API test addition reviewed, along with existing required API validation/response tests.
+- `backend/app/api/retrieval.py`: in scope - route exception mapping and delegated request fields verified against API tests.
+- `backend/app/main.py`: in scope - router registration evidence reviewed because API tests verify `/api/retrieval/search` through `create_app()`.
+- `docs/reports/report_6_execute_agent.md`: in scope - latest `(05B)` execution report entry reviewed and matched to repository evidence.
+- `docs/tasks/task_6.md`: in scope - selected task entry, dependencies, and progress tracker reviewed; only `(05B)` was updated after acceptance.
+- `docs/plans/Plan_6.md`: in scope - cited sections for required files, API design, required tests, acceptance criteria, and failure handling reviewed.
+- `backend/tests/test_retrieval_service.py`: prior accepted uncommitted change - belongs to `(05A)`, not selected `(05B)`.
+- `docs/review/review_6_review_agent.md`: in scope - prior `(05A)` review was already present; this `(05B)` review was appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_retrieval_api.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds `test_search_retrieval_api_allows_omitted_optional_fields`; existing file covers response contract, delegation, route registration, required negative checks, safe dependency errors, and empty result behavior.
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report contains an appended `(05B)` entry and does not overwrite prior reports.
+
+## Dependency Review
+- Required dependencies: Batch04 per selected task; `(05A)` is also already accepted in Batch05 and remains checked.
+- Dependency status: satisfied; Batch04 task checkboxes are checked, and the route/error-mapping implementation exists.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Tests use FastAPI `TestClient` and monkeypatch `retrieval_service.semantic_search`, so API behavior is validated without real ShopAIKey, Qdrant, or Supabase credentials. The route remains backend-only and does not add frontend UI, chat, GraphRAG, rerank, LangGraph, agents, or answer generation.
+- Failed: none
+- Uncertain: none for mocked `(05B)` scope; combined backend checks and manual/live smoke checks remain assigned to `(05C)` and `(05D)`.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: API tests exercise the real FastAPI route, schema parsing, router registration through `create_app()`, and route-level exception mapping while mocking only the retrieval service boundary.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Test UUIDs and response bodies are fixtures for mocked API assertions. No production runtime code or secrets were added by selected `(05B)`.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_api.py -v`
+- Reported result: passed; 11 tests passed in 1.77s
+- Rerun result: passed; 11 tests passed in 1.71s
+- Status: satisfied
+- Notes: Rerun covered successful response contract, request field delegation, omitted optional fields, main app router registration, empty question HTTP 400, `top_k` 0 and 1000 HTTP 400, invalid document UUID HTTP 422, ShopAIKey dependency HTTP 500, Qdrant HTTP 500, and empty results HTTP 200.
+
+## Acceptance Review
+- Task acceptance: Add/update retrieval API tests and run the focused API validation honestly.
+- Status: satisfied
+- Evidence: `backend/tests/test_retrieval_api.py` contains mocked API coverage for Plan 6 request/response and negative cases, and the focused pytest command passed on rerun.
+
+## Progress Tracking
+- Selected task checkbox: checked in task body and progress tracker after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked
+- Execution report entry: appended, not overwritten
+- Review report entry: appended, not overwritten
+- Other: `(05C)` and `(05D)` remain unchecked; no batch completion was marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found. The report accurately states runtime code was unchanged for `(05B)` and that tests were mocked.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected task is limited to retrieval API tests. Combined backend checks and manual semantic retrieval checks remain future tasks `(05C)` and `(05D)`.
+- The working tree still contains prior accepted `(05A)` changes and review output; these were preserved and not reclassified as selected `(05B)` work.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(05A)` and `(05B)` are accepted while `(05C)` and `(05D)` remain unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_api.py",
+    "backend/app/api/retrieval.py",
+    "backend/app/main.py",
+    "backend/tests/test_retrieval_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/review/review_6_review_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/plans/Plan_6.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05C)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05C)
+- Task title: Run combined backend tests and scope/security checks
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_6.md > ## 4. Out of Scope; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 14. Agent Report Requirement; ## 15. Reviewer Checklist; docs/plans/Master_Plan.md > ## 3. Authentication Policy
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05C)
+- Reviewed task ID: (05C)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is for Batch05 `(05C)`, matching the requested task ID. Prior accepted uncommitted `(05A)` and `(05B)` test and review changes were treated as sibling history, not as selected `(05C)` implementation work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_retrieval_api.py`; `backend/tests/test_retrieval_service.py`; `docs/reports/report_6_execute_agent.md`; `docs/review/review_6_review_agent.md`; `docs/tasks/task_6.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_6_execute_agent.md`: in scope - latest `(05C)` execution report reviewed and matched to repository evidence.
+- `docs/tasks/task_6.md`: in scope - selected task entry, dependencies, and progress tracker reviewed; only `(05C)` was updated after acceptance.
+- `docs/plans/Plan_6.md`: in scope - cited out-of-scope, required tests, acceptance, report, and reviewer checklist sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited backend-only authentication and secret boundary reviewed.
+- `backend/tests/test_retrieval_service.py`: prior accepted uncommitted change - belongs to `(05A)` but was reviewed as evidence for combined test and scope/security checks.
+- `backend/tests/test_retrieval_api.py`: prior accepted uncommitted change - belongs to `(05B)` but was reviewed as evidence for combined API test and scope/security checks.
+- `backend/app`: in scope for inspection - no current diff in backend application implementation files.
+- `frontend`: in scope for inspection - no current diff and no provider-secret references found by scan.
+- `docs/review/review_6_review_agent.md`: in scope - prior `(05A)` and `(05B)` reviews were already present; this `(05C)` review was appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(05C)` made no runtime or test changes; the selected task's artifact is the appended execution report with validation evidence.
+
+## Dependency Review
+- Required dependencies: `(05A)` and `(05B)` per selected task entry.
+- Dependency status: satisfied; `(05A)` and `(05B)` are checked in task body and progress tracker, and their latest review reports are accepted.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Backend-only secret boundary remains intact; no changed backend app or frontend implementation files; mocked retrieval/API tests validate ShopAIKey, Qdrant, Supabase, filters, failure handling, and response behavior without live provider calls; manual/live checks remain assigned to `(05D)`.
+- Failed: none
+- Uncertain: none for `(05C)` mocked/local validation scope.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The selected task is a validation/scope review task. Required pytest suites passed on rerun, changed app/frontend implementation diff is empty, and retrieval tests contain no skip/xfail/assert-true/TODO bypasses.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production code was changed for `(05C)`. Broader secret-like scan found only deliberate test fixtures: `private-qdrant-key` in mocked Qdrant settings and `sk-live-secret-value` in a redaction test that asserts the fake secret is not exposed in errors or logs.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_service.py tests/test_retrieval_api.py -v`
+- Reported result: passed; 37 tests passed in 1.82s
+- Rerun result: passed; 37 tests passed in 1.76s
+- Status: satisfied
+- Notes: Covers retrieval service behavior, Qdrant user/document filters, API route contract, validation errors, dependency errors, and empty results.
+- Command/check: `cd backend; pytest tests/test_config.py tests/test_health.py tests/test_shopaikey_service.py tests/test_embedding_service.py tests/test_qdrant_service.py -v`
+- Reported result: passed; 57 tests passed in 1.74s
+- Rerun result: passed; 57 tests passed in 1.79s
+- Status: satisfied
+- Notes: Relevant backend regression coverage passed.
+- Command/check: `git diff --name-only -- backend/app frontend`
+- Reported result: no changed backend app or frontend implementation files
+- Rerun result: no output
+- Status: satisfied
+- Notes: Supports executor claim that `(05C)` did not modify runtime implementation or frontend code.
+- Command/check: frontend backend-only secret reference scan
+- Reported result: passed; no matches
+- Rerun result: passed; no matches for ShopAIKey, Qdrant, Supabase service-role, or public frontend secret patterns under `frontend`
+- Status: satisfied
+- Notes: `rg` returned exit code 1 because no matches were found.
+- Command/check: changed test secret-like value scan
+- Reported result: passed with a reviewed false positive
+- Rerun result: passed with fake fixtures only: `private-qdrant-key` and `sk-live-secret-value`
+- Status: satisfied
+- Notes: Both values are mocked test data; the latter is explicitly used to verify redaction.
+- Command/check: out-of-scope feature scan
+- Reported result: passed
+- Rerun result: passed; no matches in changed retrieval tests, backend app, or frontend for GraphRAG, hybrid scoring, rerank, Agent 1, LangGraph, chat endpoint, answer generation, final answer generation, or frontend search UI.
+- Status: satisfied
+- Notes: No out-of-scope runtime feature was added.
+- Command/check: fake-success scan
+- Reported result: passed
+- Rerun result: passed; no `pytest.skip`, `xfail`, `assert True`, `return True`, `NotImplemented`, or `TODO` bypasses found in retrieval service/API tests.
+- Status: satisfied
+- Notes: `rg` returned exit code 1 because no matches were found.
+
+## Acceptance Review
+- Task acceptance: Required tests pass or failures are reported honestly; no secret exposure or out-of-scope work is found.
+- Status: satisfied
+- Evidence: Both reported pytest commands passed on rerun; frontend secret scan found no matches; changed backend app/frontend implementation diff is empty; out-of-scope and fake-success scans passed; live/manual retrieval checks were correctly deferred to `(05D)`.
+
+## Progress Tracking
+- Selected task checkbox: checked in task body and progress tracker after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked
+- Execution report entry: appended, not overwritten
+- Review report entry: appended, not overwritten
+- Other: `(05D)` remains unchecked; batch completion was not marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. Reviewer used a broader secret-like regex than the executor report and found an additional fake redaction-test fixture, but it is safe and does not change the executor's conclusion.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(05C)` is validation-only and correctly made no runtime behavior changes.
+- Manual/live semantic retrieval remains unvalidated by design and is assigned to `(05D)`.
+- Current uncommitted test changes are prior accepted `(05A)`/`(05B)` work, not new selected `(05C)` implementation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(05D)` remains unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_api.py",
+    "backend/tests/test_retrieval_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/review/review_6_review_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/plans/Plan_6.md",
+    "docs/plans/Master_Plan.md",
+    "backend/app",
+    "frontend"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05D)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Execution Report Reviewed
+docs/reports/report_6_execute_agent.md
+
+## Review Report File
+docs/review/review_6_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Perform manual semantic retrieval checks when user setup is available
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_6.md > ## 1. Goal; ## 5. Dependencies; ## 8. API Design; ## 10. Configuration and Environment Variables; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 14. Agent Report Requirement
+- Supplemental documents: User reports Qdrant keyword payload indexes for `user_id` and `document_id` were created/verified, and all tests passed.
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05D)
+- Reviewed task ID: (05D)
+- Correct selection: yes
+- Notes: Two `(05D)` execution entries exist. The earlier entry was blocked on a missing Qdrant keyword payload index; the later matching `(05D)` entry is complete and was selected for review. Prior accepted uncommitted `(05A)`, `(05B)`, and `(05C)` changes were treated as sibling history, not as selected `(05D)` implementation work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_retrieval_api.py`; `backend/tests/test_retrieval_service.py`; `docs/reports/report_6_execute_agent.md`; `docs/review/review_6_review_agent.md`; `docs/tasks/task_6.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_6_execute_agent.md`: in scope - latest complete `(05D)` execution report reviewed, including live curl evidence and safe example response summary.
+- `docs/tasks/task_6.md`: in scope - selected task entry, dependency, and progress tracker reviewed; only `(05D)` was updated after acceptance.
+- `docs/review/review_6_review_agent.md`: in scope - prior reviews were already present; this `(05D)` review was appended at EOF.
+- `docs/plans/Plan_6.md`: in scope - cited goal, dependency, API design, configuration, required tests, acceptance, and report sections reviewed.
+- `backend/app/api/retrieval.py`: in scope for behavior verification - maps retrieval validation to HTTP 400, dependency failures to safe HTTP 500, and delegates to `semantic_search`.
+- `backend/app/main.py`: in scope for behavior verification - registers retrieval router under `/api/retrieval`.
+- `backend/app/schemas/retrieval.py`: in scope for behavior verification - validates `document_ids` as UUIDs and response/result contract fields.
+- `backend/app/services/retrieval_service.py`: in scope for behavior verification - trims questions, validates Top-K, calls ShopAIKey embedding, Qdrant search, and Supabase content enrichment.
+- `backend/app/services/qdrant_service.py`: in scope for behavior verification - always includes `user_id` filter and adds optional payload `document_id` filter.
+- `backend/tests/test_retrieval_api.py`: prior accepted uncommitted change - belongs to `(05B)`, reviewed only as validation evidence.
+- `backend/tests/test_retrieval_service.py`: prior accepted uncommitted change - belongs to `(05A)`, reviewed only as validation evidence.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_6_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The selected task's tracked artifact is the appended execution report. Runtime code was not modified for `(05D)`.
+- file from execution report: temporary curl request/response files under `%TEMP%\docagent_retrieval_05d`
+- present in git/repo: not applicable
+- matches task scope: yes
+- notes: Temporary live-check artifacts are outside the repository and are not tracked.
+
+## Dependency Review
+- Required dependencies: `(05C)`; valid local `.env` values; Qdrant Cloud project/API key; ShopAIKey API key; Supabase setup; indexed chunks.
+- Dependency status: satisfied for review. `(05C)` is checked. Safe `.env` key-name check found required keys present without printing values. Live API checks returned successful semantic and selected-document retrieval after the user-reported Qdrant payload indexes.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Live checks exercised the approved backend-only `/api/retrieval/search` route; production code keeps ShopAIKey, Qdrant, Supabase, and `SINGLE_USER_ID` access backend-side; Qdrant search helper always filters by `user_id` and optionally by payload `document_id`; no runtime code or frontend UI was changed for `(05D)`.
+- Failed: none
+- Uncertain: Live response does not expose `user_id`, so user filtering was verified through implementation/tests plus successful Qdrant filtered search behavior, not by response payload.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Reviewer reran live local curl checks against `http://localhost:8000/api/retrieval/search`. The API returned HTTP 200 with scored chunk results and selected-document filtering returned only the selected document ID. Mocked retrieval/API tests also passed on rerun.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: `(05D)` added no runtime implementation. The sample question and discovered document ID are live-check inputs/evidence, not business logic. No secrets were printed or added to tracked files.
+
+## Validations Reviewed
+- Command/check: safe backend `.env` key-name presence check
+- Reported result: passed; required backend variables were present and values were not printed
+- Rerun result: passed; `SINGLE_USER_ID`, Supabase, ShopAIKey, Qdrant, and `RETRIEVAL_SEMANTIC_TOP_K` keys were present
+- Status: satisfied
+- Notes: Key names only were checked; secret values were not displayed.
+- Command/check: `curl http://localhost:8000/api/health`
+- Reported result: HTTP 200
+- Rerun result: HTTP 200
+- Status: satisfied
+- Notes: Local backend was reachable.
+- Command/check: `POST /api/retrieval/search` with `{"question":"What is the probation period?","top_k":5}`
+- Reported result: HTTP 200 with 4 results
+- Rerun result: HTTP 200 with 4 results; first result chunk ID `07c352dd-321b-48da-a04f-770d19633544`, document ID `641523b4-d6d6-4279-9f3f-40baf09c2b3c`, semantic similarity `0.118005395`
+- Status: satisfied
+- Notes: Response content was not printed in the review output.
+- Command/check: selected-document `POST /api/retrieval/search` using discovered document ID `641523b4-d6d6-4279-9f3f-40baf09c2b3c`
+- Reported result: HTTP 200 with 1 result and all results matched selected document ID
+- Rerun result: HTTP 200 with 1 result and all results matched selected document ID
+- Status: satisfied
+- Notes: This verifies the selected-document live path with a real returned document ID.
+- Command/check: empty question negative curl
+- Reported result: HTTP 400 with `Question must be non-empty.`
+- Rerun result: HTTP 400 with `Question must be non-empty.`
+- Status: satisfied
+- Notes: Matches Plan 6 API design.
+- Command/check: `top_k = 0` negative curl
+- Reported result: HTTP 400 with `top_k must be between 1 and 50.`
+- Rerun result: HTTP 400 with `top_k must be between 1 and 50.`
+- Status: satisfied
+- Notes: Matches Plan 6 API design.
+- Command/check: `top_k = 1000` negative curl
+- Reported result: HTTP 400 with `top_k must be between 1 and 50.`
+- Rerun result: HTTP 400 with `top_k must be between 1 and 50.`
+- Status: satisfied
+- Notes: Matches Plan 6 API design.
+- Command/check: `cd backend; pytest tests/test_retrieval_service.py tests/test_retrieval_api.py -v`
+- Reported result: user reported all tests passed; prior `(05C)` reported 37 passed for this combined command
+- Rerun result: 37 passed in 1.79s
+- Status: satisfied
+- Notes: Focused mocked retrieval/API tests still pass.
+
+## Acceptance Review
+- Task acceptance: Search returns scored chunks filtered by `SINGLE_USER_ID`; selected document filtering works; negative checks return required status codes.
+- Status: satisfied
+- Evidence: Live search returned HTTP 200 with scored chunk results; selected-document search returned HTTP 200 and only the discovered document ID; empty question, `top_k = 0`, and `top_k = 1000` each returned HTTP 400. Implementation/tests verify the mandatory `SINGLE_USER_ID` Qdrant filter because the API response intentionally does not expose user IDs.
+
+## Progress Tracking
+- Selected task checkbox: checked in task body and progress tracker after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked by instruction; A3 audit and orchestrator commit are still required
+- Execution report entry: appended, not overwritten
+- Review report entry: appended, not overwritten
+- Other: Sibling task checkboxes `(05A)` through `(05C)` were prior accepted uncommitted changes and were not changed by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The rerun semantic similarity differed slightly from the executor's example, which is acceptable for live provider/vector search behavior and does not affect status, document ID filtering, or response contract evidence.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The earlier blocked `(05D)` report accurately documented the missing Qdrant payload index state before the user setup change; the later complete `(05D)` entry supersedes it for this review.
+- Batch05 should not be marked complete by A2 even though all task IDs are now checked; A3 audit and orchestrator batch handling remain required.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, no task remains in Batch05; A3 batch audit can proceed
+- Should batch be marked complete? no, A3 audit and orchestrator batch process are still required
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_6.md",
+  "execution_report_reviewed": "docs/reports/report_6_execute_agent.md",
+  "review_report_file": "docs/review/review_6_review_agent.md",
+  "selected_batch": "Batch05 - Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_api.py",
+    "backend/tests/test_retrieval_service.py",
+    "docs/reports/report_6_execute_agent.md",
+    "docs/review/review_6_review_agent.md",
+    "docs/tasks/task_6.md",
+    "docs/plans/Plan_6.md",
+    "backend/app/api/retrieval.py",
+    "backend/app/main.py",
+    "backend/app/schemas/retrieval.py",
+    "backend/app/services/retrieval_service.py",
+    "backend/app/services/qdrant_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

@@ -10,12 +10,25 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.services import retrieval_service
+from app.services import qdrant_service
 from app.services import supabase_service
+from app.services.qdrant_service import QdrantSearchError
 from app.services.shopaikey_service import ShopAIKeyServiceError
 
 
 def _settings(top_k: int = 8) -> SimpleNamespace:
     return SimpleNamespace(retrieval_semantic_top_k=top_k)
+
+
+def _qdrant_settings() -> SimpleNamespace:
+    return SimpleNamespace(
+        single_user_id="single_user",
+        require_qdrant_settings=lambda: {
+            "url": "https://qdrant.test",
+            "api_key": "private-qdrant-key",
+            "collection": "document_chunks",
+        },
+    )
 
 
 def test_semantic_search_rejects_empty_question_before_embedding(
@@ -54,6 +67,58 @@ def test_semantic_search_uses_default_top_k_when_omitted(
         top_k=12,
         document_ids=None,
     )
+
+
+def test_semantic_search_calls_dependencies_in_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    call_order = []
+    chunk_id = "33333333-3333-3333-3333-333333333333"
+
+    def fake_get_settings() -> SimpleNamespace:
+        call_order.append("settings")
+        return _settings(6)
+
+    def fake_create_embedding(question: str) -> list[float]:
+        call_order.append("embedding")
+        assert question == "What is the policy?"
+        return [0.1, 0.2]
+
+    def fake_search_vectors(query_vector, top_k, document_ids):
+        call_order.append("qdrant")
+        assert query_vector == [0.1, 0.2]
+        assert top_k == 6
+        assert document_ids is None
+        return [
+            SimpleNamespace(
+                payload={
+                    "chunk_id": chunk_id,
+                    "document_id": "44444444-4444-4444-4444-444444444444",
+                    "content_preview": "Preview text",
+                },
+                semantic_similarity=0.9,
+            )
+        ]
+
+    def fake_get_chunk_content_by_ids(chunk_ids):
+        call_order.append("supabase")
+        assert chunk_ids == [chunk_id]
+        return {chunk_id: "Full chunk text"}
+
+    monkeypatch.setattr(retrieval_service, "get_settings", fake_get_settings)
+    monkeypatch.setattr(retrieval_service, "create_embedding", fake_create_embedding)
+    monkeypatch.setattr(retrieval_service, "search_vectors", fake_search_vectors)
+    monkeypatch.setattr(
+        retrieval_service,
+        "get_chunk_content_by_ids",
+        fake_get_chunk_content_by_ids,
+        raising=False,
+    )
+
+    response = retrieval_service.semantic_search("  What is the policy?  ")
+
+    assert call_order == ["settings", "embedding", "qdrant", "supabase"]
+    assert response.results[0].content == "Full chunk text"
 
 
 def test_semantic_search_returns_empty_results_for_no_qdrant_matches(
@@ -107,6 +172,35 @@ def test_semantic_search_wraps_shopaikey_failure_with_safe_error_and_log(
     assert "ShopAIKey embedding failed during semantic retrieval" in caplog.text
     assert "ShopAIKeyServiceError" in caplog.text
     search_vectors.assert_not_called()
+
+
+def test_semantic_search_stops_on_qdrant_failure_without_supabase_lookup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    create_embedding = Mock(return_value=[0.1, 0.2, 0.3])
+    search_vectors = Mock(side_effect=QdrantSearchError("Qdrant vector search failed."))
+    get_chunk_content_by_ids = Mock()
+
+    monkeypatch.setattr(retrieval_service, "create_embedding", create_embedding)
+    monkeypatch.setattr(retrieval_service, "search_vectors", search_vectors)
+    monkeypatch.setattr(
+        retrieval_service,
+        "get_chunk_content_by_ids",
+        get_chunk_content_by_ids,
+        raising=False,
+    )
+
+    with pytest.raises(QdrantSearchError) as exc_info:
+        retrieval_service.semantic_search("What is indexed?", top_k=2)
+
+    assert str(exc_info.value) == "Qdrant vector search failed."
+    create_embedding.assert_called_once_with("What is indexed?")
+    search_vectors.assert_called_once_with(
+        query_vector=[0.1, 0.2, 0.3],
+        top_k=2,
+        document_ids=None,
+    )
+    get_chunk_content_by_ids.assert_not_called()
 
 
 @pytest.mark.parametrize("top_k", [0, 51])
@@ -167,6 +261,79 @@ def test_semantic_search_delegates_vector_and_document_ids_to_qdrant(
         top_k=5,
         document_ids=document_ids,
     )
+
+
+@pytest.mark.parametrize(
+    "document_ids",
+    [
+        None,
+        [],
+        [UUID("11111111-1111-1111-1111-111111111111")],
+    ],
+)
+def test_qdrant_search_never_queries_without_user_filter(
+    monkeypatch: pytest.MonkeyPatch,
+    document_ids: list[UUID] | None,
+) -> None:
+    client = Mock()
+    client.query_points.return_value = SimpleNamespace(points=[])
+
+    monkeypatch.setattr(qdrant_service, "get_settings", _qdrant_settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    qdrant_service.search_vectors(
+        query_vector=[0.1, 0.2, 0.3],
+        top_k=3,
+        document_ids=document_ids,
+    )
+
+    query_filter = client.query_points.call_args.kwargs["query_filter"]
+    user_conditions = [
+        condition
+        for condition in query_filter.must
+        if getattr(condition, "key", None) == "user_id"
+    ]
+    assert len(user_conditions) == 1
+    assert user_conditions[0].match.value == "single_user"
+
+
+def test_qdrant_search_filters_selected_documents_by_payload_document_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    client.query_points.return_value = SimpleNamespace(points=[])
+    first_document_id = UUID("11111111-1111-1111-1111-111111111111")
+    second_document_id = UUID("22222222-2222-2222-2222-222222222222")
+
+    monkeypatch.setattr(qdrant_service, "get_settings", _qdrant_settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    qdrant_service.search_vectors(
+        query_vector=[0.1, 0.2, 0.3],
+        top_k=3,
+        document_ids=[first_document_id, second_document_id],
+    )
+
+    query_filter = client.query_points.call_args.kwargs["query_filter"]
+    document_conditions = [
+        condition
+        for condition in query_filter.must
+        if getattr(condition, "key", None) == "document_id"
+    ]
+    assert len(document_conditions) == 1
+    assert document_conditions[0].match.any == [
+        str(first_document_id),
+        str(second_document_id),
+    ]
+
+
+def test_qdrant_score_semantics_are_documented() -> None:
+    score_doc = qdrant_service._qdrant_score_to_semantic_similarity.__doc__
+
+    assert score_doc is not None
+    assert "semantic_similarity" in score_doc
+    assert "higher-is-better" in score_doc
+    assert "cosine semantic similarity" in score_doc
 
 
 def test_semantic_search_maps_complete_qdrant_payload_to_response_shape(

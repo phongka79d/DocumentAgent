@@ -237,6 +237,8 @@ Qdrant stores chunk vectors. `qdrant_service.py` creates or validates a collecti
 
 Vector search helpers always include a `user_id = SINGLE_USER_ID` filter and optionally filter by selected document IDs.
 
+For live semantic retrieval checks, the Qdrant collection must support keyword payload filtering on `user_id` and `document_id`; otherwise required filtered searches can fail even when vectors exist.
+
 ### ShopAIKey
 
 `shopaikey_service.py` calls an OpenAI-compatible embeddings endpoint at `{SHOPAIKEY_BASE_URL}/embeddings`. The embedding model is configured through `SHOPAIKEY_EMBEDDING_MODEL`; it is not hardcoded in the service.
@@ -355,7 +357,7 @@ Backend tests are under `backend/tests/`. From `backend/`:
 pytest
 ```
 
-The tests cover settings validation, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding error handling, Supabase service behavior, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, and the development indexing API.
+The tests cover settings validation, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding error handling, Supabase service behavior, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, retrieval API contract/error behavior, and the development indexing API.
 
 Frontend validation commands from `frontend/package.json`:
 

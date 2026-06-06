@@ -117,6 +117,37 @@ def test_search_retrieval_api_delegates_request_fields(monkeypatch) -> None:
     }
 
 
+def test_search_retrieval_api_allows_omitted_optional_fields(monkeypatch) -> None:
+    observed_call = {}
+
+    def fake_semantic_search(question, document_ids=None, top_k=None):
+        observed_call["question"] = question
+        observed_call["document_ids"] = document_ids
+        observed_call["top_k"] = top_k
+        return SearchResponse(question=question, results=[])
+
+    monkeypatch.setattr(
+        "app.api.retrieval.retrieval_service.semantic_search",
+        fake_semantic_search,
+    )
+
+    response = _client().post(
+        "/api/retrieval/search",
+        json={"question": "Where is the onboarding policy?"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "question": "Where is the onboarding policy?",
+        "results": [],
+    }
+    assert observed_call == {
+        "question": "Where is the onboarding policy?",
+        "document_ids": None,
+        "top_k": None,
+    }
+
+
 def test_main_app_registers_retrieval_router(monkeypatch) -> None:
     def fake_semantic_search(question, document_ids=None, top_k=None):
         return SearchResponse(question=question, results=[])
