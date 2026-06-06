@@ -444,7 +444,7 @@ The retrieval primitive must be available through a backend API route before lat
 
 ### Tasks
 
-- [ ] (04A): Implement `POST /api/retrieval/search`
+- [x] (04A): Implement `POST /api/retrieval/search`
   - Source of Truth: `docs/plans/Plan_6.md` > `## 1. Goal`; `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Implement `/api/retrieval/search` in `backend/app/api/retrieval.py`.
@@ -461,7 +461,7 @@ The retrieval primitive must be available through a backend API route before lat
   - Blocked Condition: None for mocked API tests.
   - Files: `backend/app/api/retrieval.py`, `backend/tests/test_retrieval_api.py`
 
-- [ ] (04B): Register retrieval router under `/api/retrieval`
+- [x] (04B): Register retrieval router under `/api/retrieval`
   - Source of Truth: `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 9. Implementation Steps`; `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Register retrieval router in `backend/app/main.py`.
@@ -476,7 +476,7 @@ The retrieval primitive must be available through a backend API route before lat
   - Blocked Condition: None.
   - Files: `backend/app/main.py`, `backend/app/api/retrieval.py`
 
-- [ ] (04C): Map validation and dependency errors to required HTTP responses
+- [x] (04C): Map validation and dependency errors to required HTTP responses
   - Source of Truth: `docs/plans/Plan_6.md` > `## 8. API Design`; `docs/plans/Plan_6.md` > `## 11. Required Tests`; `docs/plans/Plan_6.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Empty question returns HTTP 400.
@@ -757,9 +757,9 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03D): Handle ShopAIKey failures, empty result sets, and safe logging
 
 #### Batch04
-- [ ] (04A): Implement `POST /api/retrieval/search`
-- [ ] (04B): Register retrieval router under `/api/retrieval`
-- [ ] (04C): Map validation and dependency errors to required HTTP responses
+- [x] (04A): Implement `POST /api/retrieval/search`
+- [x] (04B): Register retrieval router under `/api/retrieval`
+- [x] (04C): Map validation and dependency errors to required HTTP responses
 
 #### Batch05
 - [ ] (05A): Add and run retrieval service tests

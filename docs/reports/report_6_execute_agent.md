@@ -978,3 +978,256 @@ complete
 - next task ID: (04A)
 - can proceed: yes, after A2 reviews and accepts `(03D)`.
 - handoff notes: The retrieval service now raises `RetrievalDependencyError(public_message="Semantic retrieval is temporarily unavailable.")` for ShopAIKey embedding failures, suitable for later API 500 mapping.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch04 - Retrieval API Route and Error Handling
+
+## Task
+(04A) - Implement `POST /api/retrieval/search`
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 1. Goal`
+- `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Retrieval API Route and Error Handling
+- Task ID: (04A)
+- Task title: Implement `POST /api/retrieval/search`
+
+## Completed Work
+- Status: complete.
+- Implemented a thin retrieval API route on `backend/app/api/retrieval.py` at router path `/search`, intended to become `/api/retrieval/search` when mounted with the `/api/retrieval` prefix.
+- The route accepts `SearchRequest`, delegates to `retrieval_service.semantic_search`, and returns `SearchResponse` with HTTP 200.
+- Added mocked API tests that mount only the retrieval router and verify the successful response contract and delegated request fields.
+
+## Files Created or Modified
+- backend/app/api/retrieval.py
+- backend/tests/test_retrieval_api.py
+- docs/reports/report_6_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_api.py -v`: Passed
+- evidence or reason: 2 tests passed in 1.78s.
+
+## Acceptance Check
+- Task acceptance condition: API tests can call the route and receive the expected response contract.
+- Status: satisfied
+- Evidence: `test_search_retrieval_api_returns_search_response` calls `POST /api/retrieval/search` through a test-mounted retrieval router and receives a response containing `question` and `results`. `test_search_retrieval_api_delegates_request_fields` verifies `question`, `document_ids`, and `top_k` are passed to `semantic_search`.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_6_execute_agent.md.
+- Mocked API response example: `{"question":"What is the remote work policy?","results":[{"chunk_id":"22222222-2222-2222-2222-222222222222","document_id":"11111111-1111-1111-1111-111111111111","file_name":"handbook.pdf","file_type":"pdf","content":"Employees may work remotely two days per week.","content_preview":null,"page_number":3,"section_title":"Remote work","chunk_index":7,"semantic_similarity":0.91}]}`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly requested checkbox updates be left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept route code focused on HTTP request/response concerns and delegated all retrieval behavior to `retrieval_service.semantic_search`.
+- Did not register the router in `backend/app/main.py` because `(04B)` owns router registration.
+- Did not add validation or dependency HTTP error mapping because `(04C)` owns required error response mapping.
+- Mounted the router inside `backend/tests/test_retrieval_api.py` so `(04A)` can validate `/api/retrieval/search` without changing application registration.
+
+## Risks or Open Issues
+- The route is not registered in the main FastAPI application yet by design; `(04B)` must register it under `/api/retrieval`.
+- HTTP mapping for `RetrievalValidationError` and `RetrievalDependencyError` remains for `(04C)`.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependency Batch03 is marked complete in `docs/tasks/task_6.md`.
+- `backend/app/main.py` was not modified, preserving `(04B)` scope.
+- No sibling tasks `(04B)` or `(04C)` were implemented.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 reviews and accepts `(04A)`.
+- handoff notes: The retrieval router now exposes `POST /search`; registering it with prefix `/api/retrieval` will provide the required `/api/retrieval/search` path.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch04 - Retrieval API Route and Error Handling
+
+## Task
+(04B) - Register retrieval router under `/api/retrieval`
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_6.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Retrieval API Route and Error Handling
+- Task ID: (04B)
+- Task title: Register retrieval router under `/api/retrieval`
+
+## Completed Work
+- Task is complete.
+- Registered the existing retrieval router in `backend/app/main.py` using the existing FastAPI application registration style.
+- Added an app-level API test proving `POST /api/retrieval/search` is reachable through `create_app()`.
+
+## Files Created or Modified
+- `backend/app/main.py`
+- `backend/tests/test_retrieval_api.py`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_api.py -v`: Failed before implementation as expected
+- evidence or reason: new app-level test returned HTTP 404 for `/api/retrieval/search`, proving the router was not registered.
+- `cd backend; pytest tests/test_retrieval_api.py -v`: Passed after implementation
+- evidence or reason: 3 tests passed in 1.70s.
+
+## Acceptance Check
+- Task acceptance condition: Route appears in tests and responds under `/api/retrieval/search`.
+- Status: satisfied
+- Evidence: `test_main_app_registers_retrieval_router` posts to `/api/retrieval/search` through `TestClient(create_app())` and receives HTTP 200 with the expected `SearchResponse` body.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+- Mocked API response example: `{"question":"Where is the onboarding policy?","results":[]}`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly requested checkbox updates be left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used the existing `application.include_router(..., prefix=...)` pattern in `backend/app/main.py`.
+- Registered the router with prefix `/api/retrieval` so the existing router path `/search` resolves to `/api/retrieval/search`.
+- Did not change retrieval route behavior or implement `(04C)` error mapping.
+
+## Risks or Open Issues
+- HTTP validation and dependency error mapping remain for `(04C)`.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependency `(04A)` is marked complete in `docs/tasks/task_6.md`.
+- No user action was required.
+- No sibling task `(04C)` or Batch05 work was implemented.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes, after A2 reviews and accepts `(04B)`.
+- handoff notes: `/api/retrieval/search` is now registered through the main FastAPI app; next work can focus only on required HTTP error mapping.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_6.md
+
+## Report File
+docs/reports/report_6_execute_agent.md
+
+## Batch
+Batch04 - Retrieval API Route and Error Handling
+
+## Task
+(04C) - Map validation and dependency errors to required HTTP responses
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_6.md` > `## 8. API Design`
+- `docs/plans/Plan_6.md` > `## 11. Required Tests`
+- `docs/plans/Plan_6.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Retrieval API Route and Error Handling
+- Task ID: (04C)
+- Task title: Map validation and dependency errors to required HTTP responses
+
+## Completed Work
+- Task is complete.
+- Added retrieval API exception mapping so `RetrievalValidationError` returns HTTP 400, `RetrievalDependencyError` returns HTTP 500 with the service-provided safe public message, and `QdrantSearchError` returns HTTP 500 with a generic safe public message.
+- Added mocked API tests for empty question, `top_k` lower and upper bound violations, invalid document UUID validation, ShopAIKey dependency failure, Qdrant search failure, and missing indexed chunks returning HTTP 200 with an empty results list.
+
+## Files Created or Modified
+- `backend/app/api/retrieval.py`
+- `backend/tests/test_retrieval_api.py`
+- `docs/reports/report_6_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_api.py -v`: Failed first during TDD red run; 5 expected failures showed validation/dependency exceptions escaping the route.
+- `cd backend; pytest tests/test_retrieval_api.py -v`: Passed; 10 tests passed.
+
+## Acceptance Check
+- Task acceptance condition: API tests cover empty question, Top-K bounds, invalid UUID, ShopAIKey failure, Qdrant failure, and empty result response.
+- Status: satisfied
+- Evidence: `pytest tests/test_retrieval_api.py -v` passed with tests for all required negative/error cases and empty-result behavior.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_6_execute_agent.md`.
+- Mocked API test evidence for required error mappings.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly requested checkbox and batch updates be left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Kept invalid UUID handling in FastAPI/Pydantic by relying on `SearchRequest.document_ids: list[UUID]`.
+- Mapped 500 responses to safe public messages and did not expose provider or dependency internals in HTTP details.
+- Kept tests mocked so no ShopAIKey, Qdrant, Supabase, or live setup is required.
+
+## Risks or Open Issues
+- Existing uncommitted changes from prior tasks remain in the workspace and were preserved.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields were identified.
+- Dependencies `(04A)` and Batch03 error types were present; `(04B)` was also marked complete in the task file.
+- No user action was required.
+- No Batch05 or live/manual checks were implemented.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after A2 reviews and accepts `(04C)` and the orchestrator advances beyond Batch04.
+- handoff notes: Retrieval API error mapping now matches Plan 6 and targeted API tests pass.
