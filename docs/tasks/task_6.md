@@ -700,33 +700,33 @@ Optional future tracks are outside the mandatory chain.
 
 ## Global Verification Checklist
 
-- [ ] `RETRIEVAL_SEMANTIC_TOP_K` exists in backend config.
-- [ ] `RETRIEVAL_SEMANTIC_TOP_K` is present in `backend/.env.example` with a non-secret example value.
-- [ ] No real secret values are committed.
-- [ ] No frontend file references ShopAIKey, Qdrant, Supabase service-role, or backend-only retrieval secrets.
-- [ ] `backend/app/schemas/retrieval.py` defines `SearchRequest`, `RetrievalResult`, and `SearchResponse`.
-- [ ] `backend/app/services/retrieval_service.py` defines `semantic_search(question, document_ids=None, top_k=None)` or an equivalent typed service entry point.
-- [ ] Question text is trimmed before validation and embedding.
-- [ ] Empty or whitespace-only questions return HTTP 400.
-- [ ] Omitted `top_k` uses `RETRIEVAL_SEMANTIC_TOP_K`.
-- [ ] `top_k` values below 1 or above 50 return HTTP 400.
-- [ ] Invalid document UUID values return HTTP 422.
-- [ ] ShopAIKey question embedding uses the existing embedding service.
-- [ ] Qdrant vector search uses the configured collection.
-- [ ] Qdrant vector search always filters by `user_id = SINGLE_USER_ID`.
-- [ ] Optional selected document filtering uses Qdrant payload `document_id`.
-- [ ] Qdrant score semantics are documented or otherwise explicit.
-- [ ] Results map chunk ID, document ID, file name, file type, content or preview, page number, section title, chunk index, and `semantic_similarity`.
-- [ ] Full chunk content is fetched from Supabase when Qdrant payload only has preview and the lookup preserves `SINGLE_USER_ID`.
-- [ ] Missing indexed chunks return HTTP 200 with an empty `results` list.
-- [ ] Missing optional payload fields do not crash response mapping.
-- [ ] ShopAIKey failures return safe public HTTP 500 errors and detailed backend logs without secrets.
-- [ ] Qdrant failures return safe public HTTP 500 errors and detailed backend logs without secrets.
-- [ ] `POST /api/retrieval/search` is registered under `/api/retrieval`.
-- [ ] Required mocked tests were run and results were reported honestly.
-- [ ] Manual live semantic checks were run only when user setup was available.
-- [ ] No GraphRAG expansion, hybrid scoring, rerank, Agent 1, chat, LangGraph, answer generation, or frontend search UI was implemented.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `RETRIEVAL_SEMANTIC_TOP_K` exists in backend config.
+- [x] `RETRIEVAL_SEMANTIC_TOP_K` is present in `backend/.env.example` with a non-secret example value.
+- [x] No real secret values are committed.
+- [x] No frontend file references ShopAIKey, Qdrant, Supabase service-role, or backend-only retrieval secrets.
+- [x] `backend/app/schemas/retrieval.py` defines `SearchRequest`, `RetrievalResult`, and `SearchResponse`.
+- [x] `backend/app/services/retrieval_service.py` defines `semantic_search(question, document_ids=None, top_k=None)` or an equivalent typed service entry point.
+- [x] Question text is trimmed before validation and embedding.
+- [x] Empty or whitespace-only questions return HTTP 400.
+- [x] Omitted `top_k` uses `RETRIEVAL_SEMANTIC_TOP_K`.
+- [x] `top_k` values below 1 or above 50 return HTTP 400.
+- [x] Invalid document UUID values return HTTP 422.
+- [x] ShopAIKey question embedding uses the existing embedding service.
+- [x] Qdrant vector search uses the configured collection.
+- [x] Qdrant vector search always filters by `user_id = SINGLE_USER_ID`.
+- [x] Optional selected document filtering uses Qdrant payload `document_id`.
+- [x] Qdrant score semantics are documented or otherwise explicit.
+- [x] Results map chunk ID, document ID, file name, file type, content or preview, page number, section title, chunk index, and `semantic_similarity`.
+- [x] Full chunk content is fetched from Supabase when Qdrant payload only has preview and the lookup preserves `SINGLE_USER_ID`.
+- [x] Missing indexed chunks return HTTP 200 with an empty `results` list.
+- [x] Missing optional payload fields do not crash response mapping.
+- [x] ShopAIKey failures return safe public HTTP 500 errors and detailed backend logs without secrets.
+- [x] Qdrant failures return safe public HTTP 500 errors and detailed backend logs without secrets.
+- [x] `POST /api/retrieval/search` is registered under `/api/retrieval`.
+- [x] Required mocked tests were run and results were reported honestly.
+- [x] Manual live semantic checks were run only when user setup was available.
+- [x] No GraphRAG expansion, hybrid scoring, rerank, Agent 1, chat, LangGraph, answer generation, or frontend search UI was implemented.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
@@ -736,7 +736,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] Batch02 - Qdrant Filtered Search Helper
 - [x] Batch03 - Semantic Retrieval Service and Result Mapping
 - [x] Batch04 - Retrieval API Route and Error Handling
-- [ ] Batch05 - Tests, Smoke Checks, and Handoff
+- [x] Batch05 - Tests, Smoke Checks, and Handoff
 
 ### Task IDs
 
