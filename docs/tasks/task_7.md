@@ -108,7 +108,7 @@ Graph extraction and graph building must be typed, backend-only, single-user sco
 
 ### Tasks
 
-- [ ] (01A): Add backend-only graph extraction configuration
+- [x] (01A): Add backend-only graph extraction configuration
   - Source of Truth: `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`
   - Source Requirements:
     - Add `SHOPAIKEY_CHAT_MODEL` to settings and `.env.example` if not already present.
@@ -124,7 +124,7 @@ Graph extraction and graph building must be typed, backend-only, single-user sco
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live LLM extraction if required ShopAIKey values are missing.
   - Files: `backend/app/core/config.py`, `backend/.env.example`
 
-- [ ] (01B): Create validated graph schemas and allowed type constants
+- [x] (01B): Create validated graph schemas and allowed type constants
   - Source of Truth: `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Create `backend/app/schemas/graph.py`.
@@ -141,7 +141,7 @@ Graph extraction and graph building must be typed, backend-only, single-user sco
   - Blocked Condition: None.
   - Files: `backend/app/schemas/graph.py`, `backend/app/schemas/__init__.py`
 
-- [ ] (01C): Add Supabase graph lookup and persistence helper contracts
+- [x] (01C): Add Supabase graph lookup and persistence helper contracts
   - Source of Truth: `docs/plans/Plan_7.md` > `## 3. Scope`; `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 6. Data Storage Design` > `### 6.2 Supabase PostgreSQL Tables`
   - Source Requirements:
     - Add helpers for chunk lookup, entity inserts, relationship inserts, and clearing graph rows for rebuild.
@@ -769,7 +769,7 @@ Optional future tracks are outside the mandatory chain.
 
 ### Batches
 
-- [ ] Batch01 - Graph Configuration, Schemas, and Supabase Contracts
+- [x] Batch01 - Graph Configuration, Schemas, and Supabase Contracts
 - [ ] Batch02 - ShopAIKey Chat and Entity Extraction Service
 - [ ] Batch03 - Graph Builder Rebuild and Structural Relationships
 - [ ] Batch04 - Entity Persistence and Relationship Expansion
@@ -778,9 +778,9 @@ Optional future tracks are outside the mandatory chain.
 ### Task IDs
 
 #### Batch01
-- [ ] (01A): Add backend-only graph extraction configuration
-- [ ] (01B): Create validated graph schemas and allowed type constants
-- [ ] (01C): Add Supabase graph lookup and persistence helper contracts
+- [x] (01A): Add backend-only graph extraction configuration
+- [x] (01B): Create validated graph schemas and allowed type constants
+- [x] (01C): Add Supabase graph lookup and persistence helper contracts
 
 #### Batch02
 - [ ] (02A): Add ShopAIKey chat completion helper for structured extraction

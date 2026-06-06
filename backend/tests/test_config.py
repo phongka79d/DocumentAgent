@@ -15,7 +15,9 @@ def test_settings_allow_missing_supabase_values_for_basic_app_usage() -> None:
     assert settings.supabase_service_role_key is None
     assert settings.shopaikey_api_key is None
     assert settings.shopaikey_base_url is None
+    assert settings.shopaikey_chat_model is None
     assert settings.shopaikey_embedding_model is None
+    assert settings.graph_extraction_enabled is True
     assert settings.qdrant_url is None
     assert settings.qdrant_api_key is None
     assert settings.qdrant_collection is None
@@ -29,6 +31,17 @@ def test_settings_allow_retrieval_semantic_top_k_override() -> None:
     settings = Settings(_env_file=None, retrieval_semantic_top_k=8)
 
     assert settings.retrieval_semantic_top_k == 8
+
+
+def test_settings_allow_graph_extraction_and_chat_model_overrides() -> None:
+    settings = Settings(
+        _env_file=None,
+        shopaikey_chat_model="configured-chat-model",
+        graph_extraction_enabled=False,
+    )
+
+    assert settings.shopaikey_chat_model == "configured-chat-model"
+    assert settings.graph_extraction_enabled is False
 
 
 @pytest.mark.parametrize("top_k", [0, 51])

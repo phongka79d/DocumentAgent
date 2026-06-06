@@ -3,6 +3,7 @@ from typing import Any
 from supabase import Client, create_client
 
 from app.core.config import get_settings
+from app.schemas.graph import EntityDraft, RelationshipDraft
 from app.schemas.parsing import ChunkDraft
 
 
@@ -143,6 +144,45 @@ def _chunk_insert_row(
     }
 
 
+def _entity_insert_row(
+    entity: EntityDraft,
+    document_id: str,
+    user_id: str,
+) -> dict[str, Any]:
+    if not isinstance(entity, EntityDraft):
+        raise ValueError("document entity inserts require validated EntityDraft items")
+
+    return {
+        "document_id": document_id,
+        "chunk_id": str(entity.chunk_id),
+        "user_id": user_id,
+        "entity_name": entity.entity_name,
+        "entity_type": entity.entity_type,
+        "description": entity.description,
+    }
+
+
+def _relationship_insert_row(
+    relationship: RelationshipDraft,
+    document_id: str,
+) -> dict[str, Any]:
+    if not isinstance(relationship, RelationshipDraft):
+        raise ValueError(
+            "document relationship inserts require validated RelationshipDraft items"
+        )
+
+    return {
+        "document_id": document_id,
+        "source_type": relationship.source_type,
+        "source_id": relationship.source_id,
+        "target_type": relationship.target_type,
+        "target_id": relationship.target_id,
+        "relationship_type": relationship.relationship_type,
+        "weight": relationship.weight,
+        "description": relationship.description,
+    }
+
+
 def insert_document_metadata(document_row: dict) -> dict:
     client = get_supabase_client()
 
@@ -203,6 +243,11 @@ def get_indexing_document(document_id: str) -> dict | None:
     return get_document_metadata(document_id, _get_single_user_id())
 
 
+def get_graph_document(document_id: str) -> dict | None:
+    """Load one document for graph building for the configured single user."""
+    return get_document_metadata(document_id, _get_single_user_id())
+
+
 def download_original_document_file(storage_path: str) -> bytes:
     client = get_supabase_client()
     bucket_name = _get_configured_storage_bucket()
@@ -254,6 +299,118 @@ def list_chunks_needing_indexing(document_id: str) -> list[dict]:
         )
     except Exception as exc:
         _raise_supabase_query_error("document chunks indexing list", exc)
+
+    return _response_rows(response)
+
+
+def list_document_chunks(document_id: str) -> list[dict]:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("document_chunks")
+            .select(
+                "id, document_id, user_id, chunk_index, content, page_number, "
+                "section_title, token_count, qdrant_point_id"
+            )
+            .eq("document_id", document_id)
+            .eq("user_id", _get_single_user_id())
+            .order("chunk_index")
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document chunks graph list", exc)
+
+    return _response_rows(response)
+
+
+def clear_document_graph_rows(document_id: str) -> None:
+    client = get_supabase_client()
+    user_id = _get_single_user_id()
+
+    try:
+        (
+            client.table("document_relationships")
+            .delete()
+            .eq("document_id", document_id)
+            .execute()
+        )
+        (
+            client.table("document_entities")
+            .delete()
+            .eq("document_id", document_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document graph rows clear", exc)
+
+
+def insert_document_entities(
+    document_id: str,
+    entities: list[EntityDraft],
+) -> list[dict]:
+    if not entities:
+        return []
+
+    client = get_supabase_client()
+    user_id = _get_single_user_id()
+    rows = [_entity_insert_row(entity, document_id, user_id) for entity in entities]
+
+    try:
+        response = client.table("document_entities").insert(rows).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("document entity insert", exc)
+
+    return _response_rows(response)
+
+
+def find_document_entity(
+    document_id: str,
+    entity_name: str,
+    entity_type: str,
+) -> dict | None:
+    client = get_supabase_client()
+    normalized_name = entity_name.strip()
+
+    try:
+        response = (
+            client.table("document_entities")
+            .select("*")
+            .eq("document_id", document_id)
+            .eq("user_id", _get_single_user_id())
+            .eq("entity_name", normalized_name)
+            .eq("entity_type", entity_type)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document entity lookup", exc)
+
+    rows = _response_rows(response)
+    if not rows:
+        return None
+
+    return rows[0]
+
+
+def insert_document_relationships(
+    document_id: str,
+    relationships: list[RelationshipDraft],
+) -> list[dict]:
+    if not relationships:
+        return []
+
+    client = get_supabase_client()
+    rows = [
+        _relationship_insert_row(relationship, document_id)
+        for relationship in relationships
+    ]
+
+    try:
+        response = client.table("document_relationships").insert(rows).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("document relationship insert", exc)
 
     return _response_rows(response)
 
