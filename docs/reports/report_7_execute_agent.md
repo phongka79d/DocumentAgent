@@ -877,3 +877,379 @@ complete
 - next task ID: (04A)
 - can proceed: yes, after A2 reviews and accepts `(03C)` and the orchestrator completes any required Batch03 gate.
 - handoff notes: graph builder now persists document-section and section-chunk structural relationships with deterministic section endpoint IDs and returns structural relationship counts; Batch04 can build entity persistence on top of this structural path.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch04 - Entity Persistence and Relationship Expansion
+
+## Task
+(04A) - Extract and persist de-duplicated document entities
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 1. Goal
+- docs/plans/Plan_7.md > ## 3. Scope
+- docs/plans/Plan_7.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_7.md > ## 9. Implementation Steps
+- docs/plans/Plan_7.md > ## 12. Acceptance Criteria
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Entity Persistence and Relationship Expansion
+- Task ID: (04A)
+- Task title: Extract and persist de-duplicated document entities
+
+## Completed Work
+- Status: complete.
+- Implemented graph-builder entity extraction across document chunks.
+- Added document-level entity de-duplication by normalized entity name, entity type, and document ID.
+- Persisted only validated `EntityDraft` rows through the existing Supabase `insert_document_entities` helper, which adds `user_id = SINGLE_USER_ID`.
+- Skipped invalid/non-`EntityDraft` extraction items before persistence.
+- Returned inserted entity count from the graph build result while preserving existing structural relationship behavior.
+
+## Files Created or Modified
+- backend/app/services/graph_builder.py
+- backend/tests/test_graph_builder.py
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence or reason: 8 tests collected, 8 passed in 0.85s.
+- TDD red check: Passed as expected before implementation
+- evidence or reason: new deduplication test failed with `AssertionError: assert 0 == 2` for missing entity persistence.
+
+## Acceptance Check
+- Task acceptance condition: Duplicate entity names/types for the same document do not create duplicate rows.
+- Status: satisfied
+- Evidence: mocked graph build extracted `Probation Period` and `probation period` as the same document/type key and inserted one `contract term` row plus one date row; mocked result count was `entity_count=2`, `relationship_count=4`.
+- Task acceptance condition: rows include `user_id = SINGLE_USER_ID`.
+- Status: satisfied
+- Evidence: graph builder persists through `supabase_service.insert_document_entities`; that helper builds rows with `user_id = _get_single_user_id()`. The graph-builder test captured mocked inserted rows with `user_id = single_user`.
+- Task acceptance condition: invalid extraction results are not inserted.
+- Status: satisfied
+- Evidence: graph-builder test included an invalid `object()` extraction item; inserted entity batch contained only validated `EntityDraft` items.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_7_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Used the existing `entity_extraction_service.extract_entities_for_chunk` contract instead of adding another extraction path.
+- Used the existing Supabase entity insert helper so `SINGLE_USER_ID` ownership remains centralized.
+- Kept `(04B)`, `(04C)`, and `(04D)` out of scope: no chunk-entity, entity-entity, or chunk-chunk relationship expansion was added.
+
+## Risks or Open Issues
+- Live ShopAIKey/Supabase extraction was not run; validation used mocked extraction and persistence per the selected task.
+- Extraction service exceptions still propagate through the graph build path; safe failure summarization is listed under later Batch04 work.
+
+## Minor Issues Fixed During Execution
+- Existing graph-builder structural tests were given a default no-entity extraction stub so they remain focused and do not require live ShopAIKey settings.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(02B)`, `(02C)`, `(03A)`, and `(03B)` are complete per docs/tasks/task_7.md.
+- Scope stayed within `(04A)` and did not implement sibling tasks `(04B)`, `(04C)`, or `(04D)`.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 reviews and accepts `(04A)`.
+- handoff notes: graph builder now has a de-duplicated in-memory entity list and persisted entity rows; `(04B)` can use this path to add chunk-entity and valid entity-entity relationships.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch04 - Entity Persistence and Relationship Expansion
+
+## Task
+(04B) - Insert chunk-entity and valid entity-entity relationships
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 3. Scope
+- docs/plans/Plan_7.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_7.md > ## 9. Implementation Steps
+- docs/plans/Plan_7.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_7.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Entity Persistence and Relationship Expansion
+- Task ID: (04B)
+- Task title: Insert chunk-entity and valid entity-entity relationships
+
+## Completed Work
+- Status: complete.
+- Refactored graph build extraction handling so each chunk's validated entity and relationship drafts are retained through entity persistence.
+- Added `chunk_mentions_entity` relationship construction for every extracted entity mention after inserted entity IDs are available.
+- Added entity endpoint resolution from extracted relation names to inserted entity IDs, skipping unresolved, ambiguous, non-entity, and self-referential endpoints safely.
+- Added validated `entity_related_to_entity` relationship construction for resolved extracted entity relations while preserving the extracted semantic relation in the description when applicable.
+- Added insert-failure handling for the chunk/entity relationship expansion insert with operation-specific `GraphBuildException` details.
+- Added mocked tests for chunk mentions, valid entity relations, unresolved endpoint discard, and entity relationship insert failure.
+
+## Files Created or Modified
+- backend/app/services/graph_builder.py
+- backend/tests/test_graph_builder.py
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence: 10 tests passed in 0.86s.
+
+## Acceptance Check
+- Task acceptance condition: Relationship rows point to valid chunk/entity identifiers, use allowed relationship types, have weights in range, and fail safely on insert errors.
+- Status: satisfied
+- Evidence: `RelationshipDraft` validation enforces allowed relationship types and weight range; mocked graph builder tests verify chunk IDs, resolved entity IDs, `chunk_mentions_entity`, `entity_related_to_entity`, unresolved endpoint discard, and `insert_entity_relationships` failure reporting. Mocked valid graph case produced 2 persisted entities and 8 total relationships.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_7_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Reused the existing validated `RelationshipDraft` schema for all persisted relationship payloads.
+- Resolved extracted entity relation endpoints by normalized entity name only when exactly one inserted entity ID matched, preventing ambiguous relationship rows.
+- Converted valid extracted semantic relations into persisted `entity_related_to_entity` rows, keeping the semantic relation label in the description.
+- Kept chunk-chunk relationship expansion and broader graph build result/failure summary work out of scope for sibling tasks `(04C)` and `(04D)`.
+
+## Risks or Open Issues
+- Live Supabase graph build was not run; validation used mocked persistence as specified by the selected task.
+- Ambiguous entity names with multiple inserted entity IDs are skipped rather than reported in `GraphBuildResult`; this satisfies safe discard behavior and avoids expanding `(04D)` result-summary scope.
+
+## Minor Issues Fixed During Execution
+- Updated the existing de-duplicated entity graph-builder test expectation to include the new per-mention `chunk_mentions_entity` rows.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency `(04A)` was complete in docs/tasks/task_7.md before execution.
+- Scope stayed within `(04B)` and did not implement sibling tasks `(04C)` or `(04D)`.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes, after A2 reviews and accepts `(04B)`.
+- handoff notes: graph builder now retains chunk-level extraction drafts and has inserted entity IDs available for relationship expansion; `(04C)` can build on the same extracted entity data for strong-overlap chunk-chunk relationships.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch04 - Entity Persistence and Relationship Expansion
+
+## Task
+(04C) - Add chunk-chunk relationships from strong entity overlap
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 3. Scope
+- docs/plans/Plan_7.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_7.md > ## 9. Implementation Steps
+- docs/plans/Plan_7.md > ## 12. Acceptance Criteria
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Entity Persistence and Relationship Expansion
+- Task ID: (04C)
+- Task title: Add chunk-chunk relationships from strong entity overlap
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Implemented chunk-chunk relationship payload creation for chunks with strong de-duplicated entity overlap.
+- Added deterministic Jaccard overlap scoring over per-chunk de-duplicated entity keys.
+- Required at least two shared entities and a normalized score of at least 0.5 to avoid noisy weak-overlap links.
+- Avoided self-links and duplicate symmetric links by evaluating unordered chunk pairs once.
+- Added `chunk_related_to_chunk` relationship rows to the existing entity relationship insertion batch.
+
+## Files Created or Modified
+- backend/app/services/graph_builder.py
+- backend/tests/test_graph_builder.py
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence or reason: 12 tests passed in 0.85s.
+- TDD red check: Passed as expected before implementation
+- evidence or reason: the two new chunk-overlap tests failed before implementation because no `chunk_related_to_chunk` rows were created; 10 existing tests passed.
+
+## Acceptance Check
+- Task acceptance condition: Strong entity overlap produces normalized relationship weights.
+- Status: satisfied
+- Evidence: mocked strong-overlap test produced one `chunk_related_to_chunk` row with weight `0.5`; duplicate full-overlap chunks produced one row with weight `1.0`.
+- Task acceptance condition: Weak overlap does not create noisy relationships.
+- Status: satisfied
+- Evidence: weak one-entity overlap did not create a chunk relationship because it failed the minimum shared-entity and normalized-score thresholds.
+- Task acceptance condition: Duplicate chunk-chunk rows are avoided.
+- Status: satisfied
+- Evidence: pair generation evaluates unordered chunk pairs once, skips same chunk IDs, and the duplicate-prevention test produced only one chunk relationship for the qualifying pair.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_7_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Used de-duplicated entity keys `(document_id, normalized entity_name, entity_type)` for chunk overlap comparison so repeated mentions in a chunk do not inflate scores.
+- Used Jaccard overlap as the deterministic normalized weight because it naturally stays between 0 and 1.
+- Required at least two shared entities plus a minimum Jaccard weight of `0.5` as the strong-overlap threshold.
+- Kept broader graph build count and failure-summary changes out of scope for sibling task `(04D)`.
+
+## Risks or Open Issues
+- Live Supabase graph build was not run; validation used mocked graph builder tests as required by the selected task.
+- The strong-overlap threshold is conservative but not externally configurable; Plan 7 did not specify a configurable threshold.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(04A)` and `(04B)` were marked complete in docs/tasks/task_7.md before execution.
+- Scope stayed within `(04C)` and did not implement sibling task `(04D)` or future Batch05 work.
+
+## Notes for Next Task
+- next task ID: (04D)
+- can proceed: yes, after A2 reviews and accepts `(04C)`.
+- handoff notes: chunk overlap relationships now contribute to the existing relationship insertion path and mocked relationship counts; `(04D)` can focus on graph build counts and safe failure summaries.
+
+---
+
+# Task Execution Report - (04D)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch04 - Entity Persistence and Relationship Expansion
+
+## Task
+(04D) - Return graph build counts and safe failure summaries
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 8. API Design
+- docs/plans/Plan_7.md > ## 9. Implementation Steps
+- docs/plans/Plan_7.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_7.md > ## 13. Failure Handling
+- docs/plans/Plan_7.md > ## 14. Agent Report Requirement
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Entity Persistence and Relationship Expansion
+- Task ID: (04D)
+- Task title: Return graph build counts and safe failure summaries
+
+## Completed Work
+- Status: complete.
+- Added top-level `graph_rows_cleared` and `partial_state_risk` flags to `GraphBuildResult` while preserving existing `document_id`, `entity_count`, `relationship_count`, and `errors` fields.
+- Updated graph builder result aggregation so successful builds report inserted entity and relationship counts, including structural, chunk-entity, entity-entity, and chunk-chunk relationship rows.
+- Added safe per-chunk extraction failure summaries. Extraction failures now record operation `extract_entities_for_chunk`, the affected chunk UUID when available, and a sanitized generic message without provider details or secrets. Failed chunk graph data is skipped while the build continues with other chunks.
+- Updated database failure results to stop the build with the failed operation name and carry known inserted counts plus partial-state flags where rows were already cleared.
+- Added mocked graph builder coverage for safe extraction failure reporting, partial result counts, and database failure count/flag reporting.
+
+## Files Created or Modified
+- backend/app/services/graph_builder.py
+- backend/app/schemas/graph.py
+- backend/tests/test_graph_builder.py
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence or reason: 13 tests passed, including safe chunk extraction failure reporting, count reporting, partial-state flags, and database failure operation reporting.
+- `cd backend; pytest tests/test_graph_schemas.py -v`: Passed
+- evidence or reason: 5 schema tests passed after adding defaulted result flags.
+- changed-file secret/scope scan: Passed
+- evidence or reason: searched selected changed files for `sk-live`, direct `SHOPAIKEY_API_KEY =`, and `service_role`; no real secret exposure found. A generic non-key-looking sentinel is used only inside a sanitization test.
+
+## Acceptance Check
+- Task acceptance condition: Successful builds report accurate entity and relationship counts.
+- Status: satisfied
+- Evidence: mocked graph builder tests assert successful count examples including `entity_count=2`, `relationship_count=8` for chunk/entity/entity relationships and `entity_count=4`, `relationship_count=11` for chunk-overlap relationships.
+- Task acceptance condition: Extraction failures identify affected chunks safely.
+- Status: satisfied
+- Evidence: `test_build_document_graph_reports_safe_chunk_extraction_failure` verifies operation `extract_entities_for_chunk`, chunk id `33333333-3333-3333-3333-333333333333`, sanitized skipped message, no provider detail leakage, `entity_count=1`, and `relationship_count=5` from the remaining mocked graph build.
+- Task acceptance condition: Database failures stop the build with the failed operation name.
+- Status: satisfied
+- Evidence: mocked entity relationship insert failure raises `GraphBuildException`; result error operation is `insert_entity_relationships`, with `graph_rows_cleared=True`, `partial_state_risk=True`, and known inserted counts preserved (`entity_count=1`, `relationship_count=4`).
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_7_execute_agent.md.
+- Mocked graph build count evidence: successful sample counts `entity_count=2`, `relationship_count=8`; partial extraction sample counts `entity_count=1`, `relationship_count=5`; database failure partial counts `entity_count=1`, `relationship_count=4`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Kept extraction failures as safe `GraphBuildError` entries with chunk IDs and generic messages instead of surfacing provider exception text.
+- Continued the build after a chunk extraction failure so unaffected chunks can still produce entity and relationship counts while the result clearly marks partial-state risk.
+- Added result-level partial-state flags so callers do not have to parse `errors[].details` to detect partial rebuild risk.
+- Preserved stop-on-database-failure behavior and added known inserted counts to the exception result where prior inserts had already succeeded.
+
+## Risks or Open Issues
+- Live ShopAIKey and Supabase graph build validation was not run; task validation is mocked as specified.
+- Existing workspace had unrelated modified files before execution (`docs/tasks/task_7.md`, `docs/review/review_7_review_agent.md`, and prior report content). They were not reverted or used to mark progress.
+
+## Minor Issues Fixed During Execution
+- Avoided a key-like fake secret literal in the sanitization test by using a generic sentinel string.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(04A)`, `(04B)`, and `(04C)` were marked complete in docs/tasks/task_7.md before execution.
+- Scope stayed within `(04D)` and did not implement Batch05, endpoints, frontend APIs, retrieval, scoring, Agent 1, graph visualization, or community detection.
+- Task checkbox intentionally left unchecked for orchestrated A2 review.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after A2 reviews and accepts `(04D)`.
+- handoff notes: graph build results now include counts, safe extraction failure summaries, and partial-state flags; Batch05 can wire or validate the graph build path without changing this result contract.

@@ -454,7 +454,7 @@ The medium GraphRAG layer is useful only when extracted entities are persisted o
 
 ### Tasks
 
-- [ ] (04A): Extract and persist de-duplicated document entities
+- [x] (04A): Extract and persist de-duplicated document entities
   - Source of Truth: `docs/plans/Plan_7.md` > `## 1. Goal`; `docs/plans/Plan_7.md` > `## 3. Scope`; `docs/plans/Plan_7.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Add entity extraction from chunk text.
@@ -471,7 +471,7 @@ The medium GraphRAG layer is useful only when extracted entities are persisted o
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live LLM extraction if ShopAIKey setup is missing and fallback is not enabled.
   - Files: `backend/app/services/graph_builder.py`, `backend/app/services/supabase_service.py`, `backend/tests/test_graph_builder.py`
 
-- [ ] (04B): Insert chunk-entity and valid entity-entity relationships
+- [x] (04B): Insert chunk-entity and valid entity-entity relationships
   - Source of Truth: `docs/plans/Plan_7.md` > `## 3. Scope`; `docs/plans/Plan_7.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Insert rows into `document_relationships`.
@@ -489,7 +489,7 @@ The medium GraphRAG layer is useful only when extracted entities are persisted o
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/services/graph_builder.py`, `backend/tests/test_graph_builder.py`
 
-- [ ] (04C): Add chunk-chunk relationships from strong entity overlap
+- [x] (04C): Add chunk-chunk relationships from strong entity overlap
   - Source of Truth: `docs/plans/Plan_7.md` > `## 3. Scope`; `docs/plans/Plan_7.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Create chunk-chunk relationship records where supported by available metadata.
@@ -505,7 +505,7 @@ The medium GraphRAG layer is useful only when extracted entities are persisted o
   - Blocked Condition: None.
   - Files: `backend/app/services/graph_builder.py`, `backend/tests/test_graph_builder.py`
 
-- [ ] (04D): Return graph build counts and safe failure summaries
+- [x] (04D): Return graph build counts and safe failure summaries
   - Source of Truth: `docs/plans/Plan_7.md` > `## 8. API Design`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`; `docs/plans/Plan_7.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Return counts for inserted entities and relationships.
@@ -772,7 +772,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] Batch01 - Graph Configuration, Schemas, and Supabase Contracts
 - [x] Batch02 - ShopAIKey Chat and Entity Extraction Service
 - [x] Batch03 - Graph Builder Rebuild and Structural Relationships
-- [ ] Batch04 - Entity Persistence and Relationship Expansion
+- [x] Batch04 - Entity Persistence and Relationship Expansion
 - [ ] Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
 
 ### Task IDs
@@ -794,10 +794,10 @@ Optional future tracks are outside the mandatory chain.
 - [x] (03C): Create section node concepts and structural relationships
 
 #### Batch04
-- [ ] (04A): Extract and persist de-duplicated document entities
-- [ ] (04B): Insert chunk-entity and valid entity-entity relationships
-- [ ] (04C): Add chunk-chunk relationships from strong entity overlap
-- [ ] (04D): Return graph build counts and safe failure summaries
+- [x] (04A): Extract and persist de-duplicated document entities
+- [x] (04B): Insert chunk-entity and valid entity-entity relationships
+- [x] (04C): Add chunk-chunk relationships from strong entity overlap
+- [x] (04D): Return graph build counts and safe failure summaries
 
 #### Batch05
 - [ ] (05A): Wire graph builder into the supported backend graph build path

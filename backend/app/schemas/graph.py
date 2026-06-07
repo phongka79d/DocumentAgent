@@ -183,3 +183,5 @@ class GraphBuildResult(BaseModel):
     entity_count: int = Field(ge=0)
     relationship_count: int = Field(ge=0)
     errors: list[GraphBuildError] = Field(default_factory=list)
+    graph_rows_cleared: bool = False
+    partial_state_risk: bool = False
