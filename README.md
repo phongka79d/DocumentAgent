@@ -10,7 +10,7 @@ This repository is a mixed workspace:
 - `frontend/` contains a Vite React TypeScript shell with an Axios API client.
 - `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
 
-The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, and graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion. Graph build API integration, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
+The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, and graph building wired into the backend document processing service after chunks are persisted. Public graph APIs, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
 
 ## What This Folder Does
 
@@ -111,9 +111,10 @@ Important current limitation: upload does not automatically call `process_docume
 6. Split sections into `ChunkDraft` records with `chunking_service.chunk_sections()`.
 7. Insert chunks into Supabase `document_chunks`.
 8. Update document `chunk_count`.
-9. Mark the document `ready`, or mark it `failed` with a safe error message.
+9. Build graph rows for the document through `graph_builder.build_document_graph(document_id)`.
+10. Mark the document `ready`, or mark it `failed` with a safe error message.
 
-This workflow is tested, but no public API route currently triggers it.
+The processing result includes graph entity, relationship, and graph error counts. Graph build failures are mapped to the safe public message `Document graph build failed.` before the document is marked `failed`. This workflow is tested, but no public API route currently triggers it.
 
 ### Parsing and Chunking
 
@@ -175,8 +176,9 @@ Plan 7 graph groundwork is partially implemented in backend-only code:
 5. `backend/app/services/entity_extraction_service.py` extracts entities and candidate entity relationships from one chunk, validates LLM JSON with Pydantic before returning drafts, raises controlled chunk-scoped errors for invalid/provider output, and uses deterministic date/repeated-capitalized-term fallback when graph extraction is disabled.
 6. `backend/app/services/graph_builder.py` loads one document and its chunks through graph helpers, clears existing graph rows after preconditions pass, derives stable section concepts, extracts and de-duplicates entities, persists `document_entities`, and inserts validated structural, chunk-entity, entity-entity, and strong-overlap chunk-chunk relationships.
 7. Graph build results report inserted entity and relationship counts, safe per-chunk extraction errors, and partial-state flags when rows were cleared or a partial rebuild risk exists.
+8. The supported graph build path is currently `document_processing_service.process_document()` after chunk persistence.
 
-No public graph build route is mounted yet. Graph build API integration, public graph APIs, graph expansion retrieval, and frontend graph workflows are still planned.
+No public graph build route is mounted yet. Public graph APIs, graph expansion retrieval, and frontend graph workflows are still planned.
 
 ## Architecture
 
@@ -219,7 +221,7 @@ Key files:
 - `backend/app/api/retrieval.py`: retrieval search endpoint and safe API error mapping.
 - `backend/app/core/config.py`: settings and required provider configuration checks.
 - `backend/app/services/document_service.py`: upload/list/detail orchestration.
-- `backend/app/services/document_processing_service.py`: parse/chunk/persist workflow, not exposed through an API route.
+- `backend/app/services/document_processing_service.py`: parse/chunk/persist/graph-build workflow, not exposed through an API route.
 - `backend/app/services/document_parser.py`: parsers for PDF, DOCX, TXT, and CSV.
 - `backend/app/services/chunking_service.py`: deterministic chunk generation.
 - `backend/app/services/embedding_service.py`: document chunk indexing orchestration.
@@ -423,10 +425,10 @@ Validation before claiming completion:
 
 - The backend reads `backend/.env`, but this workspace currently has a root `.env`; root `.env` is not loaded by `SettingsConfigDict` in `backend/app/core/config.py`.
 - Upload stores the original file and metadata but does not automatically trigger parsing/chunking.
-- `document_processing_service.process_document()` exists and is tested but is not exposed through a route or background worker.
+- `document_processing_service.process_document()` exists, builds graph rows after chunk persistence, and is tested, but is not exposed through a route or background worker.
 - The development indexing route exists at `POST /api/documents/{document_id}/index`; its docstring says the frontend must not call it.
 - `backend/app/api/retrieval.py` is mounted in `backend/app/main.py` and exposes `POST /api/retrieval/search`, but there is still no frontend retrieval or chat UI.
-- Graph schemas, graph entity extraction, Supabase graph helper contracts, entity persistence, graph relationship expansion, count reporting, and safe extraction failure summaries exist in backend graph builder code. Graph build API integration, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
+- Graph schemas, graph entity extraction, Supabase graph helper contracts, entity persistence, graph relationship expansion, count reporting, safe extraction failure summaries, and processing-service graph build integration exist in backend code. Public graph APIs, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
 - The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
 - The frontend is currently a placeholder shell, not a working upload/chat UI.
 - No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.

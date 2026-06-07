@@ -585,7 +585,7 @@ Plan 7 completion depends on evidence that processed documents can produce graph
 
 ### Tasks
 
-- [ ] (05A): Wire graph builder into the supported backend graph build path
+- [x] (05A): Wire graph builder into the supported backend graph build path
   - Source of Truth: `docs/plans/Plan_7.md` > `## 1. Goal`; `docs/plans/Plan_7.md` > `## 8. API Design`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 5. Core Features` > `### 5.1 Upload Document`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.5 Medium-Level GraphRAG Construction`
   - Source Requirements:
     - Processed documents should produce `document_entities` and `document_relationships` rows.
@@ -602,7 +602,7 @@ Plan 7 completion depends on evidence that processed documents can produce graph
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live validation if no processed document/chunks or required provider setup exists.
   - Files: `backend/app/services/graph_builder.py`, existing backend processing service/module, optional development-only API file if needed
 
-- [ ] (05B): Add and run graph builder tests
+- [x] (05B): Add and run graph builder tests
   - Source of Truth: `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 11. Required Tests`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add `backend/tests/test_graph_builder.py`.
@@ -619,7 +619,7 @@ Plan 7 completion depends on evidence that processed documents can produce graph
   - Blocked Condition: None for mocked tests.
   - Files: `backend/tests/test_graph_builder.py`
 
-- [ ] (05C): Run combined backend tests and scope/security checks
+- [x] (05C): Run combined backend tests and scope/security checks
   - Source of Truth: `docs/plans/Plan_7.md` > `## 4. Out of Scope`; `docs/plans/Plan_7.md` > `## 11. Required Tests`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_7.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
   - Source Requirements:
     - Run `pytest tests/test_entity_extraction_service.py tests/test_graph_builder.py -v`.
@@ -638,7 +638,7 @@ Plan 7 completion depends on evidence that processed documents can produce graph
   - Blocked Condition: None for mocked/local tests.
   - Files: Test files and changed implementation files for inspection
 
-- [ ] (05D): Perform manual graph build and SQL checks when user setup is available
+- [x] (05D): Perform manual graph build and SQL checks when user setup is available
   - Source of Truth: `docs/plans/Plan_7.md` > `## 1. Goal`; `docs/plans/Plan_7.md` > `## 5. Dependencies`; `docs/plans/Plan_7.md` > `## 8. API Design`; `docs/plans/Plan_7.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_7.md` > `## 11. Required Tests`; `docs/plans/Plan_7.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Upload and process a sample document.
@@ -773,7 +773,7 @@ Optional future tracks are outside the mandatory chain.
 - [x] Batch02 - ShopAIKey Chat and Entity Extraction Service
 - [x] Batch03 - Graph Builder Rebuild and Structural Relationships
 - [x] Batch04 - Entity Persistence and Relationship Expansion
-- [ ] Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- [x] Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
 
 ### Task IDs
 
@@ -800,10 +800,10 @@ Optional future tracks are outside the mandatory chain.
 - [x] (04D): Return graph build counts and safe failure summaries
 
 #### Batch05
-- [ ] (05A): Wire graph builder into the supported backend graph build path
-- [ ] (05B): Add and run graph builder tests
-- [ ] (05C): Run combined backend tests and scope/security checks
-- [ ] (05D): Perform manual graph build and SQL checks when user setup is available
+- [x] (05A): Wire graph builder into the supported backend graph build path
+- [x] (05B): Add and run graph builder tests
+- [x] (05C): Run combined backend tests and scope/security checks
+- [x] (05D): Perform manual graph build and SQL checks when user setup is available
 
 ## Completion Reporting Rules for Future Execution Agents
 

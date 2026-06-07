@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.services import graph_builder
+from app.services import entity_extraction_service, graph_builder
 from app.schemas.graph import EntityDraft, RelationshipDraft
 
 
@@ -609,6 +609,84 @@ def test_build_document_graph_reports_safe_chunk_extraction_failure(
     }
 
 
+def test_build_document_graph_skips_invalid_extraction_without_entity_persistence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entity_batches = []
+    relationship_batches = []
+
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "get_graph_document",
+        lambda document_id: _document(),
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "list_document_chunks",
+        lambda document_id: _chunks(),
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "clear_document_graph_rows",
+        lambda document_id: None,
+    )
+
+    def extract_entities_for_chunk(chunk: dict[str, object]) -> SimpleNamespace:
+        raise entity_extraction_service.EntityExtractionError(
+            "LLM entity extraction returned invalid graph data.",
+            chunk_id=UUID(str(chunk["id"])),
+        )
+
+    def insert_document_entities(
+        document_id: str,
+        entities: list[EntityDraft],
+    ) -> list[dict[str, object]]:
+        entity_batches.append(entities)
+        return []
+
+    def insert_document_relationships(
+        document_id: str,
+        relationships: list[RelationshipDraft],
+    ) -> list[dict[str, object]]:
+        relationship_batches.append(relationships)
+        return [{"id": str(index)} for index, _relationship in enumerate(relationships)]
+
+    monkeypatch.setattr(
+        graph_builder,
+        "entity_extraction_service",
+        SimpleNamespace(extract_entities_for_chunk=extract_entities_for_chunk),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "insert_document_entities",
+        insert_document_entities,
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "insert_document_relationships",
+        insert_document_relationships,
+    )
+
+    result = graph_builder.build_document_graph(DOCUMENT_ID)
+
+    assert result.entity_count == 0
+    assert result.relationship_count == 4
+    assert result.partial_state_risk is True
+    assert len(result.errors) == 2
+    assert [error.operation for error in result.errors] == [
+        "extract_entities_for_chunk",
+        "extract_entities_for_chunk",
+    ]
+    assert entity_batches == [[]]
+    assert len(relationship_batches) == 1
+    assert all(
+        relationship.relationship_type
+        in {"document_contains_section", "section_contains_chunk"}
+        for relationship in relationship_batches[0]
+    )
+
+
 def test_build_document_graph_persists_chunk_mentions_and_valid_entity_relations(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -847,6 +925,82 @@ def test_build_document_graph_reports_failed_entity_relationship_insert(
     assert result.graph_rows_cleared is True
     assert result.partial_state_risk is True
     assert result.errors[0].operation == "insert_entity_relationships"
+    assert result.errors[0].details == {
+        "graph_rows_cleared": True,
+        "partial_state_risk": True,
+    }
+
+
+def test_build_document_graph_reports_failed_entity_insert(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "get_graph_document",
+        lambda document_id: _document(),
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "list_document_chunks",
+        lambda document_id: _chunks(),
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "clear_document_graph_rows",
+        lambda document_id: None,
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "insert_document_relationships",
+        lambda document_id, relationships: [
+            {"id": str(index)} for index, _relationship in enumerate(relationships)
+        ],
+    )
+
+    def extract_entities_for_chunk(chunk: dict[str, object]) -> SimpleNamespace:
+        return SimpleNamespace(
+            entities=[
+                EntityDraft(
+                    entity_name="Probation Period",
+                    entity_type="contract term",
+                    chunk_id=UUID(str(chunk["id"])),
+                )
+            ],
+            relationships=[],
+        )
+
+    def insert_document_entities(
+        document_id: str,
+        entities: list[EntityDraft],
+    ) -> list[dict[str, object]]:
+        raise RuntimeError("entity insert failed")
+
+    monkeypatch.setattr(
+        graph_builder,
+        "entity_extraction_service",
+        SimpleNamespace(extract_entities_for_chunk=extract_entities_for_chunk),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        graph_builder.supabase_service,
+        "insert_document_entities",
+        insert_document_entities,
+    )
+
+    with pytest.raises(graph_builder.GraphBuildException) as exc_info:
+        graph_builder.build_document_graph(DOCUMENT_ID)
+
+    assert (
+        str(exc_info.value)
+        == f"Graph build could not insert document entities: {DOCUMENT_ID}."
+    )
+    result = exc_info.value.result
+    assert result.document_id == UUID(DOCUMENT_ID)
+    assert result.entity_count == 0
+    assert result.relationship_count == 4
+    assert result.graph_rows_cleared is True
+    assert result.partial_state_risk is True
+    assert result.errors[0].operation == "insert_document_entities"
     assert result.errors[0].details == {
         "graph_rows_cleared": True,
         "partial_state_risk": True,

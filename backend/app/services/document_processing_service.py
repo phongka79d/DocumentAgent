@@ -21,6 +21,7 @@ from app.services.supabase_service import (
     update_document_chunk_count,
     update_document_status,
 )
+from app.services import graph_builder
 
 
 class DocumentProcessingError(RuntimeError):
@@ -35,6 +36,9 @@ class DocumentProcessingResult(BaseModel):
     document_id: UUID
     status: Literal["ready"] = "ready"
     chunk_count: int = Field(ge=0)
+    graph_entity_count: int = Field(default=0, ge=0)
+    graph_relationship_count: int = Field(default=0, ge=0)
+    graph_error_count: int = Field(default=0, ge=0)
 
 
 def _require_document_field(document: dict, field_name: str) -> str:
@@ -97,6 +101,8 @@ def _safe_processing_error_message(exc: Exception) -> str:
         return _safe_parser_error_message(exc)
     if isinstance(exc, EmptyChunksError):
         return str(exc)
+    if isinstance(exc, graph_builder.GraphBuildException):
+        return "Document graph build failed."
     if isinstance(exc, SupabaseConnectionError):
         return "Document storage or persistence operation failed."
     if isinstance(exc, DocumentProcessingError):
@@ -142,6 +148,7 @@ def process_document(document_id: UUID) -> DocumentProcessingResult:
             raise EmptyChunksError("Chunk persistence returned no chunks.")
 
         update_document_chunk_count(document_id_text, chunk_count)
+        graph_result = graph_builder.build_document_graph(document_id_text)
         update_document_status(document_id_text, "ready", error_message=None)
     except Exception as exc:
         error_message = _safe_processing_error_message(exc)
@@ -157,6 +164,9 @@ def process_document(document_id: UUID) -> DocumentProcessingResult:
     return DocumentProcessingResult(
         document_id=document_id,
         chunk_count=chunk_count,
+        graph_entity_count=graph_result.entity_count,
+        graph_relationship_count=graph_result.relationship_count,
+        graph_error_count=len(graph_result.errors),
     )
 
 

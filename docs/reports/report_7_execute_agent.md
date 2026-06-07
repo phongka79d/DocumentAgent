@@ -1253,3 +1253,501 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after A2 reviews and accepts `(04D)`.
 - handoff notes: graph build results now include counts, safe extraction failure summaries, and partial-state flags; Batch05 can wire or validate the graph build path without changing this result contract.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+
+## Task
+(05A) - Wire graph builder into the supported backend graph build path
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 1. Goal
+- docs/plans/Plan_7.md > ## 8. API Design
+- docs/plans/Plan_7.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > ## 5. Core Features > ### 5.1 Upload Document
+- docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.5 Medium-Level GraphRAG Construction
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05A)
+- Task title: Wire graph builder into the supported backend graph build path
+
+## Completed Work
+- Complete for the mocked/backend integration scope.
+- Wired `graph_builder.build_document_graph(document_id)` into `process_document` after chunk rows are persisted and `chunk_count` is updated, before marking the document `ready`.
+- Added graph count fields to `DocumentProcessingResult`: `graph_entity_count`, `graph_relationship_count`, and `graph_error_count`.
+- Mapped `GraphBuildException` to the safe processing error message `Document graph build failed.` and left the detailed provider/database exception text out of document status.
+- Added mocked processing integration coverage for graph build ordering, count propagation, partial graph errors, and safe graph failure handling.
+- Did not add any frontend graph API or public graph endpoint.
+
+## Files Created or Modified
+- backend/app/services/document_processing_service.py
+- backend/tests/test_document_processing.py
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence or reason: 13 passed.
+- `cd backend; pytest tests/test_document_processing.py -v`: Passed
+- evidence or reason: 12 passed after correcting the mocked graph exception fixture.
+- `cd backend; pytest tests/test_graph_builder.py tests/test_document_processing.py -v`: Passed
+- evidence or reason: 25 passed.
+- Changed-file/scope inspection: Passed
+- evidence or reason: diff shows only backend processing service and processing tests changed; repository search found no new `/build-graph` route, no frontend graph API wiring, and no new frontend secret exposure.
+- Live processed-document graph build validation: Blocked
+- evidence or reason: no user-provided processed document, local Supabase rows/chunks, and provider setup were supplied for live validation; mocked integration validation was run instead.
+
+## Acceptance Check
+- Task acceptance condition: A document with chunks can trigger graph building and produce entity and relationship counts without adding frontend graph APIs.
+- Status: satisfied
+- Evidence: `test_process_document_orchestrates_success_path` verifies the processing sequence reaches `build_graph` after `insert_chunks` and `chunk_count`, then returns mocked graph counts `graph_entity_count=2` and `graph_relationship_count=5` before ready status. `test_process_document_persists_real_txt_chunks_with_single_user_owner` verifies real TXT chunking still triggers graph build and surfaces mocked counts `graph_entity_count=3`, `graph_relationship_count=7`, and `graph_error_count=1`. No frontend graph API was added.
+
+## Artifacts Produced
+- Appended execution report in docs/reports/report_7_execute_agent.md.
+- Mocked processing integration count evidence: entity count 2 / relationship count 5 for the success path; entity count 3 / relationship count 7 / graph error count 1 for a partial graph result.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Used the existing `document_processing_service.process_document` orchestration path instead of adding the optional development-only graph endpoint.
+- Placed graph building after chunk persistence and chunk count update because `build_document_graph` loads persisted chunks from Supabase.
+- Kept database/preflight graph failures fatal to document processing status, while non-fatal graph builder result errors are returned as counts/error counts on the processing result.
+
+## Risks or Open Issues
+- Live validation remains `BLOCKED_BY_USER_ACTION` until the user provides a processed document with persisted chunks and required Supabase/provider setup.
+- If graph extraction returns errors without raising, the document can still be marked ready with a nonzero `graph_error_count`; this matches the existing graph builder partial-result behavior but should be considered by later operational reporting work.
+
+## Minor Issues Fixed During Execution
+- Corrected a mocked graph failure fixture so it constructed a valid `GraphBuildResult` and exercised the intended `GraphBuildException` handling path.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch03 and Batch04 were marked complete in docs/tasks/task_7.md before execution.
+- Scope stayed within `(05A)` and did not implement `(05B)`, `(05C)`, `(05D)`, frontend graph APIs, graph retrieval, hybrid scoring, Agent 1, graph visualization, or community detection.
+- Required user action for live validation is documented as blocked; mocked integration validation completed.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes, after A2 reviews and accepts `(05A)`.
+- handoff notes: graph build now runs through the existing processing service after chunks exist and returns graph counts on `DocumentProcessingResult`; live validation still needs user-provided processed document/chunks and provider setup.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+
+## Task
+(05B) - Add and run graph builder tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_7.md > (05B): Add and run graph builder tests
+- docs/plans/Plan_7.md > ## 6. Required Files and Folders
+- docs/plans/Plan_7.md > ## 9. Implementation Steps
+- docs/plans/Plan_7.md > ## 11. Required Tests
+- docs/plans/Plan_7.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_7.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05B)
+- Task title: Add and run graph builder tests
+
+## Completed Work
+- Status: complete.
+- Added focused mocked graph builder coverage in `backend/tests/test_graph_builder.py` for invalid extraction behavior and failed entity insert reporting.
+- Confirmed the existing graph builder test file covers missing document, no chunks, clear-before-rebuild, structural relationships, entity de-duplication, chunk mentions, valid entity-to-entity relationships, chunk overlap relationships, safe extraction failure handling, relationship insert failure, and graph build count reporting.
+- Ran the selected task validation command successfully.
+
+## Files Created or Modified
+- backend/tests/test_graph_builder.py
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence or reason: collected 15 tests; 15 passed in 0.90s. The command covered mocked Supabase and extraction service graph builder behavior, including mocked count results such as entity count 0 / relationship count 4 for invalid extraction, entity count 2 / relationship count 8 for chunk mention and entity relationship persistence, and entity count 4 / relationship count 11 for strong chunk overlap.
+
+## Acceptance Check
+- Task acceptance condition: Tests pass or failures are reported honestly.
+- Status: satisfied
+- Evidence: `pytest tests/test_graph_builder.py -v` passed with 15 tests. The test file now includes targeted graph builder coverage for valid extraction, invalid extraction, de-duplication, relationship types, rebuild behavior, no-chunks clear error, missing document, ShopAIKey/extraction failure behavior, database insert failures, and count reporting.
+
+## Artifacts Produced
+- Graph builder mocked test coverage in `backend/tests/test_graph_builder.py`.
+- Validation output: `15 passed` from `pytest tests/test_graph_builder.py -v`.
+- Appended execution report in `docs/reports/report_7_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Reused the existing graph builder test structure and mocked `supabase_service`, `entity_extraction_service`, and graph drafts directly.
+- Added assertions for invalid extraction that verify structural relationships may still be inserted, extracted entity rows are not persisted, and partial-state risk is reported.
+- Added entity insert failure coverage alongside the existing relationship insert failure coverage to make database insert failure handling explicit.
+
+## Risks or Open Issues
+- None for mocked `(05B)` validation.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch03 and Batch04 were marked complete in docs/tasks/task_7.md before execution.
+- Scope stayed within `(05B)` and did not implement `(05C)`, `(05D)`, live SQL checks, frontend graph APIs, graph retrieval, hybrid scoring, Agent 1, graph visualization, or community detection.
+- Existing dirty files from prior task/review work were not reverted or edited.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes, after A2 reviews and accepts `(05B)`.
+- handoff notes: graph builder mocked tests pass; `(05C)` should run the combined backend tests and scope/security checks required by the batch.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+
+## Task
+(05C) - Run combined backend tests and scope/security checks
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 4. Out of Scope
+- docs/plans/Plan_7.md > ## 11. Required Tests
+- docs/plans/Plan_7.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_7.md > ## 14. Agent Report Requirement
+- docs/plans/Plan_7.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 3. Authentication Policy
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05C)
+- Task title: Run combined backend tests and scope/security checks
+
+## Completed Work
+- Task status: complete.
+- Ran the required combined backend test command.
+- Ran the directly affected backend processing regression test because `backend/app/services/document_processing_service.py` is changed.
+- Inspected current changed implementation/test files and relevant graph/extraction/config services for hardcoded secrets, frontend secret exposure, community detection, graph visualization, hybrid scoring, Agent 1, frontend graph APIs, answer generation, fake success, and unvalidated LLM JSON persistence.
+- Confirmed the implementation remains backend-only and medium GraphRAG scoped: processed documents trigger graph build after chunk persistence, with no frontend graph API or public graph endpoint added.
+
+## Files Created or Modified
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_entity_extraction_service.py tests/test_graph_builder.py -v`: Passed
+- evidence or reason: collected 27 tests; 27 passed in 0.93s. This includes invalid LLM JSON rejection, deterministic fallback, ShopAIKey failure handling, missing document/no chunks errors, rebuild clearing, structural relationships, de-duplicated entities, safe extraction failures, entity/relationship insert failures, chunk mentions, entity relationships, and chunk overlap behavior.
+- `cd backend; pytest tests/test_document_processing.py -v`: Passed
+- evidence or reason: collected 12 tests; 12 passed in 1.19s. This covered the affected processing integration path, graph build ordering after chunk persistence, graph count propagation, graph error count propagation, and safe graph build failure handling.
+- `git diff --check`: Passed
+- evidence or reason: command completed with exit code 0. Git emitted line-ending warnings for existing working-copy files only; no whitespace errors were reported.
+- Changed-file and relevant-service scope/security scan with `rg`: Passed
+- evidence or reason: production code matches were limited to expected backend-only config access, validated JSON parsing, and Supabase graph insert helper boundaries. No community detection, graph visualization, hybrid scoring, Agent 1, frontend graph API, answer generation, hardcoded key pattern, or frontend secret exposure was found. A fake provider-failure sentinel appears only in `backend/tests/test_graph_builder.py` to assert that provider details are sanitized from graph errors.
+- Frontend backend-secret/graph-setting scan with `rg`: Passed
+- evidence or reason: no matches in frontend files for ShopAIKey, Supabase service-role, Qdrant API key, graph extraction settings, single-user ID, service_role, or key-like token patterns.
+- Source section review: Passed
+- evidence or reason: reviewed the cited Plan 7 out-of-scope, required tests, acceptance criteria, report requirement, reviewer checklist, and Master Plan authentication/medium GraphRAG sections needed for this validation.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass or failures are reported honestly; no secret exposure or out-of-scope work is found.
+- Status: satisfied
+- Evidence: required combined test command passed with 27 tests; affected processing regression passed with 12 tests; scope/security scans found no production hardcoded secrets, no frontend secret exposure, no fake success path, no community detection, no graph visualization, no hybrid scoring, no Agent 1, no frontend graph APIs, no answer generation, and no unvalidated LLM JSON persistence. LLM JSON is parsed and then validated with `LLMGraphExtractionOutput.model_validate(...)` before graph drafts can reach persistence.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_7_execute_agent.md`.
+- Verification evidence from mocked graph tests includes count-producing graph builds such as invalid extraction with entity count 0 / relationship count 4, chunk mention and entity relationship persistence with entity count 2 / relationship count 8, and strong chunk overlap with entity count 4 / relationship count 11.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after an accepted review.
+
+## Key Implementation Decisions
+- No implementation changes were made for `(05C)` because validation passed and no narrow in-scope fix was required.
+- Treated `backend/tests/test_document_processing.py` as an affected regression suite because the changed processing service now invokes graph building after chunk persistence.
+
+## Risks or Open Issues
+- Live/manual graph build and SQL checks were not part of `(05C)` and remain for `(05D)` when user setup is available.
+- Existing working tree remains dirty from prior task/review changes; no unrelated edits were reverted.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(02D)` and `(05B)` were marked complete in `docs/tasks/task_7.md` before execution.
+- Scope stayed within `(05C)` and did not implement `(05D)`, live SQL checks, new endpoints, frontend graph APIs, graph retrieval, hybrid scoring, Agent 1, graph visualization, answer generation, or community detection.
+- Architecture remains aligned with `docs/plans/Master_Plan.md`: single-user/backend-only secret policy is preserved, graph construction remains medium level, and graph build stays in the backend processing pipeline.
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes
+- handoff notes: `(05C)` validation passed. `(05D)` should perform manual graph build and SQL checks only when real local Supabase/provider setup and a processed document with chunks are available; otherwise report `BLOCKED_BY_USER_ACTION` honestly.
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+
+## Task
+(05D) - Perform manual graph build and SQL checks when user setup is available
+
+## Status
+failed
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 1. Goal
+- docs/plans/Plan_7.md > ## 5. Dependencies
+- docs/plans/Plan_7.md > ## 8. API Design
+- docs/plans/Plan_7.md > ## 10. Configuration and Environment Variables
+- docs/plans/Plan_7.md > ## 11. Required Tests
+- docs/plans/Plan_7.md > ## 14. Agent Report Requirement
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Perform manual graph build and SQL checks when user setup is available
+
+## Completed Work
+- Task status: failed.
+- Safely inspected local setup without printing secrets.
+- Confirmed `backend/.env` exists and has nonempty required Supabase, ShopAIKey chat, graph extraction, and `SINGLE_USER_ID` key values; root `.env` did not contain these backend keys.
+- Confirmed `GRAPH_EXTRACTION_ENABLED=True`, Supabase config present, and ShopAIKey chat config present through backend settings without printing secret values.
+- Found safe Supabase metadata evidence for the configured single user: 6 documents, 5 sampled chunks, and a ready candidate document with 1 sampled chunk.
+- `http://localhost:8000/api/health` timed out, so started a temporary local backend on `http://127.0.0.1:8017` and verified `GET /api/health` returned HTTP 200.
+- Ran the graph builder for candidate document `ce7a4a1a-e843-4c9e-949c-4898831caee8` through the backend service path because Plan 7 does not require a public graph build API.
+- Queried `document_entities` and `document_relationships` for the candidate document using safe aggregate queries only.
+- Live graph validation did not satisfy acceptance: graph build completed with a chunk-scoped extraction error, inserted 0 entities, and left only 2 structural relationships.
+- Ran mocked graph builder tests for mocked count evidence; existing tests passed and include count-producing mocked graph builds.
+- Stopped the temporary local backend process and removed temporary log files created for this task.
+
+## Files Created or Modified
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- Safe `.env` key presence inspection: Passed
+- evidence or reason: `.env` exists but lacks backend service keys; `backend/.env` exists with nonempty `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, `SHOPAIKEY_CHAT_MODEL`, `GRAPH_EXTRACTION_ENABLED`, and `SINGLE_USER_ID`. No secret values were printed.
+- `Invoke-WebRequest http://localhost:8000/api/health`: Failed
+- evidence or reason: request timed out; default local backend was not reachable.
+- Temporary backend health check at `http://127.0.0.1:8017/api/health`: Passed
+- evidence or reason: returned HTTP 200 with `{"status":"ok","service":"document-qa-agent","app_env":"development"}`.
+- Safe Supabase setup/document/chunk metadata check: Passed
+- evidence or reason: backend settings reported graph extraction enabled and required config present; metadata-only Supabase queries found 6 single-user documents, 5 sampled chunks, and candidate document `ce7a4a1a-e843-4c9e-949c-4898831caee8` with 1 chunk and status `ready`.
+- Manual graph build for document `ce7a4a1a-e843-4c9e-949c-4898831caee8`: Failed acceptance
+- evidence or reason: `build_document_graph(...)` returned successfully but reported `entity_count=0`, `relationship_count=2`, `error_count=1`, `graph_rows_cleared=True`, and `partial_state_risk=True`. The sanitized error was `operation=extract_entities_for_chunk`, message `Entity extraction failed for a document chunk; extracted graph data for that chunk was skipped.`, with a chunk ID present.
+- SQL check for `document_entities` by document ID: Failed acceptance
+- evidence or reason: `document_entities` count was 0; entity type summary was `none`.
+- SQL check for `document_relationships` grouped by relationship type: Partially satisfied
+- evidence or reason: `document_relationships` count was 2; grouped summary was `document_contains_section:1`, `section_contains_chunk:1`. Expected entity-related relationship types were absent because no entities were extracted.
+- `.\.venv\Scripts\python.exe -m pytest tests/test_graph_builder.py -q`: Passed
+- evidence or reason: 15 passed in 1.19s. Mocked count evidence includes entity/relationship count assertions such as 2 entities / 8 relationships for chunk mentions and valid entity relationships, 4 entities / 11 relationships for strong chunk overlap, 1 entity / 5 relationships for safe chunk extraction failure, and 0 entities / 4 relationships for invalid extraction or insert-failure paths.
+
+## Acceptance Check
+- Task acceptance condition: `document_entities` contains rows for the document; `document_relationships` contains expected relationship types; counts are reported honestly.
+- Status: not satisfied
+- Evidence: For live candidate document `ce7a4a1a-e843-4c9e-949c-4898831caee8`, SQL checks found `document_entities=0` and `document_relationships=2` with only structural types: `document_contains_section:1`, `section_contains_chunk:1`. Live entity extraction failed for the single chunk, so no entity rows or entity-related relationship types were produced. Counts are reported honestly and no live SQL result was fabricated.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_7_execute_agent.md`.
+- Live graph validation evidence for candidate document `ce7a4a1a-e843-4c9e-949c-4898831caee8`.
+- SQL aggregate summaries for `document_entities` and `document_relationships`.
+- Mocked graph builder validation evidence from `backend/tests/test_graph_builder.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run explicitly instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after review. The selected task also did not satisfy live acceptance.
+
+## Key Implementation Decisions
+- Used the existing ready Supabase document with chunks instead of uploading a new sample because safe setup inspection found a processed candidate and the task allows validation when processed chunks exist.
+- Started a temporary backend on port 8017 because the default local backend health check timed out on port 8000.
+- Triggered graph building through the existing backend service function because Plan 7 does not require a public graph build endpoint and no frontend graph API should be added.
+- Did not modify `.env`, force fallback extraction, add APIs, or alter runtime code to make live validation pass.
+
+## Risks or Open Issues
+- Live Plan 7 acceptance remains open: `document_entities` has 0 rows for the checked document, and expected entity-related relationship types are absent.
+- The live ShopAIKey extraction path returned a sanitized chunk-scoped extraction failure. The report cannot determine from safe output alone whether the cause is provider response shape, model behavior, prompt compatibility, document text, or credential/provider configuration.
+- The sample document has only 1 chunk, so chunk-overlap relationships cannot be produced for that live sample even after entity extraction succeeds.
+- Existing mocked tests pass, but mocked count evidence does not replace failed live SQL acceptance.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency `(05C)` was marked complete in `docs/tasks/task_7.md` and its prior execution report indicated required combined tests and scope/security checks passed.
+- Scope stayed within `(05D)`: no graph APIs, frontend graph APIs, retrieval expansion, hybrid scoring, Agent 1, answer generation, community detection, or runtime code changes were added.
+- No secrets were printed, copied into reports, or committed.
+
+## Notes for Next Task
+- next task ID: None in Batch05 after `(05D)`.
+- can proceed: no
+- handoff notes: Live graph validation should be rerun after fixing or confirming the live extraction setup/output for the sample document. A better live sample should include text that yields extractable entities and preferably multiple chunks if chunk-overlap relationship validation is required. Current mocked graph builder tests pass, but live acceptance remains unsatisfied.
+
+---
+
+# Task Execution Report - (05D) Repair
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+
+## Task
+(05D) - Perform manual graph build and SQL checks when user setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_7.md > ## 1. Goal
+- docs/plans/Plan_7.md > ## 5. Dependencies
+- docs/plans/Plan_7.md > ## 8. API Design
+- docs/plans/Plan_7.md > ## 10. Configuration and Environment Variables
+- docs/plans/Plan_7.md > ## 11. Required Tests
+- docs/plans/Plan_7.md > ## 14. Agent Report Requirement
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Perform manual graph build and SQL checks when user setup is available
+
+## Completed Work
+- Task status: complete after repair.
+- Investigated the rejected live validation failure before changing setup.
+- Confirmed the previous failure was at the ShopAIKey chat completion boundary, before JSON parsing: the configured model was present in `/models`, but chat completion returned HTTP 500/503 for sampled chunks and HTTP 503 for a minimal strict-JSON probe.
+- Confirmed the provider base URL and credentials were usable enough to call `/models`: the endpoint returned HTTP 200, 380 model IDs, and the configured model was present.
+- Tested provider-listed chat model candidates with the existing `response_format={"type":"json_object"}` request shape; `gpt-4o-mini` returned strict JSON containing `entities` and `relationships`.
+- Updated local-only `backend/.env` `SHOPAIKEY_CHAT_MODEL` to `gpt-4o-mini`. No raw credentials were printed or copied.
+- Probed existing processed documents and selected the best available existing sample, `25580d60-ba7e-4cce-ab60-071b935fe898`, which produced validated extraction output before graph build.
+- Started a temporary backend on `http://127.0.0.1:8017` and verified `GET /api/health` returned HTTP 200.
+- Reran manual graph build for `25580d60-ba7e-4cce-ab60-071b935fe898`.
+- Queried safe SQL aggregates for `document_entities` and `document_relationships` grouped by type for that document.
+- Stopped the temporary backend processes and removed temporary log files.
+
+## Files Created or Modified
+- docs/reports/report_7_execute_agent.md
+- backend/.env (local untracked setup change only: `SHOPAIKEY_CHAT_MODEL` adjusted; no secrets added to tracked files)
+
+## Tests or Validations Run
+- Provider boundary probe with prior configured model: Failed
+- evidence or reason: `/models` returned HTTP 200 and showed the configured model was present, but chat completion returned HTTP 500/503 for sampled chunks and HTTP 503 for a minimal strict-JSON probe. This reproduced the root cause without printing provider output content or secrets.
+- Provider candidate strict JSON probe: Passed
+- evidence or reason: `gpt-4o-mini` returned HTTP 200 and strict JSON with top-level `entities` and `relationships` using the current JSON object response format.
+- Existing processed sample extraction probe: Passed
+- evidence or reason: best existing sample document `25580d60-ba7e-4cce-ab60-071b935fe898` produced 3 validated entities and 2 validated entity relationships before graph build.
+- Temporary backend health check at `http://127.0.0.1:8017/api/health`: Passed
+- evidence or reason: returned HTTP 200 with `{"status":"ok","service":"document-qa-agent","app_env":"development"}`.
+- Manual graph build for document `25580d60-ba7e-4cce-ab60-071b935fe898`: Passed
+- evidence or reason: `build_document_graph(...)` returned `entity_count=3`, `relationship_count=7`, `error_count=0`, `graph_rows_cleared=True`, and `partial_state_risk=False`.
+- SQL check for `document_entities` by document ID: Passed
+- evidence or reason: `document_entities` count was 3; grouped entity types were `organization:1`, `other:2`.
+- SQL check for `document_relationships` grouped by relationship type: Passed
+- evidence or reason: `document_relationships` count was 7; grouped relationship types were `chunk_mentions_entity:3`, `document_contains_section:1`, `entity_related_to_entity:2`, `section_contains_chunk:1`.
+- `.\.venv\Scripts\python.exe -m pytest tests/test_entity_extraction_service.py tests/test_graph_builder.py -q`: Passed
+- evidence or reason: 27 passed in 0.92s.
+
+## Acceptance Check
+- Task acceptance condition: `document_entities` contains rows for the document; `document_relationships` contains expected relationship types; counts are reported honestly.
+- Status: satisfied
+- Evidence: Live SQL checks for document `25580d60-ba7e-4cce-ab60-071b935fe898` found `document_entities=3` and `document_relationships=7`, including expected entity-related relationship types `chunk_mentions_entity:3` and `entity_related_to_entity:2`. The manual graph build reported 3 entities, 7 relationships, and 0 errors.
+
+## Artifacts Produced
+- Appended repair execution report in `docs/reports/report_7_execute_agent.md`.
+- Live graph validation evidence for document `25580d60-ba7e-4cce-ab60-071b935fe898`.
+- SQL aggregate summaries for `document_entities` and `document_relationships`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated repair explicitly instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Treated the prior failure as a provider/model compatibility issue only after reproducing it at the chat completion boundary.
+- Adjusted the local backend setup to a provider-listed model that returned strict JSON with the current request shape instead of changing graph code.
+- Used a better existing processed sample document rather than creating tracked sample files or adding graph APIs.
+- Kept validation through backend service calls because Plan 7 does not require a public graph build endpoint.
+
+## Risks or Open Issues
+- `backend/.env` is local setup and not tracked; other environments must set `SHOPAIKEY_CHAT_MODEL` to a strict-JSON-compatible provider model before live graph extraction can pass.
+- Existing processed samples each had only 1 chunk, so this live sample validates entity persistence, `chunk_mentions_entity`, and `entity_related_to_entity`, but not live `chunk_related_to_chunk` overlap behavior. Mocked tests continue to cover chunk overlap.
+- `docs/tasks/task_7.md` was already dirty in the worktree during this repair; this repair did not update task checkboxes or batch status.
+
+## Minor Issues Fixed During Execution
+- Local ShopAIKey chat model setup was changed from a provider-listed but chat-failing model to `gpt-4o-mini`, which returned strict JSON for the required extraction shape.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency `(05C)` remained complete before repair.
+- Scope stayed within `(05D)` repair: no graph APIs, frontend graph APIs, retrieval expansion, hybrid scoring, Agent 1, answer generation, community detection, or tracked runtime code changes were added.
+- No secrets, raw provider credentials, raw provider output, or document text were printed in the report.
+
+## Notes for Next Task
+- next task ID: None in Batch05 after `(05D)`.
+- can proceed: yes, pending A2 review acceptance.
+- handoff notes: A2 should verify the latest repair report and live SQL evidence. Batch05 completion remains blocked until A2 accepts `(05D)` and updates progress tracking.

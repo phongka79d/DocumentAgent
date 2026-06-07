@@ -7,6 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.schemas.parsing import ChunkDraft, ParsedSection
+from app.schemas.graph import GraphBuildError, GraphBuildResult
 from app.services import document_processing_service
 from app.services.document_parser import (
     DocumentDecodingError,
@@ -114,6 +115,14 @@ def test_process_document_orchestrates_success_path(monkeypatch):
         calls.append(("chunk_count", received_document_id, chunk_count))
         return {"id": received_document_id, "chunk_count": chunk_count}
 
+    def fake_build_document_graph(received_document_id: str):
+        calls.append(("build_graph", received_document_id))
+        return GraphBuildResult(
+            document_id=DOCUMENT_ID,
+            entity_count=2,
+            relationship_count=5,
+        )
+
     monkeypatch.setattr(
         document_processing_service,
         "get_settings",
@@ -154,12 +163,20 @@ def test_process_document_orchestrates_success_path(monkeypatch):
         "update_document_chunk_count",
         fake_update_document_chunk_count,
     )
+    monkeypatch.setattr(
+        document_processing_service.graph_builder,
+        "build_document_graph",
+        fake_build_document_graph,
+    )
 
     result = document_processing_service.process_document(DOCUMENT_ID)
 
     assert result.document_id == DOCUMENT_ID
     assert result.status == "ready"
     assert result.chunk_count == 1
+    assert result.graph_entity_count == 2
+    assert result.graph_relationship_count == 5
+    assert result.graph_error_count == 0
     assert calls == [
         ("get_document", DOCUMENT_ID_TEXT),
         ("status", DOCUMENT_ID_TEXT, "processing", None),
@@ -179,6 +196,7 @@ def test_process_document_orchestrates_success_path(monkeypatch):
         ),
         ("insert_chunks", DOCUMENT_ID_TEXT, calls[5][2]),
         ("chunk_count", DOCUMENT_ID_TEXT, 1),
+        ("build_graph", DOCUMENT_ID_TEXT),
         ("status", DOCUMENT_ID_TEXT, "ready", None),
     ]
 
@@ -239,6 +257,20 @@ def test_process_document_persists_real_txt_chunks_with_single_user_owner(
         calls.append(("chunk_count", received_document_id, chunk_count))
         return {"id": received_document_id, "chunk_count": chunk_count}
 
+    def fake_build_document_graph(received_document_id: str):
+        calls.append(("build_graph", received_document_id))
+        return GraphBuildResult(
+            document_id=DOCUMENT_ID,
+            entity_count=3,
+            relationship_count=7,
+            errors=[
+                GraphBuildError(
+                    operation="extract_entities_for_chunk",
+                    message="Entity extraction failed for a document chunk.",
+                )
+            ],
+        )
+
     monkeypatch.setattr(
         document_processing_service,
         "get_settings",
@@ -269,11 +301,19 @@ def test_process_document_persists_real_txt_chunks_with_single_user_owner(
         "update_document_chunk_count",
         fake_update_document_chunk_count,
     )
+    monkeypatch.setattr(
+        document_processing_service.graph_builder,
+        "build_document_graph",
+        fake_build_document_graph,
+    )
 
     result = document_processing_service.process_document(DOCUMENT_ID)
 
     assert result.status == "ready"
     assert result.chunk_count == len(inserted_chunks)
+    assert result.graph_entity_count == 3
+    assert result.graph_relationship_count == 7
+    assert result.graph_error_count == 1
     assert len(inserted_chunks) >= 1
     assert [chunk.chunk_index for chunk in inserted_chunks] == list(
         range(len(inserted_chunks))
@@ -305,6 +345,54 @@ def test_process_document_persists_real_txt_chunks_with_single_user_owner(
     assert calls.index(("insert_chunks", DOCUMENT_ID_TEXT, inserted_chunks)) < calls.index(
         ("chunk_count", DOCUMENT_ID_TEXT, len(inserted_chunks))
     )
+    assert calls.index(("chunk_count", DOCUMENT_ID_TEXT, len(inserted_chunks))) < calls.index(
+        ("build_graph", DOCUMENT_ID_TEXT)
+    )
+
+
+def test_process_document_marks_graph_build_failure_failed_safely(monkeypatch):
+    calls: list[tuple] = []
+    _install_default_processing_mocks(monkeypatch, calls)
+
+    def fail_build_document_graph(received_document_id: str):
+        calls.append(("build_graph", received_document_id))
+        result = GraphBuildResult(
+            document_id=DOCUMENT_ID,
+            entity_count=0,
+            relationship_count=0,
+            errors=[
+                GraphBuildError(
+                    operation="insert_document_entities",
+                    message="Failed to insert extracted document entities.",
+                    details={
+                        "graph_rows_cleared": True,
+                        "partial_state_risk": True,
+                    },
+                )
+            ],
+            graph_rows_cleared=True,
+            partial_state_risk=True,
+        )
+        raise document_processing_service.graph_builder.GraphBuildException(
+            f"Graph build could not insert document entities: {DOCUMENT_ID_TEXT}.",
+            result,
+        )
+
+    monkeypatch.setattr(
+        document_processing_service.graph_builder,
+        "build_document_graph",
+        fail_build_document_graph,
+    )
+
+    with pytest.raises(document_processing_service.DocumentProcessingError) as exc_info:
+        document_processing_service.process_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == "Document graph build failed."
+    assert calls.index(("chunk_count", DOCUMENT_ID_TEXT, 1)) < calls.index(
+        ("build_graph", DOCUMENT_ID_TEXT)
+    )
+    assert ("status", DOCUMENT_ID_TEXT, "failed", "Document graph build failed.") in calls
+    assert ("status", DOCUMENT_ID_TEXT, "ready", None) not in calls
 
 
 def test_process_document_empty_txt_file_marks_document_failed(monkeypatch):
@@ -450,6 +538,14 @@ def _install_default_processing_mocks(monkeypatch, calls: list[tuple]) -> None:
         calls.append(("chunk_count", received_document_id, chunk_count))
         return {"id": received_document_id, "chunk_count": chunk_count}
 
+    def fake_build_document_graph(received_document_id: str):
+        calls.append(("build_graph", received_document_id))
+        return GraphBuildResult(
+            document_id=DOCUMENT_ID,
+            entity_count=1,
+            relationship_count=2,
+        )
+
     monkeypatch.setattr(document_processing_service, "get_settings", fake_get_settings)
     monkeypatch.setattr(
         document_processing_service,
@@ -485,6 +581,11 @@ def _install_default_processing_mocks(monkeypatch, calls: list[tuple]) -> None:
         document_processing_service,
         "update_document_chunk_count",
         fake_update_document_chunk_count,
+    )
+    monkeypatch.setattr(
+        document_processing_service.graph_builder,
+        "build_document_graph",
+        fake_build_document_graph,
     )
 
 

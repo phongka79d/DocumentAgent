@@ -2602,3 +2602,989 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05A)
+- Task title: Wire graph builder into the supported backend graph build path
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_7.md > ## 1. Goal; ## 8. API Design; ## 9. Implementation Steps; docs/plans/Master_Plan.md > ## 5. Core Features > ### 5.1 Upload Document; ## 8. Document Processing Pipeline > ### 8.5 Medium-Level GraphRAG Construction
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The latest appended execution report is for the requested `(05A)` task. Prior Batch04 work is already present as committed task history and was not part of the current implementation diff.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/services/document_processing_service.py; backend/tests/test_document_processing.py; docs/reports/report_7_execute_agent.md; docs/tasks/task_7.md after accepted checkbox update
+- untracked files: none observed
+
+## Files Reviewed
+- `backend/app/services/document_processing_service.py`: in scope - wires `graph_builder.build_document_graph(document_id)` into `process_document` after chunk persistence and chunk count update, before ready status; adds graph counts to the processing result; maps graph build exceptions to a safe document-processing error.
+- `backend/tests/test_document_processing.py`: in scope - mocked integration coverage verifies graph-build ordering, count propagation, partial graph errors, and safe graph failure handling.
+- `backend/app/services/graph_builder.py`: in scope as dependency evidence - existing Batch03/Batch04 graph builder entry point and exception contract used by `(05A)`.
+- `backend/app/schemas/graph.py`: in scope as dependency evidence - existing `GraphBuildResult` and `GraphBuildError` contracts used by processing tests.
+- `docs/reports/report_7_execute_agent.md`: in scope - latest `(05A)` execution report was appended.
+- `docs/tasks/task_7.md`: in scope - reviewer updated only `(05A)` checkbox after acceptance; Batch05 remains unchecked and sibling tasks remain unchecked.
+- `docs/plans/Plan_7.md`: in scope as source of truth - confirms no required public endpoint, graph builder service, tests, counts, and out-of-scope boundaries.
+- `docs/plans/Master_Plan.md`: in scope as source of truth - confirms upload processing should build medium-level GraphRAG metadata.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/document_processing_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the selected task's supported processing-path integration.
+- file from execution report: backend/tests/test_document_processing.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains focused mocked integration tests for `(05A)`.
+- file from execution report: docs/reports/report_7_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry is appended and matches repository evidence.
+
+## Dependency Review
+- Required dependencies: Batch03, Batch04, existing document processing service or route structure.
+- Dependency status: satisfied; Batch03 and Batch04 task IDs are marked complete in `docs/tasks/task_7.md`, and `graph_builder.build_document_graph` plus `GraphBuildResult`/`GraphBuildException` are available.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Uses the existing backend `process_document` orchestration path instead of adding a public graph endpoint; graph build runs after chunks exist and before the document is marked ready; frontend graph APIs were not added; graph failures are reported safely.
+- Failed: none.
+- Uncertain: live Supabase/ShopAIKey validation remains unavailable because no processed document, persisted chunks, and provider setup were provided; this is allowed as a blocked live check for this task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code calls `graph_builder.build_document_graph(document_id_text)` in `process_document`, propagates real `GraphBuildResult` counts, and handles `GraphBuildException` with a safe failure status. Tests use mocks appropriately around external graph-building behavior.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production hardcoded API keys, provider URLs, user IDs, entity answers, graph endpoints, or fixture-only success logic were introduced. Test fixture UUIDs and mocked counts are confined to tests.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_graph_builder.py -v`
+- Reported result: Passed, 13 passed.
+- Rerun result: Passed, 13 passed in 0.91s.
+- Status: passed
+- Notes: Confirms the existing graph builder contract still passes after processing integration.
+- Command/check: `pytest tests/test_document_processing.py -v`
+- Reported result: Passed, 12 passed.
+- Rerun result: Passed, 12 passed in 1.08s.
+- Status: passed
+- Notes: Confirms new processing integration tests and existing processing failure tests pass.
+- Command/check: `pytest tests/test_graph_builder.py tests/test_document_processing.py -v`
+- Reported result: Passed, 25 passed.
+- Rerun result: Passed, 25 passed in 1.08s.
+- Status: passed
+- Notes: Confirms combined reported validation.
+- Command/check: scope/security search for graph endpoint/frontend secret exposure/out-of-scope features
+- Reported result: Passed.
+- Rerun result: Passed with no frontend matches and no new `/build-graph` route; search only found existing backend config/service-role references.
+- Status: passed
+- Notes: No frontend graph API, community detection, graph visualization, hybrid scoring, or Agent 1 work was introduced by the selected task.
+- Command/check: live processed-document graph build validation
+- Reported result: Blocked by missing processed document/chunks/provider setup.
+- Rerun result: Not rerun; required user setup was not available.
+- Status: blocked, non-blocking for `(05A)` acceptance
+- Notes: Report accurately labels this as blocked instead of fabricated.
+
+## Acceptance Review
+- Task acceptance: A document with chunks can trigger graph building and produce entity and relationship counts without adding frontend graph APIs.
+- Status: satisfied
+- Evidence: `process_document` now runs `build_document_graph` after `insert_document_chunks` and `update_document_chunk_count`; `DocumentProcessingResult` returns entity, relationship, and graph-error counts; tests verify ordering, count propagation, partial graph errors, and fatal safe handling of `GraphBuildException`; no frontend graph API or public graph endpoint was added.
+
+## Progress Tracking
+- Selected task checkbox: checked after accepted review
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked
+- Execution report entry: appended and accurate
+- Review report entry: appended at EOF
+- Other: Sibling tasks `(05B)`, `(05C)`, and `(05D)` remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found. The report accurately distinguishes mocked/backend integration validation from blocked live validation.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live processed-document/Supabase/ShopAIKey validation remains blocked by missing user-provided setup; the execution report states this honestly and `(05D)` is the planned live-check task.
+
+### Observations
+- The selected implementation deliberately uses the existing processing service rather than an optional development-only endpoint, which matches Plan 7's API guidance.
+- Non-fatal graph builder result errors surface as `graph_error_count` while the document can still be marked ready; this matches the established graph builder partial-result contract from Batch04.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(05A)` is accepted and `(05B)`, `(05C)`, `(05D)` remain incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_processing_service.py",
+    "backend/tests/test_document_processing.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/tasks/task_7.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live processed-document graph build validation blocked by missing user-provided Supabase rows/chunks/provider setup."
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live processed-document/Supabase/ShopAIKey validation remains blocked by missing user-provided setup; this is expected for later `(05D)` live checks."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05B)
+- Task title: Add and run graph builder tests
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_7.md > (05B); docs/plans/Plan_7.md > ## 6. Required Files and Folders; ## 9. Implementation Steps; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: The latest appended execution report is for requested task `(05B)`. Current git diff also contains prior accepted uncommitted `(05A)` work and its A2 review; this review isolates the selected `(05B)` test/report/progress changes.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/services/document_processing_service.py; backend/tests/test_document_processing.py; backend/tests/test_graph_builder.py; docs/reports/report_7_execute_agent.md; docs/review/review_7_review_agent.md; docs/tasks/task_7.md
+- untracked files: none observed
+
+## Files Reviewed
+- `backend/tests/test_graph_builder.py`: in scope - selected `(05B)` test file; new coverage adds invalid extraction behavior and failed entity insert reporting, while existing accepted tests cover missing document, no chunks, rebuild clearing, structural relationships, de-duplication, relationship types, chunk overlap, extraction failure, relationship insert failure, and count reporting.
+- `backend/app/services/graph_builder.py`: in scope as behavior dependency - production graph builder contract exercised by mocked tests; no `(05B)` production edits found.
+- `backend/app/services/document_processing_service.py`: prior accepted uncommitted `(05A)` work - not part of selected `(05B)` implementation.
+- `backend/tests/test_document_processing.py`: prior accepted uncommitted `(05A)` work - not part of selected `(05B)` implementation.
+- `docs/reports/report_7_execute_agent.md`: in scope - latest `(05B)` execution report was appended after `(05A)`.
+- `docs/tasks/task_7.md`: in scope - reviewer updated only `(05B)` checkboxes after acceptance; Batch05, `(05C)`, and `(05D)` remain unchecked.
+- `docs/review/review_7_review_agent.md`: in scope for A2 artifact - existing `(05A)` review was present before this append; this `(05B)` review is appended at EOF.
+- `docs/plans/Plan_7.md`: in scope as source of truth - confirms required graph builder test coverage, acceptance criteria, and failure handling expectations.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_graph_builder.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the selected task's new graph builder tests and the full mocked graph builder test suite.
+- file from execution report: docs/reports/report_7_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry for `(05B)` is appended and matches repository evidence.
+
+## Dependency Review
+- Required dependencies: Batch03 and Batch04 graph builder implementation; existing graph schemas, Supabase helper contracts, and extraction service contract.
+- Dependency status: satisfied; Batch03 and Batch04 task IDs are already marked complete in `docs/tasks/task_7.md`, and `build_document_graph`, `GraphBuildResult`, `GraphBuildException`, `EntityDraft`, and `RelationshipDraft` are available.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: The selected task only adds mocked graph builder tests and does not change production architecture, database schema, public endpoints, frontend graph APIs, graph retrieval, hybrid scoring, Agent 1, visualization, or community detection.
+- Failed: none.
+- Uncertain: none for mocked `(05B)` validation.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Tests execute the real `graph_builder.build_document_graph` path with mocked Supabase/extraction dependencies. New assertions verify invalid extraction is skipped without entity persistence and failed entity insert raises `GraphBuildException` with safe operation metadata.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Test UUIDs, relationship counts, and fixture names are confined to tests and are used to assert deterministic graph behavior. No production hardcoded secrets, provider URLs, user IDs, model names, or fixture-only success logic were introduced by `(05B)`.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_graph_builder.py -v`
+- Reported result: Passed, collected 15 tests; 15 passed in 0.90s.
+- Rerun result: Passed, collected 15 tests; 15 passed in 0.88s.
+- Status: passed
+- Notes: Covers mocked graph builder behavior for missing document, no chunks, graph row clearing, structural relationships, de-duplication, invalid extraction, extraction failure, entity persistence, relationship types, chunk overlap, database insert failures, and count reporting.
+
+## Acceptance Review
+- Task acceptance: Tests pass or failures are reported honestly.
+- Status: satisfied
+- Evidence: The required validation command passed locally. The selected test file provides mocked coverage matching the `(05B)` task requirements, including valid extraction, invalid extraction, de-duplication, relationship types, rebuild behavior, no-chunks errors, extraction failure handling, database insert failure handling, and graph build counts.
+
+## Progress Tracking
+- Selected task checkbox: checked after accepted review
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked
+- Execution report entry: appended and accurate
+- Review report entry: appended at EOF
+- Other: Sibling tasks `(05C)` and `(05D)` remain unchecked; prior accepted `(05A)` remains checked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found. The report accurately lists the selected files, validation command, passing result, and scope boundaries for `(05B)`.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Current working tree still includes prior accepted uncommitted `(05A)` implementation and review artifacts; they were treated as prior work, not selected `(05B)` scope.
+- `(05B)` does not run combined entity-extraction plus graph-builder tests or live SQL checks; those are explicitly assigned to later `(05C)` and `(05D)` tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(05A)` and `(05B)` are accepted; `(05C)` and `(05D)` remain incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_processing_service.py",
+    "backend/tests/test_document_processing.py",
+    "backend/tests/test_graph_builder.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/review/review_7_review_agent.md",
+    "docs/tasks/task_7.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05C)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05C)
+- Task title: Run combined backend tests and scope/security checks
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_7.md > ## 4. Out of Scope; ## 11. Required Tests; ## 12. Acceptance Criteria; ## 14. Agent Report Requirement; ## 15. Reviewer Checklist; docs/plans/Master_Plan.md > ## 3. Authentication Policy
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05C)
+- Reviewed task ID: (05C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for requested Task (05C). Prior Batch05 entries (05A) and (05B) are accepted but uncommitted sibling work and were treated as background evidence, not selected task scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/services/document_processing_service.py; backend/tests/test_document_processing.py; backend/tests/test_graph_builder.py; docs/reports/report_7_execute_agent.md; docs/review/review_7_review_agent.md; docs/tasks/task_7.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_7_execute_agent.md`: in scope - selected (05C) report entry is appended and contains commands, scope/security checks, known risks, and handoff notes.
+- `docs/tasks/task_7.md`: in scope - selected task entry, dependencies, progress tracker, and prior accepted Batch05 checkboxes reviewed; only (05C) was updated by this review.
+- `docs/review/review_7_review_agent.md`: in scope - prior reviews exist; this review was appended at EOF.
+- `backend/app/services/document_processing_service.py`: in scope for inspection - changed by prior accepted (05A), not by selected (05C); inspected as affected processing integration code.
+- `backend/tests/test_document_processing.py`: in scope for inspection - changed by prior accepted (05A), not by selected (05C); rerun as affected regression coverage.
+- `backend/tests/test_graph_builder.py`: in scope for inspection - changed by prior accepted (05B), not by selected (05C); rerun as part of required combined tests.
+- `backend/app/services/entity_extraction_service.py`: in scope for inspection - verified JSON parse plus Pydantic validation before drafts reach persistence.
+- `backend/app/services/graph_builder.py`: in scope for inspection - verified medium graph build behavior, safe errors, and no community detection or future retrieval work.
+- `backend/app/schemas/graph.py`: in scope for inspection - verified validated graph drafts and bounded numeric weights.
+- `backend/app/core/config.py`: in scope for inspection - verified backend-only graph/ShopAIKey settings.
+- `docs/plans/Plan_7.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited authentication policy and medium GraphRAG context reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (05C) is a validation/reporting task; no implementation files were reported as modified by (05C). The broader dirty implementation/test files are prior accepted uncommitted (05A)/(05B) work and were still inspected because (05C) validates combined scope/security.
+
+## Dependency Review
+- Required dependencies: (02D), (05B)
+- Dependency status: satisfied; both are checked in `docs/tasks/task_7.md`, and (05B) has a prior accepted review in `docs/review/review_7_review_agent.md`.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Backend-only secret boundary is preserved; graph construction remains medium level; graph build stays in backend processing/testing paths; LLM JSON is validated before persistence; no frontend graph API was added.
+- Failed: none
+- Uncertain: live/manual SQL checks are intentionally deferred to (05D), so no live graph row counts were accepted for (05C).
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `entity_extraction_service.py` parses JSON then validates with `LLMGraphExtractionOutput.model_validate(...)`; `graph_builder.py` persists only `EntityDraft`/`RelationshipDraft` paths through Supabase helpers; rerun tests exercise failure handling rather than fixed success values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Focused frontend secret scan returned no matches. Broader backend scan found expected environment variable names in config/tests and fake/sentinel values only in tests. No real provider keys, service-role secrets, or frontend secret exposure were found.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_entity_extraction_service.py tests/test_graph_builder.py -v` from `backend`
+- Reported result: passed, 27 tests
+- Rerun result: passed, 27 tests in 0.85s
+- Status: passed
+- Notes: Covers invalid LLM JSON rejection, fallback, ShopAIKey failure handling, graph preflight, rebuild clearing, structural relationships, entity persistence behavior, insert failures, and relationship/count behavior.
+
+- Command/check: `pytest tests/test_document_processing.py -v` from `backend`
+- Reported result: passed, 12 tests
+- Rerun result: passed, 12 tests in 1.00s
+- Status: passed
+- Notes: Appropriate affected regression suite for prior (05A) processing integration.
+
+- Command/check: `git diff --check`
+- Reported result: passed with line-ending warnings only
+- Rerun result: passed; Git emitted CRLF warnings only and no whitespace errors
+- Status: passed
+- Notes: Warnings are existing working-copy line-ending notices, not diff check failures.
+
+- Command/check: scope/security `rg` scans over backend/frontend/docs and focused frontend secret scan
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: Prohibited terms appear in docs/reports or tests as scope assertions, not as production implementation. Focused frontend secret scan returned no matches.
+
+## Acceptance Review
+- Task acceptance: Required tests pass or failures are reported honestly; no secret exposure or out-of-scope work is found.
+- Status: satisfied
+- Evidence: Required combined tests and affected processing regression tests passed locally; source review and searches found no production community detection, graph visualization, hybrid scoring, Agent 1, frontend graph API, answer generation, fake success path, hardcoded production secret, or unvalidated LLM JSON insert path.
+
+## Progress Tracking
+- Selected task checkbox: checked after accepted review in both the Batch05 task list and Task IDs progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked because (05D) is still unchecked
+- Execution report entry: appended and accurate
+- Review report entry: appended at EOF
+- Other: Prior accepted (05A) and (05B) remain checked; sibling/future (05D) remains unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found. The report accurately states that (05C) made no implementation changes, ran the required combined tests, ran the affected processing regression suite, performed scope/security checks, and deferred live/manual SQL checks to (05D).
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Current working tree still contains prior accepted uncommitted (05A) and (05B) implementation/test changes plus review/report artifacts; those were distinguished from selected (05C) validation scope.
+- Live/manual graph build and SQL checks remain correctly assigned to (05D), not (05C).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, (05D) remains incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_processing_service.py",
+    "backend/tests/test_document_processing.py",
+    "backend/tests/test_graph_builder.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/review/review_7_review_agent.md",
+    "docs/tasks/task_7.md",
+    "backend/app/services/entity_extraction_service.py",
+    "backend/app/services/graph_builder.py",
+    "backend/app/schemas/graph.py",
+    "backend/app/core/config.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05D)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Perform manual graph build and SQL checks when user setup is available
+- Task status reported by executor: failed
+- Source of Truth: docs/plans/Plan_7.md > ## 1. Goal; ## 5. Dependencies; ## 8. API Design; ## 10. Configuration and Environment Variables; ## 11. Required Tests; ## 14. Agent Report Requirement
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05D)
+- Reviewed task ID: (05D)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for requested Task (05D). Review was limited to the failed live/manual validation task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/services/document_processing_service.py; backend/tests/test_document_processing.py; backend/tests/test_graph_builder.py; docs/reports/report_7_execute_agent.md; docs/review/review_7_review_agent.md; docs/tasks/task_7.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_7_execute_agent.md`: in scope - selected (05D) report entry is appended and honestly reports failed live acceptance.
+- `docs/tasks/task_7.md`: in scope - selected (05D) task entry, dependencies, acceptance, blocked condition, and progress tracker reviewed; (05D) remains unchecked.
+- `docs/review/review_7_review_agent.md`: in scope - prior reviews exist; this review is appended at EOF.
+- `docs/plans/Plan_7.md`: in scope - cited source sections reviewed for live graph goal, dependencies, API design, configuration, manual/SQL checks, and report requirements.
+- `backend/app/services/graph_builder.py`: in scope for behavior verification - confirms extraction failures are safely recorded and can produce partial graph rows without entity rows.
+- `backend/app/services/entity_extraction_service.py`: in scope for behavior verification - confirms live LLM extraction requires valid strict JSON and raises a chunk-scoped extraction error when provider output is malformed or invalid.
+- `backend/app/services/document_processing_service.py`: in scope as prior accepted integration work - not changed by selected (05D), but relevant to the supported graph build path.
+- `backend/tests/test_graph_builder.py`: in scope as validation evidence - mocked graph builder checks were rerun.
+- `backend/tests/test_document_processing.py`: questionable for selected (05D) - prior accepted Batch05 integration tests remain dirty, but no new (05D) implementation work is claimed there.
+
+## Reported Files Cross-Check
+- file from execution report: docs/reports/report_7_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (05D) is a manual validation/reporting task and reports only the execution report as modified.
+
+## Dependency Review
+- Required dependencies: (05C), valid local `.env` values, Supabase setup, processed document with chunks, and real ShopAIKey values when LLM extraction is enabled.
+- Dependency status: partly satisfied for running the check; (05C) is checked and previously accepted, backend `.env` and Supabase metadata were reported present, and a ready document with a chunk was found. Live extraction dependency did not produce acceptable validated graph data.
+- Missing or invalid dependency: live ShopAIKey extraction/setup/output remains invalid or unconfirmed because the graph build produced a sanitized chunk-scoped extraction failure and no entity rows.
+
+## Architecture Alignment
+- Passed: No public graph API, frontend graph API, schema migration, retrieval expansion, hybrid scoring, Agent 1, answer generation, community detection, or graph visualization was added. Secrets were not printed in the report.
+- Failed: none as an architecture violation.
+- Uncertain: The safe report does not expose the provider response, so the exact cause may be provider response shape, model behavior, prompt compatibility, document text, or credential/provider configuration.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: A1 ran a real graph build against a Supabase candidate and reported real aggregate SQL counts. The implementation path exists, but the live result had `entity_count=0`, `relationship_count=2`, `error_count=1`, `partial_state_risk=True`, and only structural relationships.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No new production code was introduced by (05D). The execution report states no secrets were printed and no `.env` or runtime code was modified to force success.
+
+## Validations Reviewed
+- Command/check: Safe `.env` key presence inspection
+- Reported result: Passed
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported with caution
+- Notes: The report states only key presence/nonempty status was printed, not secret values.
+
+- Command/check: `Invoke-WebRequest http://localhost:8000/api/health`
+- Reported result: failed by timeout
+- Rerun result: not rerun by reviewer
+- Status: failed as reported
+- Notes: A1 used a temporary backend on port 8017 after default port 8000 was unavailable.
+
+- Command/check: Temporary backend health check at `http://127.0.0.1:8017/api/health`
+- Reported result: passed, HTTP 200
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: Temporary process was reported stopped and temp logs removed.
+
+- Command/check: Safe Supabase setup/document/chunk metadata check
+- Reported result: passed
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: Report found 6 single-user documents, 5 sampled chunks, and candidate document `ce7a4a1a-e843-4c9e-949c-4898831caee8` with 1 chunk and status `ready`.
+
+- Command/check: Manual graph build for document `ce7a4a1a-e843-4c9e-949c-4898831caee8`
+- Reported result: failed acceptance
+- Rerun result: not rerun by reviewer
+- Status: failed
+- Notes: Reported result was `entity_count=0`, `relationship_count=2`, `error_count=1`, `graph_rows_cleared=True`, and `partial_state_risk=True` with a sanitized `extract_entities_for_chunk` error.
+
+- Command/check: SQL check for `document_entities` by document ID
+- Reported result: failed acceptance, count 0
+- Rerun result: not rerun by reviewer
+- Status: failed
+- Notes: This directly fails the task acceptance requirement that `document_entities` contains rows for the document.
+
+- Command/check: SQL check for `document_relationships` grouped by relationship type
+- Reported result: partially satisfied, count 2 with `document_contains_section:1` and `section_contains_chunk:1`
+- Rerun result: not rerun by reviewer
+- Status: failed for acceptance
+- Notes: Entity-related relationship types were absent because no entities were extracted.
+
+- Command/check: `.\.venv\Scripts\python.exe -m pytest tests/test_graph_builder.py -q`
+- Reported result: passed, 15 tests
+- Rerun result: passed, 15 tests in 0.84s from `backend`
+- Status: passed
+- Notes: Mocked graph builder tests remain healthy but do not replace failed live SQL acceptance for (05D).
+
+## Acceptance Review
+- Task acceptance: `document_entities` contains rows for the document; `document_relationships` contains expected relationship types; counts are reported honestly.
+- Status: not satisfied
+- Evidence: Live SQL evidence in the execution report shows `document_entities=0` and only structural `document_relationships` rows for the candidate document. Counts were reported honestly, but the required live graph output was not produced.
+
+## Progress Tracking
+- Selected task checkbox: unchecked
+- Checkbox updated by reviewer: no
+- Batch status: Batch05 remains unchecked
+- Execution report entry: appended and accurate enough for failed status
+- Review report entry: appended at EOF
+- Other: Prior accepted (05A), (05B), and (05C) remain checked; no sibling/future task checkbox was changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The report correctly marks (05D) failed, lists the failed live graph/SQL checks, reports mocked tests separately, and does not claim live acceptance.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- Live manual graph acceptance failed: candidate document `ce7a4a1a-e843-4c9e-949c-4898831caee8` produced zero `document_entities` rows and no entity-related relationship types.
+- Live extraction path failed for the document chunk, leaving only structural relationships and a partial-state-risk graph result.
+
+### Minor
+- The live sample had only one chunk, so it cannot demonstrate chunk-overlap relationships even after entity extraction is fixed; use a richer sample if overlap validation is expected.
+
+### Warnings
+- Mocked graph builder tests passed, but mocked count evidence is not a substitute for the selected task's failed live SQL acceptance.
+
+### Observations
+- A1 did not fabricate SQL or provider results and did not modify runtime code, `.env`, or APIs to force success.
+- The failed report is useful handoff evidence for the live setup/extraction repair path.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no next task in Batch05; Batch05 completion cannot proceed
+- Should batch be marked complete? no, (05D) remains unchecked and unaccepted
+
+## Repair Instructions
+- target: live ShopAIKey extraction setup/output and the manual validation sample for `build_document_graph`
+- change: determine why `extract_entities_for_chunk` fails for the live chunk without exposing secrets; confirm provider credentials/base URL/model return strict JSON matching `LLMGraphExtractionOutput`, adjust provider setup or prompt/model compatibility if needed, and use a sample document with extractable entities. Prefer a sample with multiple chunks if chunk-overlap relationship evidence is required.
+- validation: rerun the manual graph build for the document, then rerun SQL aggregate checks for `document_entities` and `document_relationships` grouped by relationship type. Acceptance requires `document_entities > 0` and expected entity-related relationship types such as `chunk_mentions_entity` and, where supported by extracted relationships, `entity_related_to_entity`; counts must be reported honestly. Rerun `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_graph_builder.py -q` after any implementation/config-related fix.
+- blocks next task: yes for Batch05 completion; there is no later task in this batch, but (05D) must be re-executed and re-reviewed before Batch05 can be marked complete.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_processing_service.py",
+    "backend/tests/test_document_processing.py",
+    "backend/tests/test_graph_builder.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/review/review_7_review_agent.md",
+    "docs/tasks/task_7.md",
+    "docs/plans/Plan_7.md",
+    "backend/app/services/graph_builder.py",
+    "backend/app/services/entity_extraction_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": false,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "manual graph build for ce7a4a1a-e843-4c9e-949c-4898831caee8",
+    "SQL document_entities count for ce7a4a1a-e843-4c9e-949c-4898831caee8",
+    "SQL document_relationships expected entity-related relationship types for ce7a4a1a-e843-4c9e-949c-4898831caee8"
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [
+    "Live graph build produced zero document_entities rows.",
+    "Live relationship SQL check produced only structural relationships and no entity-related relationship types."
+  ],
+  "warnings": [
+    "Mocked graph builder tests pass but do not satisfy failed live SQL acceptance.",
+    "The live sample has only one chunk, so chunk-overlap relationship validation needs a richer sample if required."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05D) Repair
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
+- Task ID: (05D)
+- Task title: Perform manual graph build and SQL checks when user setup is available
+- Task status reported by executor: complete after repair
+- Source of Truth: docs/plans/Plan_7.md > ## 1. Goal; ## 5. Dependencies; ## 8. API Design; ## 10. Configuration and Environment Variables; ## 11. Required Tests; ## 14. Agent Report Requirement
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05D) repair after A2 rejection
+- Reviewed task ID: (05D)
+- Correct selection: yes
+- Notes: Reviewed the latest `# Task Execution Report - (05D) Repair`, not the earlier failed (05D) entry.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/services/document_processing_service.py; backend/tests/test_document_processing.py; backend/tests/test_graph_builder.py; docs/reports/report_7_execute_agent.md; docs/review/review_7_review_agent.md; docs/tasks/task_7.md
+- untracked files: none shown by `git status --short`; A1 reports `backend/.env` was changed as ignored/local setup only.
+
+## Files Reviewed
+- `docs/reports/report_7_execute_agent.md`: in scope - latest repair entry documents provider root cause, local setup change, live graph build counts, SQL aggregate counts, and test result.
+- `docs/tasks/task_7.md`: in scope - selected (05D) task, acceptance, dependencies, and progress tracker reviewed; reviewer updated only (05D) checkbox entries.
+- `docs/review/review_7_review_agent.md`: in scope - prior rejection was present; this repair review is appended at EOF.
+- `docs/plans/Plan_7.md`: in scope - cited sections confirm the manual build, SQL checks, backend-only config, no public API requirement, and reporting requirements.
+- `backend/app/services/document_processing_service.py`: in scope as prior accepted Batch05 integration work, not part of the selected repair.
+- `backend/tests/test_document_processing.py`: in scope as prior accepted Batch05 integration coverage, not part of the selected repair.
+- `backend/tests/test_graph_builder.py`: in scope for validation rerun and prior accepted graph-builder coverage.
+- `backend/app/services/entity_extraction_service.py`: in scope for behavior contract; extraction output must validate as strict JSON before persistence.
+- `backend/.env`: in scope as local setup area only - A1 reports `SHOPAIKEY_CHAT_MODEL` was changed to `gpt-4o-mini`; ignored/local file was not printed in git status and must not be committed.
+
+## Reported Files Cross-Check
+- file from execution report: docs/reports/report_7_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair report was appended and contains the new live validation evidence.
+- file from execution report: backend/.env
+- present in git/repo: ignored/local setup file, not shown in tracked git status
+- matches task scope: yes
+- notes: Local model configuration change is allowed as user setup for live validation; no tracked secret was added.
+
+## Dependency Review
+- Required dependencies: (05C), valid local backend `.env`, Supabase setup, processed document with chunks, strict-JSON-compatible ShopAIKey chat model.
+- Dependency status: satisfied for this repair review. A1 reports provider `/models` was reachable, previous model failed chat completion, `gpt-4o-mini` returned strict JSON, a processed document was available, and live graph/SQL checks passed.
+- Missing or invalid dependency: none for acceptance. Other environments must set a compatible `SHOPAIKEY_CHAT_MODEL` locally.
+
+## Architecture Alignment
+- Passed: Repair stayed in (05D) validation/setup scope; no public graph API, frontend graph API, schema migration, retrieval expansion, hybrid scoring, Agent 1, answer generation, community detection, graph visualization, or tracked runtime code change was added.
+- Failed: none.
+- Uncertain: Live sample had one chunk, so live `chunk_related_to_chunk` overlap was not demonstrated; mocked graph builder tests cover that behavior and Plan 7 acceptance for (05D) is satisfied by entity rows plus expected relationship types.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: A1 reported a live backend service graph build for document `25580d60-ba7e-4cce-ab60-071b935fe898` with `entity_count=3`, `relationship_count=7`, `error_count=0`, and matching SQL aggregates.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The repair changed local `backend/.env` model setup rather than production code. The model is configuration, not business logic hardcoding. No tracked secret or provider output was added.
+
+## Validations Reviewed
+- Command/check: Provider boundary probe with previous configured model
+- Reported result: failed as root cause evidence; `/models` reachable but chat completion returned HTTP 500/503
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: Safe root-cause summary, no secrets printed.
+
+- Command/check: Provider candidate strict JSON probe with `gpt-4o-mini`
+- Reported result: passed; strict JSON with top-level `entities` and `relationships`
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: This addresses A2's repair instruction to confirm strict JSON-compatible provider/model behavior.
+
+- Command/check: Existing processed sample extraction probe
+- Reported result: passed; 3 validated entities and 2 validated entity relationships before graph build
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: Supports that extraction output matched the expected Pydantic contract.
+
+- Command/check: Temporary backend health check at `http://127.0.0.1:8017/api/health`
+- Reported result: passed, HTTP 200
+- Rerun result: not rerun by reviewer
+- Status: accepted as reported
+- Notes: Temporary backend was reported stopped afterward.
+
+- Command/check: Manual graph build for document `25580d60-ba7e-4cce-ab60-071b935fe898`
+- Reported result: passed; `entity_count=3`, `relationship_count=7`, `error_count=0`, `graph_rows_cleared=True`, `partial_state_risk=False`
+- Rerun result: not rerun by reviewer
+- Status: passed
+- Notes: Satisfies the rejected live graph-build condition.
+
+- Command/check: SQL check for `document_entities` by document ID
+- Reported result: passed; count 3, grouped entity types `organization:1`, `other:2`
+- Rerun result: not rerun by reviewer
+- Status: passed
+- Notes: Directly satisfies the entity-row acceptance requirement.
+
+- Command/check: SQL check for `document_relationships` grouped by relationship type
+- Reported result: passed; total 7, grouped as `chunk_mentions_entity:3`, `document_contains_section:1`, `entity_related_to_entity:2`, `section_contains_chunk:1`
+- Rerun result: not rerun by reviewer
+- Status: passed
+- Notes: Directly satisfies the expected relationship-type acceptance requirement.
+
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_entity_extraction_service.py tests/test_graph_builder.py -v`
+- Reported result: passed, 27 tests in 0.92s
+- Rerun result: passed, 27 tests in 0.91s
+- Status: passed
+- Notes: Rerun covers strict extraction validation and graph-builder mocked behavior including chunk overlap.
+
+## Acceptance Review
+- Task acceptance: `document_entities` contains rows for the document; `document_relationships` contains expected relationship types; counts are reported honestly.
+- Status: satisfied
+- Evidence: Latest repair report gives live SQL evidence for document `25580d60-ba7e-4cce-ab60-071b935fe898`: `document_entities=3`; `document_relationships=7`; relationship groups include `chunk_mentions_entity:3` and `entity_related_to_entity:2`; graph build returned zero errors.
+
+## Progress Tracking
+- Selected task checkbox: checked by reviewer in the Batch05 task list and Task IDs progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked, per user instruction that the orchestrator handles batch completion after all tasks accepted and A3 passes
+- Execution report entry: appended and accurate
+- Review report entry: appended at EOF
+- Other: No sibling/future task checkbox or batch checkbox was changed by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found. The latest repair report addresses the original rejection, reports the setup-only model fix, includes live graph and SQL counts, and keeps checkboxes unchanged for A2.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- `backend/.env` is local/ignored setup. Other environments must configure `SHOPAIKEY_CHAT_MODEL` to a strict-JSON-compatible model such as the repaired local value before live extraction can pass.
+- The live sample has one chunk, so live chunk-overlap relationships were not demonstrated; mocked tests cover `chunk_related_to_chunk` behavior.
+
+### Observations
+- A1's repair stayed within setup and validation scope and did not alter tracked runtime code to force success.
+- The repaired live SQL evidence satisfies the original A2 rejection points.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes for orchestrator/A3 flow; there is no later task in Batch05
+- Should batch be marked complete? no, per user instruction the orchestrator handles batch completion after all tasks are accepted and A3 passes
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff",
+  "selected_task_id": "(05D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/document_processing_service.py",
+    "backend/tests/test_document_processing.py",
+    "backend/tests/test_graph_builder.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/review/review_7_review_agent.md",
+    "docs/tasks/task_7.md",
+    "docs/plans/Plan_7.md",
+    "backend/app/services/entity_extraction_service.py",
+    "backend/.env"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "backend/.env local setup must use a strict-JSON-compatible ShopAIKey chat model in other environments.",
+    "Live sample had one chunk; mocked tests cover chunk-overlap relationships."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
