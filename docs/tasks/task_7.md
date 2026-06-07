@@ -724,46 +724,46 @@ Optional future tracks are outside the mandatory chain.
 
 ## Global Verification Checklist
 
-- [ ] `SHOPAIKEY_CHAT_MODEL` exists in backend config when LLM extraction is enabled.
-- [ ] `GRAPH_EXTRACTION_ENABLED` exists in backend config or equivalent backend-only settings.
-- [ ] Graph extraction settings are present in `backend/.env.example` with placeholders only.
-- [ ] No real secret values are committed.
-- [ ] No frontend file references ShopAIKey, Supabase service-role, graph extraction, or backend-only provider settings.
-- [ ] `backend/app/schemas/graph.py` defines `EntityDraft`, `RelationshipDraft`, `GraphBuildResult`, and validated LLM output models.
-- [ ] Entity types are validated against the Plan 7 allowed set.
-- [ ] Relationship types are validated against the Plan 7 allowed set.
-- [ ] Relationship weights are numeric and normalized between `0.0` and `1.0` where practical.
-- [ ] `backend/app/services/shopaikey_service.py` provides `chat_completion(messages, response_format=None)` if not already present.
-- [ ] ShopAIKey chat requests use configured backend-only base URL, API key, and chat model.
-- [ ] `backend/app/services/entity_extraction_service.py` defines `extract_entities_for_chunk(chunk)` or an equivalent typed service entry point.
-- [ ] Extraction prompt asks for strict JSON containing entities and relationships only.
-- [ ] Extraction prompt does not ask the model to answer user questions.
-- [ ] LLM JSON output is validated with Pydantic before persistence.
-- [ ] Invalid LLM JSON is rejected or handled by explicit fallback without inserting malformed rows.
-- [ ] Deterministic fallback extracts obvious dates and repeated capitalized terms when LLM extraction is disabled in tests.
-- [ ] `backend/app/services/graph_builder.py` defines `build_document_graph(document_id)` or an equivalent typed graph build entry point.
-- [ ] Documents and chunks are fetched filtered by `SINGLE_USER_ID`.
-- [ ] Missing document returns a clear not-found error.
-- [ ] Document with no chunks returns a clear no-chunks error.
-- [ ] Existing graph rows for the document are cleared before rebuild.
-- [ ] Graph rebuilds do not duplicate old entities or relationships.
-- [ ] Rebuild failures after clearing report partial-state risk safely.
-- [ ] Section keys are derived from `section_title` or a stable default.
-- [ ] `document_contains_section` relationships are created.
-- [ ] `section_contains_chunk` relationships are created.
-- [ ] Extracted entities are inserted into `document_entities`.
-- [ ] `document_entities` rows include `user_id = SINGLE_USER_ID`.
-- [ ] Entity rows are de-duplicated by normalized `entity_name`, `entity_type`, and document.
-- [ ] `chunk_mentions_entity` relationships are created for extracted entities.
-- [ ] `entity_related_to_entity` relationships are created only when relation endpoints are valid.
-- [ ] `chunk_related_to_chunk` relationships are created only for strong entity overlap.
-- [ ] Database insert failures stop the graph build and report the failed operation safely.
-- [ ] Graph build result reports inserted entity and relationship counts.
-- [ ] Required mocked tests were run and results were reported honestly.
-- [ ] Manual graph build and SQL checks were run only when user setup was available.
-- [ ] No database table changes are added.
-- [ ] No community detection, graph visualization, hybrid retrieval scoring, Agent 1, frontend graph APIs, or answer generation is implemented.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `SHOPAIKEY_CHAT_MODEL` exists in backend config when LLM extraction is enabled.
+- [x] `GRAPH_EXTRACTION_ENABLED` exists in backend config or equivalent backend-only settings.
+- [x] Graph extraction settings are present in `backend/.env.example` with placeholders only.
+- [x] No real secret values are committed.
+- [x] No frontend file references ShopAIKey, Supabase service-role, graph extraction, or backend-only provider settings.
+- [x] `backend/app/schemas/graph.py` defines `EntityDraft`, `RelationshipDraft`, `GraphBuildResult`, and validated LLM output models.
+- [x] Entity types are validated against the Plan 7 allowed set.
+- [x] Relationship types are validated against the Plan 7 allowed set.
+- [x] Relationship weights are numeric and normalized between `0.0` and `1.0` where practical.
+- [x] `backend/app/services/shopaikey_service.py` provides `chat_completion(messages, response_format=None)` if not already present.
+- [x] ShopAIKey chat requests use configured backend-only base URL, API key, and chat model.
+- [x] `backend/app/services/entity_extraction_service.py` defines `extract_entities_for_chunk(chunk)` or an equivalent typed service entry point.
+- [x] Extraction prompt asks for strict JSON containing entities and relationships only.
+- [x] Extraction prompt does not ask the model to answer user questions.
+- [x] LLM JSON output is validated with Pydantic before persistence.
+- [x] Invalid LLM JSON is rejected or handled by explicit fallback without inserting malformed rows.
+- [x] Deterministic fallback extracts obvious dates and repeated capitalized terms when LLM extraction is disabled in tests.
+- [x] `backend/app/services/graph_builder.py` defines `build_document_graph(document_id)` or an equivalent typed graph build entry point.
+- [x] Documents and chunks are fetched filtered by `SINGLE_USER_ID`.
+- [x] Missing document returns a clear not-found error.
+- [x] Document with no chunks returns a clear no-chunks error.
+- [x] Existing graph rows for the document are cleared before rebuild.
+- [x] Graph rebuilds do not duplicate old entities or relationships.
+- [x] Rebuild failures after clearing report partial-state risk safely.
+- [x] Section keys are derived from `section_title` or a stable default.
+- [x] `document_contains_section` relationships are created.
+- [x] `section_contains_chunk` relationships are created.
+- [x] Extracted entities are inserted into `document_entities`.
+- [x] `document_entities` rows include `user_id = SINGLE_USER_ID`.
+- [x] Entity rows are de-duplicated by normalized `entity_name`, `entity_type`, and document.
+- [x] `chunk_mentions_entity` relationships are created for extracted entities.
+- [x] `entity_related_to_entity` relationships are created only when relation endpoints are valid.
+- [x] `chunk_related_to_chunk` relationships are created only for strong entity overlap.
+- [x] Database insert failures stop the graph build and report the failed operation safely.
+- [x] Graph build result reports inserted entity and relationship counts.
+- [x] Required mocked tests were run and results were reported honestly.
+- [x] Manual graph build and SQL checks were run only when user setup was available.
+- [x] No database table changes are added.
+- [x] No community detection, graph visualization, hybrid retrieval scoring, Agent 1, frontend graph APIs, or answer generation is implemented.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
