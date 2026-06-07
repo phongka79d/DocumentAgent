@@ -17,13 +17,19 @@ def _settings(
     api_key: str = "private-shopaikey-key",
     base_url: str = "https://api.shopaikey.test/v1/",
     embedding_model: str = "configured-embedding-model",
+    chat_model: str = "configured-chat-model",
 ) -> SimpleNamespace:
     return SimpleNamespace(
         require_shopaikey_settings=lambda: {
             "api_key": api_key,
             "base_url": base_url,
             "embedding_model": embedding_model,
-        }
+        },
+        require_shopaikey_chat_settings=lambda: {
+            "api_key": api_key,
+            "base_url": base_url,
+            "chat_model": chat_model,
+        },
     )
 
 
@@ -238,4 +244,216 @@ def test_create_embedding_maps_missing_config_to_clear_backend_error(
 
     message = str(exc_info.value)
     assert "Missing SHOPAIKEY_API_KEY" in message
+    assert "backend environment" in message
+
+
+@pytest.mark.parametrize(
+    ("base_url", "expected_url"),
+    [
+        (
+            "https://api.shopaikey.test/v1",
+            "https://api.shopaikey.test/v1/chat/completions",
+        ),
+        (
+            "https://api.shopaikey.test/v1/",
+            "https://api.shopaikey.test/v1/chat/completions",
+        ),
+    ],
+)
+def test_chat_completion_posts_openai_style_request_with_configured_values(
+    monkeypatch: pytest.MonkeyPatch,
+    base_url: str,
+    expected_url: str,
+) -> None:
+    response = Mock()
+    response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "content": '{"entities":[],"relationships":[]}',
+                },
+            }
+        ]
+    }
+    response.raise_for_status = Mock()
+    post = Mock(return_value=response)
+    messages = [{"role": "user", "content": "Extract graph entities."}]
+    response_format = {"type": "json_object"}
+
+    monkeypatch.setattr(
+        shopaikey_service, "get_settings", lambda: _settings(base_url=base_url)
+    )
+    monkeypatch.setattr(shopaikey_service.httpx, "post", post)
+
+    content = shopaikey_service.chat_completion(
+        messages,
+        response_format=response_format,
+    )
+
+    assert content == '{"entities":[],"relationships":[]}'
+    post.assert_called_once_with(
+        expected_url,
+        headers={
+            "Authorization": "Bearer private-shopaikey-key",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "configured-chat-model",
+            "messages": messages,
+            "response_format": response_format,
+        },
+        timeout=shopaikey_service.CHAT_COMPLETION_REQUEST_TIMEOUT_SECONDS,
+    )
+    response.raise_for_status.assert_called_once_with()
+
+
+def test_chat_completion_omits_response_format_when_not_provided(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    response = Mock()
+    response.json.return_value = {"choices": [{"message": {"content": "{}"}}]}
+    response.raise_for_status = Mock()
+    post = Mock(return_value=response)
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(shopaikey_service.httpx, "post", post)
+
+    shopaikey_service.chat_completion([{"role": "user", "content": "Extract."}])
+
+    assert "response_format" not in post.call_args.kwargs["json"]
+
+
+def test_chat_completion_uses_configured_chat_model_without_hardcoded_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    response = Mock()
+    response.json.return_value = {"choices": [{"message": {"content": "{}"}}]}
+    response.raise_for_status = Mock()
+    post = Mock(return_value=response)
+
+    monkeypatch.setattr(
+        shopaikey_service,
+        "get_settings",
+        lambda: _settings(chat_model="different-chat-model"),
+    )
+    monkeypatch.setattr(shopaikey_service.httpx, "post", post)
+
+    shopaikey_service.chat_completion([{"role": "user", "content": "Extract."}])
+
+    assert post.call_args.kwargs["json"]["model"] == "different-chat-model"
+
+
+@pytest.mark.parametrize(
+    ("post_error", "expected_message"),
+    [
+        (httpx.TimeoutException("timed out"), "timed out"),
+        (httpx.ConnectError("provider unavailable"), "request failed"),
+    ],
+)
+def test_chat_completion_maps_network_failures_to_safe_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    post_error: httpx.RequestError,
+    expected_message: str,
+) -> None:
+    secret_key = "private-shopaikey-key"
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings(api_key=secret_key))
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock(side_effect=post_error))
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.chat_completion([{"role": "user", "content": "Extract."}])
+
+    message = str(exc_info.value)
+    assert expected_message in message
+    assert secret_key not in message
+    assert "provider unavailable" not in message
+
+
+def test_chat_completion_maps_non_success_status_to_safe_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    secret_key = "private-shopaikey-key"
+    request = httpx.Request("POST", "https://api.shopaikey.test/v1/chat/completions")
+    response = httpx.Response(
+        status_code=502,
+        content=b'{"error":"provider secret details"}',
+        request=request,
+    )
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings(api_key=secret_key))
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock(return_value=response))
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.chat_completion([{"role": "user", "content": "Extract."}])
+
+    message = str(exc_info.value)
+    assert "status 502" in message
+    assert secret_key not in message
+    assert "provider secret details" not in message
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"choices": []},
+        {"choices": [{"message": {}}]},
+        {"choices": [{"message": {"content": None}}]},
+    ],
+)
+def test_chat_completion_maps_missing_or_invalid_content_to_clear_error(
+    monkeypatch: pytest.MonkeyPatch,
+    payload: dict[str, Any],
+) -> None:
+    response = Mock()
+    response.raise_for_status = Mock()
+    response.json.return_value = payload
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock(return_value=response))
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.chat_completion([{"role": "user", "content": "Extract."}])
+
+    assert "chat completion content" in str(exc_info.value)
+
+
+def test_chat_completion_maps_malformed_json_to_clear_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    response = Mock()
+    response.raise_for_status = Mock()
+    response.json.side_effect = ValueError("raw invalid json")
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock(return_value=response))
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.chat_completion([{"role": "user", "content": "Extract."}])
+
+    message = str(exc_info.value)
+    assert "malformed JSON" in message
+    assert "raw invalid json" not in message
+
+
+def test_chat_completion_maps_missing_config_to_clear_backend_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        shopaikey_service,
+        "get_settings",
+        lambda: SimpleNamespace(
+            require_shopaikey_chat_settings=Mock(
+                side_effect=RuntimeError(
+                    "Missing SHOPAIKEY_CHAT_MODEL. Configure ShopAIKey settings in the backend environment before using chat completion services."
+                )
+            )
+        ),
+    )
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.chat_completion([{"role": "user", "content": "Extract."}])
+
+    message = str(exc_info.value)
+    assert "Missing SHOPAIKEY_CHAT_MODEL" in message
     assert "backend environment" in message

@@ -215,7 +215,7 @@ The graph builder cannot persist reliable entities or relationships until extrac
 
 ### Tasks
 
-- [ ] (02A): Add ShopAIKey chat completion helper for structured extraction
+- [x] (02A): Add ShopAIKey chat completion helper for structured extraction
   - Source of Truth: `docs/plans/Plan_7.md` > `## 5. Dependencies`; `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 10. Configuration and Environment Variables`
   - Source Requirements:
     - Add `chat_completion(messages, response_format=None)` to `shopaikey_service.py`.
@@ -232,7 +232,7 @@ The graph builder cannot persist reliable entities or relationships until extrac
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live LLM extraction if ShopAIKey credentials or chat model are missing.
   - Files: `backend/app/services/shopaikey_service.py`, `backend/tests/test_entity_extraction_service.py`
 
-- [ ] (02B): Implement strict JSON entity extraction with Pydantic validation
+- [x] (02B): Implement strict JSON entity extraction with Pydantic validation
   - Source of Truth: `docs/plans/Plan_7.md` > `## 3. Scope`; `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Create `backend/app/services/entity_extraction_service.py`.
@@ -250,7 +250,7 @@ The graph builder cannot persist reliable entities or relationships until extrac
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live extraction when ShopAIKey setup is missing and fallback is not enabled.
   - Files: `backend/app/services/entity_extraction_service.py`, `backend/app/schemas/graph.py`, `backend/tests/test_entity_extraction_service.py`
 
-- [ ] (02C): Implement deterministic fallback and controlled invalid-output behavior
+- [x] (02C): Implement deterministic fallback and controlled invalid-output behavior
   - Source of Truth: `docs/plans/Plan_7.md` > `## 4. Out of Scope`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_7.md` > `## 11. Required Tests`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`
   - Source Requirements:
     - If LLM JSON is invalid, return a controlled extraction error or fallback result.
@@ -267,7 +267,7 @@ The graph builder cannot persist reliable entities or relationships until extrac
   - Blocked Condition: None for mocked/fallback tests.
   - Files: `backend/app/services/entity_extraction_service.py`, `backend/tests/test_entity_extraction_service.py`
 
-- [ ] (02D): Add focused entity extraction tests
+- [x] (02D): Add focused entity extraction tests
   - Source of Truth: `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 11. Required Tests`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add `backend/tests/test_entity_extraction_service.py`.
@@ -770,7 +770,7 @@ Optional future tracks are outside the mandatory chain.
 ### Batches
 
 - [x] Batch01 - Graph Configuration, Schemas, and Supabase Contracts
-- [ ] Batch02 - ShopAIKey Chat and Entity Extraction Service
+- [x] Batch02 - ShopAIKey Chat and Entity Extraction Service
 - [ ] Batch03 - Graph Builder Rebuild and Structural Relationships
 - [ ] Batch04 - Entity Persistence and Relationship Expansion
 - [ ] Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
@@ -783,10 +783,10 @@ Optional future tracks are outside the mandatory chain.
 - [x] (01C): Add Supabase graph lookup and persistence helper contracts
 
 #### Batch02
-- [ ] (02A): Add ShopAIKey chat completion helper for structured extraction
-- [ ] (02B): Implement strict JSON entity extraction with Pydantic validation
-- [ ] (02C): Implement deterministic fallback and controlled invalid-output behavior
-- [ ] (02D): Add focused entity extraction tests
+- [x] (02A): Add ShopAIKey chat completion helper for structured extraction
+- [x] (02B): Implement strict JSON entity extraction with Pydantic validation
+- [x] (02C): Implement deterministic fallback and controlled invalid-output behavior
+- [x] (02D): Add focused entity extraction tests
 
 #### Batch03
 - [ ] (03A): Implement `build_document_graph(document_id)` document and chunk loading

@@ -571,3 +571,764 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - ShopAIKey Chat and Entity Extraction Service
+- Task ID: (02A)
+- Task title: Add ShopAIKey chat completion helper for structured extraction
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_7.md` > `## 5. Dependencies`; `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 10. Configuration and Environment Variables`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: The latest matching `(02A)` execution report was selected and previous Batch01 entries were treated as already accepted prior work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/core/config.py`
+  - `backend/app/services/shopaikey_service.py`
+  - `backend/tests/test_shopaikey_service.py`
+  - `docs/reports/report_7_execute_agent.md`
+  - `docs/tasks/task_7.md`
+- untracked files: None
+
+## Files Reviewed
+- `backend/app/core/config.py`: in scope - adds `require_shopaikey_chat_settings()` without changing embedding settings behavior.
+- `backend/app/services/shopaikey_service.py`: in scope - adds OpenAI-compatible chat completion helper, timeout, response parsing, and safe error mapping.
+- `backend/tests/test_shopaikey_service.py`: in scope - existing ShopAIKey service tests extended with mocked chat completion coverage.
+- `docs/reports/report_7_execute_agent.md`: in scope - selected execution report was appended for `(02A)`.
+- `docs/tasks/task_7.md`: in scope - reviewer updated only `(02A)` task/progress checkboxes after acceptance.
+- `docs/plans/Plan_7.md`: in scope - cited source-of-truth sections reviewed.
+- `backend/.env.example`: in scope - dependency context from accepted `(01A)` confirms backend-only chat model placeholder already exists.
+- `backend/tests/test_config.py`: in scope - dependency context from accepted `(01A)` confirms config fields are covered.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds required chat settings helper using `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, and `SHOPAIKEY_CHAT_MODEL`.
+- file from execution report: `backend/app/services/shopaikey_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Provides `chat_completion(messages, response_format=None)` and keeps embedding path separate.
+- file from execution report: `backend/tests/test_shopaikey_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests configured model, endpoint, auth header, optional response format, response parsing, and failure mapping.
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended execution report for `(02A)`.
+
+## Dependency Review
+- Required dependencies: (01A), existing ShopAIKey service patterns from prior plans.
+- Dependency status: satisfied; `(01A)` is checked in the task file and config fields/placeholders exist, and the existing embedding helper pattern is present in `shopaikey_service.py`.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Backend-only provider helper; no frontend references or extraction-service sibling work added; provider/config failures map to service exceptions; embedding behavior remains independent.
+- Failed: None.
+- Uncertain: Live ShopAIKey chat behavior was not exercised because real credentials are user-provided and outside this task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `chat_completion()` builds a real HTTP POST to `/chat/completions`, includes configured auth/model/messages/optional response format, parses `choices[0].message.content`, and handles timeout, request, HTTP status, malformed JSON, and invalid content failures.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses configured API key, base URL, and chat model; fixed test values are confined to mocked unit tests.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_shopaikey_service.py -v`
+- Reported result: Passed, 26 passed.
+- Rerun result: Passed, 26 passed in 0.29s.
+- Status: satisfied
+- Notes: Rerun from `backend/` verified the focused ShopAIKey service tests.
+- Command/check: `cd backend; pytest tests/test_entity_extraction_service.py -v`
+- Reported result: Not run because `tests/test_entity_extraction_service.py` does not exist yet.
+- Rerun result: Not rerun.
+- Status: not applicable for `(02A)`
+- Notes: Entity extraction tests belong to later Batch02 tasks and this task explicitly did not implement sibling extraction service work.
+
+## Acceptance Review
+- Task acceptance: Mocked tests can verify configured model usage, endpoint path, safe auth handling, response parsing, and failure mapping without real credentials.
+- Status: satisfied
+- Evidence: Diff and rerun tests show coverage for configured chat model, `/chat/completions`, Authorization header handling, optional `response_format`, returned content parsing, malformed response/JSON handling, HTTP status mapping, timeout/request mapping, and missing chat config mapping.
+
+## Progress Tracking
+- Selected task checkbox: checked in main Batch02 task list and Batch02 progress checklist.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked; sibling tasks `(02B)`, `(02C)`, and `(02D)` remain unchecked.
+- Execution report entry: appended and accurate for `(02A)`.
+- Review report entry: appended at EOF.
+- Other: No batch completion status was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The reported red-phase failure was not independently reproducible from the final state, but the final implementation and validation claims match repository evidence.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live LLM extraction remains user-action dependent because real ShopAIKey chat credentials are intentionally not part of this task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(02A)` is accepted and sibling Batch02 tasks remain unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch02 - ShopAIKey Chat and Entity Extraction Service",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/tasks/task_7.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (02B)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - ShopAIKey Chat and Entity Extraction Service
+- Task ID: (02B)
+- Task title: Implement strict JSON entity extraction with Pydantic validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_7.md` > `## 3. Scope`; `## 6. Required Files and Folders`; `## 7. Data Model / Schema Changes`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02B)
+- Reviewed task ID: (02B)
+- Correct selection: yes
+- Notes: The latest matching `(02B)` execution report was selected. Accepted uncommitted `(02A)` changes were treated as dependency context only and not re-reviewed as selected scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/core/config.py` - accepted uncommitted `(02A)` dependency context
+  - `backend/app/services/shopaikey_service.py` - accepted uncommitted `(02A)` dependency context
+  - `backend/tests/test_shopaikey_service.py` - accepted uncommitted `(02A)` dependency context
+  - `docs/reports/report_7_execute_agent.md` - appended execution reports including selected `(02B)`
+  - `docs/review/review_7_review_agent.md` - accepted `(02A)` review already present; selected `(02B)` review appended by this reviewer
+  - `docs/tasks/task_7.md` - accepted `(02A)` checkbox already present; selected `(02B)` checkbox updated by this reviewer
+- untracked files:
+  - `backend/app/services/entity_extraction_service.py`
+  - `backend/tests/test_entity_extraction_service.py`
+
+## Files Reviewed
+- `backend/app/services/entity_extraction_service.py`: in scope - implements `extract_entities_for_chunk(chunk)`, prompt construction, JSON parsing, Pydantic validation, draft conversion, disabled-extraction error, and no persistence calls.
+- `backend/tests/test_entity_extraction_service.py`: in scope - focused mocked tests for valid extraction, prompt boundaries, malformed JSON, unsupported entity type, invalid weight, and missing field rejection.
+- `backend/app/schemas/graph.py`: in scope - dependency schema contract from `(01B)` used for `LLMGraphExtractionOutput`, `EntityDraft`, and `RelationshipDraft` validation.
+- `backend/tests/test_graph_schemas.py`: in scope - dependency validation for graph schema behavior.
+- `backend/app/services/shopaikey_service.py`: in scope as accepted `(02A)` dependency - provides `chat_completion()` used by the selected service.
+- `backend/app/core/config.py`: in scope as accepted `(02A)`/`(01A)` dependency - provides `graph_extraction_enabled` and ShopAIKey chat settings.
+- `backend/tests/test_shopaikey_service.py`: in scope as accepted `(02A)` dependency - combined regression validation rerun.
+- `docs/tasks/task_7.md`: in scope - selected task entry, dependencies, progress tracker, and selected checkbox update reviewed.
+- `docs/reports/report_7_execute_agent.md`: in scope - selected execution report cross-checked.
+- `docs/plans/Plan_7.md`: in scope - cited source-of-truth sections reviewed.
+- `docs/review/review_7_review_agent.md`: in scope - existing EOF inspected and selected review appended.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/entity_extraction_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New untracked service implements selected `(02B)` extraction orchestration and has no database writes.
+- file from execution report: `backend/tests/test_entity_extraction_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New untracked tests cover the selected validation behavior; broader fallback/provider-failure coverage remains for `(02C)`/`(02D)`.
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended `(02B)` execution report and accurately states no task checkbox was updated by the executor.
+
+## Dependency Review
+- Required dependencies: (01B), (02A)
+- Dependency status: satisfied; `(01B)` and `(02A)` are checked in the task file, graph schemas exist, and `chat_completion()` exists from accepted uncommitted `(02A)` work.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Backend-only service; uses ShopAIKey chat helper only through service boundary; validates LLM JSON through graph Pydantic models before returning drafts; returns typed drafts without persistence; prompt is entity/relationship focused; no frontend, graph builder, retrieval, agent, visualization, community detection, hybrid scoring, or answer generation work added.
+- Failed: None.
+- Uncertain: Live ShopAIKey extraction was not run because real credentials are user-provided and outside the mocked validation for this task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `extract_entities_for_chunk()` validates chunk ID/content, builds messages, calls `shopaikey_service.chat_completion(..., response_format={"type":"json_object"})`, parses JSON, validates `LLMGraphExtractionOutput`, converts to `EntityDraft` and `RelationshipDraft`, and returns an `EntityExtractionResult`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses schema constants for allowed types and configured settings for graph extraction behavior. Fixed UUIDs and sample payloads are confined to mocked tests.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_entity_extraction_service.py -v`
+- Reported result: Passed; 6 tests passed in 0.54s.
+- Rerun result: Passed; 6 tests passed in 0.61s.
+- Status: satisfied
+- Notes: Focused selected-task validation passed.
+- Command/check: `cd backend; pytest tests/test_entity_extraction_service.py tests/test_graph_schemas.py tests/test_shopaikey_service.py -v`
+- Reported result: Passed; 37 tests passed in 0.95s.
+- Rerun result: Passed; 37 tests passed in 0.78s.
+- Status: satisfied
+- Notes: Combined selected-service, graph-schema, and accepted ShopAIKey dependency tests passed.
+- Command/check: changed-file/out-of-scope inspection with `rg`
+- Reported result: Passed.
+- Rerun result: Passed; no Supabase/database write calls, frontend graph APIs, graph builder, answer generation, hybrid scoring, community detection, or visualization implementation found in the selected files.
+- Status: satisfied
+- Notes: The only fallback reference is the explicit disabled-extraction error, which keeps deterministic fallback deferred to `(02C)`.
+
+## Acceptance Review
+- Task acceptance: Valid LLM JSON produces typed entity and relationship drafts; unsupported types, missing fields, invalid weights, and malformed JSON are rejected before persistence.
+- Status: satisfied
+- Evidence: Tests and code confirm valid JSON returns `EntityDraft`/`RelationshipDraft`, chunk IDs are attached to entities, unsupported entity types and invalid weights fail through Pydantic validation, malformed JSON raises `EntityExtractionError`, and the service does not call persistence helpers.
+
+## Progress Tracking
+- Selected task checkbox: checked in the Batch02 task list and Batch02 progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked because `(02C)` and `(02D)` are not accepted.
+- Execution report entry: appended and accurate for `(02B)`.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not updated; batch completion was not marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. Red-phase failure evidence is historical and not independently reproducible from the final state, but final implementation, validation, no-write, and fallback-deferral claims match repository evidence.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Deterministic fallback is intentionally deferred; disabled graph extraction currently raises `EntityExtractionError`, which is appropriate for `(02B)` and leaves fallback behavior to `(02C)`.
+- Live LLM validation remains dependent on user-provided ShopAIKey configuration and was not required for this mocked task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(02A)` and `(02B)` are accepted; `(02C)` and `(02D)` remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch02 - ShopAIKey Chat and Entity Extraction Service",
+  "selected_task_id": "(02B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/entity_extraction_service.py",
+    "backend/tests/test_entity_extraction_service.py",
+    "backend/app/schemas/graph.py",
+    "backend/tests/test_graph_schemas.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/app/core/config.py",
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/review/review_7_review_agent.md",
+    "docs/tasks/task_7.md",
+    "docs/plans/Plan_7.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - ShopAIKey Chat and Entity Extraction Service
+- Task ID: (02C)
+- Task title: Implement deterministic fallback and controlled invalid-output behavior
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_7.md` > `## 4. Out of Scope`; `## 9. Implementation Steps`; `## 10. Configuration and Environment Variables`; `## 11. Required Tests`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C)
+- Correct selection: yes
+- Notes: The latest matching `(02C)` execution report was selected. Accepted uncommitted `(02A)` and `(02B)` work was treated as dependency context only and not re-reviewed as selected scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/core/config.py` - accepted uncommitted `(02A)` dependency context
+  - `backend/app/services/shopaikey_service.py` - accepted uncommitted `(02A)` dependency context
+  - `backend/tests/test_shopaikey_service.py` - accepted uncommitted `(02A)` dependency context
+  - `docs/reports/report_7_execute_agent.md` - appended execution reports including selected `(02C)`
+  - `docs/review/review_7_review_agent.md` - prior accepted reviews already present; selected `(02C)` review appended by this reviewer
+  - `docs/tasks/task_7.md` - accepted `(02A)/(02B)` checkboxes already present; selected `(02C)` checkbox updated by this reviewer
+- untracked files:
+  - `backend/app/services/entity_extraction_service.py`
+  - `backend/tests/test_entity_extraction_service.py`
+
+## Files Reviewed
+- `backend/app/services/entity_extraction_service.py`: in scope - selected `(02C)` adds disabled-mode deterministic fallback and chunk-scoped controlled provider/invalid-output errors on top of accepted `(02B)` extraction flow.
+- `backend/tests/test_entity_extraction_service.py`: in scope - selected `(02C)` adds fallback, invalid JSON wrapper, and provider failure tests while retaining accepted `(02B)` extraction tests.
+- `backend/app/schemas/graph.py`: in scope as accepted `(01B)` dependency - provides validation contracts used by the selected service.
+- `backend/app/services/shopaikey_service.py`: in scope as accepted `(02A)` dependency - provider exception type and chat helper used by selected error handling.
+- `backend/app/core/config.py`: in scope as accepted `(01A)/(02A)` dependency - provides `graph_extraction_enabled` used to gate fallback behavior.
+- `backend/tests/test_graph_schemas.py`: in scope as dependency validation rerun.
+- `backend/tests/test_shopaikey_service.py`: in scope as dependency validation rerun.
+- `docs/tasks/task_7.md`: in scope - selected task entry, dependencies, and selected task/progress checkboxes reviewed and updated.
+- `docs/reports/report_7_execute_agent.md`: in scope - selected execution report cross-checked.
+- `docs/plans/Plan_7.md`: in scope - cited source sections reviewed.
+- `docs/review/review_7_review_agent.md`: in scope - existing EOF inspected earlier and selected review appended.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/entity_extraction_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements deterministic fallback only when graph extraction is disabled and wraps malformed JSON, invalid graph data, and ShopAIKey failures in `EntityExtractionError`.
+- file from execution report: `backend/tests/test_entity_extraction_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains focused tests for fallback dates/repeated capitalized terms, invalid JSON, invalid graph data, and chunk-scoped provider failures.
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended `(02C)` execution report and accurately states A2 must update the checkbox after acceptance.
+
+## Dependency Review
+- Required dependencies: (02B), plus accepted `(02A)` chat helper and Batch01 schema/config foundations.
+- Dependency status: satisfied; `(02A)` and `(02B)` are checked in the task file, the extraction service exists from accepted `(02B)`, schema validation contracts exist, and `chat_completion()`/`ShopAIKeyServiceError` exist for provider error wrapping.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Backend-only extraction service; deterministic fallback is gated by `GRAPH_EXTRACTION_ENABLED=false`; enabled malformed LLM output remains an explicit error; no database writes or persistence boundary were added; provider failures are reported safely with affected chunk ID; no frontend graph API, graph builder, retrieval, answer generation, Agent 1, hybrid scoring, graph visualization, or community detection was added.
+- Failed: None.
+- Uncertain: Live ShopAIKey behavior was not exercised because real credentials are user-provided and outside this mocked/fallback task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_deterministic_fallback()` extracts month/day/year dates and repeated exact capitalized multi-word terms into validated `EntityDraft` objects, returns no relationships, and is called only when `settings.graph_extraction_enabled` is false. `_parse_llm_json()` wraps malformed JSON and Pydantic validation failures in `EntityExtractionError`; provider failures are wrapped with the affected `chunk_id`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production fallback uses deterministic regex patterns and schema draft validation, not fixed fixture answers. Fixed UUIDs, sample dates, and `Acme Policy` are confined to tests. No hardcoded secrets, API keys, provider URLs, user IDs, database IDs, or frontend settings were found in the selected files.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_entity_extraction_service.py -v`
+- Reported result: Passed; 9 passed in 0.31s.
+- Rerun result: Passed; 9 passed in 0.31s.
+- Status: satisfied
+- Notes: Focused selected-task validation passed.
+- Command/check: `cd backend; pytest tests/test_entity_extraction_service.py tests/test_graph_schemas.py tests/test_shopaikey_service.py -v`
+- Reported result: Not reported for `(02C)`.
+- Rerun result: Passed; 40 passed in 0.35s.
+- Status: satisfied
+- Notes: Related extraction, schema, and accepted ShopAIKey dependency tests passed.
+- Command/check: selected-file out-of-scope/secret search with `rg`
+- Reported result: Not reported for `(02C)`.
+- Rerun result: Passed; no matches for Supabase/database inserts, graph builder, frontend graph API, community detection, graph visualization, hybrid scoring, Agent 1, answer generation, or backend secret setting names in the selected implementation/test files.
+- Status: satisfied
+- Notes: Separate logging/error search found no logging calls and confirmed public provider failure text excludes the raw provider message.
+
+## Acceptance Review
+- Task acceptance: Invalid JSON cannot produce persisted graph rows; fallback returns predictable date and repeated-capitalized-term entities; provider errors identify the affected chunk safely.
+- Status: satisfied
+- Evidence: The service has no persistence calls; invalid JSON and invalid graph data raise `EntityExtractionError`; disabled-mode fallback returns validated `date` entities and repeated `other` terms; provider failures raise `EntityExtractionError` with the chunk UUID in both the message and `chunk_id` attribute.
+
+## Progress Tracking
+- Selected task checkbox: checked in the main Batch02 task list and Batch02 progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked because `(02D)` is not accepted.
+- Execution report entry: appended and accurate for `(02C)`.
+- Review report entry: appended at EOF.
+- Other: Sibling `(02D)` and future task checkboxes were not updated; batch completion was not marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The `Artifacts Produced` section lists only the appended execution report, but the report's `Files Created or Modified` section correctly names the selected implementation and test files.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Fallback behavior is intentionally simple and deterministic, which matches Plan 7's non-goal of perfect entity extraction.
+- Live LLM validation remains user-action dependent because real ShopAIKey setup is outside this mocked/fallback task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(02D)` remains unchecked and unreviewed.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch02 - ShopAIKey Chat and Entity Extraction Service",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/entity_extraction_service.py",
+    "backend/tests/test_entity_extraction_service.py",
+    "backend/app/core/config.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/tests/test_shopaikey_service.py",
+    "backend/tests/test_graph_schemas.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/review/review_7_review_agent.md",
+    "docs/tasks/task_7.md",
+    "docs/plans/Plan_7.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02D)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - ShopAIKey Chat and Entity Extraction Service
+- Task ID: (02D)
+- Task title: Add focused entity extraction tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02D)
+- Reviewed task ID: (02D)
+- Correct selection: yes
+- Notes: The latest execution report entry is the requested `(02D)` entry. Previously accepted uncommitted `(02A)`, `(02B)`, and `(02C)` changes were treated as dependency context only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/core/config.py` - accepted uncommitted `(02A)` dependency context
+  - `backend/app/services/shopaikey_service.py` - accepted uncommitted `(02A)` dependency context
+  - `backend/tests/test_shopaikey_service.py` - accepted uncommitted `(02A)` dependency context
+  - `docs/reports/report_7_execute_agent.md` - appended execution reports including selected `(02D)`
+  - `docs/review/review_7_review_agent.md` - prior accepted reviews plus this appended review
+  - `docs/tasks/task_7.md` - accepted Batch02 task checkboxes; selected `(02D)` updated by this reviewer
+- untracked files:
+  - `backend/app/services/entity_extraction_service.py` - accepted uncommitted `(02B)/(02C)` dependency context
+  - `backend/tests/test_entity_extraction_service.py` - selected `(02D)` test coverage plus accepted dependency tests
+
+## Files Reviewed
+- `backend/tests/test_entity_extraction_service.py`: in scope - contains focused tests for valid JSON, invalid JSON, unsupported entity type, unsupported relationship type, missing required fields, invalid weights, disabled fallback, provider failure, prompt boundaries, and malformed-output no-insert guard.
+- `backend/app/services/entity_extraction_service.py`: in scope as accepted `(02B)/(02C)` dependency - behavior under test validates LLM output, fallback, and controlled errors without persistence writes.
+- `backend/app/services/supabase_service.py`: in scope as dependency reference - imported only by the test no-insert guard to fail if malformed extraction attempted graph inserts.
+- `backend/app/core/config.py`: in scope as accepted `(01A)/(02A)` dependency - provides graph extraction toggle used by tests.
+- `backend/app/services/shopaikey_service.py`: in scope as accepted `(02A)` dependency - mocked chat helper and provider exception type used by tests.
+- `backend/app/schemas/graph.py`: in scope as accepted `(01B)` dependency - validates entity and relationship types, fields, and weights used by selected tests.
+- `docs/tasks/task_7.md`: in scope - selected task entry, dependencies, and selected task/progress checkboxes reviewed and updated.
+- `docs/reports/report_7_execute_agent.md`: in scope - selected execution report cross-checked.
+- `docs/plans/Plan_7.md`: in scope - cited source sections reviewed.
+- `docs/review/review_7_review_agent.md`: in scope - existing EOF inspected and selected review appended.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_entity_extraction_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains 12 collected tests, including added unsupported relationship type, missing relationship field, and malformed-output no-insert coverage.
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended `(02D)` execution report and accurately states A2 must update the checkbox after acceptance.
+
+## Dependency Review
+- Required dependencies: (02A), (02B), (02C)
+- Dependency status: satisfied; all three dependency task IDs are checked in `docs/tasks/task_7.md`, and their accepted uncommitted implementation/test files exist in the working tree.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Selected work is test-only, uses mocked ShopAIKey calls/settings, validates extraction contracts before persistence, includes disabled-fallback and provider-failure coverage, and does not add graph builder, persistence implementation, frontend graph APIs, Agent 1, hybrid scoring, answer generation, visualization, or community detection.
+- Failed: None.
+- Uncertain: Live ShopAIKey/Supabase behavior was not exercised; not required for this mocked test task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The selected tests execute the real `extract_entities_for_chunk()` path with mocked provider/settings inputs and assert concrete draft outputs or controlled `EntityExtractionError` failures. The malformed-output guard patches Supabase insert helpers to fail if invalid extraction attempts graph insertion.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs, payloads, dates, and sample terms are confined to deterministic unit tests. No production hardcoding was introduced by selected `(02D)` changes.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_entity_extraction_service.py -v`
+- Reported result: Passed; 12 tests collected, 12 passed in 1.22s.
+- Rerun result: Passed; 12 tests passed in 0.91s.
+- Status: satisfied
+- Notes: Rerun verified the exact required validation for `(02D)`.
+- Command/check: selected-file scope and secret scan with `rg`
+- Reported result: Not separately reported for `(02D)`.
+- Rerun result: Passed; selected implementation/test files did not contain out-of-scope graph builder/frontend/retrieval/agent work or secret values. Matches for insert helper names were confined to the negative no-insert test guard.
+- Status: satisfied
+- Notes: No additional validation was required for this test-only task.
+
+## Acceptance Review
+- Task acceptance: Tests pass or failures are reported honestly with safe error context.
+- Status: satisfied
+- Evidence: Required pytest command passed with 12 tests. Coverage includes valid JSON parsing, malformed JSON, unsupported entity type, unsupported relationship type, missing entity and relationship fields, invalid weight, deterministic fallback when disabled, provider failure safe error context, prompt boundaries, and malformed-output no-insert protection.
+
+## Progress Tracking
+- Selected task checkbox: checked in the main Batch02 task list and Batch02 progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked per user instruction; no batch completion status was marked.
+- Execution report entry: appended and accurate for `(02D)`.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not changed by this review; `(02A)-(02C)` were already accepted and checked before this selected review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected no-insert guard is necessarily a unit-level negative check because graph persistence belongs to later graph builder tasks; this is aligned with `(02D)` scope.
+- Batch02 now has all task IDs checked, but the Batch02 batch checkbox remains unchecked as required for the later batch-level gate.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no; per user instruction, Batch02 was not marked complete and the batch-level gate remains separate.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch02 - ShopAIKey Chat and Entity Extraction Service",
+  "selected_task_id": "(02D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_entity_extraction_service.py",
+    "backend/app/services/entity_extraction_service.py",
+    "backend/app/services/supabase_service.py",
+    "backend/app/core/config.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/app/schemas/graph.py",
+    "docs/tasks/task_7.md",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/review/review_7_review_agent.md",
+    "docs/plans/Plan_7.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

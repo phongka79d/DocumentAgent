@@ -6,14 +6,19 @@ from app.core.config import get_settings
 
 
 EMBEDDING_REQUEST_TIMEOUT_SECONDS = 30.0
+CHAT_COMPLETION_REQUEST_TIMEOUT_SECONDS = 60.0
 
 
 class ShopAIKeyServiceError(RuntimeError):
-    """Raised when the ShopAIKey embedding provider cannot return a usable vector."""
+    """Raised when the ShopAIKey provider cannot return a usable response."""
 
 
 def _embeddings_url(base_url: str) -> str:
     return f"{base_url.rstrip('/')}/embeddings"
+
+
+def _chat_completions_url(base_url: str) -> str:
+    return f"{base_url.rstrip('/')}/chat/completions"
 
 
 def _extract_embedding(response_payload: dict[str, Any]) -> list[float]:
@@ -32,6 +37,22 @@ def _extract_embedding(response_payload: dict[str, Any]) -> list[float]:
         )
 
     return [float(value) for value in embedding]
+
+
+def _extract_chat_completion_content(response_payload: dict[str, Any]) -> str:
+    try:
+        content = response_payload["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ShopAIKeyServiceError(
+            "ShopAIKey chat completion response did not include chat completion content."
+        ) from exc
+
+    if not isinstance(content, str):
+        raise ShopAIKeyServiceError(
+            "ShopAIKey chat completion response did not include chat completion content."
+        )
+
+    return content
 
 
 def create_embedding(text: str) -> list[float]:
@@ -73,3 +94,56 @@ def create_embedding(text: str) -> list[float]:
         ) from exc
 
     return _extract_embedding(response_payload)
+
+
+def chat_completion(
+    messages: list[dict[str, Any]],
+    response_format: dict[str, Any] | None = None,
+) -> str:
+    try:
+        settings = get_settings().require_shopaikey_chat_settings()
+    except RuntimeError as exc:
+        raise ShopAIKeyServiceError(str(exc)) from exc
+
+    request_payload: dict[str, Any] = {
+        "model": settings["chat_model"],
+        "messages": messages,
+    }
+    if response_format is not None:
+        request_payload["response_format"] = response_format
+
+    try:
+        response = httpx.post(
+            _chat_completions_url(settings["base_url"]),
+            headers={
+                "Authorization": f"Bearer {settings['api_key']}",
+                "Content-Type": "application/json",
+            },
+            json=request_payload,
+            timeout=CHAT_COMPLETION_REQUEST_TIMEOUT_SECONDS,
+        )
+    except httpx.TimeoutException as exc:
+        raise ShopAIKeyServiceError(
+            "ShopAIKey chat completion request timed out."
+        ) from exc
+    except httpx.RequestError as exc:
+        raise ShopAIKeyServiceError(
+            "ShopAIKey chat completion request failed."
+        ) from exc
+
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        status_code = exc.response.status_code if exc.response is not None else "unknown"
+        raise ShopAIKeyServiceError(
+            f"ShopAIKey chat completion request failed with status {status_code}."
+        ) from exc
+
+    try:
+        response_payload = response.json()
+    except ValueError as exc:
+        raise ShopAIKeyServiceError(
+            "ShopAIKey chat completion response contained malformed JSON."
+        ) from exc
+
+    return _extract_chat_completion_content(response_payload)
