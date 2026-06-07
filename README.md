@@ -10,7 +10,7 @@ This repository is a mixed workspace:
 - `frontend/` contains a Vite React TypeScript shell with an Axios API client.
 - `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
 
-The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, and graph building wired into the backend document processing service after chunks are persisted. Public graph APIs, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
+The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, and Plan 8 hybrid retrieval configuration, schemas, and deterministic scoring utilities. Public graph APIs, hybrid retrieval orchestration, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
 
 ## What This Folder Does
 
@@ -39,7 +39,7 @@ Do not treat `docs/plans/Master_Plan.md` as proof that a feature exists in code.
 │   │   ├── db/           # SQL migrations
 │   │   ├── schemas/      # Pydantic API/service contracts
 │   │   ├── services/     # Supabase, parsing, chunking, embedding, Qdrant logic
-│   │   ├── utils/        # Upload validation helpers
+│   │   ├── utils/        # Upload validation and retrieval scoring helpers
 │   │   └── main.py       # FastAPI application factory and router wiring
 │   ├── tests/            # Pytest tests and sample document fixtures
 │   └── requirements.txt  # Python dependencies
@@ -157,7 +157,7 @@ ShopAIKey embedding failures are wrapped as `RetrievalDependencyError` with the 
 
 `backend/app/api/retrieval.py` exposes `POST /api/retrieval/search`, mounted from `backend/app/main.py` under `/api/retrieval`.
 
-The route accepts `question`, optional `document_ids`, and optional `top_k`, then delegates to `retrieval_service.semantic_search()`. Successful responses include the normalized `question` and a `results` list. API-level error behavior is:
+The request schema accepts `question`, optional `document_ids`, optional `top_k`, and optional `mode` values of `semantic` or `hybrid`, defaulting to `semantic`. The current route still delegates to `retrieval_service.semantic_search()` and does not yet implement hybrid mode branching. Successful responses include the normalized `question` and a `results` list. API-level error behavior is:
 
 - Empty or whitespace-only questions return HTTP 400.
 - `top_k` values outside 1 through 50 return HTTP 400.
@@ -179,6 +179,16 @@ Plan 7 graph groundwork is partially implemented in backend-only code:
 8. The supported graph build path is currently `document_processing_service.process_document()` after chunk persistence.
 
 No public graph build route is mounted yet. Public graph APIs, graph expansion retrieval, and frontend graph workflows are still planned.
+
+### Hybrid Retrieval Configuration, Schemas, and Scoring Utilities
+
+Plan 8 Batch01 groundwork is implemented, but the hybrid retrieval service itself is still planned:
+
+1. `backend/app/core/config.py` exposes backend-only `RETRIEVAL_GRAPH_TOP_K`, `RETRIEVAL_FINAL_TOP_K`, `ENABLE_RERANK`, and optional `SHOPAIKEY_RERANK_MODEL` settings while preserving `RETRIEVAL_SEMANTIC_TOP_K`.
+2. `ENABLE_RERANK` defaults to `false`; settings validation requires `SHOPAIKEY_RERANK_MODEL` only when rerank is enabled.
+3. `backend/app/schemas/retrieval.py` defines hybrid score component, candidate, and response models that include all five Plan 8 score components plus `final_score` and optional retrieval reason.
+4. `backend/app/utils/scoring.py` contains deterministic helpers for score clamping, keyword overlap, metadata matching, recency or position scoring, and the exact Plan 8 final score formula.
+5. No graph candidate lookup service, hybrid candidate merge service, live rerank call, answer generation, final chat API, or frontend retrieval UI is implemented yet.
 
 ## Architecture
 
@@ -229,6 +239,7 @@ Key files:
 - `backend/app/services/qdrant_service.py`: Qdrant collection, upsert, and search helpers.
 - `backend/app/services/shopaikey_service.py`: embedding API calls.
 - `backend/app/services/retrieval_service.py`: semantic retrieval orchestration, result mapping, Supabase content fallback, and safe dependency failure wrapping.
+- `backend/app/utils/scoring.py`: deterministic hybrid retrieval score normalization helpers and exact final score formula.
 
 ## Data, Storage, and External Services
 
@@ -262,7 +273,7 @@ For live semantic retrieval checks, the Qdrant collection must support keyword p
 - Embeddings use `{SHOPAIKEY_BASE_URL}/embeddings` and `SHOPAIKEY_EMBEDDING_MODEL`.
 - Chat completion uses `{SHOPAIKEY_BASE_URL}/chat/completions` and `SHOPAIKEY_CHAT_MODEL`.
 
-The embedding and chat models are configured through backend settings; they are not hardcoded in the service. Rerank endpoints are still planned.
+The embedding and chat models are configured through backend settings; they are not hardcoded in the service. Rerank configuration placeholders exist in backend settings, but no live rerank service call is implemented.
 
 ## Configuration
 
@@ -282,11 +293,15 @@ Do not expose or copy secret values into documentation.
 | `SHOPAIKEY_BASE_URL` | Yes for embeddings | OpenAI-compatible API base URL. | `Settings.require_shopaikey_settings()` |
 | `SHOPAIKEY_CHAT_MODEL` | Yes when LLM graph extraction is enabled later | Chat model intended for graph entity extraction. | `backend/app/core/config.py` |
 | `SHOPAIKEY_EMBEDDING_MODEL` | Yes for embeddings | Embedding model sent to the `/embeddings` endpoint. | `Settings.require_shopaikey_settings()` |
+| `SHOPAIKEY_RERANK_MODEL` | Yes only when `ENABLE_RERANK=true` | Optional rerank model name for future guarded rerank support. | `backend/app/core/config.py` |
 | `GRAPH_EXTRACTION_ENABLED` | No | Enables future live graph extraction; can be disabled for deterministic fallback tests/local development. Defaults to `true`. | `backend/app/core/config.py` |
 | `QDRANT_URL` | Yes for Qdrant operations | Qdrant endpoint URL. | `Settings.require_qdrant_settings()` |
 | `QDRANT_API_KEY` | Yes for Qdrant operations | Backend-only Qdrant API key. | `Settings.require_qdrant_settings()` |
 | `QDRANT_COLLECTION` | Yes for Qdrant operations | Collection name for chunk vectors. | `Settings.require_qdrant_settings()` |
 | `RETRIEVAL_SEMANTIC_TOP_K` | No | Semantic retrieval limit, constrained from 1 to 50. Defaults to `20`. | `backend/app/core/config.py` |
+| `RETRIEVAL_GRAPH_TOP_K` | No | Planned graph candidate limit before hybrid merge, constrained from 1 to 50. Defaults to `20`. | `backend/app/core/config.py` |
+| `RETRIEVAL_FINAL_TOP_K` | No | Planned final ranked hybrid result limit, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
+| `ENABLE_RERANK` | No | Enables future rerank behavior only when explicitly true and the rerank model is configured. Defaults to `false`. | `backend/app/core/config.py` |
 | `MAX_UPLOAD_BYTES` | No | Upload size limit in bytes. Defaults to `25000000`. | `backend/app/core/config.py` |
 | `CHUNK_SIZE_TOKENS` | No | Approximate chunk size. Defaults to `1000`. | `backend/app/core/config.py` |
 | `CHUNK_OVERLAP_TOKENS` | No | Approximate chunk overlap. Defaults to `150`; must be less than chunk size. | `backend/app/core/config.py` |
@@ -378,7 +393,7 @@ Backend tests are under `backend/tests/`. From `backend/`:
 pytest
 ```
 
-The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, retrieval API contract/error behavior, and the development indexing API.
+The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, retrieval API contract/error behavior, and the development indexing API. Dedicated Plan 8 scoring tests are still planned for the later testing batch.
 
 Frontend validation commands from `frontend/package.json`:
 
@@ -400,6 +415,7 @@ Read these first:
 - `backend/app/api/documents.py` and `backend/app/services/document_service.py` before changing upload/list/detail behavior.
 - `backend/app/services/document_processing_service.py`, `document_parser.py`, and `chunking_service.py` before changing parsing or chunk persistence.
 - `backend/app/services/embedding_service.py`, `shopaikey_service.py`, `qdrant_service.py`, and `retrieval_service.py` before changing indexing or retrieval behavior.
+- `backend/app/utils/scoring.py` before changing hybrid retrieval score component or final score behavior.
 - `backend/app/services/entity_extraction_service.py` and `backend/app/schemas/graph.py` before changing graph extraction behavior.
 - `backend/app/db/migrations/001_initial_schema.sql` before changing persistence contracts.
 
@@ -410,7 +426,7 @@ Important coordination rules:
 - If you add API routes, update `backend/app/main.py`; adding a router file alone does not expose it.
 - If you change document/chunk schemas, coordinate Pydantic schemas, Supabase SQL, service row builders, tests, and any Qdrant payload expectations.
 - If you wire processing into upload, account for status transitions: `uploaded`, `processing`, `ready`, `failed`.
-- If you change retrieval API behavior, keep `backend/app/api/retrieval.py` thin, preserve safe error responses, and keep semantic retrieval orchestration in `backend/app/services/retrieval_service.py`.
+- If you change retrieval API behavior, keep `backend/app/api/retrieval.py` thin, preserve safe error responses, and keep semantic retrieval orchestration in `backend/app/services/retrieval_service.py`. The `mode` request field exists in schema form, but hybrid mode is not wired into the route yet.
 - If you implement frontend features, expand beyond the current placeholder in `frontend/src/App.tsx` and keep `frontend/src/api/client.ts` aligned with backend routes.
 - Ignore generated and dependency folders such as `node_modules/`, `__pycache__/`, `.pytest_cache/`, `dist/`, `build/`, `.venv/`, and `venv/`.
 
@@ -429,6 +445,7 @@ Validation before claiming completion:
 - The development indexing route exists at `POST /api/documents/{document_id}/index`; its docstring says the frontend must not call it.
 - `backend/app/api/retrieval.py` is mounted in `backend/app/main.py` and exposes `POST /api/retrieval/search`, but there is still no frontend retrieval or chat UI.
 - Graph schemas, graph entity extraction, Supabase graph helper contracts, entity persistence, graph relationship expansion, count reporting, safe extraction failure summaries, and processing-service graph build integration exist in backend code. Public graph APIs, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
+- Hybrid retrieval settings, schemas, and scoring utilities exist, including exact final score math. Graph candidate lookup, hybrid candidate merge/ranking orchestration, guarded rerank behavior, and hybrid API mode handling are still planned.
 - The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
 - The frontend is currently a placeholder shell, not a working upload/chat UI.
 - No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.

@@ -23,7 +23,14 @@ from app.schemas.graph import (
     RelationshipDraft,
 )
 from app.schemas.parsing import ChunkDraft, ParsedSection
-from app.schemas.retrieval import RetrievalResult, SearchRequest, SearchResponse
+from app.schemas.retrieval import (
+    HybridRetrievalCandidate,
+    HybridScoreComponents,
+    HybridSearchResponse,
+    RetrievalResult,
+    SearchRequest,
+    SearchResponse,
+)
 
 __all__ = [
     "ALLOWED_ENTITY_TYPES",
@@ -46,6 +53,9 @@ __all__ = [
     "LLMRelationshipOutput",
     "ParsedSection",
     "RelationshipDraft",
+    "HybridRetrievalCandidate",
+    "HybridScoreComponents",
+    "HybridSearchResponse",
     "RetrievalResult",
     "SearchRequest",
     "SearchResponse",

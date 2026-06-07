@@ -20,11 +20,15 @@ class Settings(BaseSettings):
     shopaikey_base_url: str | None = None
     shopaikey_chat_model: str | None = None
     shopaikey_embedding_model: str | None = None
+    shopaikey_rerank_model: str | None = None
     graph_extraction_enabled: bool = True
     qdrant_url: str | None = None
     qdrant_api_key: str | None = None
     qdrant_collection: str | None = None
     retrieval_semantic_top_k: int = Field(default=20, ge=1, le=50)
+    retrieval_graph_top_k: int = Field(default=20, ge=1, le=50)
+    retrieval_final_top_k: int = Field(default=8, ge=1, le=50)
+    enable_rerank: bool = False
     max_upload_bytes: int | None = 25_000_000
     chunk_size_tokens: int = Field(default=1000, gt=0)
     chunk_overlap_tokens: int = Field(default=150, ge=0)
@@ -39,6 +43,12 @@ class Settings(BaseSettings):
     def validate_chunking_settings(self) -> "Settings":
         if self.chunk_overlap_tokens >= self.chunk_size_tokens:
             raise ValueError("CHUNK_OVERLAP_TOKENS must be less than CHUNK_SIZE_TOKENS")
+        return self
+
+    @model_validator(mode="after")
+    def validate_rerank_settings(self) -> "Settings":
+        if self.enable_rerank and not self.shopaikey_rerank_model:
+            raise ValueError("SHOPAIKEY_RERANK_MODEL must be configured when ENABLE_RERANK is true")
         return self
 
     def require_supabase_settings(self) -> dict[str, Any]:

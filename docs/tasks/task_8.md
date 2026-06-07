@@ -117,7 +117,7 @@ Hybrid retrieval cannot be implemented safely until Top-K settings, score compon
 
 ### Tasks
 
-- [ ] (01A): Add backend-only hybrid retrieval settings
+- [x] (01A): Add backend-only hybrid retrieval settings
   - Source of Truth: `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`
   - Source Requirements:
     - Add `RETRIEVAL_GRAPH_TOP_K`, `RETRIEVAL_FINAL_TOP_K`, and `ENABLE_RERANK` to settings and `.env.example`.
@@ -134,7 +134,7 @@ Hybrid retrieval cannot be implemented safely until Top-K settings, score compon
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live rerank validation if rerank is enabled but provider settings are missing.
   - Files: `backend/app/core/config.py`, `backend/.env.example`, optional existing backend config tests
 
-- [ ] (01B): Extend retrieval schemas for hybrid candidates and score components
+- [x] (01B): Extend retrieval schemas for hybrid candidates and score components
   - Source of Truth: `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_8.md` > `## 8. API Design`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.6 Agent 1 Output Schema`
   - Source Requirements:
     - Extend `backend/app/schemas/retrieval.py` with hybrid candidate and score component schemas.
@@ -150,7 +150,7 @@ Hybrid retrieval cannot be implemented safely until Top-K settings, score compon
   - Blocked Condition: None.
   - Files: `backend/app/schemas/retrieval.py`, `backend/app/schemas/__init__.py` if needed
 
-- [ ] (01C): Implement normalized scoring helpers
+- [x] (01C): Implement normalized scoring helpers
   - Source of Truth: `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.4 Scoring Formula`
   - Source Requirements:
     - Create `backend/app/utils/scoring.py`.
@@ -169,7 +169,7 @@ Hybrid retrieval cannot be implemented safely until Top-K settings, score compon
   - Blocked Condition: None.
   - Files: `backend/app/utils/scoring.py`, `backend/app/utils/__init__.py` if needed
 
-- [ ] (01D): Implement exact final score formula helper
+- [x] (01D): Implement exact final score formula helper
   - Source of Truth: `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 11. Required Tests`; `docs/plans/Plan_8.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.4 Scoring Formula`
   - Source Requirements:
     - Implement `final_score(components)` with exact weights.
@@ -825,10 +825,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch01
 
-- [ ] (01A): Add backend-only hybrid retrieval settings
-- [ ] (01B): Extend retrieval schemas for hybrid candidates and score components
-- [ ] (01C): Implement normalized scoring helpers
-- [ ] (01D): Implement exact final score formula helper
+- [x] (01A): Add backend-only hybrid retrieval settings
+- [x] (01B): Extend retrieval schemas for hybrid candidates and score components
+- [x] (01C): Implement normalized scoring helpers
+- [x] (01D): Implement exact final score formula helper
 
 #### Batch02
 
