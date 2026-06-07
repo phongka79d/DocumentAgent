@@ -1332,3 +1332,522 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Graph Builder Rebuild and Structural Relationships
+- Task ID: (03A)
+- Task title: Implement `build_document_graph(document_id)` document and chunk loading
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_7.md` > `## 1. Goal`; `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The last execution report entry is for the requested `(03A)` task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_7_execute_agent.md`, `docs/tasks/task_7.md` after reviewer checkbox update
+- untracked files: `backend/app/services/graph_builder.py`, `backend/tests/test_graph_builder.py`
+
+## Files Reviewed
+- `backend/app/services/graph_builder.py`: in scope - creates `GraphBuildException` and `build_document_graph(document_id)` preflight loading.
+- `backend/tests/test_graph_builder.py`: in scope - covers missing document, no chunks, and valid document/chunk loading before later stages.
+- `docs/reports/report_7_execute_agent.md`: in scope - latest `(03A)` execution report appended.
+- `docs/tasks/task_7.md`: in scope - selected task entry, dependencies, and progress tracker reviewed and updated only for `(03A)`.
+- `backend/app/services/supabase_service.py`: in scope - existing graph document/chunk helpers verify `SINGLE_USER_ID` filtering and chunk order.
+- `backend/app/schemas/graph.py`: in scope - existing `GraphBuildResult` and `GraphBuildError` contracts used by the builder.
+- `docs/plans/Plan_7.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - authentication policy reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/graph_builder.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Untracked new file contains the graph builder entry point and preflight error handling.
+- file from execution report: `backend/tests/test_graph_builder.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Untracked new file contains focused mocked tests for `(03A)`.
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report entry was appended and matches repository evidence.
+
+## Dependency Review
+- Required dependencies: (01B), (01C), (02B)
+- Dependency status: satisfied; the task file shows all required dependencies checked.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Uses backend-only service module, existing graph schemas, and existing Supabase helper contracts for single-user document/chunk loading.
+- Failed: None
+- Uncertain: Live graph build remains dependent on real processed chunks, which is outside mocked `(03A)` validation.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `build_document_graph(document_id)` calls `get_graph_document`, short-circuits missing documents, calls `list_document_chunks`, short-circuits no-chunk documents, and returns a typed zero-count `GraphBuildResult` for valid preflight.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code does not hardcode user IDs, provider settings, secrets, entity types, relationship types, fixture answers, or frontend behavior. Test UUIDs and sample chunk rows are test fixtures only.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_graph_builder.py -v`
+- Reported result: Passed, 3 tests collected and 3 passed.
+- Rerun result: Passed, 3 tests collected and 3 passed.
+- Status: satisfied
+- Notes: Rerun covered missing document, no chunks, and valid preflight loading.
+
+## Acceptance Review
+- Task acceptance: Missing documents and no-chunk documents fail with clear safe errors; valid documents proceed to graph build stages.
+- Status: satisfied
+- Evidence: Tests assert `GraphBuildException` with structured `GraphBuildResult.errors`, no clearing before missing/no-chunk preflight, and valid document/chunk calls returning a zero-count result for later stages.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the Batch03 task block and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked.
+- Execution report entry: appended, not overwritten.
+- Review report entry: appended, not overwritten.
+- Other: Sibling `(03B)` and `(03C)` remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(03A)` intentionally does not clear graph rows or persist structural relationships; those are assigned to `(03B)` and `(03C)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(03A)` is accepted and `(03B)`/`(03C)` remain incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch03 - Graph Builder Rebuild and Structural Relationships",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/graph_builder.py",
+    "backend/tests/test_graph_builder.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/tasks/task_7.md",
+    "backend/app/services/supabase_service.py",
+    "backend/app/schemas/graph.py",
+    "docs/plans/Plan_7.md",
+    "docs/plans/Master_Plan.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Graph Builder Rebuild and Structural Relationships
+- Task ID: (03B)
+- Task title: Clear existing graph rows safely before rebuild
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest execution report entry is for the requested `(03B)` task. Prior accepted uncommitted `(03A)` work was treated as dependency/baseline and not re-reviewed as a new task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_7_execute_agent.md`, `docs/review/review_7_review_agent.md`, `docs/tasks/task_7.md`
+- untracked files: `backend/app/services/graph_builder.py`, `backend/tests/test_graph_builder.py`
+
+## Files Reviewed
+- `backend/app/services/graph_builder.py`: in scope - `(03B)` adds clear-before-rebuild after `(03A)` document/chunk preconditions and clear failure reporting.
+- `backend/tests/test_graph_builder.py`: in scope - `(03B)` adds clear ordering, repeated rebuild clear, and clear failure partial-state tests on top of prior `(03A)` preflight tests.
+- `backend/app/services/supabase_service.py`: in scope - existing `clear_document_graph_rows` contract deletes `document_relationships` by `document_id` and `document_entities` by `document_id` plus `SINGLE_USER_ID`.
+- `backend/app/schemas/graph.py`: in scope - existing `GraphBuildError.details` and `GraphBuildResult` support structured partial-state risk reporting.
+- `docs/reports/report_7_execute_agent.md`: in scope - selected `(03B)` execution report appended after `(03A)`.
+- `docs/tasks/task_7.md`: in scope - selected task entry, dependencies, and progress tracker reviewed; only `(03B)` checkboxes were updated.
+- `docs/plans/Plan_7.md`: in scope - cited implementation, acceptance, and failure-handling sections reviewed.
+- `docs/review/review_7_review_agent.md`: in scope - prior `(03A)` review was present; this `(03B)` review was appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/graph_builder.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the selected `(03B)` clear call and clear failure wrapper.
+- file from execution report: `backend/tests/test_graph_builder.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains five tests, including the two selected `(03B)` clear-specific tests and one ordering test.
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(03B)` report entry is appended and matches repository evidence.
+
+## Dependency Review
+- Required dependencies: (01C), (03A)
+- Dependency status: satisfied; `docs/tasks/task_7.md` shows `(01C)` and `(03A)` checked, and the prior `(03A)` review is present in `docs/review/review_7_review_agent.md`.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Reuses the existing backend-only graph builder and existing Supabase clear helper; clearing runs only after document and chunk preconditions pass; no database schema, frontend API, retrieval, Agent 1, community detection, or visualization work was added.
+- Failed: None
+- Uncertain: Live Supabase behavior is not validated in this mocked task, which is acceptable for `(03B)`.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `build_document_graph(document_id)` loads the document, loads non-empty chunks, calls `supabase_service.clear_document_graph_rows(document_id)`, returns a typed zero-count `GraphBuildResult`, and raises `GraphBuildException` with `operation="clear_graph_rows"` and partial-state metadata when clear fails.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code does not hardcode secrets, user IDs, provider settings, entity/relationship fixture answers, or frontend behavior. UUIDs and sample chunks appear only in tests as fixtures.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_graph_builder.py -v`
+- Reported result: Passed, 5 tests collected and 5 passed.
+- Rerun result: Passed, 5 tests collected and 5 passed in 1.00s.
+- Status: satisfied
+- Notes: Rerun covered missing document, no chunks, valid preflight plus clear, repeated rebuild clear, and clear failure reporting.
+
+## Acceptance Review
+- Task acceptance: Clear existing graph rows before rebuild, avoid duplicate rows on rerun, and report partial state if clearing fails.
+- Status: satisfied
+- Evidence: Clear is called after document/chunk preconditions, repeated rebuild invokes clear once per build, and clear failure raises a structured result with `operation="clear_graph_rows"` plus partial-state risk details.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the Batch03 task block and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked because `(03C)` is still unchecked.
+- Execution report entry: appended, not overwritten.
+- Review report entry: appended, not overwritten.
+- Other: `(03A)` remained checked from the prior accepted review; `(03C)` remains unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(03B)` appropriately reuses the `(01C)` Supabase clear helper instead of adding a new storage contract.
+- The current build result remains zero-count because entity and structural relationship persistence belong to later tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(03C)` remains unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch03 - Graph Builder Rebuild and Structural Relationships",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/graph_builder.py",
+    "backend/tests/test_graph_builder.py",
+    "backend/app/services/supabase_service.py",
+    "backend/app/schemas/graph.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/tasks/task_7.md",
+    "docs/plans/Plan_7.md",
+    "docs/review/review_7_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Execution Report Reviewed
+docs/reports/report_7_execute_agent.md
+
+## Review Report File
+docs/review/review_7_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Graph Builder Rebuild and Structural Relationships
+- Task ID: (03C)
+- Task title: Create section node concepts and structural relationships
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_7.md` > `## 1. Goal`; `## 3. Scope`; `## 7. Data Model / Schema Changes`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.5 Medium-Level GraphRAG Construction`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest execution report entry is for the requested `(03C)` task. Prior accepted uncommitted `(03A)` and `(03B)` work was treated as dependency/baseline and not re-reviewed as newly selected work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_7_execute_agent.md`, `docs/review/review_7_review_agent.md`, `docs/tasks/task_7.md`
+- untracked files: `backend/app/services/graph_builder.py`, `backend/tests/test_graph_builder.py`
+
+## Files Reviewed
+- `backend/app/services/graph_builder.py`: in scope - `(03C)` adds section key derivation, document-section relationships, section-chunk relationships, structural relationship insertion, and insert failure reporting.
+- `backend/tests/test_graph_builder.py`: in scope - covers structural relationship grouping, fallback section keys, relationship ordering, endpoint IDs/types, weights, descriptions, and returned relationship counts.
+- `backend/app/schemas/graph.py`: in scope - verifies `RelationshipDraft` allows required relationship types and enforces non-empty endpoints plus strict `0..1` numeric weight.
+- `backend/app/services/supabase_service.py`: in scope - verifies `insert_document_relationships` persists validated `RelationshipDraft` rows into `document_relationships` with the provided `document_id`.
+- `docs/reports/report_7_execute_agent.md`: in scope - selected `(03C)` execution report appended after prior `(03A)` and `(03B)` entries.
+- `docs/tasks/task_7.md`: in scope - selected task block, dependencies, and progress tracker reviewed; only `(03C)` checkboxes were updated by this review.
+- `docs/plans/Plan_7.md`: in scope - cited goal, scope, schema, implementation, and acceptance sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited medium-level GraphRAG construction section reviewed.
+- `docs/review/review_7_review_agent.md`: in scope - prior `(03A)` and `(03B)` reviews were present; this `(03C)` review was appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/graph_builder.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains selected `(03C)` section derivation and structural relationship insertion behavior.
+- file from execution report: `backend/tests/test_graph_builder.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains seven graph builder tests, including the two structural relationship tests added for `(03C)`.
+- file from execution report: `docs/reports/report_7_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(03C)` report entry is appended and matches repository evidence.
+
+## Dependency Review
+- Required dependencies: (03A), (03B)
+- Dependency status: satisfied; `docs/tasks/task_7.md` shows `(03A)` and `(03B)` checked, and prior accepted reviews for `(03A)` and `(03B)` are present in `docs/review/review_7_review_agent.md`.
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Uses backend-only graph builder service, existing graph schemas, and existing Supabase relationship insert helper; represents `Document -> Section -> Chunk` without a new sections table; keeps entity persistence, chunk-entity/entity-entity/chunk-chunk relationships, graph retrieval, Agent 1, hybrid scoring, graph visualization, community detection, and frontend graph APIs out of scope.
+- Failed: None
+- Uncertain: Live Supabase insertion was not run; mocked persistence is acceptable for this selected task and reported honestly.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `build_document_graph(document_id)` loads document/chunks, clears existing graph rows, builds validated `RelationshipDraft` objects for one `document_contains_section` relationship per section and one `section_contains_chunk` relationship per chunk, calls `supabase_service.insert_document_relationships`, returns inserted relationship counts, and raises structured partial-state errors if structural relationship insertion fails.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses available chunk metadata to derive stable section IDs and does not hardcode secrets, user IDs, fixture answers, provider settings, database IDs, or frontend behavior. Test UUIDs and chunk rows are fixtures only.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_graph_builder.py -v`
+- Reported result: Failed first during TDD red run, then passed after implementation with 7 tests collected and 7 passed in 0.88s.
+- Rerun result: Passed, 7 tests collected and 7 passed in 1.30s.
+- Status: satisfied
+- Notes: Rerun covered preflight errors, clear-before-rebuild behavior, clear failure reporting, structural relationship persistence, page fallback section keys, and chunk fallback section keys.
+
+## Acceptance Review
+- Task acceptance: Relationship rows use allowed relationship types, valid source/target types, stable IDs, normalized weights, and safe descriptions.
+- Status: satisfied
+- Evidence: Structural relationship tests verify `document_contains_section` and `section_contains_chunk`, `document`/`section`/`chunk` endpoint types, deterministic IDs shaped as `<document_id>:section:<section_key>`, `weight == 1.0`, normalized title/page/chunk fallback labels, and returned relationship counts. `RelationshipDraft` validation enforces allowed types, non-empty endpoint fields, and strict numeric `0..1` weights.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the Batch03 task block and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked; batch-level acceptance is not part of this single-task review.
+- Execution report entry: appended, not overwritten.
+- Review report entry: appended, not overwritten.
+- Other: `(03A)` and `(03B)` remained checked from prior accepted reviews; no Batch04 or later task checkbox was changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(03C)` intentionally represents section node concepts through stable relationship endpoint IDs and does not create a `sections` table.
+- Entity persistence and non-structural relationships remain correctly deferred to Batch04.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, after the orchestrator completes any required Batch03 gate.
+- Should batch be marked complete? no, not by this review; batch completion requires the orchestrator/A3 gate after all task IDs are accepted.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_7.md",
+  "execution_report_reviewed": "docs/reports/report_7_execute_agent.md",
+  "review_report_file": "docs/review/review_7_review_agent.md",
+  "selected_batch": "Batch03 - Graph Builder Rebuild and Structural Relationships",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/graph_builder.py",
+    "backend/tests/test_graph_builder.py",
+    "backend/app/schemas/graph.py",
+    "backend/app/services/supabase_service.py",
+    "docs/reports/report_7_execute_agent.md",
+    "docs/tasks/task_7.md",
+    "docs/plans/Plan_7.md",
+    "docs/plans/Master_Plan.md",
+    "docs/review/review_7_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

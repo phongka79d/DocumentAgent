@@ -344,7 +344,7 @@ The graph must represent the required `Document -> Section -> Chunk` structure b
 
 ### Tasks
 
-- [ ] (03A): Implement `build_document_graph(document_id)` document and chunk loading
+- [x] (03A): Implement `build_document_graph(document_id)` document and chunk loading
   - Source of Truth: `docs/plans/Plan_7.md` > `## 1. Goal`; `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
   - Source Requirements:
     - Create `backend/app/services/graph_builder.py`.
@@ -362,7 +362,7 @@ The graph must represent the required `Document -> Section -> Chunk` structure b
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live graph build if no processed document/chunks exist.
   - Files: `backend/app/services/graph_builder.py`, `backend/tests/test_graph_builder.py`
 
-- [ ] (03B): Clear existing graph rows safely before rebuild
+- [x] (03B): Clear existing graph rows safely before rebuild
   - Source of Truth: `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_7.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Clear existing graph rows for the document before rebuild to prevent duplicates.
@@ -379,7 +379,7 @@ The graph must represent the required `Document -> Section -> Chunk` structure b
   - Blocked Condition: None for mocked tests.
   - Files: `backend/app/services/graph_builder.py`, `backend/app/services/supabase_service.py`, `backend/tests/test_graph_builder.py`
 
-- [ ] (03C): Create section node concepts and structural relationships
+- [x] (03C): Create section node concepts and structural relationships
   - Source of Truth: `docs/plans/Plan_7.md` > `## 1. Goal`; `docs/plans/Plan_7.md` > `## 3. Scope`; `docs/plans/Plan_7.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_7.md` > `## 9. Implementation Steps`; `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 8. Document Processing Pipeline` > `### 8.5 Medium-Level GraphRAG Construction`
   - Source Requirements:
     - Represent graph path `Document -> Section -> Chunk -> Entity -> Relationship`.
@@ -771,7 +771,7 @@ Optional future tracks are outside the mandatory chain.
 
 - [x] Batch01 - Graph Configuration, Schemas, and Supabase Contracts
 - [x] Batch02 - ShopAIKey Chat and Entity Extraction Service
-- [ ] Batch03 - Graph Builder Rebuild and Structural Relationships
+- [x] Batch03 - Graph Builder Rebuild and Structural Relationships
 - [ ] Batch04 - Entity Persistence and Relationship Expansion
 - [ ] Batch05 - Processing Integration, Tests, Smoke Checks, and Handoff
 
@@ -789,9 +789,9 @@ Optional future tracks are outside the mandatory chain.
 - [x] (02D): Add focused entity extraction tests
 
 #### Batch03
-- [ ] (03A): Implement `build_document_graph(document_id)` document and chunk loading
-- [ ] (03B): Clear existing graph rows safely before rebuild
-- [ ] (03C): Create section node concepts and structural relationships
+- [x] (03A): Implement `build_document_graph(document_id)` document and chunk loading
+- [x] (03B): Clear existing graph rows safely before rebuild
+- [x] (03C): Create section node concepts and structural relationships
 
 #### Batch04
 - [ ] (04A): Extract and persist de-duplicated document entities

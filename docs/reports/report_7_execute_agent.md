@@ -611,3 +611,269 @@ complete
 - next task ID: (03A)
 - can proceed: yes, after A2 reviews and accepts `(02D)`.
 - handoff notes: Entity extraction tests now exercise the invalid-output and no-insert boundaries needed before graph builder work.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch03 - Graph Builder Rebuild and Structural Relationships
+
+## Task
+(03A) - Implement `build_document_graph(document_id)` document and chunk loading
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_7.md` > `## 1. Goal`
+- `docs/plans/Plan_7.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_7.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_7.md` > `## 13. Failure Handling`
+- `docs/plans/Master_Plan.md` > `## 3. Authentication Policy`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Graph Builder Rebuild and Structural Relationships
+- Task ID: (03A)
+- Task title: Implement `build_document_graph(document_id)` document and chunk loading
+
+## Completed Work
+- Status: complete.
+- Created `backend/app/services/graph_builder.py` with `build_document_graph(document_id)`.
+- Added `GraphBuildException` carrying a structured `GraphBuildResult` for safe preflight failures.
+- Loaded the graph document through existing single-user-scoped `supabase_service.get_graph_document`.
+- Loaded chunks through existing single-user-scoped `supabase_service.list_document_chunks`, which preserves stable `chunk_index` order.
+- Returned clear not-found and no-chunks errors before any graph clearing or persistence work.
+- Returned a zero-count `GraphBuildResult` for valid document/chunk preflight so later graph build stages can proceed in subsequent tasks.
+
+## Files Created or Modified
+- `backend/app/services/graph_builder.py`
+- `backend/tests/test_graph_builder.py`
+- `docs/reports/report_7_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence or reason: 3 tests collected and 3 passed, covering missing document, no chunks, and valid document/chunk loading preflight.
+
+## Acceptance Check
+- Task acceptance condition: Missing documents and no-chunk documents fail with clear safe errors; valid documents proceed to graph build stages.
+- Status: satisfied
+- Evidence: `GraphBuildException` messages are safe and structured with `GraphBuildResult.errors`; tests assert document/chunk loading and that graph rows are not cleared during missing/no-chunk preflight.
+
+## Artifacts Produced
+- Graph builder entry point in `backend/app/services/graph_builder.py`.
+- Focused graph builder tests in `backend/tests/test_graph_builder.py`.
+- Appended execution report in `docs/reports/report_7_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrator requested A1 execution only; A2 updates checkbox after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused existing `GraphBuildResult` and `GraphBuildError` schemas from `backend/app/schemas/graph.py` rather than introducing a duplicate result model.
+- Kept row clearing and persistence out of scope because `(03B)` and later Batch03/Batch04 tasks own those stages.
+- Relied on existing Supabase graph helper contracts for `SINGLE_USER_ID` filtering and `chunk_index` ordering.
+
+## Risks or Open Issues
+- Live graph build still requires a processed document with persisted chunks; otherwise it is blocked by the selected task's live-data condition.
+- Later tasks must add clearing, section/chunk relationships, entity extraction, persistence, and final count updates.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(01B)`, `(01C)`, and `(02B)` are checked in `docs/tasks/task_7.md`.
+- Scope stayed within `(03A)` and did not implement `(03B)`, `(03C)`, Batch04 persistence, graph retrieval, frontend graph APIs, Agent 1, hybrid scoring, graph visualization, or community detection.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 reviews and accepts `(03A)`.
+- handoff notes: `build_document_graph(document_id)` now completes safe document/chunk preflight and returns a zero-count `GraphBuildResult`; `(03B)` can add graph row clearing after this preflight passes.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch03 - Graph Builder Rebuild and Structural Relationships
+
+## Task
+(03B) - Clear existing graph rows safely before rebuild
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_7.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_7.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_7.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Graph Builder Rebuild and Structural Relationships
+- Task ID: (03B)
+- Task title: Clear existing graph rows safely before rebuild
+
+## Completed Work
+- Status: complete.
+- Implemented rebuild clearing in `build_document_graph(document_id)` after document and chunk preconditions pass.
+- Reused the existing `supabase_service.clear_document_graph_rows(document_id)` helper so relationship rows and entity rows are cleared with document-scoped filters before later rebuild stages.
+- Added clear failure reporting through `GraphBuildException.result`, including `clear_graph_rows` operation details and partial-state risk metadata.
+- Added mocked graph builder tests covering precondition ordering, repeated rebuild clears, and honest partial-state risk reporting on clear failure.
+
+## Files Created or Modified
+- `backend/app/services/graph_builder.py`
+- `backend/tests/test_graph_builder.py`
+- `docs/reports/report_7_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed
+- evidence: 5 tests collected, 5 passed in 0.92s.
+
+## Acceptance Check
+- Task acceptance condition: Rebuilding the same document does not duplicate prior entities or relationships; failures after clearing are reported honestly.
+- Status: satisfied
+- Evidence: `build_document_graph` now calls `clear_document_graph_rows` after loading a valid document and non-empty chunks, and `test_build_document_graph_clears_existing_rows_on_each_rebuild` verifies the clear helper is called once per rebuild. `test_build_document_graph_reports_partial_state_risk_when_clear_fails` verifies clear failures are reported with `operation="clear_graph_rows"` and partial-state risk details.
+
+## Artifacts Produced
+- Updated graph builder implementation.
+- Updated focused graph builder test coverage.
+- Appended execution report in `docs/reports/report_7_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrator requested A1 execution only; A2 updates task and batch checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept clearing after `(03A)` document/chunk preconditions so missing documents and empty chunk sets do not mutate graph tables.
+- Reused the existing Supabase clear helper instead of adding new storage contracts.
+- Added partial-state risk details to `GraphBuildError.details` because the current result schema already supports structured failure metadata.
+
+## Risks or Open Issues
+- Later `(03C)` and Batch04 tasks still need to add structural relationships, entity extraction, persistence, and inserted row counts.
+- If the Supabase clear helper partially deletes rows before raising, the builder reports partial-state risk but cannot know exactly which table mutation succeeded from the mocked helper boundary.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(01C)` and `(03A)` are complete per the provided orchestrator context and selected task block.
+- Scope stayed within `(03B)` and did not implement `(03C)`, Batch04 entity persistence, graph retrieval, frontend graph APIs, Agent 1, hybrid scoring, graph visualization, or community detection.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes, after A2 reviews and accepts `(03B)`.
+- handoff notes: graph rebuild now starts by clearing existing graph rows after preconditions pass; `(03C)` can add structural relationship creation on top of this clean-state rebuild flow.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_7.md
+
+## Report File
+docs/reports/report_7_execute_agent.md
+
+## Batch
+Batch03 - Graph Builder Rebuild and Structural Relationships
+
+## Task
+(03C) - Create section node concepts and structural relationships
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_7.md selected (03C) task block
+- docs/plans/Plan_7.md > ## 1. Goal
+- docs/plans/Plan_7.md > ## 3. Scope
+- docs/plans/Plan_7.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_7.md > ## 9. Implementation Steps
+- docs/plans/Plan_7.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 8. Document Processing Pipeline > ### 8.5 Medium-Level GraphRAG Construction
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Graph Builder Rebuild and Structural Relationships
+- Task ID: (03C)
+- Task title: Create section node concepts and structural relationships
+
+## Completed Work
+- Status: complete.
+- Implemented stable section key derivation from normalized `section_title`, page metadata, or chunk-group fallback.
+- Added structural `RelationshipDraft` payload creation for one `document_contains_section` relationship per section and one `section_contains_chunk` relationship per chunk.
+- Persisted structural relationships through `supabase_service.insert_document_relationships` after graph rows are cleared.
+- Returned inserted structural relationship counts in `GraphBuildResult.relationship_count` while leaving entity persistence at zero for Batch04 scope.
+- Added safe partial-state reporting if structural relationship insertion fails after rebuild clearing.
+
+## Files Created or Modified
+- backend/app/services/graph_builder.py
+- backend/tests/test_graph_builder.py
+- docs/reports/report_7_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_builder.py -v`: Failed first as expected during TDD red run; 3 failed, 4 passed because structural relationship behavior was not implemented yet.
+- `cd backend; pytest tests/test_graph_builder.py -v`: Passed after implementation; 7 tests collected, 7 passed in 0.88s.
+
+## Acceptance Check
+- Task acceptance condition: Relationship rows use allowed relationship types, valid source/target types, stable IDs, normalized weights, and safe descriptions.
+- Status: satisfied
+- Evidence: Structural relationships are built as validated `RelationshipDraft` objects using allowed types `document_contains_section` and `section_contains_chunk`, source/target types `document`, `section`, and `chunk`, deterministic section IDs shaped as `<document_id>:section:<section_key>`, weight `1.0`, and single-line generated descriptions. Tests verify title grouping, page fallback, chunk fallback, relationship order, IDs, endpoint types, weights, descriptions, and persisted row counts.
+
+## Artifacts Produced
+- Updated graph builder structural relationship implementation.
+- Updated mocked graph builder persistence tests.
+- Appended execution report in `docs/reports/report_7_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrator requested A1 execution only; A2 updates task and batch checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Did not create a sections table; section node concepts are represented by stable relationship endpoint IDs.
+- Used normalized section titles first, page-number keys second, and chunk-group fallback keys last.
+- Kept structural relationship insertion after safe rebuild clearing and before later Batch04 entity persistence.
+- Used existing `RelationshipDraft` validation and Supabase relationship insert helper instead of adding new persistence contracts.
+
+## Risks or Open Issues
+- Live Supabase insertion was not run; validation used mocked persistence per the selected task.
+- Section IDs are deterministic from available metadata, but documents with duplicate normalized section titles intentionally group chunks under the same section concept.
+
+## Minor Issues Fixed During Execution
+- Corrected new test wiring to import `RelationshipDraft` directly from `app.schemas.graph` so the red run targeted missing behavior instead of a test annotation issue.
+- Normalized section-title whitespace and ASCII slug generation for safer section IDs.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(03A)` and `(03B)` are complete per the selected task file and provided orchestrator context.
+- Scope stayed within `(03C)` and did not implement Batch04 entity persistence, chunk-entity/entity-entity/chunk-chunk relationships, graph retrieval, frontend graph APIs, Agent 1, hybrid scoring, or graph visualization.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes, after A2 reviews and accepts `(03C)` and the orchestrator completes any required Batch03 gate.
+- handoff notes: graph builder now persists document-section and section-chunk structural relationships with deterministic section endpoint IDs and returns structural relationship counts; Batch04 can build entity persistence on top of this structural path.
