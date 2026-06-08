@@ -111,7 +111,7 @@ The retrieval agent cannot safely call hybrid retrieval or persist logs until th
 
 ### Tasks
 
-- [ ] (01A): Create backend agents package
+- [x] (01A): Create backend agents package
   - Source of Truth: `docs/plans/Plan_9.md` > `## 3. Scope`; `docs/plans/Plan_9.md` > `## 6. Required Files and Folders`; `docs/plans/Master_Plan.md` > `# 16. Suggested Project Structure`
   - Source Requirements:
     - Add shared agent schemas.
@@ -127,7 +127,7 @@ The retrieval agent cannot safely call hybrid retrieval or persist logs until th
   - Blocked Condition: None.
   - Files: `backend/app/agents/__init__.py`
 
-- [ ] (01B): Define shared Agent 1 Pydantic schemas
+- [x] (01B): Define shared Agent 1 Pydantic schemas
   - Source of Truth: `docs/plans/Plan_9.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.6 Agent 1 Output Schema`
   - Source Requirements:
     - Define `RetrievalAgentInput`, `RetrievalCandidate`, and `RetrievalAgentOutput`.
@@ -144,7 +144,7 @@ The retrieval agent cannot safely call hybrid retrieval or persist logs until th
   - Blocked Condition: None.
   - Files: `backend/app/agents/schemas.py`, `backend/app/agents/__init__.py`
 
-- [ ] (01C): Confirm backend-only retrieval and persistence configuration boundary
+- [x] (01C): Confirm backend-only retrieval and persistence configuration boundary
   - Source of Truth: `docs/plans/Plan_9.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.3 Top-K Settings`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`; `README.md` > `### Hybrid Retrieval Configuration, Schemas, Scoring Utilities, Graph Candidates, and API Mode`
   - Source Requirements:
     - `RETRIEVAL_FINAL_TOP_K` is the default number of candidate chunks Agent 1 returns.
@@ -692,9 +692,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch01
 
-- [ ] (01A): Create backend agents package
-- [ ] (01B): Define shared Agent 1 Pydantic schemas
-- [ ] (01C): Confirm backend-only retrieval and persistence configuration boundary
+- [x] (01A): Create backend agents package
+- [x] (01B): Define shared Agent 1 Pydantic schemas
+- [x] (01C): Confirm backend-only retrieval and persistence configuration boundary
 
 #### Batch02
 

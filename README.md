@@ -10,7 +10,7 @@ This repository is a mixed workspace:
 - `frontend/` contains a Vite React TypeScript shell with an Axios API client.
 - `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
 
-The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, and Plan 8 hybrid retrieval configuration, schemas, deterministic scoring utilities, graph candidate lookup, hybrid candidate merge/scoring/final ranking service behavior, guarded rerank placeholder behavior, safe hybrid failure handling, and optional hybrid mode routing on the existing retrieval search API. Public graph APIs, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
+The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, Plan 8 hybrid retrieval configuration, schemas, deterministic scoring utilities, graph candidate lookup, hybrid candidate merge/scoring/final ranking service behavior, guarded rerank placeholder behavior, safe hybrid failure handling, optional hybrid mode routing on the existing retrieval search API, and the Plan 9 Batch01 backend agent package with shared Agent 1 input/candidate/output Pydantic schemas. The Agent 1 retrieval callable, agent step logging service, public graph APIs, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
 
 ## What This Folder Does
 
@@ -200,6 +200,7 @@ Plan 8 Batch01 through Batch04 backend retrieval behavior is implemented:
 The current architecture is layered:
 
 - API layer: `backend/app/api/health.py`, `backend/app/api/documents.py`, and `backend/app/api/retrieval.py` expose FastAPI routes and map service exceptions to HTTP responses.
+- Agent package: `backend/app/agents/` currently exposes shared Agent 1 retrieval input, candidate, and output schemas only. The retrieval agent callable and logging behavior are planned for later Plan 9 batches.
 - Configuration layer: `backend/app/core/config.py` centralizes Pydantic settings, default values, and required external-service checks.
 - Service layer: `backend/app/services/` owns orchestration, entity extraction, and provider-specific clients.
 - Persistence layer: `supabase_service.py` reads/writes Supabase tables and storage buckets.
@@ -231,6 +232,7 @@ The backend is a FastAPI project in `backend/`.
 Key files:
 
 - `backend/app/main.py`: app factory, CORS setup, route registration.
+- `backend/app/agents/schemas.py`: shared Agent 1 retrieval input, candidate, and output Pydantic schemas.
 - `backend/app/api/health.py`: health endpoint.
 - `backend/app/api/documents.py`: upload, list, detail, and development indexing routes.
 - `backend/app/api/retrieval.py`: retrieval search endpoint and safe API error mapping.
@@ -423,6 +425,7 @@ Read these first:
 - `backend/app/services/document_processing_service.py`, `document_parser.py`, and `chunking_service.py` before changing parsing or chunk persistence.
 - `backend/app/services/embedding_service.py`, `shopaikey_service.py`, `qdrant_service.py`, and `retrieval_service.py` before changing indexing or retrieval behavior.
 - `backend/app/services/hybrid_retrieval_service.py` and `backend/app/utils/scoring.py` before changing hybrid retrieval merge, score component, final ranking, or retrieval reason behavior.
+- `backend/app/agents/schemas.py` before changing Agent 1 workflow contracts.
 - `backend/app/services/entity_extraction_service.py` and `backend/app/schemas/graph.py` before changing graph extraction behavior.
 - `backend/app/db/migrations/001_initial_schema.sql` before changing persistence contracts.
 
@@ -453,6 +456,7 @@ Validation before claiming completion:
 - `backend/app/api/retrieval.py` is mounted in `backend/app/main.py` and exposes `POST /api/retrieval/search`, but there is still no frontend retrieval or chat UI.
 - Graph schemas, graph entity extraction, Supabase graph helper contracts, entity persistence, graph relationship expansion, count reporting, safe extraction failure summaries, processing-service graph build integration, and backend-only graph candidate lookup exist in backend code. Public graph APIs, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
 - Hybrid retrieval settings, schemas, scoring utilities, graph candidate lookup, candidate merge/scoring/ranking orchestration, deterministic retrieval reasons, guarded rerank behavior, safe hybrid failure handling, and hybrid API mode handling exist. Live rerank provider calls are still not implemented.
+- Agent 1 shared schemas exist in `backend/app/agents/schemas.py`; the retrieval agent callable, agent step logging service, and agent run workflow are still planned.
 - The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
 - The frontend is currently a placeholder shell, not a working upload/chat UI.
 - No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.
