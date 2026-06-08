@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document QA Agent - Visual Overview</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-soft: #eef3f8;
+      --text: #17202f;
+      --muted: #667085;
+      --line: #d8e0ea;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+      --accent-3: #6d28d9;
+      --accent-4: #be123c;
+      --ok: #15803d;
+      --warn: #b45309;
+      --planned: #475569;
+      --shadow: 0 18px 45px rgba(23, 32, 47, 0.09);
+      --radius: 8px;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #111827;
+      --surface: #1f2937;
+      --surface-soft: #263244;
+      --text: #f8fafc;
+      --muted: #b7c0cc;
+      --line: #3b4658;
+      --accent: #2dd4bf;
+      --accent-2: #f59e0b;
+      --accent-3: #a78bfa;
+      --accent-4: #fb7185;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --planned: #cbd5e1;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .layout {
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-inner {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 900;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .nav-links a,
+    .theme-toggle,
+    .copy-button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, background 160ms ease;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active,
+    .theme-toggle:hover,
+    .copy-button:hover {
+      transform: translateY(-1px);
+      color: var(--text);
+      border-color: var(--accent);
+      background: var(--surface-soft);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      align-items: center;
+      padding: 54px 0 30px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.78rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.1;
+      letter-spacing: 0;
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 12px;
+      font-size: clamp(2.4rem, 7vw, 5.8rem);
+      max-width: 900px;
+    }
+
+    h2 {
+      font-size: clamp(1.75rem, 4vw, 3rem);
+    }
+
+    h3 {
+      font-size: 1.05rem;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .hero-copy {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 1.08rem;
+      max-width: 760px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+      align-items: center;
+    }
+
+    .primary-link {
+      border-radius: 999px;
+      padding: 11px 16px;
+      background: var(--text);
+      color: var(--surface);
+      font-weight: 800;
+      border: 1px solid var(--text);
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: var(--muted);
+      background: var(--surface);
+      font-size: 0.83rem;
+      font-weight: 700;
+    }
+
+    .status-board {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric-card,
+    .card,
+    .diagram-node,
+    .timeline-item,
+    .interface-card,
+    .source-note {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .metric-card {
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .metric-value {
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .metric-card.current {
+      border-left: 5px solid var(--ok);
+    }
+
+    .metric-card.planned {
+      border-left: 5px solid var(--accent-3);
+    }
+
+    .metric-card.warning {
+      border-left: 5px solid var(--warn);
+    }
+
+    section {
+      padding: 58px 0;
+      scroll-margin-top: 84px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      max-width: 680px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .span-4 {
+      grid-column: span 4;
+    }
+
+    .span-6 {
+      grid-column: span 6;
+    }
+
+    .span-8 {
+      grid-column: span 8;
+    }
+
+    .span-12 {
+      grid-column: 1 / -1;
+    }
+
+    .card {
+      padding: 18px;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .card:hover,
+    .interface-card:hover,
+    .timeline-item:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 20px 55px rgba(15, 118, 110, 0.14);
+    }
+
+    .card p,
+    .interface-card p,
+    .timeline-item p,
+    .source-note p {
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .tagline {
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .label-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .mini-tag {
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      background: var(--surface-soft);
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .mini-tag.now {
+      color: var(--ok);
+      border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+    }
+
+    .mini-tag.plan {
+      color: var(--accent-3);
+      border-color: color-mix(in srgb, var(--accent-3) 45%, var(--line));
+    }
+
+    .mini-tag.gap {
+      color: var(--accent-4);
+      border-color: color-mix(in srgb, var(--accent-4) 45%, var(--line));
+    }
+
+    .architecture {
+      display: grid;
+      gap: 16px;
+    }
+
+    .diagram-lane {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .diagram-node {
+      min-height: 142px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .diagram-node:before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: var(--node-color, var(--accent));
+    }
+
+    .node-title {
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .node-body {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .connector {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      text-align: center;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .workflow-step {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 14px;
+      min-height: 132px;
+      position: relative;
+    }
+
+    .step-number {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .workflow-step p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.94rem;
+    }
+
+    th {
+      background: var(--surface-soft);
+      color: var(--text);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: var(--mono);
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      padding: 2px 5px;
+      border-radius: 5px;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .module-map {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 0;
+      box-shadow: var(--shadow);
+    }
+
+    summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 16px 18px;
+      font-weight: 900;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary:after {
+      content: "+";
+      float: right;
+      color: var(--accent);
+    }
+
+    details[open] summary:after {
+      content: "-";
+    }
+
+    .details-body {
+      padding: 0 18px 18px;
+      color: var(--muted);
+    }
+
+    .gate-grid,
+    .interface-grid,
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .gate-card {
+      border-top: 5px solid var(--accent-2);
+    }
+
+    .timeline-item {
+      padding: 18px;
+      border-left: 5px solid var(--planned);
+      min-height: 210px;
+    }
+
+    .timeline-item.done {
+      border-left-color: var(--ok);
+    }
+
+    .timeline-item.next {
+      border-left-color: var(--accent-3);
+    }
+
+    .phase {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .scenario {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .path {
+      display: grid;
+      gap: 10px;
+    }
+
+    .path-row {
+      display: grid;
+      grid-template-columns: 136px 1fr;
+      gap: 10px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: var(--surface);
+    }
+
+    .path-row strong {
+      color: var(--accent);
+    }
+
+    .source-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .source-note {
+      padding: 16px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 500ms ease, transform 500ms ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .copy-state {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      padding: 42px 0 58px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .scenario,
+      .module-map {
+        grid-template-columns: 1fr;
+      }
+
+      .diagram-lane,
+      .workflow,
+      .gate-grid,
+      .interface-grid,
+      .roadmap {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .connector {
+        display: none;
+      }
+
+      .span-4,
+      .span-6,
+      .span-8 {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .nav-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 0;
+      }
+
+      .nav-links {
+        justify-content: flex-start;
+      }
+
+      .nav-links a {
+        font-size: 0.82rem;
+        padding: 7px 10px;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 34px;
+      }
+
+      section {
+        padding: 42px 0;
+      }
+
+      .section-head {
+        display: grid;
+      }
+
+      .diagram-lane,
+      .workflow,
+      .gate-grid,
+      .interface-grid,
+      .roadmap {
+        grid-template-columns: 1fr;
+      }
+
+      .path-row {
+        grid-template-columns: 1fr;
+      }
+
+      .badge,
+      .mini-tag {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout" data-theme="light">
+    <header class="topbar">
+      <div class="nav-inner">
+        <a class="brand" href="#hero" aria-label="Document QA Agent overview home">
+          <span class="brand-mark">DQ</span>
+          <span>Document QA Agent</span>
+        </a>
+        <nav class="nav-links" aria-label="Section navigation">
+          <a href="#purpose">Purpose</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#components">Components</a>
+          <a href="#storage">Storage</a>
+          <a href="#roadmap">Roadmap</a>
+          <button class="theme-toggle" type="button" aria-label="Toggle color theme">Theme</button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="hero" class="hero">
+        <div class="hero-grid reveal">
+          <div>
+            <div class="eyebrow">Single-user grounded document QA</div>
+            <h1>Document QA Agent</h1>
+            <p class="hero-copy" id="project-summary">
+              A document question-answering workspace that uploads documents, parses and chunks their contents,
+              indexes evidence with embeddings, retrieves semantic and graph candidates, and plans a verified
+              multi-agent answer workflow grounded only in document evidence.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-link" href="#architecture">View architecture</a>
+              <button class="copy-button" type="button" data-copy-target="project-summary">Copy summary</button>
+              <span class="copy-state" aria-live="polite"></span>
+            </div>
+            <div class="badges" aria-label="Source-backed technologies and concepts">
+              <span class="badge">FastAPI</span>
+              <span class="badge">React</span>
+              <span class="badge">TypeScript</span>
+              <span class="badge">Supabase</span>
+              <span class="badge">Qdrant Cloud</span>
+              <span class="badge">ShopAIKey</span>
+              <span class="badge">GraphRAG</span>
+              <span class="badge">Pydantic</span>
+              <span class="badge">LangGraph planned</span>
+            </div>
+          </div>
+          <aside class="status-board" aria-label="Project status summary">
+            <div class="metric-card current">
+              <div class="metric-label">Current backend scope</div>
+              <div class="metric-value">Plan 8 behavior</div>
+              <p>Health, document metadata/storage, parsing, chunking, embeddings, Qdrant indexing, graph building, semantic retrieval, and hybrid scoring are documented as implemented.</p>
+            </div>
+            <div class="metric-card planned">
+              <div class="metric-label">Planned MVP scope</div>
+              <div class="metric-value">Plans 9-16</div>
+              <p>Retrieval agent, verification agent, answer agent, LangGraph orchestration, chat APIs, evidence/log APIs, frontend screens, and end-to-end stabilization remain planned.</p>
+            </div>
+            <div class="metric-card warning">
+              <div class="metric-label">Important boundary</div>
+              <div class="metric-value">Backend-only secrets</div>
+              <p>Supabase service role, Qdrant key, and ShopAIKey key must never move into frontend code.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="purpose" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Project Purpose</div>
+            <h2>What the system is building</h2>
+          </div>
+          <p>The project targets one configured user who needs grounded answers from uploaded documents without full authentication in the MVP.</p>
+        </div>
+        <div class="grid">
+          <article class="card span-4">
+            <h3>Problem</h3>
+            <p>Users need to ask questions about PDF, DOCX, TXT, and CSV documents and receive answers based only on verified document evidence.</p>
+            <div class="label-row">
+              <span class="mini-tag now">MVP support: PDF/DOCX/TXT/CSV</span>
+              <span class="mini-tag gap">No OCR in MVP</span>
+            </div>
+          </article>
+          <article class="card span-4">
+            <h3>Audience</h3>
+            <p>The source plan defines a single-user system controlled by <code>SINGLE_USER_ID</code>, with no Auth/JWT in the MVP.</p>
+            <div class="label-row">
+              <span class="mini-tag now">Single-user filter</span>
+              <span class="mini-tag gap">No multi-user auth</span>
+            </div>
+          </article>
+          <article class="card span-4">
+            <h3>Differentiator</h3>
+            <p>The target workflow combines GraphRAG, semantic search, Top-K retrieval, transparent scoring, evidence verification, citations, and self-checking.</p>
+            <div class="label-row">
+              <span class="mini-tag now">Hybrid retrieval implemented</span>
+              <span class="mini-tag plan">Verification and answers planned</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="architecture" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">High-Level Architecture</div>
+            <h2>Current layers and planned agent boundary</h2>
+          </div>
+          <p>The README marks the master plan as target architecture, so the diagram separates current runtime surfaces from planned chat and agent work.</p>
+        </div>
+        <div class="architecture">
+          <div class="diagram-lane" aria-label="Architecture diagram">
+            <div class="diagram-node" style="--node-color: var(--accent-2)">
+              <div class="node-title">User</div>
+              <div class="node-body">Single configured user uploads documents and asks questions in the planned UI.</div>
+              <div class="label-row"><span class="mini-tag now">SINGLE_USER_ID</span></div>
+            </div>
+            <div class="diagram-node" style="--node-color: var(--accent-3)">
+              <div class="node-title">Frontend</div>
+              <div class="node-body">Vite React TypeScript shell with Axios client. Production upload/chat screens are planned.</div>
+              <div class="label-row"><span class="mini-tag gap">Placeholder UI</span></div>
+            </div>
+            <div class="diagram-node" style="--node-color: var(--accent)">
+              <div class="node-title">FastAPI Backend</div>
+              <div class="node-body">Mounted routes: health, documents, retrieval search. Processing exists as a service, not a public route.</div>
+              <div class="label-row"><span class="mini-tag now">API layer</span></div>
+            </div>
+            <div class="diagram-node" style="--node-color: var(--ok)">
+              <div class="node-title">Service Layer</div>
+              <div class="node-body">Document, parsing, chunking, embedding, graph, semantic retrieval, hybrid retrieval, and provider clients.</div>
+              <div class="label-row"><span class="mini-tag now">Plan 8 backend</span></div>
+            </div>
+            <div class="diagram-node" style="--node-color: var(--accent-4)">
+              <div class="node-title">Storage and APIs</div>
+              <div class="node-body">Supabase Storage/PostgreSQL, Qdrant Cloud vectors, and ShopAIKey embeddings/chat completion.</div>
+              <div class="label-row"><span class="mini-tag now">Backend-only access</span></div>
+            </div>
+          </div>
+          <div class="connector" aria-hidden="true">
+            <span>input</span>
+            <span>HTTP</span>
+            <span>orchestrates</span>
+            <span>persists/searches</span>
+            <span>returns evidence</span>
+          </div>
+          <div class="grid">
+            <article class="card span-6">
+              <h3>Current retrieval path</h3>
+              <p><code>POST /api/retrieval/search</code> accepts <code>mode</code> as <code>semantic</code> or <code>hybrid</code>. Semantic mode searches Qdrant from an embedded question. Hybrid mode delegates to backend hybrid retrieval and returns score components.</p>
+            </article>
+            <article class="card span-6">
+              <h3>Planned QA path</h3>
+              <p>The master plan adds Agent 1 retrieval, Agent 2 evidence verification, Agent 3 answer generation and self-check, LangGraph orchestration, chat persistence, evidence APIs, and agent logs.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="workflow" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Core Workflow</div>
+            <h2>Document lifecycle and question path</h2>
+          </div>
+          <p>Upload, processing, indexing, and retrieval are split across routes and services. The upload route does not currently trigger processing automatically.</p>
+        </div>
+        <div class="workflow" aria-label="Workflow steps">
+          <div class="workflow-step">
+            <div class="step-number">1</div>
+            <h3>Upload</h3>
+            <p>Validate supported file, store original in Supabase Storage, insert document metadata with status <code>uploaded</code>.</p>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">2</div>
+            <h3>Process</h3>
+            <p>Service-only path marks processing, downloads the file, parses content, chunks sections, writes chunks, builds graph rows, then marks ready or failed.</p>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">3</div>
+            <h3>Index</h3>
+            <p>Development endpoint embeds ready chunks through ShopAIKey and upserts vectors into Qdrant with chunk metadata payloads.</p>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">4</div>
+            <h3>Retrieve</h3>
+            <p>Semantic search embeds the question and queries Qdrant. Hybrid retrieval merges semantic and graph candidates.</p>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">5</div>
+            <h3>Score</h3>
+            <p>Hybrid scoring computes semantic, graph, keyword, metadata, position, and final scores, then applies final Top-K.</p>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">6</div>
+            <h3>Answer</h3>
+            <p>Planned agents verify evidence, generate cited answers, run self-check, and persist logs. Not implemented in current runtime.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="components" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Component Responsibilities</div>
+            <h2>Major modules and their contracts</h2>
+          </div>
+          <p>Responsibilities are listed from the README, plans, and runtime files checked during this overview.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Responsibility</th>
+                <th>Input</th>
+                <th>Output</th>
+                <th>Dependencies</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>frontend/src</code></td>
+                <td>Current React shell and Axios API client.</td>
+                <td>User interaction, <code>VITE_API_BASE_URL</code></td>
+                <td>Placeholder app shell today; planned upload/chat screens later.</td>
+                <td>Vite, React, TypeScript, backend API.</td>
+              </tr>
+              <tr>
+                <td><code>backend/app/api</code></td>
+                <td>FastAPI routes and service error mapping.</td>
+                <td>HTTP requests.</td>
+                <td>Health, document, indexing, and retrieval responses.</td>
+                <td>Service layer, Pydantic schemas.</td>
+              </tr>
+              <tr>
+                <td><code>document_service</code></td>
+                <td>Upload/list/detail orchestration and safe file validation.</td>
+                <td>Upload file bytes or document filters.</td>
+                <td>Document metadata and storage path updates.</td>
+                <td>Supabase service, file validation, settings.</td>
+              </tr>
+              <tr>
+                <td><code>document_processing_service</code></td>
+                <td>Parse, chunk, persist, graph-build, and status transition workflow.</td>
+                <td>Document ID for one configured user.</td>
+                <td>Processing result with chunk count and graph counts.</td>
+                <td>Supabase, parser, chunking, graph builder.</td>
+              </tr>
+              <tr>
+                <td><code>document_parser</code> and <code>chunking_service</code></td>
+                <td>Extract text from PDF/DOCX/TXT/CSV and split into metadata-preserving chunks.</td>
+                <td>File bytes and file type.</td>
+                <td>Parsed sections and <code>ChunkDraft</code> records.</td>
+                <td><code>pypdf</code>, <code>python-docx</code>, CSV reader, settings.</td>
+              </tr>
+              <tr>
+                <td><code>embedding_service</code> and <code>qdrant_service</code></td>
+                <td>Generate embeddings, ensure collection, upsert vectors, and search vectors.</td>
+                <td>Ready chunks or query vectors.</td>
+                <td>Qdrant point IDs and semantic search hits.</td>
+                <td>ShopAIKey embeddings, Qdrant Cloud, Supabase chunks.</td>
+              </tr>
+              <tr>
+                <td><code>graph_builder</code> and <code>entity_extraction_service</code></td>
+                <td>Build document-section-chunk-entity graph rows and validated relationships.</td>
+                <td>Persisted document chunks.</td>
+                <td>Entities, relationships, graph errors, partial-state flags.</td>
+                <td>Supabase graph helpers, ShopAIKey chat completion or deterministic fallback.</td>
+              </tr>
+              <tr>
+                <td><code>retrieval_service</code></td>
+                <td>Semantic retrieval orchestration and Qdrant result mapping.</td>
+                <td>Question, optional document IDs, optional Top-K.</td>
+                <td>Semantic search response with safe dependency errors.</td>
+                <td>ShopAIKey embeddings, Qdrant, Supabase content fallback.</td>
+              </tr>
+              <tr>
+                <td><code>hybrid_retrieval_service</code></td>
+                <td>Merge semantic and graph candidates, compute score components, sort, and return final Top-K.</td>
+                <td>Question, document IDs, final Top-K.</td>
+                <td>Hybrid candidates with all score components and optional retrieval reason.</td>
+                <td>Semantic retrieval, graph retrieval, scoring utilities, guarded rerank placeholder.</td>
+              </tr>
+              <tr>
+                <td><code>backend/app/agents</code></td>
+                <td>Planned Agent 1, Agent 2, Agent 3, and LangGraph workflow boundaries.</td>
+                <td>Not implemented in current runtime.</td>
+                <td>Planned structured candidates, verified evidence, final answers, and logs.</td>
+                <td>Plans 9-12.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="storage" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Data Flow and Storage</div>
+            <h2>Persistence responsibilities</h2>
+          </div>
+          <p>Storage is specified in the master plan and initial migration, with README notes about which tables are currently used.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data type</th>
+                <th>Created by</th>
+                <th>Stored in</th>
+                <th>Used by</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Original uploaded files</td>
+                <td>Document upload service</td>
+                <td>Supabase Storage bucket <code>documents</code></td>
+                <td>Processing service</td>
+                <td>Preserve raw document files under <code>documents/{user_id}/{document_id}/{file}</code>.</td>
+              </tr>
+              <tr>
+                <td>Document metadata</td>
+                <td>Document upload/list/detail services</td>
+                <td>Supabase table <code>documents</code></td>
+                <td>Document API, processing, indexing, UI plans</td>
+                <td>Track file name, type, status, chunk count, ownership, and safe error message.</td>
+              </tr>
+              <tr>
+                <td>Parsed chunks</td>
+                <td>Processing service and chunking service</td>
+                <td>Supabase table <code>document_chunks</code></td>
+                <td>Embedding, graph builder, retrieval fallback, planned evidence display</td>
+                <td>Store chunk text, metadata, token count, and Qdrant point link.</td>
+              </tr>
+              <tr>
+                <td>Chunk vectors</td>
+                <td>Embedding and indexing services</td>
+                <td>Qdrant collection <code>document_chunks</code></td>
+                <td>Semantic retrieval and hybrid retrieval</td>
+                <td>Support cosine vector search filtered by <code>SINGLE_USER_ID</code> and optional document IDs.</td>
+              </tr>
+              <tr>
+                <td>Graph entities</td>
+                <td>Graph builder and entity extraction service</td>
+                <td>Supabase table <code>document_entities</code></td>
+                <td>Graph retrieval service</td>
+                <td>Represent extracted entities tied to documents and chunks.</td>
+              </tr>
+              <tr>
+                <td>Graph relationships</td>
+                <td>Graph builder</td>
+                <td>Supabase table <code>document_relationships</code></td>
+                <td>Graph retrieval service</td>
+                <td>Represent document-section-chunk-entity and related chunk/entity edges.</td>
+              </tr>
+              <tr>
+                <td>Chat sessions and messages</td>
+                <td>Planned chat workflow</td>
+                <td><code>chat_sessions</code>, <code>chat_messages</code></td>
+                <td>Planned frontend chat and conversation storage</td>
+                <td>Future chat persistence. Migration exists, runtime workflow is planned.</td>
+              </tr>
+              <tr>
+                <td>Agent runs and steps</td>
+                <td>Planned LangGraph and agents</td>
+                <td><code>agent_runs</code>, <code>agent_steps</code></td>
+                <td>Planned evidence and logs APIs</td>
+                <td>Trace retrieval, verification, answer generation, self-check, confidence, and errors.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="modules" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Service / Module Workflow</div>
+            <h2>Current services and planned agents</h2>
+          </div>
+          <p>No runtime agent package is currently implemented. The project does define service modules now and agent plans for later milestones.</p>
+        </div>
+        <div class="module-map">
+          <details open>
+            <summary>Current service workflow</summary>
+            <div class="details-body">
+              <p><strong>Document service:</strong> validates uploads, stores original files, inserts metadata, lists/detail documents. Failure behavior includes safe HTTP errors for unsupported, empty, oversized, storage, or metadata failures.</p>
+              <p><strong>Processing service:</strong> moves documents through <code>processing</code>, parsing, chunk persistence, graph build, and <code>ready</code>; failures mark <code>failed</code> with safe messages.</p>
+              <p><strong>Retrieval services:</strong> validate questions and Top-K values, call dependencies, map results, and return empty results when no indexed chunks match.</p>
+              <p><strong>Hybrid service:</strong> graph failures can fall back to semantic-only scoring when unavailable; missing graph rows become graph score <code>0.0</code>.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Planned agent workflow</summary>
+            <div class="details-body">
+              <p><strong>Agent 1 Retrieval:</strong> planned internal callable that validates input, calls hybrid retrieval, returns structured candidate chunks, and logs <code>agent_1_retrieval</code>.</p>
+              <p><strong>Agent 2 Evidence Verification:</strong> planned verifier that accepts useful chunks, rejects weak chunks, checks contradictions, sets <code>missing_information</code>, and reports confidence.</p>
+              <p><strong>Agent 3 Answer and Self-Check:</strong> planned generator that uses only verified chunks, includes file-name plus quote citations, handles insufficient evidence, and self-checks for unsupported claims.</p>
+              <p><strong>LangGraph orchestration:</strong> planned workflow connecting the three agents, persisting runs and steps, and exposing chat, evidence, and logs APIs.</p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section id="gates" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Validation and Quality Gates</div>
+            <h2>Checks that protect grounded behavior</h2>
+          </div>
+          <p>The project emphasizes backend-only execution, single-user filtering, safe dependency errors, and verified evidence before final answers.</p>
+        </div>
+        <div class="gate-grid">
+          <article class="card gate-card">
+            <h3>Single-user access gate</h3>
+            <p>Checks <code>SINGLE_USER_ID</code> ownership for documents, chunks, vectors, and future agent data. Passes when rows and searches are filtered by the configured user.</p>
+          </article>
+          <article class="card gate-card">
+            <h3>Secret boundary gate</h3>
+            <p>Backend-only Supabase service role, Qdrant key, and ShopAIKey key. Failure action: do not expose provider credentials in frontend or documentation.</p>
+          </article>
+          <article class="card gate-card">
+            <h3>Upload validation gate</h3>
+            <p>Allows PDF, DOCX, TXT, and CSV, with size and content-type checks where available. Unsupported or empty files fail clearly.</p>
+          </article>
+          <article class="card gate-card">
+            <h3>Processing status gate</h3>
+            <p>Documents move through <code>uploaded</code>, <code>processing</code>, <code>ready</code>, or <code>failed</code>. Processing errors are mapped to safe messages.</p>
+          </article>
+          <article class="card gate-card">
+            <h3>Retrieval API gate</h3>
+            <p>Empty questions and invalid Top-K values fail. Dependency errors return safe public messages. Invalid document UUIDs are validated by schemas.</p>
+          </article>
+          <article class="card gate-card">
+            <h3>Answer grounding gate</h3>
+            <p>Planned Agent 3 must use verified chunks only, avoid rejected chunks and outside knowledge, include citations, and run self-check.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="interfaces" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">API, CLI, and Interface Overview</div>
+            <h2>Current and planned user surfaces</h2>
+          </div>
+          <p>Current endpoints are mounted in the FastAPI app. Some planned APIs exist only in the master plan.</p>
+        </div>
+        <div class="interface-grid">
+          <article class="interface-card card">
+            <h3><code>GET /api/health</code></h3>
+            <p>Returns service health with <code>status</code>, <code>service</code>, and <code>app_env</code>.</p>
+            <span class="mini-tag now">Current</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>POST /api/documents/upload</code></h3>
+            <p>Accepts multipart file upload and returns document ID, file name, and status after metadata/storage work.</p>
+            <span class="mini-tag now">Current</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>GET /api/documents</code></h3>
+            <p>Lists documents for the configured user, newest first, with status and metadata.</p>
+            <span class="mini-tag now">Current</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>GET /api/documents/{id}</code></h3>
+            <p>Returns document metadata and currently an empty chunks list according to README.</p>
+            <span class="mini-tag now">Current</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>POST /api/documents/{id}/index</code></h3>
+            <p>Development/internal indexing endpoint for ready chunks. The frontend must not call it.</p>
+            <span class="mini-tag now">Current internal</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>POST /api/retrieval/search</code></h3>
+            <p>Accepts question, optional document IDs, Top-K, and mode <code>semantic</code> or <code>hybrid</code>.</p>
+            <span class="mini-tag now">Current</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>POST /api/chat/ask</code></h3>
+            <p>Planned full QA API for LangGraph agent execution and final answer output.</p>
+            <span class="mini-tag plan">Planned</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>GET /api/agent-runs/{id}/evidence</code></h3>
+            <p>Planned evidence API exposing verified and rejected chunks.</p>
+            <span class="mini-tag plan">Planned</span>
+          </article>
+          <article class="interface-card card">
+            <h3><code>GET /api/agent-runs/{id}/logs</code></h3>
+            <p>Planned agent logs API for retrieval scores, verification results, self-checks, and errors.</p>
+            <span class="mini-tag plan">Planned</span>
+          </article>
+        </div>
+        <div class="grid" style="margin-top: 14px;">
+          <article class="card span-6">
+            <h3>Backend commands</h3>
+            <p>Setup and runtime are documented from <code>backend/</code>: create a virtual environment, install requirements, then run <code>uvicorn app.main:app --reload</code>. Tests run with <code>pytest</code>.</p>
+          </article>
+          <article class="card span-6">
+            <h3>Frontend commands</h3>
+            <p>Setup and runtime are documented from <code>frontend/</code>: run <code>npm install</code>, <code>npm run dev</code>, and <code>npm run build</code>. No frontend test script is defined.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="roadmap" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Implementation Roadmap</div>
+            <h2>Plan sequence and current status</h2>
+          </div>
+          <p>The plan index defines sixteen milestones. README indicates the current backend has progressed through Plan 8 behavior while later MVP surfaces remain planned.</p>
+        </div>
+        <div class="roadmap">
+          <article class="timeline-item done">
+            <div class="phase">Plans 1-2</div>
+            <h3>Foundation and Supabase</h3>
+            <p>Backend/frontend skeleton, configuration, health check, database schema, storage assumptions, and Supabase connection boundaries.</p>
+            <div class="label-row"><span class="mini-tag now">Implemented foundation</span></div>
+          </article>
+          <article class="timeline-item done">
+            <div class="phase">Plans 3-4</div>
+            <h3>Upload, parsing, chunking</h3>
+            <p>Document upload metadata/storage, list/detail APIs, parsers for supported formats, chunk persistence, and processing service.</p>
+            <div class="label-row"><span class="mini-tag now">Backend implemented</span></div>
+          </article>
+          <article class="timeline-item done">
+            <div class="phase">Plans 5-6</div>
+            <h3>Embeddings and semantic retrieval</h3>
+            <p>ShopAIKey embeddings, Qdrant collection/upsert/search, semantic retrieval service, and retrieval search API.</p>
+            <div class="label-row"><span class="mini-tag now">Backend implemented</span></div>
+          </article>
+          <article class="timeline-item done">
+            <div class="phase">Plans 7-8</div>
+            <h3>Graph and hybrid scoring</h3>
+            <p>Graph builder, entity extraction contracts, graph candidates, hybrid merge, deterministic scoring, guarded rerank placeholder, and hybrid API mode.</p>
+            <div class="label-row"><span class="mini-tag now">Backend implemented</span></div>
+          </article>
+          <article class="timeline-item next">
+            <div class="phase">Plans 9-12</div>
+            <h3>Agents and LangGraph</h3>
+            <p>Planned Retrieval Agent, Evidence Verification Agent, Answer Agent, full LangGraph QA workflow, chat API, evidence API, and logs API.</p>
+            <div class="label-row"><span class="mini-tag plan">Planned</span></div>
+          </article>
+          <article class="timeline-item">
+            <div class="phase">Plans 13-16</div>
+            <h3>Frontend and stabilization</h3>
+            <p>Planned upload/document list UI, chat and evidence viewer, agent logs debug UI, end-to-end regression testing, final documentation, and MVP acceptance checks.</p>
+            <div class="label-row"><span class="mini-tag plan">Planned</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="scenario" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Example Scenario</div>
+            <h2>How one question should move through the system</h2>
+          </div>
+          <p>Illustrative example based on documented workflow. The final answer path is planned until the agent workflow is implemented.</p>
+        </div>
+        <div class="scenario">
+          <article class="card">
+            <h3>Input event</h3>
+            <p>A user uploads an employment document that states a start date of <code>2026-06-01</code>, a probation duration of two months, and an official-work condition after probation.</p>
+            <p class="tagline">Question: What month can official work begin?</p>
+            <div class="label-row">
+              <span class="mini-tag now">Source-backed test scenario</span>
+              <span class="mini-tag plan">Answer step planned</span>
+            </div>
+          </article>
+          <div class="path" aria-label="Scenario path">
+            <div class="path-row">
+              <strong>Upload</strong>
+              <span>File is validated, stored in Supabase Storage, and recorded in <code>documents</code>.</span>
+            </div>
+            <div class="path-row">
+              <strong>Process</strong>
+              <span>Text is parsed, chunked, persisted, and graph rows are built from document-section-chunk-entity relationships.</span>
+            </div>
+            <div class="path-row">
+              <strong>Index</strong>
+              <span>Chunks are embedded through ShopAIKey and inserted into Qdrant with metadata payloads.</span>
+            </div>
+            <div class="path-row">
+              <strong>Retrieve</strong>
+              <span>Semantic and graph candidates are merged and scored, returning chunks about the start date, probation duration, and condition.</span>
+            </div>
+            <div class="path-row">
+              <strong>Verify</strong>
+              <span>Planned Agent 2 accepts chunks that directly support the answer and rejects weak or unrelated chunks.</span>
+            </div>
+            <div class="path-row">
+              <strong>Answer</strong>
+              <span>Planned Agent 3 can reason that <code>2026-06-01 + 2 months = 2026-08-01</code> and cite the verified quotes.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="risks" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Risks, Limitations, and Future Work</div>
+            <h2>Known boundaries to keep visible</h2>
+          </div>
+          <p>These items come from README known gaps, the master plan non-goals, and future improvement sections.</p>
+        </div>
+        <div class="grid">
+          <article class="card span-4">
+            <h3>Current runtime gaps</h3>
+            <p>Upload does not automatically call processing. Processing is tested as a service but has no public trigger route. The frontend is still a placeholder.</p>
+          </article>
+          <article class="card span-4">
+            <h3>Planned agent gaps</h3>
+            <p>Public graph APIs, chat agents, LangGraph orchestration, chat APIs, evidence APIs, and agent logs APIs are not implemented yet.</p>
+          </article>
+          <article class="card span-4">
+            <h3>Provider and rerank gaps</h3>
+            <p>Live rerank provider calls are not implemented. Rerank is guarded by configuration and disabled by default behavior.</p>
+          </article>
+          <article class="card span-4">
+            <h3>Configuration risk</h3>
+            <p>Backend settings read <code>backend/.env</code>. A root <code>.env</code> exists in the workspace, but it is not loaded by backend settings by default.</p>
+          </article>
+          <article class="card span-4">
+            <h3>MVP non-goals</h3>
+            <p>No multi-user authentication, JWT login, OCR, payment system, admin dashboard, complex permissions, fine-tuning, mobile app, or browser extension.</p>
+          </article>
+          <article class="card span-4">
+            <h3>Future improvements</h3>
+            <p>OCR support, multi-user auth, graph visualization, BM25 plus vector search, advanced reranking, streaming answers, document comparison, source previews, summaries, and export.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="sources" class="reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Source Notes</div>
+            <h2>What this overview used</h2>
+          </div>
+          <p>No major conflicts were silently merged. Current implementation claims use README and runtime file checks; target architecture uses plan documents.</p>
+        </div>
+        <div class="source-list">
+          <article class="source-note">
+            <h3>Source files used</h3>
+            <p><code>README.md</code>, <code>docs/plans/Master_Plan.md</code>, <code>docs/plans/README.md</code>, <code>docs/plans/Plan_8.md</code>, <code>docs/plans/Plan_9.md</code>, <code>docs/tasks/task_9.md</code>, <code>backend/app/db/migrations/001_initial_schema.sql</code>, <code>backend/app/main.py</code>, <code>backend/app/api</code>, <code>backend/app/schemas/retrieval.py</code>, <code>backend/app/core/config.py</code>, and <code>backend/app/services</code>.</p>
+          </article>
+          <article class="source-note">
+            <h3>Assumptions made</h3>
+            <p>The README is treated as the authority for current implemented behavior. The master plan and numbered plans are treated as target or future scope when README says a feature is incomplete. The untracked <code>docs/tasks/task_9.md</code> was used only as planning context, not as evidence that Agent 1 is implemented.</p>
+          </article>
+          <article class="source-note">
+            <h3>Conflicts or unclear points</h3>
+            <p>The master plan describes upload as starting processing, but README and current route notes say upload does not automatically trigger processing. This overview marks automatic processing as planned/not wired rather than current runtime behavior.</p>
+          </article>
+          <article class="source-note">
+            <h3>Sections needing review</h3>
+            <p>The exact live status of user acceptance for Plan 8 batch-level checkboxes is not encoded into this overview. README states Plan 8 behavior is implemented, so the roadmap uses that as the current status.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Standalone project overview generated from source documents and checked runtime files.
+    </footer>
+  </div>
+
+  <script>
+    const root = document.querySelector(".layout");
+    const themeButton = document.querySelector(".theme-toggle");
+    const navLinks = Array.from(document.querySelectorAll(".nav-links a"));
+    const sections = navLinks
+      .map((link) => document.querySelector(link.getAttribute("href")))
+      .filter(Boolean);
+
+    themeButton.addEventListener("click", () => {
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      themeButton.textContent = next === "dark" ? "Light" : "Theme";
+    });
+
+    document.querySelectorAll("[data-copy-target]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const target = document.getElementById(button.dataset.copyTarget);
+        const state = document.querySelector(".copy-state");
+        if (!target) return;
+        try {
+          await navigator.clipboard.writeText(target.textContent.trim().replace(/\s+/g, " "));
+          state.textContent = "Copied.";
+          setTimeout(() => {
+            state.textContent = "";
+          }, 1800);
+        } catch {
+          state.textContent = "Copy unavailable.";
+        }
+      });
+    });
+
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+
+    document.querySelectorAll(".reveal").forEach((element) => {
+      revealObserver.observe(element);
+    });
+
+    const navObserver = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        navLinks.forEach((link) => {
+          link.classList.toggle("active", link.getAttribute("href") === `#${visible.target.id}`);
+        });
+      },
+      { rootMargin: "-18% 0px -65% 0px", threshold: [0.1, 0.3, 0.6] }
+    );
+
+    sections.forEach((section) => navObserver.observe(section));
+  </script>
+</body>
+</html>
