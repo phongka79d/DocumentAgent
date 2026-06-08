@@ -785,41 +785,41 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ## Global Verification Checklist
 
-- [ ] `docs/plans/Plan_8.md` remained the scope authority.
-- [ ] No database schema changes were added.
-- [ ] No Agent 1 wrapper was implemented.
-- [ ] No Evidence Verification Agent logic was implemented.
-- [ ] No answer generation logic was implemented.
-- [ ] No final chat API was exposed.
-- [ ] No frontend retrieval UI was implemented.
-- [ ] Backend-only secrets and provider settings stayed out of frontend code.
-- [ ] `RETRIEVAL_GRAPH_TOP_K`, `RETRIEVAL_FINAL_TOP_K`, and `ENABLE_RERANK` are backend-only and configurable.
-- [ ] All score components are normalized to `0.0` through `1.0`.
-- [ ] Final formula weights are exactly `0.45`, `0.25`, `0.15`, `0.10`, and `0.05`.
-- [ ] Semantic-only candidates can appear with `graph_relevance = 0.0`.
-- [ ] Graph-only candidates can appear with `semantic_similarity = 0.0`.
-- [ ] Final results sort descending by `final_score`.
-- [ ] Selected document filters still apply to semantic and graph paths.
-- [ ] Rerank is disabled by default or guarded by `ENABLE_RERANK`.
-- [ ] Disabled rerank does not call ShopAIKey.
-- [ ] Empty candidate sets return an empty list.
-- [ ] Invalid final Top-K values return validation errors.
-- [ ] `cd backend` then `pytest tests/test_scoring.py -v` was run and reported.
-- [ ] `cd backend` then `pytest tests/test_graph_retrieval_service.py -v` was run and reported.
-- [ ] `cd backend` then `pytest tests/test_hybrid_retrieval_service.py -v` was run and reported.
-- [ ] Manual hybrid retrieval smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
-- [ ] Execution report includes one scored candidate example or a blocked reason for manual validation.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `docs/plans/Plan_8.md` remained the scope authority.
+- [x] No database schema changes were added.
+- [x] No Agent 1 wrapper was implemented.
+- [x] No Evidence Verification Agent logic was implemented.
+- [x] No answer generation logic was implemented.
+- [x] No final chat API was exposed.
+- [x] No frontend retrieval UI was implemented.
+- [x] Backend-only secrets and provider settings stayed out of frontend code.
+- [x] `RETRIEVAL_GRAPH_TOP_K`, `RETRIEVAL_FINAL_TOP_K`, and `ENABLE_RERANK` are backend-only and configurable.
+- [x] All score components are normalized to `0.0` through `1.0`.
+- [x] Final formula weights are exactly `0.45`, `0.25`, `0.15`, `0.10`, and `0.05`.
+- [x] Semantic-only candidates can appear with `graph_relevance = 0.0`.
+- [x] Graph-only candidates can appear with `semantic_similarity = 0.0`.
+- [x] Final results sort descending by `final_score`.
+- [x] Selected document filters still apply to semantic and graph paths.
+- [x] Rerank is disabled by default or guarded by `ENABLE_RERANK`.
+- [x] Disabled rerank does not call ShopAIKey.
+- [x] Empty candidate sets return an empty list.
+- [x] Invalid final Top-K values return validation errors.
+- [x] `cd backend` then `pytest tests/test_scoring.py -v` was run and reported.
+- [x] `cd backend` then `pytest tests/test_graph_retrieval_service.py -v` was run and reported.
+- [x] `cd backend` then `pytest tests/test_hybrid_retrieval_service.py -v` was run and reported.
+- [x] Manual hybrid retrieval smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
+- [x] Execution report includes one scored candidate example or a blocked reason for manual validation.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
 ### Batches
 
-- [ ] Batch01 - Retrieval Configuration, Schemas, and Scoring Utilities
-- [ ] Batch02 - Graph Candidate Lookup Service
-- [ ] Batch03 - Hybrid Candidate Merge and Final Ranking
-- [ ] Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
-- [ ] Batch05 - Required Tests, Manual Validation, and Handoff
+- [x] Batch01 - Retrieval Configuration, Schemas, and Scoring Utilities
+- [x] Batch02 - Graph Candidate Lookup Service
+- [x] Batch03 - Hybrid Candidate Merge and Final Ranking
+- [x] Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+- [x] Batch05 - Required Tests, Manual Validation, and Handoff
 
 ### Task IDs
 
@@ -914,4 +914,3 @@ Optional future tracks are outside the mandatory dependency chain.
 #### Notes for Next Batch
 
 - handoff notes
-
