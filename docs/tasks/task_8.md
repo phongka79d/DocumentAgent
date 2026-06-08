@@ -246,7 +246,7 @@ Hybrid retrieval needs graph candidates with normalized graph relevance before s
 
 ### Tasks
 
-- [ ] (02A): Create graph retrieval service module and service contract
+- [x] (02A): Create graph retrieval service module and service contract
   - Source of Truth: `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 5. Dependencies`; `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `README.md` > `### Graph Configuration, Entity Extraction, Builder, and Persistence Contracts`
   - Source Requirements:
     - Create `backend/app/services/graph_retrieval_service.py`.
@@ -263,7 +263,7 @@ Hybrid retrieval needs graph candidates with normalized graph relevance before s
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live graph validation if no processed, indexed, graph-built document exists.
   - Files: `backend/app/services/graph_retrieval_service.py`, `backend/tests/test_graph_retrieval_service.py`
 
-- [ ] (02B): Extract deterministic question terms and match graph entities
+- [x] (02B): Extract deterministic question terms and match graph entities
   - Source of Truth: `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.2 Retrieval Steps`
   - Source Requirements:
     - Extract simple question terms or entities using deterministic text matching.
@@ -279,7 +279,7 @@ Hybrid retrieval needs graph candidates with normalized graph relevance before s
   - Blocked Condition: None.
   - Files: `backend/app/services/graph_retrieval_service.py`, `backend/tests/test_graph_retrieval_service.py`
 
-- [ ] (02C): Expand matched entities through graph relationships to chunk candidates
+- [x] (02C): Expand matched entities through graph relationships to chunk candidates
   - Source of Truth: `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Expand matching entities to related chunks through `document_relationships`.
@@ -296,7 +296,7 @@ Hybrid retrieval needs graph candidates with normalized graph relevance before s
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live graph validation if graph rows are unavailable.
   - Files: `backend/app/services/graph_retrieval_service.py`, `backend/app/services/supabase_service.py` if narrow helper additions are needed, `backend/tests/test_graph_retrieval_service.py`
 
-- [ ] (02D): Compute normalized graph relevance
+- [x] (02D): Compute normalized graph relevance
   - Source of Truth: `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.4 Scoring Formula`
   - Source Requirements:
     - Compute `graph_relevance` based on entity match strength, relationship weight, and number of graph paths.
@@ -832,10 +832,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch02
 
-- [ ] (02A): Create graph retrieval service module and service contract
-- [ ] (02B): Extract deterministic question terms and match graph entities
-- [ ] (02C): Expand matched entities through graph relationships to chunk candidates
-- [ ] (02D): Compute normalized graph relevance
+- [x] (02A): Create graph retrieval service module and service contract
+- [x] (02B): Extract deterministic question terms and match graph entities
+- [x] (02C): Expand matched entities through graph relationships to chunk candidates
+- [x] (02D): Compute normalized graph relevance
 
 #### Batch03
 

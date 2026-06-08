@@ -10,7 +10,7 @@ This repository is a mixed workspace:
 - `frontend/` contains a Vite React TypeScript shell with an Axios API client.
 - `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
 
-The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, and Plan 8 hybrid retrieval configuration, schemas, and deterministic scoring utilities. Public graph APIs, hybrid retrieval orchestration, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
+The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, and Plan 8 hybrid retrieval configuration, schemas, deterministic scoring utilities, and graph candidate lookup service. Public graph APIs, hybrid retrieval orchestration, chat agents, agent logs APIs, and production frontend screens are still incomplete or planned.
 
 ## What This Folder Does
 
@@ -180,15 +180,16 @@ Plan 7 graph groundwork is partially implemented in backend-only code:
 
 No public graph build route is mounted yet. Public graph APIs, graph expansion retrieval, and frontend graph workflows are still planned.
 
-### Hybrid Retrieval Configuration, Schemas, and Scoring Utilities
+### Hybrid Retrieval Configuration, Schemas, Scoring Utilities, and Graph Candidates
 
-Plan 8 Batch01 groundwork is implemented, but the hybrid retrieval service itself is still planned:
+Plan 8 Batch01 and Batch02 backend groundwork is implemented, but the hybrid retrieval service itself is still planned:
 
 1. `backend/app/core/config.py` exposes backend-only `RETRIEVAL_GRAPH_TOP_K`, `RETRIEVAL_FINAL_TOP_K`, `ENABLE_RERANK`, and optional `SHOPAIKEY_RERANK_MODEL` settings while preserving `RETRIEVAL_SEMANTIC_TOP_K`.
 2. `ENABLE_RERANK` defaults to `false`; settings validation requires `SHOPAIKEY_RERANK_MODEL` only when rerank is enabled.
 3. `backend/app/schemas/retrieval.py` defines hybrid score component, candidate, and response models that include all five Plan 8 score components plus `final_score` and optional retrieval reason.
 4. `backend/app/utils/scoring.py` contains deterministic helpers for score clamping, keyword overlap, metadata matching, recency or position scoring, and the exact Plan 8 final score formula.
-5. No graph candidate lookup service, hybrid candidate merge service, live rerank call, answer generation, final chat API, or frontend retrieval UI is implemented yet.
+5. `backend/app/services/graph_retrieval_service.py` provides backend-only graph candidate lookup through deterministic question term matching, persisted entity/relationship traversal, selected-document filtering, chunk enrichment, normalized `graph_relevance`, and a mockable repository boundary.
+6. No hybrid candidate merge service, live rerank call, answer generation, final chat API, or frontend retrieval UI is implemented yet.
 
 ## Architecture
 
@@ -239,6 +240,7 @@ Key files:
 - `backend/app/services/qdrant_service.py`: Qdrant collection, upsert, and search helpers.
 - `backend/app/services/shopaikey_service.py`: embedding API calls.
 - `backend/app/services/retrieval_service.py`: semantic retrieval orchestration, result mapping, Supabase content fallback, and safe dependency failure wrapping.
+- `backend/app/services/graph_retrieval_service.py`: backend-only graph candidate lookup over persisted entities, relationships, and chunks.
 - `backend/app/utils/scoring.py`: deterministic hybrid retrieval score normalization helpers and exact final score formula.
 
 ## Data, Storage, and External Services
@@ -393,7 +395,7 @@ Backend tests are under `backend/tests/`. From `backend/`:
 pytest
 ```
 
-The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, retrieval API contract/error behavior, and the development indexing API. Dedicated Plan 8 scoring tests are still planned for the later testing batch.
+The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, retrieval API contract/error behavior, and the development indexing API. Dedicated later-batch Plan 8 hybrid merge/API validation is still planned.
 
 Frontend validation commands from `frontend/package.json`:
 
@@ -444,8 +446,8 @@ Validation before claiming completion:
 - `document_processing_service.process_document()` exists, builds graph rows after chunk persistence, and is tested, but is not exposed through a route or background worker.
 - The development indexing route exists at `POST /api/documents/{document_id}/index`; its docstring says the frontend must not call it.
 - `backend/app/api/retrieval.py` is mounted in `backend/app/main.py` and exposes `POST /api/retrieval/search`, but there is still no frontend retrieval or chat UI.
-- Graph schemas, graph entity extraction, Supabase graph helper contracts, entity persistence, graph relationship expansion, count reporting, safe extraction failure summaries, and processing-service graph build integration exist in backend code. Public graph APIs, graph expansion retrieval, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
-- Hybrid retrieval settings, schemas, and scoring utilities exist, including exact final score math. Graph candidate lookup, hybrid candidate merge/ranking orchestration, guarded rerank behavior, and hybrid API mode handling are still planned.
+- Graph schemas, graph entity extraction, Supabase graph helper contracts, entity persistence, graph relationship expansion, count reporting, safe extraction failure summaries, processing-service graph build integration, and backend-only graph candidate lookup exist in backend code. Public graph APIs, LangGraph agent orchestration, chat APIs, evidence APIs, and agent log APIs are planned but not present in runtime code.
+- Hybrid retrieval settings, schemas, scoring utilities, and graph candidate lookup exist, including exact final score math and normalized graph relevance. Hybrid candidate merge/ranking orchestration, guarded rerank behavior, and hybrid API mode handling are still planned.
 - The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
 - The frontend is currently a placeholder shell, not a working upload/chat UI.
 - No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.

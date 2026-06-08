@@ -363,3 +363,368 @@ complete
 - next task ID: (02A)
 - can proceed: yes, after A2 review accepts (01D)
 - handoff notes: Final scoring helper is available as `app.utils.scoring.final_score`; constants are available as `FINAL_SCORE_WEIGHTS`.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch02 - Graph Candidate Lookup Service
+
+## Task
+(02A) - Create graph retrieval service module and service contract
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_8.md` > `(02A): Create graph retrieval service module and service contract`
+- `docs/plans/Plan_8.md` > `## 3. Scope`
+- `docs/plans/Plan_8.md` > `## 5. Dependencies`
+- `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_8.md` > `## 9. Implementation Steps`
+- `README.md` > `### Graph Configuration, Entity Extraction, Builder, and Persistence Contracts`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Graph Candidate Lookup Service
+- Task ID: (02A)
+- Task title: Create graph retrieval service module and service contract
+
+## Completed Work
+- Status: complete for the (02A) service contract scope.
+- Created backend-only `app.services.graph_retrieval_service`.
+- Added `find_graph_candidates(question, document_ids, top_k)` with question and Top-K validation, default graph Top-K resolution, selected document filter pass-through, and an injectable repository boundary for persisted `document_entities`, `document_relationships`, and chunk rows.
+- Added a `GraphRetrievalCandidate` contract keyed by `chunk_id` so the later hybrid retrieval service can merge graph candidates by chunk.
+- Added a default Supabase-backed graph row repository that preserves single-user filtering for entity/chunk rows and restricts relationship rows to selected or discovered single-user document IDs.
+- Kept deterministic entity matching, relationship traversal, and graph relevance scoring as later Batch02 task work per the selected task hard rules.
+
+## Files Created or Modified
+- `backend/app/services/graph_retrieval_service.py`
+- `backend/tests/test_graph_retrieval_service.py`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_retrieval_service.py -v`: Passed
+- evidence or reason: 6 tests passed, covering importability, validation, default Top-K use, mockable graph rows, and selected document filter propagation.
+
+## Acceptance Check
+- Task acceptance condition: Service can be imported; tests can mock Supabase graph rows; no public graph API is added.
+- Status: satisfied
+- Evidence: `test_graph_retrieval_service_imports_contract` imports the contract; focused tests inject `FakeGraphRepository` graph rows; no API route or frontend file was added.
+
+## Artifacts Produced
+- Backend graph retrieval service module exposing `find_graph_candidates`.
+- Focused graph retrieval service contract tests.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used an injectable `GraphRowsRepository` protocol to keep Supabase access mockable and avoid public graph APIs.
+- Returned an empty candidate list from the initial contract until later Batch02 tasks implement deterministic entity matching, relationship expansion, and relevance scoring.
+- Derived relationship lookup document IDs from selected documents when provided, or from already single-user-filtered entity rows when omitted.
+
+## Risks or Open Issues
+- Actual entity term matching, relationship expansion, candidate construction, and normalized graph relevance remain pending for (02B), (02C), and (02D).
+- Live graph validation still requires processed, indexed, graph-built documents and was not required for this mocked contract task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependencies checked: Batch01 tasks are marked complete, and README confirms Plan 7 graph helpers/persisted graph rows exist.
+- No missing source-of-truth fields, dependency blockers, user-action blockers for mocked validation, or architecture concerns identified.
+- Existing unrelated working tree changes were not reverted or modified.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: `find_graph_candidates` now validates inputs, loads graph entity/relationship rows through a mockable repository, and exposes `GraphRetrievalCandidate`; (02B) can add deterministic question term/entity matching inside this service without changing public API shape.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch02 - Graph Candidate Lookup Service
+
+## Task
+(02B) - Extract deterministic question terms and match graph entities
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_8.md > Batch02 - Graph Candidate Lookup Service > (02B)
+- docs/plans/Plan_8.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > # 10. Agent 1: Retrieval Agent > ## 10.2 Retrieval Steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Graph Candidate Lookup Service
+- Task ID: (02B)
+- Task title: Extract deterministic question terms and match graph entities
+
+## Completed Work
+- Status: complete.
+- Implemented deterministic question normalization into lowercase alphanumeric terms without LLM/provider calls.
+- Added deterministic entity-name matching against loaded `document_entities.entity_name` rows.
+- Added matched-entity graph candidates using the entity row's `chunk_id` and `document_id`, with `graph_relevance` left at `0.0` for the later (02D) relevance-scoring task.
+- Preserved selected document filters by passing `document_ids` to the repository and filtering loaded entity rows before returning matches.
+- Kept relationship expansion out of scope for (02C).
+
+## Files Created or Modified
+- backend/app/services/graph_retrieval_service.py
+- backend/tests/test_graph_retrieval_service.py
+- docs/reports/report_8_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_retrieval_service.py -v`: Passed
+- Evidence: 9 tests passed, covering matched entities, empty question no matches, irrelevant question no matches, punctuation/casing normalization, selected document filters, default top_k, and invalid top_k validation.
+- TDD red run before implementation: Failed as expected
+- Evidence: 4 failures showed the scaffold still rejected empty questions and returned no matched entity candidates before production changes.
+
+## Acceptance Check
+- Task acceptance condition: Matching is case-insensitive.
+- Status: satisfied
+- Evidence: `test_find_graph_candidates_matches_entity_names_case_insensitively_with_punctuation` passes with uppercase question text.
+- Task acceptance condition: Handles punctuation safely.
+- Status: satisfied
+- Evidence: The same test passes for `probation-period` matching `Probation Period`.
+- Task acceptance condition: Returns no matches for empty or irrelevant questions.
+- Status: satisfied
+- Evidence: Empty question returns `[]` before repository calls; irrelevant question returns `[]` after deterministic matching.
+- Task acceptance condition: Preserves selected document filters.
+- Status: satisfied
+- Evidence: Tests verify selected document IDs are passed to the repository and loaded rows outside the selected documents are filtered out.
+
+## Artifacts Produced
+- Matched graph entity candidates from deterministic question/entity-name matching.
+- Targeted graph retrieval unit tests for the (02B) behavior.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used regex-based lowercase alphanumeric tokenization to normalize both questions and entity names consistently.
+- Required all normalized entity-name terms to appear in the normalized question to avoid broad partial matches during this deterministic lookup step.
+- Returned `GraphRetrievalCandidate` records directly from matched entity rows and stored match details in metadata so later tasks can expand relationships and compute relevance without changing the public service contract.
+
+## Risks or Open Issues
+- Relationship expansion remains pending for (02C).
+- Normalized graph relevance remains pending for (02D); matched candidates currently use `graph_relevance = 0.0` by design.
+- Candidate enrichment from chunk rows remains pending for later graph/hybrid retrieval work.
+
+## Minor Issues Fixed During Execution
+- Updated the empty-question graph retrieval test expectation/name to match the selected (02B) acceptance requirement that empty questions return no matches.
+
+## Workflow Integrity Check
+- Dependencies checked: (02A) is marked complete in `docs/tasks/task_8.md`; Plan 7 entity persistence is treated as available through the existing `document_entities` repository contract.
+- No user action required.
+- No source-of-truth conflict identified after applying the selected (02B) acceptance requirement for empty questions.
+- Existing unrelated working tree changes were not reverted.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes
+- handoff notes: `find_graph_candidates` now returns deterministic matched-entity candidates with match metadata and selected document filtering; (02C) can expand these matched entities through `document_relationships` without adding LLM/provider calls.
+
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch02 - Graph Candidate Lookup Service
+
+## Task
+(02C) - Expand matched entities through graph relationships to chunk candidates
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_8.md > ## 3. Scope
+- docs/plans/Plan_8.md > ## 6. Required Files and Folders
+- docs/plans/Plan_8.md > ## 9. Implementation Steps
+- docs/plans/Plan_8.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Graph Candidate Lookup Service
+- Task ID: (02C)
+- Task title: Expand matched entities through graph relationships to chunk candidates
+
+## Completed Work
+- Status: complete.
+- Expanded matched graph entities through bounded relationship traversal over `document_relationships` rows.
+- Added direct entity-to-chunk and entity-to-entity-to-chunk candidate discovery with duplicate graph path handling.
+- Added chunk row loading through the existing repository contract so graph candidates include content, chunk index, page number, and section title when available.
+- Preserved selected document filtering for loaded entities, relationship rows, and constructed candidates.
+- Kept `graph_relevance = 0.0` intentionally because normalized graph relevance belongs to sibling task (02D).
+- Missing entity, relationship, or chunk rows return empty or partially enriched candidates without crashing.
+
+## Files Created or Modified
+- backend/app/services/graph_retrieval_service.py
+- backend/tests/test_graph_retrieval_service.py
+- docs/reports/report_8_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_retrieval_service.py -v`: Passed
+- evidence or reason: 13 tests passed, including entity-to-chunk, entity-to-entity-to-chunk, duplicate graph paths, no graph rows/irrelevant rows, and selected document filtering.
+
+## Acceptance Check
+- Task acceptance condition: Related chunks are found through entity and relationship rows.
+- Status: satisfied
+- Evidence: Tests cover direct entity-to-chunk and two-hop entity-to-entity-to-chunk relationship expansion.
+- Task acceptance condition: Candidates outside selected documents are excluded.
+- Status: satisfied
+- Evidence: Tests verify selected document IDs are passed to row lookups and relationship chunks outside selected documents are not returned.
+- Task acceptance condition: Missing rows return empty graph candidates or zero graph score without crashing.
+- Status: satisfied
+- Evidence: Existing empty/irrelevant graph tests pass; graph candidates retain `graph_relevance = 0.0` for this task.
+- Task acceptance condition: Graph-only candidates can appear if relevant.
+- Status: satisfied
+- Evidence: Relationship-expanded chunks can be returned even when they are not the matched entity's original chunk.
+
+## Artifacts Produced
+- Graph candidate expansion logic with raw graph evidence in candidate metadata.
+- Targeted graph retrieval unit tests for relationship traversal, duplicate paths, missing rows, and document filters.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Treated graph relationships as a bounded undirected graph over `entity` and `chunk` nodes so stored `chunk_mentions_entity` rows work regardless of source/target direction.
+- Limited traversal to two relationship hops to cover `(02C)` requirements without implementing broad graph relevance or future hybrid ranking behavior.
+- Stored raw graph evidence in metadata, including path type, path depth, relationship IDs, relationship types, relationship weight, and matched entity context for later relevance scoring.
+
+## Risks or Open Issues
+- Normalized `graph_relevance` remains pending for (02D) and is intentionally fixed at `0.0` here.
+- Live validation still depends on processed graph-built documents with Plan 7 rows; this task used mocked unit tests as requested.
+
+## Minor Issues Fixed During Execution
+- Updated existing graph retrieval tests to reflect chunk enrichment and relationship evidence produced by `(02C)`.
+
+## Workflow Integrity Check
+- Dependencies checked: (02A) and (02B) are marked complete in `docs/tasks/task_8.md`; Plan 7 graph rows are represented by the existing repository contract and mocked test rows.
+- No user action required for mocked tests.
+- No source-of-truth conflict identified.
+- Existing unrelated working tree changes were not reverted.
+
+## Notes for Next Task
+- next task ID: (02D)
+- can proceed: yes
+- handoff notes: `find_graph_candidates` now returns related chunk candidates with graph evidence and `graph_relevance = 0.0`; (02D) can compute normalized relevance from match strength, relationship weights, and graph path counts.
+---
+
+# Task Execution Report - 02D
+
+## Source Task File
+[docs/tasks/task_8.md](docs/tasks/task_8.md)
+
+## Report File
+[docs/reports/report_8_execute_agent.md](docs/reports/report_8_execute_agent.md)
+
+## Batch
+[Batch02 - Graph Candidate Lookup Service]
+
+## Task
+[02D] - Compute normalized graph relevance
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_8.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.4 Scoring Formula`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Graph Candidate Lookup Service
+- Task ID: 02D
+- Task title: Compute normalized graph relevance
+
+## Completed Work
+- Added deterministic graph relevance scoring in `backend/app/services/graph_retrieval_service.py`.
+- Graph relevance now uses matched entity strength, relationship weight, and number of graph paths.
+- Graph relevance is clamped to the normalized `0.0` through `1.0` range.
+- Graph candidates are now sorted by normalized relevance before secondary stable ordering.
+- Updated graph retrieval tests to cover score bounds, stronger vs weaker matches, missing weights, and graph-only candidate score presence.
+
+## Files Created or Modified
+- `backend/app/services/graph_retrieval_service.py`
+- `backend/tests/test_graph_retrieval_service.py`
+- `docs/reports/report_8_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_graph_retrieval_service.py -v`: Passed
+- Evidence: 14/14 graph retrieval tests passed, including weight bounds, multi-path traversal, missing weights, selected document filtering, and nonzero graph-only candidate scoring.
+
+## Acceptance Check
+- Task acceptance condition: Graph relevance is stable, clamped, and increases with stronger matches or more relevant paths without exceeding `1.0`.
+- Status: satisfied
+- Evidence: The new relevance calculation clamps invalid weights, returns bounded scores, and the test suite verifies stronger weights score higher than weaker or missing weights.
+
+## Artifacts Produced
+- Normalized graph relevance scoring in the graph retrieval service.
+- Targeted graph retrieval test coverage for score bounds and graph-only candidate scoring.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used a deterministic weighted formula that combines entity match strength, relationship weight, path depth, and path count bonus, then clamps the final result.
+- Kept graph candidate shape unchanged so later hybrid merge work can consume the same objects.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- Corrected one expectation in the new test coverage after confirming the service clamps weights above `1.0` before scoring.
+
+## Workflow Integrity Check
+- Dependencies from Batch01 were already present.
+- No user action was required.
+- No source-of-truth conflict identified.
+- Orchestrated execution respected the no-checkbox-update rule.
+
+## Notes for Next Task
+- next task ID: 03A
+- can proceed: yes
+- handoff notes: Graph retrieval candidates now include normalized `graph_relevance` and are ready for hybrid merge work.
