@@ -1193,3 +1193,291 @@ complete
 - next task ID: 04A
 - can proceed: yes
 - handoff notes: Batch03 task (03E) now has deterministic optional retrieval reasons; A2 review should verify scope before any Batch04 execution begins.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+
+## Task
+(04A) - Add guarded rerank placeholder that is disabled unless configured
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_8.md > ## 3. Scope
+- docs/plans/Plan_8.md > ## 4. Out of Scope
+- docs/plans/Plan_8.md > ## 6. Required Files and Folders
+- docs/plans/Plan_8.md > ## 9. Implementation Steps
+- docs/plans/Plan_8.md > ## 10. Configuration and Environment Variables
+- docs/plans/Master_Plan.md > # 10. Agent 1: Retrieval Agent > ## 10.5 Optional Rerank
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+- Task ID: (04A)
+- Task title: Add guarded rerank placeholder that is disabled unless configured
+
+## Completed Work
+- Status: complete.
+- Added `shopaikey_service.rerank_candidates()` as a guarded placeholder.
+- Disabled rerank returns the same candidate list object unchanged and makes no provider call.
+- Enabled rerank validates backend rerank settings, then fails safely because live rerank is intentionally not implemented in this task.
+- Wired hybrid retrieval to pass already scored and Top-K-limited candidates through the guarded rerank placeholder after initial hybrid scoring.
+- Preserved score components, retrieval reasons, candidate order when disabled, and retrieval-only boundaries.
+
+## Files Created or Modified
+- backend/app/core/config.py
+- backend/app/services/shopaikey_service.py
+- backend/app/services/hybrid_retrieval_service.py
+- backend/tests/test_shopaikey_service.py
+- backend/tests/test_hybrid_retrieval_service.py
+- docs/reports/report_8_execute_agent.md
+
+## Tests or Validations Run
+- `pytest tests/test_shopaikey_service.py -k rerank -v`: Passed
+- Evidence: 2 passed, 26 deselected.
+- `pytest tests/test_hybrid_retrieval_service.py -k rerank -v`: Passed
+- Evidence: 1 passed, 19 deselected.
+- `pytest tests/test_hybrid_retrieval_service.py -v`: Passed
+- Evidence: 20 passed.
+- `pytest tests/test_shopaikey_service.py -v`: Passed
+- Evidence: 28 passed.
+- `pytest tests/test_config.py -v`: Passed
+- Evidence: 15 passed.
+
+## Acceptance Check
+- Task acceptance condition: Disabled rerank makes no provider call and preserves candidates.
+- Status: satisfied
+- Evidence: `test_rerank_candidates_returns_same_candidates_and_skips_provider_when_disabled` asserts same list object and `httpx.post` not called.
+- Task acceptance condition: Enabled rerank requires configuration.
+- Status: satisfied
+- Evidence: `require_shopaikey_rerank_settings()` requires API key, base URL, and rerank model; enabled missing-model test raises safe `ShopAIKeyServiceError` without provider call.
+- Task acceptance condition: Rerank never replaces evidence verification or removes score component output.
+- Status: satisfied
+- Evidence: hybrid service applies rerank only after scoring/ranking; no verification or answer-generation code was added; hybrid tests still confirm score components and final ordering.
+
+## Artifacts Produced
+- Guarded rerank placeholder helper.
+- Unit tests for disabled rerank no-provider-call behavior and safe enabled missing-config behavior.
+- Hybrid retrieval test proving ranked candidates pass through the guarded rerank path with score components intact.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run requested no checkbox or batch status updates; A2 handles progress after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept live ShopAIKey rerank unsupported in this task and fail-safe when `ENABLE_RERANK` is true, matching the placeholder-only scope.
+- Placed rerank after initial hybrid scoring and final Top-K selection so it cannot replace scoring, score component output, or later evidence verification.
+- Used existing `ShopAIKeyServiceError` and settings patterns to avoid leaking secrets in provider/config errors.
+
+## Risks or Open Issues
+- Live enabled rerank validation remains blocked until the user explicitly enables rerank and provides required provider/model settings; this task intentionally does not call a live provider.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency Batch03 hybrid candidate response is checked complete in `docs/tasks/task_8.md`.
+- No source-of-truth conflict identified.
+- Scope boundaries respected: no Batch04 (04B) failure handling, no (04C) API mode, no answer generation, no evidence verification, no frontend work, no provider live call, no commit, and no checkbox updates.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: Rerank placeholder is in place and defaults to unchanged candidates; next task can focus on safe hybrid retrieval failure handling without needing live rerank.
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+
+## Task
+(04B) - Implement safe hybrid retrieval failure handling
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_8.md > ## 13. Failure Handling
+- docs/plans/Plan_8.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_8.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+- Task ID: (04B)
+- Task title: Implement safe hybrid retrieval failure handling
+
+## Completed Work
+- Complete.
+- Added hybrid-specific dependency failure handling with safe public errors for semantic retrieval failures.
+- Added safe logging around semantic and graph dependency calls without provider details, keys, SQL payloads, or stack traces in log messages.
+- Added graph-unavailable fallback behavior: graph dependency failures are logged and hybrid retrieval continues with semantic-only candidates whose graph scores remain 0.0.
+- Preserved existing deterministic behavior for missing graph rows, score clamping, empty candidate sets, invalid Top-K validation, ranking, and guarded rerank.
+- Did not implement sibling task (04C) optional API mode.
+
+## Files Created or Modified
+- backend/app/services/hybrid_retrieval_service.py
+- backend/tests/test_hybrid_retrieval_service.py
+- docs/reports/report_8_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_hybrid_retrieval_service.py -v: Failed before implementation / Passed after implementation
+- evidence or reason: Red run failed on the newly added dependency-failure tests because hybrid retrieval had no logger or dependency boundary; green run passed 23 tests.
+
+## Acceptance Check
+- Task acceptance condition: Semantic dependency failures are not hidden.
+- Status: satisfied
+- Evidence: `test_retrieve_hybrid_fails_semantic_dependency_errors_with_safe_message_and_log` verifies semantic failure raises `HybridRetrievalDependencyError`, keeps graph dependency uncalled, uses safe public message, and does not leak a secret into exception text or logs.
+- Task acceptance condition: Graph failures follow documented fallback or failure behavior.
+- Status: satisfied
+- Evidence: `test_retrieve_hybrid_logs_graph_dependency_error_and_returns_semantic_only_scores` and `test_retrieve_hybrid_logs_unexpected_graph_error_and_returns_semantic_only_scores` verify graph failures are logged safely and return semantic-only candidates with `graph_relevance = 0.0`.
+- Task acceptance condition: Invalid scores are clamped.
+- Status: satisfied
+- Evidence: Existing `test_retrieve_hybrid_clamps_invalid_component_scores_before_final_formula` passed in the targeted suite.
+- Task acceptance condition: Empty and invalid input cases are deterministic.
+- Status: satisfied
+- Evidence: Existing empty candidate and invalid Top-K tests passed in the targeted suite.
+
+## Artifacts Produced
+- Hardened hybrid retrieval failure boundary.
+- Hybrid service tests for semantic failure, graph dependency failure, unexpected graph failure, score clamping, empty candidates, and invalid Top-K.
+- Scored candidate example from the semantic-only graph-failure path: `semantic_similarity = 0.82`, `graph_relevance = 0.0`, `keyword_overlap` normalized by scoring helper, `metadata_match` normalized by scoring helper, `recency_or_position_score` normalized by scoring helper, and `final_score > 0.0` with graph unavailable.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run requested no checkbox or batch status updates; A2 handles progress after ACCEPTED review.
+
+## Key Implementation Decisions
+- Semantic dependency failures fail hybrid retrieval with `HybridRetrievalDependencyError("Semantic retrieval is temporarily unavailable.")` instead of falling back.
+- Graph dependency failures are treated as graph scores unavailable and fall back to semantic-only scoring with graph scores at 0.0.
+- Logs include exception class names only and suppress dependency messages to avoid leaking provider details, keys, SQL payloads, or stack traces.
+
+## Risks or Open Issues
+- API mapping for `HybridRetrievalDependencyError` is not implemented because (04C) optional API mode is out of scope for this task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency Batch03 hybrid service is checked complete in `docs/tasks/task_8.md`.
+- Source-of-truth fields were present and aligned with the selected task.
+- No source conflict identified.
+- Scope boundaries respected: no (04C) API mode, no final chat API, no frontend, no answer generation, no evidence verification, no commits, and no checkbox updates.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes
+- handoff notes: Hybrid service now exposes a safe dependency error for semantic failures and graph-unavailable fallback for semantic-only operation; optional API mode can map these errors later if (04C) is selected.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+
+## Task
+(04C) - Optionally add `/api/retrieval/search` hybrid mode without changing semantic default
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_8.md` > `## 8. API Design`
+- `docs/plans/Plan_8.md` > `## 4. Out of Scope`
+- `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`
+- `README.md` > `### Semantic Retrieval API`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+- Task ID: (04C)
+- Task title: Optionally add `/api/retrieval/search` hybrid mode without changing semantic default
+
+## Completed Work
+- Task is complete.
+- Added optional `mode="hybrid"` branching to the existing `POST /api/retrieval/search` endpoint without adding a new endpoint.
+- Preserved omitted-mode and `mode="semantic"` behavior by keeping both paths delegated to `retrieval_service.semantic_search(...)`.
+- Delegated `mode="hybrid"` to `hybrid_retrieval_service.retrieve_hybrid(...)` using request `top_k` as `final_top_k`.
+- Returned the existing hybrid response schema from the existing route when hybrid mode is selected.
+- Mapped hybrid validation errors to HTTP 400 and hybrid dependency errors to safe HTTP 500 responses.
+- Left final chat API, frontend retrieval UI, answer generation, evidence verification, and live rerank behavior unimplemented.
+
+## Files Created or Modified
+- `backend/app/api/retrieval.py`
+- `backend/tests/test_retrieval_api.py`
+- `docs/reports/report_8_execute_agent.md`
+
+## Tests or Validations Run
+- `python -m pytest backend/tests/test_retrieval_api.py`: Passed
+- evidence or reason: 16 tests passed, covering semantic default/explicit semantic behavior, hybrid mode delegation, invalid mode rejection, semantic error mapping, and hybrid error mapping.
+- `python -m pytest backend/tests/test_hybrid_retrieval_service.py`: Passed
+- evidence or reason: 23 tests passed, confirming delegated hybrid service behavior remains intact.
+
+## Acceptance Check
+- Task acceptance condition: If implemented, `mode=semantic` preserves existing behavior, `mode=hybrid` delegates to hybrid retrieval, invalid mode is rejected, and no final chat API or frontend UI is added.
+- Status: satisfied
+- Evidence: Retrieval API tests pass for omitted/default semantic mode, explicit semantic mode, hybrid mode delegation, invalid mode HTTP 422, hybrid validation HTTP 400, and hybrid dependency HTTP 500. No new endpoint, final chat API, frontend UI, answer generation, or evidence verification was added.
+
+## Artifacts Produced
+- Optional hybrid mode support on existing `POST /api/retrieval/search`.
+- Retrieval API tests for semantic mode preservation, hybrid delegation, invalid mode rejection, and hybrid error mapping.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run requested no checkbox or batch status updates; A2 handles progress after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used the existing `SearchRequest.mode` literal schema instead of changing request validation.
+- Used `Union[SearchResponse, HybridSearchResponse]` for the route response model so semantic responses keep `results` while hybrid responses return existing `candidates`.
+- Mapped request `top_k` to hybrid `final_top_k`, matching the optional API field shown in Plan 8.
+
+## Risks or Open Issues
+- Existing uncommitted Batch04 changes remain in the worktree and were not reverted or modified except for this task's route/test files.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependency Batch03 hybrid service is checked complete in `docs/tasks/task_8.md`.
+- Source-of-truth fields were present and aligned with the selected task.
+- No source conflict identified.
+- Scope boundaries respected: no new public endpoint, no final chat API, no frontend retrieval UI, no answer generation, no evidence verification, no live rerank behavior, no commits, and no checkbox updates.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes
+- handoff notes: Optional hybrid API mode is implemented and validated; Batch05 can proceed after A2 review/acceptance and any batch gate requirements.

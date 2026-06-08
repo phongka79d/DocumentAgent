@@ -107,6 +107,26 @@ class Settings(BaseSettings):
             "chat_model": self.shopaikey_chat_model,
         }
 
+    def require_shopaikey_rerank_settings(self) -> dict[str, Any]:
+        missing = []
+        if not self.shopaikey_api_key:
+            missing.append("SHOPAIKEY_API_KEY")
+        if not self.shopaikey_base_url:
+            missing.append("SHOPAIKEY_BASE_URL")
+        if not self.shopaikey_rerank_model:
+            missing.append("SHOPAIKEY_RERANK_MODEL")
+
+        if missing:
+            raise RuntimeError(
+                f"Missing {', '.join(missing)}. Configure ShopAIKey rerank settings in the backend environment before enabling rerank."
+            )
+
+        return {
+            "api_key": self.shopaikey_api_key,
+            "base_url": self.shopaikey_base_url,
+            "rerank_model": self.shopaikey_rerank_model,
+        }
+
     def require_qdrant_settings(self) -> dict[str, Any]:
         missing = []
         if not self.qdrant_url:

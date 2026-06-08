@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import logging
 import re
 from typing import Protocol
 from uuid import UUID
@@ -10,7 +11,7 @@ from app.schemas.retrieval import (
     RetrievalResult,
     SearchResponse,
 )
-from app.services import graph_retrieval_service, retrieval_service
+from app.services import graph_retrieval_service, retrieval_service, shopaikey_service
 from app.services.graph_retrieval_service import GraphRetrievalCandidate
 from app.utils.scoring import (
     clamp_score,
@@ -25,9 +26,19 @@ MIN_TOP_K = 1
 MAX_TOP_K = 50
 _REASON_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
+logger = logging.getLogger(__name__)
+
 
 class HybridRetrievalValidationError(ValueError):
     """Raised when hybrid retrieval input is invalid."""
+
+
+class HybridRetrievalDependencyError(RuntimeError):
+    """Raised when hybrid retrieval cannot safely complete because of a dependency."""
+
+    def __init__(self, public_message: str) -> None:
+        self.public_message = public_message
+        super().__init__(public_message)
 
 
 class SemanticSearchDependency(Protocol):
@@ -90,13 +101,15 @@ def retrieve_hybrid(
     semantic_dependency = semantic_search or retrieval_service.semantic_search
     graph_dependency = graph_retrieval or graph_retrieval_service.find_graph_candidates
 
-    semantic_response = semantic_dependency(
-        trimmed_question,
+    semantic_response = _call_semantic_dependency(
+        semantic_dependency,
+        question=trimmed_question,
         document_ids=document_ids,
         top_k=resolved_semantic_top_k,
     )
-    graph_candidates = graph_dependency(
-        trimmed_question,
+    graph_candidates = _call_graph_dependency(
+        graph_dependency,
+        question=trimmed_question,
         document_ids=document_ids,
         top_k=resolved_graph_top_k,
     )
@@ -110,10 +123,63 @@ def retrieve_hybrid(
         document_ids=document_ids,
     )
 
+    ranked_candidates = _rank_and_limit_candidates(scored_candidates, resolved_final_top_k)
+    reranked_candidates = shopaikey_service.rerank_candidates(
+        trimmed_question,
+        ranked_candidates,
+        top_n=resolved_final_top_k,
+    )
+
     return HybridSearchResponse(
         question=trimmed_question,
-        candidates=_rank_and_limit_candidates(scored_candidates, resolved_final_top_k),
+        candidates=reranked_candidates,
     )
+
+
+def _call_semantic_dependency(
+    semantic_dependency: SemanticSearchDependency,
+    *,
+    question: str,
+    document_ids: list[UUID] | None,
+    top_k: int,
+) -> SearchResponse:
+    try:
+        return semantic_dependency(
+            question,
+            document_ids=document_ids,
+            top_k=top_k,
+        )
+    except Exception as exc:
+        logger.error(
+            "Semantic retrieval failed during hybrid retrieval. "
+            "exception_type=%s; dependency details were suppressed for safety.",
+            exc.__class__.__name__,
+        )
+        raise HybridRetrievalDependencyError(
+            "Semantic retrieval is temporarily unavailable."
+        ) from exc
+
+
+def _call_graph_dependency(
+    graph_dependency: GraphRetrievalDependency,
+    *,
+    question: str,
+    document_ids: list[UUID] | None,
+    top_k: int,
+) -> list[GraphRetrievalCandidate]:
+    try:
+        return graph_dependency(
+            question,
+            document_ids=document_ids,
+            top_k=top_k,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Graph retrieval unavailable during hybrid retrieval. "
+            "exception_type=%s; returning semantic-only candidates with graph scores set to 0.0.",
+            exc.__class__.__name__,
+        )
+        return []
 
 
 def _resolve_top_k(value: int | None, default: int, field_name: str) -> int:
@@ -412,6 +478,7 @@ def _reason_tokens(value: str | None) -> list[str]:
 
 __all__ = [
     "GraphRetrievalDependency",
+    "HybridRetrievalDependencyError",
     "HybridRetrievalValidationError",
     "SemanticSearchDependency",
     "retrieve_hybrid",

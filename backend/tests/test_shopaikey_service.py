@@ -18,8 +18,11 @@ def _settings(
     base_url: str = "https://api.shopaikey.test/v1/",
     embedding_model: str = "configured-embedding-model",
     chat_model: str = "configured-chat-model",
+    rerank_model: str | None = "configured-rerank-model",
+    enable_rerank: bool = False,
 ) -> SimpleNamespace:
     return SimpleNamespace(
+        enable_rerank=enable_rerank,
         require_shopaikey_settings=lambda: {
             "api_key": api_key,
             "base_url": base_url,
@@ -30,7 +33,71 @@ def _settings(
             "base_url": base_url,
             "chat_model": chat_model,
         },
+        require_shopaikey_rerank_settings=lambda: {
+            "api_key": api_key,
+            "base_url": base_url,
+            "rerank_model": rerank_model,
+        }
+        if rerank_model
+        else (_ for _ in ()).throw(
+            RuntimeError(
+                "Missing SHOPAIKEY_RERANK_MODEL. Configure ShopAIKey rerank settings in the backend environment before enabling rerank."
+            )
+        ),
     )
+
+
+def test_rerank_candidates_returns_same_candidates_and_skips_provider_when_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidates = [object(), object()]
+    post = Mock()
+
+    monkeypatch.setattr(
+        shopaikey_service,
+        "get_settings",
+        lambda: _settings(enable_rerank=False),
+    )
+    monkeypatch.setattr(shopaikey_service.httpx, "post", post)
+
+    result = shopaikey_service.rerank_candidates(
+        "What is the policy?",
+        candidates,
+        top_n=2,
+    )
+
+    assert result is candidates
+    assert result == candidates
+    post.assert_not_called()
+
+
+def test_rerank_candidates_enabled_without_required_config_fails_safely(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    secret_key = "private-shopaikey-key"
+
+    monkeypatch.setattr(
+        shopaikey_service,
+        "get_settings",
+        lambda: _settings(
+            api_key=secret_key,
+            enable_rerank=True,
+            rerank_model=None,
+        ),
+    )
+    monkeypatch.setattr(shopaikey_service.httpx, "post", Mock())
+
+    with pytest.raises(shopaikey_service.ShopAIKeyServiceError) as exc_info:
+        shopaikey_service.rerank_candidates(
+            "What is the policy?",
+            [object()],
+            top_n=1,
+        )
+
+    message = str(exc_info.value)
+    assert "SHOPAIKEY_RERANK_MODEL" in message
+    assert secret_key not in message
+    shopaikey_service.httpx.post.assert_not_called()
 
 
 @pytest.mark.parametrize(

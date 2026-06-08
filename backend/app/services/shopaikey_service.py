@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TypeVar
 
 import httpx
 
@@ -7,6 +7,7 @@ from app.core.config import get_settings
 
 EMBEDDING_REQUEST_TIMEOUT_SECONDS = 30.0
 CHAT_COMPLETION_REQUEST_TIMEOUT_SECONDS = 60.0
+CandidateT = TypeVar("CandidateT")
 
 
 class ShopAIKeyServiceError(RuntimeError):
@@ -19,6 +20,26 @@ def _embeddings_url(base_url: str) -> str:
 
 def _chat_completions_url(base_url: str) -> str:
     return f"{base_url.rstrip('/')}/chat/completions"
+
+
+def rerank_candidates(
+    question: str,
+    candidates: list[CandidateT],
+    *,
+    top_n: int,
+) -> list[CandidateT]:
+    settings = get_settings()
+    if not getattr(settings, "enable_rerank", False):
+        return candidates
+
+    try:
+        settings.require_shopaikey_rerank_settings()
+    except RuntimeError as exc:
+        raise ShopAIKeyServiceError(str(exc)) from exc
+
+    raise ShopAIKeyServiceError(
+        "ShopAIKey rerank is not implemented. Disable ENABLE_RERANK to return hybrid candidates without rerank."
+    )
 
 
 def _extract_embedding(response_payload: dict[str, Any]) -> list[float]:

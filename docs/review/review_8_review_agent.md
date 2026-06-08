@@ -2334,3 +2334,688 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+- Task ID: (04A)
+- Task title: Add guarded rerank placeholder that is disabled unless configured
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_8.md > ## 3. Scope; ## 4. Out of Scope; ## 6. Required Files and Folders; ## 9. Implementation Steps; ## 10. Configuration and Environment Variables; docs/plans/Master_Plan.md > # 10. Agent 1: Retrieval Agent > ## 10.5 Optional Rerank
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The final execution report entry is for the requested `(04A)` task, and this review did not assess sibling `(04B)` or `(04C)` as completed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/core/config.py`, `backend/app/services/hybrid_retrieval_service.py`, `backend/app/services/shopaikey_service.py`, `backend/tests/test_hybrid_retrieval_service.py`, `backend/tests/test_shopaikey_service.py`, `docs/reports/report_8_execute_agent.md`; after acceptance, reviewer also updated `docs/tasks/task_8.md` checkboxes for `(04A)` only
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/core/config.py`: in scope - adds `require_shopaikey_rerank_settings()` and keeps rerank config validation safe.
+- `backend/app/services/shopaikey_service.py`: in scope - adds guarded `rerank_candidates()` placeholder; disabled path returns the same list before provider code; enabled path validates settings and raises a safe unsupported-placeholder error.
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - wires rerank after scoring, ranking, and final Top-K so score components remain populated before rerank.
+- `backend/tests/test_shopaikey_service.py`: in scope - covers disabled no-provider-call behavior and enabled missing-config safe failure.
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - covers ranked candidates passing through the guarded rerank hook with score components intact.
+- `docs/reports/report_8_execute_agent.md`: in scope - latest `(04A)` report entry was appended and matches repository evidence.
+- `docs/tasks/task_8.md`: in scope - selected `(04A)` checkbox updated by reviewer only after acceptance; `(04B)`, `(04C)`, and Batch04 remain unchecked.
+- `docs/plans/Plan_8.md`: in scope - cited source sections reviewed for rerank scope, out-of-scope boundaries, implementation step 20, and configuration rules.
+- `docs/plans/Master_Plan.md`: in scope - cited optional rerank section reviewed; rerank must not replace verification and only improves ordering.
+- `backend/app/api/retrieval.py`: in scope check - no changes; `(04C)` API mode was not implemented in this task.
+- `backend/app/schemas/retrieval.py`: in scope check - no new `(04C)` schema/API work in this diff; existing `mode` field is prior Batch01 work.
+- `frontend/`: in scope check - no frontend changes or backend-only rerank setting exposure found.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Config helper supports enabled rerank validation without exposing secret values.
+
+- file from execution report: `backend/app/services/shopaikey_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains guarded placeholder only; no live rerank request implementation.
+
+- file from execution report: `backend/app/services/hybrid_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Rerank hook is after initial scoring/ranking and before response construction.
+
+- file from execution report: `backend/tests/test_shopaikey_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests disabled and missing-config enabled paths.
+
+- file from execution report: `backend/tests/test_hybrid_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests pass-through of ranked scored candidates through rerank helper.
+
+- file from execution report: `docs/reports/report_8_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry accurately describes the observed implementation and validation.
+
+## Dependency Review
+- Required dependencies: Batch03 hybrid candidate response.
+- Dependency status: satisfied; Batch03 task checkboxes were already complete before this review, and `retrieve_hybrid()` already returned scored/ranked hybrid candidates.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Rerank remains backend-only, disabled by default, and guarded by `ENABLE_RERANK`; disabled rerank preserves candidates and makes no provider call; rerank is applied after scoring and final Top-K; no evidence verification, answer generation, final chat API, frontend UI, or new public endpoint was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The production `rerank_candidates()` function has concrete disabled behavior, config validation, and safe failure behavior for enabled placeholder mode. It intentionally does not claim live rerank support.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No provider secrets, fixture-specific candidate IDs in production, fixed success values, or sample-answer logic were introduced. Tests use fixed UUIDs only as test fixtures.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_shopaikey_service.py -k rerank -v`
+- Reported result: Passed, 2 passed and 26 deselected.
+- Rerun result: Passed, 2 passed and 26 deselected.
+- Status: passed
+- Notes: Confirms disabled no-provider-call behavior and enabled missing-config safe error.
+
+- Command/check: `pytest tests/test_hybrid_retrieval_service.py -k rerank -v`
+- Reported result: Passed, 1 passed and 19 deselected.
+- Rerun result: Passed, 1 passed and 19 deselected.
+- Status: passed
+- Notes: Confirms ranked candidates pass through the guarded rerank hook.
+
+- Command/check: `pytest tests/test_hybrid_retrieval_service.py -v`
+- Reported result: Passed, 20 passed.
+- Rerun result: Passed, 20 passed.
+- Status: passed
+- Notes: Confirms existing score components, final ordering, empty candidate set, and invalid Top-K behavior still pass after rerank wiring.
+
+- Command/check: `pytest tests/test_shopaikey_service.py -v`
+- Reported result: Passed, 28 passed.
+- Rerun result: Passed, 28 passed.
+- Status: passed
+- Notes: Confirms existing ShopAIKey embedding/chat service behavior was not regressed.
+
+- Command/check: `pytest tests/test_config.py -v`
+- Reported result: Passed, 15 passed.
+- Rerun result: Passed, 15 passed.
+- Status: passed
+- Notes: Confirms existing config validation still passes with rerank settings present.
+
+- Command/check: Direct enabled-configured rerank placeholder smoke check with `httpx.post` mocked.
+- Reported result: not reported by executor.
+- Rerun result: Passed; printed `enabled configured placeholder fails safely without provider call`.
+- Status: passed
+- Notes: Confirms enabled and configured placeholder raises safe unsupported error without leaking the mock secret and without provider call.
+
+## Acceptance Review
+- Task acceptance: Disabled rerank makes no provider call and preserves candidates.
+- Status: satisfied
+- Evidence: `rerank_candidates()` returns the original `candidates` list before any provider request path when `enable_rerank` is false; rerun test asserts same list object and `httpx.post` not called.
+
+- Task acceptance: Enabled rerank requires configuration and fails safely without leaking secrets.
+- Status: satisfied
+- Evidence: `require_shopaikey_rerank_settings()` requires API key, base URL, and rerank model; missing-config test verifies no secret in error and no provider call; direct configured-enabled smoke check verifies the placeholder still fails safely without provider call.
+
+- Task acceptance: Rerank does not remove score components or replace evidence verification.
+- Status: satisfied
+- Evidence: Hybrid service computes score components and final ranking before calling rerank; rerank returns the same candidate objects when disabled; no evidence verification or answer-generation files were changed.
+
+- Task acceptance: No sibling `(04B)` failure handling or `(04C)` API mode was implemented.
+- Status: satisfied
+- Evidence: Diff does not change `backend/app/api/retrieval.py`, `backend/app/schemas/retrieval.py`, `backend/app/services/graph_retrieval_service.py`, or API tests; existing failure/top-k tests in `test_hybrid_retrieval_service.py` were prior Batch03 coverage, not new `(04B)` implementation.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed `(04A)` task entry and the Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended to EOF of `docs/review/review_8_review_agent.md`.
+- Other: `(04B)`, `(04C)`, and future Batch05 tasks remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Live rerank remains intentionally unsupported in `(04A)`; enabled mode validates config then fails safely, which matches the guarded placeholder scope.
+- Existing `SearchRequest.mode` is prior Batch01 work and not new `(04C)` API integration.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04A)` is accepted and `(04B)`/`(04C)` remain incomplete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch04 - Rerank Guard, Failure Handling, and Optional API Mode",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py",
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_8_execute_agent.md",
+    "docs/tasks/task_8.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+- Task ID: (04B)
+- Task title: Implement safe hybrid retrieval failure handling
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_8.md > ## 13. Failure Handling; docs/plans/Plan_8.md > ## 12. Acceptance Criteria; docs/plans/Plan_8.md > ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The latest execution report entry is the requested `(04B)` report. This review assessed only `(04B)` and treated already accepted uncommitted `(04A)` rerank/config changes as prior dependency evidence, not selected-task implementation.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/core/config.py`, `backend/app/services/hybrid_retrieval_service.py`, `backend/app/services/shopaikey_service.py`, `backend/tests/test_hybrid_retrieval_service.py`, `backend/tests/test_shopaikey_service.py`, `docs/reports/report_8_execute_agent.md`, `docs/review/review_8_review_agent.md`, `docs/tasks/task_8.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - selected `(04B)` adds semantic dependency failure boundary, graph dependency safe fallback/logging, and preserves scoring, final Top-K, ranking, and guarded rerank flow.
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - selected `(04B)` adds semantic failure, graph dependency failure, unexpected graph failure, and existing deterministic behavior coverage.
+- `docs/reports/report_8_execute_agent.md`: in scope - latest `(04B)` execution report was appended and matches repository evidence.
+- `docs/tasks/task_8.md`: in scope - selected `(04B)` checkbox was updated by reviewer after acceptance only; Batch04 and `(04C)` remain unchecked.
+- `docs/review/review_8_review_agent.md`: in scope - prior review content was inspected for append safety; this review is appended at EOF.
+- `docs/plans/Plan_8.md`: in scope - cited failure handling, acceptance criteria, API design, out-of-scope, and reviewer checklist sections reviewed.
+- `backend/app/core/config.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` rerank configuration work, not selected `(04B)` failure handling.
+- `backend/app/services/shopaikey_service.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` guarded rerank placeholder, not selected `(04B)` failure handling.
+- `backend/tests/test_shopaikey_service.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` rerank tests; rerun only to verify guarded rerank behavior still passes.
+- `backend/app/api/retrieval.py`: in scope check - no diff; no sibling `(04C)` API hybrid mode dispatch was implemented.
+- `backend/app/schemas/retrieval.py`: in scope check - no diff in this task; existing `mode` schema field is prior Batch01 work, not `(04C)` API mode implementation.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/hybrid_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains safe semantic dependency error handling and graph-unavailable semantic-only fallback.
+
+- file from execution report: `backend/tests/test_hybrid_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains tests for semantic failure, graph dependency failure, unexpected graph failure, score clamping, empty candidates, invalid Top-K, ranking, and guarded rerank pass-through.
+
+- file from execution report: `docs/reports/report_8_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest report entry accurately lists selected task scope, validations, and non-implementation of `(04C)`.
+
+## Dependency Review
+- Required dependencies: Batch03 hybrid service; accepted `(04A)` guarded rerank behavior is also present as an operational predecessor in the dirty working tree.
+- Dependency status: satisfied. Batch03 tasks are checked complete, `(04A)` is checked complete, and the existing hybrid service has merge, scoring, ranking, Top-K, retrieval reasons, and guarded rerank wiring available.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Semantic dependency failures fail hybrid retrieval with a safe `HybridRetrievalDependencyError` public message; graph dependency failures are logged without dependency details and fall back to semantic-only candidates with `graph_relevance = 0.0`; missing graph rows through empty graph candidates remain deterministic; invalid scores are clamped; empty candidates return `[]`; invalid Top-K values raise validation errors before dependency calls; no API mode, final chat API, frontend UI, answer generation, evidence verification, or Agent 1 wrapper was added.
+- Failed: none.
+- Uncertain: none. The graph-unavailable state is represented by logged fallback plus `graph_relevance = 0.0`, which matches the selected task instruction to produce graph scores unavailable/0.0 and the existing schema shape.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_call_semantic_dependency()` wraps real semantic dependency calls, logs only exception class, and raises a service-specific public error. `_call_graph_dependency()` wraps real graph dependency calls, logs only exception class, and returns an empty graph candidate list so merged semantic candidates retain graph score `0.0`. Existing scoring and ranking functions still execute on real candidate data.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code does not hardcode secrets, fixture IDs, expected answers, sample records, or fixed success values. Fixed UUIDs and fake secret strings appear only in tests to verify deterministic behavior and non-leakage.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_hybrid_retrieval_service.py -v`
+- Reported result: Failed before implementation / Passed after implementation; green run passed 23 tests.
+- Rerun result: Passed via `python -m pytest backend/tests/test_hybrid_retrieval_service.py -v`; 23 passed in 1.64s.
+- Status: passed
+- Notes: Covers selected `(04B)` semantic failure, graph dependency failure, unexpected graph failure, invalid scores, empty candidates, invalid Top-K, ranking, semantic-only/graph-only behavior, and guarded rerank pass-through.
+
+- Command/check: `pytest tests/test_graph_retrieval_service.py -v`
+- Reported result: not reported for selected `(04B)`.
+- Rerun result: Passed via `python -m pytest backend/tests/test_graph_retrieval_service.py -v`; 14 passed in 0.92s.
+- Status: passed
+- Notes: Regression check for missing graph rows/no matches, graph candidate lookup, selected document filtering, clamping, and invalid graph Top-K behavior from prior graph service tasks.
+
+- Command/check: `pytest tests/test_shopaikey_service.py -k rerank -v`
+- Reported result: not reported for selected `(04B)`; prior `(04A)` reported rerank tests passed.
+- Rerun result: Passed via `python -m pytest backend/tests/test_shopaikey_service.py -k rerank -v`; 2 passed, 26 deselected.
+- Status: passed
+- Notes: Confirms guarded rerank behavior remains deterministic and disabled rerank still skips provider calls.
+
+- Command/check: `git diff -- backend/app/api/retrieval.py backend/app/schemas/retrieval.py`
+- Reported result: `(04C)` not implemented.
+- Rerun result: No diff.
+- Status: passed
+- Notes: Confirms selected task did not implement sibling `(04C)` API mode. Existing schema `mode` field is prior Batch01 work and no API dispatch to `retrieve_hybrid()` exists.
+
+- Command/check: `rg -n "retrieve_hybrid|HybridRetrieval|mode.*hybrid|mode ==|request\.mode|mode=|HybridRetrievalDependencyError" backend/app/api backend/tests -S`
+- Reported result: `(04C)` not implemented.
+- Rerun result: No API use of `retrieve_hybrid`, `request.mode`, or `HybridRetrievalDependencyError`; matches only hybrid service tests and unrelated Pydantic dump modes.
+- Status: passed
+- Notes: Confirms no optional API hybrid mode was added in API routes or API tests.
+
+## Acceptance Review
+- Task acceptance: Semantic dependency failures are not hidden.
+- Status: satisfied
+- Evidence: `_call_semantic_dependency()` catches dependency exceptions, logs a safe class-only error, raises `HybridRetrievalDependencyError("Semantic retrieval is temporarily unavailable.")`, preserves the original cause for internal debugging, and prevents graph dependency execution after semantic failure. Tests verify public message and logs do not include a fake secret.
+
+- Task acceptance: Graph failures follow documented fallback behavior.
+- Status: satisfied
+- Evidence: `_call_graph_dependency()` logs a warning with exception class only, suppresses dependency message details, returns `[]`, and the merge/scoring path returns semantic-only candidates with `graph_relevance = 0.0`. Tests verify both expected graph dependency errors and unexpected runtime errors do not leak fake secrets and return semantic-only scores.
+
+- Task acceptance: Missing graph rows, invalid scores, empty candidates, invalid Top-K, ranking, and guarded rerank behavior remain deterministic.
+- Status: satisfied
+- Evidence: Hybrid and graph service tests passed for empty graph/no-match behavior, clamped score components, empty merged candidates, invalid Top-K validation before dependency calls, final-score descending ranking with stable equal-score ordering, and guarded rerank pass-through/no-provider behavior.
+
+- Task acceptance: No sibling `(04C)` API mode was implemented.
+- Status: satisfied
+- Evidence: No diff exists for `backend/app/api/retrieval.py` or `backend/app/schemas/retrieval.py`; search found no API route dispatch using `request.mode` or `retrieve_hybrid()`.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed `(04B)` task entry and the Task IDs progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked because `(04C)` remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended to EOF of `docs/review/review_8_review_agent.md`.
+- Other: `(04A)` remains checked from prior accepted review; `(04C)` and all Batch05 tasks remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The dirty working tree still includes prior accepted uncommitted `(04A)` config/rerank changes. They were inspected only to distinguish them from selected `(04B)` failure-handling changes.
+- Graph-unavailable fallback is represented by safe logging plus semantic-only results with `graph_relevance = 0.0`; there is no separate availability flag in the current hybrid candidate schema.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(04C)` is still unchecked
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch04 - Rerank Guard, Failure Handling, and Optional API Mode",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py",
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_8_execute_agent.md",
+    "docs/review/review_8_review_agent.md",
+    "docs/tasks/task_8.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+
+ACCEPTED
+
+## Reviewed Scope
+
+- Batch: Batch04 - Rerank Guard, Failure Handling, and Optional API Mode
+- Task ID: (04C)
+- Task title: Optionally add `/api/retrieval/search` hybrid mode without changing semantic default
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_8.md` > `## 8. API Design`; `docs/plans/Plan_8.md` > `## 4. Out of Scope`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `README.md` > `### Semantic Retrieval API`
+- Supplemental documents: None
+
+## Latest Report Selection
+
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The latest execution report entry is the requested `(04C)` report. This review assessed only `(04C)` and treated already accepted uncommitted `(04A)` and `(04B)` changes as prior dependency evidence, not selected-task implementation.
+
+## Git Diff Evidence
+
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/api/retrieval.py`, `backend/app/core/config.py`, `backend/app/services/hybrid_retrieval_service.py`, `backend/app/services/shopaikey_service.py`, `backend/tests/test_hybrid_retrieval_service.py`, `backend/tests/test_retrieval_api.py`, `backend/tests/test_shopaikey_service.py`, `docs/reports/report_8_execute_agent.md`, `docs/review/review_8_review_agent.md`, `docs/tasks/task_8.md`
+- untracked files: none
+
+## Files Reviewed
+
+- `backend/app/api/retrieval.py`: in scope - selected `(04C)` adds hybrid branching on the existing `/api/retrieval/search` route, preserves semantic default/explicit semantic behavior, and maps hybrid validation/dependency errors safely.
+- `backend/tests/test_retrieval_api.py`: in scope - selected `(04C)` adds API tests for explicit semantic mode preservation, hybrid delegation, invalid mode rejection, and hybrid validation/dependency error mapping.
+- `docs/reports/report_8_execute_agent.md`: in scope - latest `(04C)` execution report was appended and matches repository evidence.
+- `docs/tasks/task_8.md`: in scope - selected `(04C)` checkbox was updated by reviewer after acceptance only; Batch04 remains unchecked per hard rule.
+- `docs/review/review_8_review_agent.md`: in scope - prior review content was inspected for append safety; this review is appended at EOF.
+- `docs/plans/Plan_8.md`: in scope - cited API design, out-of-scope, and acceptance sections reviewed.
+- `README.md`: questionable - cited source section was reviewed for API context; it still describes the pre-`(04C)` semantic-only route and is now stale relative to the code.
+- `backend/app/core/config.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` rerank configuration work, not selected `(04C)`.
+- `backend/app/services/hybrid_retrieval_service.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` and `(04B)` hybrid rerank/failure-handling work, not selected `(04C)`.
+- `backend/app/services/shopaikey_service.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` rerank placeholder work, not selected `(04C)`.
+- `backend/tests/test_hybrid_retrieval_service.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` and `(04B)` tests; rerun only to confirm delegated hybrid behavior and safe dependency mapping remain intact.
+- `backend/tests/test_shopaikey_service.py`: questionable - dirty diff belongs to prior accepted uncommitted `(04A)` rerank tests, not selected `(04C)`.
+
+## Reported Files Cross-Check
+
+- file from execution report: `backend/app/api/retrieval.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Route still exposes only `POST /api/retrieval/search`; hybrid mode is optional branching inside the existing endpoint.
+
+- file from execution report: `backend/tests/test_retrieval_api.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers omitted/default semantic behavior, explicit semantic mode, hybrid delegation, invalid mode rejection, semantic error mapping, and hybrid error mapping.
+
+- file from execution report: `docs/reports/report_8_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest report entry accurately lists selected task scope, validations, and non-implementation of final chat API/frontend work.
+
+## Dependency Review
+
+- Required dependencies: Batch03 hybrid service and existing retrieval API; prior accepted uncommitted `(04A)` and `(04B)` changes remain available in the working tree.
+- Dependency status: satisfied. Batch03 work exists, `(04A)` and `(04B)` are already accepted, `SearchRequest.mode` and `HybridSearchResponse` already exist, and the retrieval route is mounted from the existing API.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+
+- Passed: Existing `POST /api/retrieval/search` route remains the only endpoint; omitted `mode` and explicit `mode="semantic"` both delegate to `retrieval_service.semantic_search(...)`; `mode="hybrid"` delegates to `hybrid_retrieval_service.retrieve_hybrid(...)` and passes request `top_k` as `final_top_k`; hybrid validation errors map to HTTP 400; hybrid dependency errors map to safe HTTP 500 responses; semantic Qdrant error mapping remains unchanged; no final chat API, answer generation, evidence verification, frontend retrieval UI, live rerank behavior, or new public endpoint was added.
+- Failed: none.
+- Uncertain: `README.md` still documents the pre-`(04C)` semantic-only route behavior; this is documentation drift, not a route architecture defect.
+
+## Implementation Reality
+
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/api/retrieval.py` contains real request-mode branching on the live route, imports the real hybrid service/types, and maps real service error classes. `backend/tests/test_retrieval_api.py` exercises the branch behavior and response/error contracts through FastAPI `TestClient`.
+
+## Hardcoding Review
+
+- Hardcoding found: no
+- Evidence: Production code does not hardcode answers, IDs, filenames, provider responses, or fixed success paths. Fixed UUIDs and payloads appear only in API tests to verify routing and response shape.
+
+## Validations Reviewed
+
+- Command/check: `python -m pytest backend/tests/test_retrieval_api.py -v`
+- Reported result: Passed; 16 tests passed.
+- Rerun result: Passed; 16 passed in 1.84s.
+- Status: passed
+- Notes: Confirms omitted/default semantic behavior, explicit semantic behavior, hybrid delegation, invalid mode rejection, existing semantic error mapping, hybrid validation HTTP 400, and hybrid dependency HTTP 500.
+
+- Command/check: `python -m pytest backend/tests/test_hybrid_retrieval_service.py -v`
+- Reported result: Passed; 23 tests passed.
+- Rerun result: Passed; 23 passed in 1.62s.
+- Status: passed
+- Notes: Regression check confirming the delegated hybrid service remains intact, including safe dependency behavior introduced by accepted `(04B)`.
+
+- Command/check: `git diff -- backend/app/api/retrieval.py backend/tests/test_retrieval_api.py`
+- Reported result: selected `(04C)` route/test changes only.
+- Rerun result: Confirmed the selected task delta is limited to the existing retrieval route and retrieval API tests.
+- Status: passed
+- Notes: No new API module, no new endpoint, and no frontend/chat/evidence files were introduced by `(04C)`.
+
+## Acceptance Review
+
+- Task acceptance: `mode=semantic` preserves existing behavior and default semantic behavior remains unchanged.
+- Status: satisfied
+- Evidence: Route falls through to `retrieval_service.semantic_search(...)` unless `request.mode == "hybrid"` in `backend/app/api/retrieval.py:27-38`. Tests in `backend/tests/test_retrieval_api.py:161-203` verify explicit semantic mode does not call hybrid retrieval, and the omitted-mode tests continue to pass with the semantic `results` schema.
+
+- Task acceptance: `mode=hybrid` delegates to hybrid retrieval and returns the intended hybrid schema.
+- Status: satisfied
+- Evidence: Route calls `hybrid_retrieval_service.retrieve_hybrid(...)` and maps `request.top_k` to `final_top_k` in `backend/app/api/retrieval.py:27-32`. Tests in `backend/tests/test_retrieval_api.py:206-291` verify semantic retrieval is not called, hybrid retrieval is called, and the response body uses the existing hybrid `candidates` schema.
+
+- Task acceptance: Invalid mode is rejected.
+- Status: satisfied
+- Evidence: `SearchRequest.mode` remains `Literal["semantic", "hybrid"]` in `backend/app/schemas/retrieval.py`, and `backend/tests/test_retrieval_api.py:377-398` verifies `mode="keyword"` returns HTTP 422 before either service runs.
+
+- Task acceptance: Hybrid validation/dependency errors are mapped safely.
+- Status: satisfied
+- Evidence: `backend/app/api/retrieval.py:39-48` maps `HybridRetrievalValidationError` to HTTP 400 with `str(exc)` and `HybridRetrievalDependencyError` to HTTP 500 with `exc.public_message`. Tests in `backend/tests/test_retrieval_api.py:445-486` verify both mappings.
+
+- Task acceptance: No final chat API, frontend UI, answer generation, evidence verification, live rerank, or new endpoint was added.
+- Status: satisfied
+- Evidence: The selected diff changes only `backend/app/api/retrieval.py` and `backend/tests/test_retrieval_api.py`; route path remains `/search`; no new API/router/frontend/chat/evidence files were changed.
+
+## Progress Tracking
+
+- Selected task checkbox: checked in both the detailed `(04C)` task entry and the Task IDs progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked per the user hard rule.
+- Execution report entry: appended and accurate.
+- Review report entry: appended to EOF of `docs/review/review_8_review_agent.md`.
+- Other: `(04A)` and `(04B)` remain checked from prior accepted reviews; no Batch05 checkbox was changed.
+
+## Report Accuracy
+
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+
+- None.
+
+### Major
+
+- None.
+
+### Minor
+
+- None.
+
+### Warnings
+
+- `README.md` `### Semantic Retrieval API` still says hybrid mode branching is not implemented (`README.md:160`). The selected `(04C)` code and tests are correct, so this does not block acceptance, but the docs are now stale.
+
+### Observations
+
+- The selected task reuses the existing hybrid response schema with `candidates`, which is consistent with the already-added hybrid retrieval models and Agent 1 output schema.
+- Prior accepted uncommitted `(04A)` and `(04B)` changes remain in the working tree and were reviewed only to distinguish them from the selected `(04C)` delta.
+
+## Decision
+
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, per user instruction do not mark Batch04 complete here
+
+## Repair Instructions
+
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch04 - Rerank Guard, Failure Handling, and Optional API Mode",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/retrieval.py",
+    "backend/app/core/config.py",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/app/services/shopaikey_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py",
+    "backend/tests/test_retrieval_api.py",
+    "backend/tests/test_shopaikey_service.py",
+    "docs/reports/report_8_execute_agent.md",
+    "docs/review/review_8_review_agent.md",
+    "docs/tasks/task_8.md",
+    "README.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "README.md Semantic Retrieval API section is stale relative to accepted (04C) route behavior."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

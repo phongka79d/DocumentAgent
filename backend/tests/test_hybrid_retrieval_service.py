@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+import logging
 from unittest.mock import Mock
 from uuid import UUID
 
@@ -10,7 +11,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.schemas.retrieval import RetrievalResult, SearchResponse
 from app.services import hybrid_retrieval_service
-from app.services.graph_retrieval_service import GraphRetrievalCandidate
+from app.services.graph_retrieval_service import (
+    GraphRetrievalCandidate,
+    GraphRetrievalDependencyError,
+)
+from app.services.retrieval_service import RetrievalDependencyError
 from app.utils.scoring import final_score
 
 
@@ -18,11 +23,13 @@ def _settings(
     semantic_top_k: int = 11,
     graph_top_k: int = 7,
     final_top_k: int = 5,
+    enable_rerank: bool = False,
 ) -> SimpleNamespace:
     return SimpleNamespace(
         retrieval_semantic_top_k=semantic_top_k,
         retrieval_graph_top_k=graph_top_k,
         retrieval_final_top_k=final_top_k,
+        enable_rerank=enable_rerank,
     )
 
 
@@ -548,6 +555,65 @@ def test_retrieve_hybrid_sorts_by_final_score_desc_and_uses_configured_final_top
     )
 
 
+def test_retrieve_hybrid_passes_ranked_candidates_through_guarded_rerank(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    low_chunk_id = "abababab-abab-abab-abab-abababababab"
+    high_chunk_id = "bcbcbcbc-bcbc-bcbc-bcbc-bcbcbcbcbcbc"
+    semantic_search = Mock(
+        return_value=SearchResponse(
+            question="unmatched query",
+            results=[
+                _semantic_candidate(
+                    low_chunk_id,
+                    content="alpha",
+                    semantic_similarity=0.2,
+                    chunk_index=5,
+                    page_number=None,
+                    section_title=None,
+                ),
+                _semantic_candidate(
+                    high_chunk_id,
+                    content="bravo",
+                    semantic_similarity=0.9,
+                    chunk_index=5,
+                    page_number=None,
+                    section_title=None,
+                ),
+            ],
+        )
+    )
+    graph_retrieval = Mock(return_value=[])
+    rerank_candidates = Mock(side_effect=lambda _question, candidates, top_n: candidates)
+    monkeypatch.setattr(hybrid_retrieval_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(
+        hybrid_retrieval_service.shopaikey_service,
+        "rerank_candidates",
+        rerank_candidates,
+    )
+
+    response = hybrid_retrieval_service.retrieve_hybrid(
+        "unmatched query",
+        semantic_search=semantic_search,
+        graph_retrieval=graph_retrieval,
+    )
+
+    rerank_candidates.assert_called_once()
+    rerank_question, ranked_candidates = rerank_candidates.call_args.args[:2]
+    rerank_top_n = rerank_candidates.call_args.kwargs["top_n"]
+    assert rerank_question == "unmatched query"
+    assert rerank_top_n == 5
+    assert [candidate.chunk_id for candidate in ranked_candidates] == [
+        UUID(high_chunk_id),
+        UUID(low_chunk_id),
+    ]
+    assert [candidate.chunk_id for candidate in response.candidates] == [
+        UUID(high_chunk_id),
+        UUID(low_chunk_id),
+    ]
+    assert all(candidate.final_score > 0.0 for candidate in response.candidates)
+
+
 def test_retrieve_hybrid_explicit_final_top_k_overrides_configured_value(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -655,6 +721,105 @@ def test_retrieve_hybrid_returns_empty_list_for_empty_merged_candidates(
     )
 
     assert response.candidates == []
+
+
+def test_retrieve_hybrid_fails_semantic_dependency_errors_with_safe_message_and_log(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    secret = "sk-live-secret-value"
+    semantic_error = RetrievalDependencyError(
+        f"Provider rejected Authorization Bearer {secret}"
+    )
+    semantic_search = Mock(side_effect=semantic_error)
+    graph_retrieval = Mock()
+    monkeypatch.setattr(hybrid_retrieval_service, "get_settings", lambda: _settings())
+
+    with caplog.at_level(logging.ERROR, logger=hybrid_retrieval_service.logger.name):
+        with pytest.raises(
+            hybrid_retrieval_service.HybridRetrievalDependencyError
+        ) as exc_info:
+            hybrid_retrieval_service.retrieve_hybrid(
+                "What is the policy?",
+                semantic_search=semantic_search,
+                graph_retrieval=graph_retrieval,
+            )
+
+    assert exc_info.value.public_message == (
+        "Semantic retrieval is temporarily unavailable."
+    )
+    assert str(exc_info.value) == "Semantic retrieval is temporarily unavailable."
+    assert exc_info.value.__cause__ is semantic_error
+    assert secret not in str(exc_info.value)
+    assert secret not in caplog.text
+    assert "Semantic retrieval failed during hybrid retrieval" in caplog.text
+    assert "RetrievalDependencyError" in caplog.text
+    graph_retrieval.assert_not_called()
+
+
+def test_retrieve_hybrid_logs_graph_dependency_error_and_returns_semantic_only_scores(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    secret = "service-role-secret"
+    chunk_id = "13131313-1313-1313-1313-131313131313"
+    semantic_search = Mock(
+        return_value=SearchResponse(
+            question="What is the policy?",
+            results=[_semantic_candidate(chunk_id, semantic_similarity=0.82)],
+        )
+    )
+    graph_retrieval = Mock(
+        side_effect=GraphRetrievalDependencyError(
+            f"SQL failed with service key {secret}"
+        )
+    )
+    monkeypatch.setattr(hybrid_retrieval_service, "get_settings", lambda: _settings())
+
+    with caplog.at_level(logging.WARNING, logger=hybrid_retrieval_service.logger.name):
+        response = hybrid_retrieval_service.retrieve_hybrid(
+            "What is the policy?",
+            semantic_search=semantic_search,
+            graph_retrieval=graph_retrieval,
+        )
+
+    assert len(response.candidates) == 1
+    assert response.candidates[0].chunk_id == UUID(chunk_id)
+    assert response.candidates[0].semantic_similarity == pytest.approx(0.82)
+    assert response.candidates[0].graph_relevance == 0.0
+    assert response.candidates[0].final_score > 0.0
+    assert secret not in caplog.text
+    assert "Graph retrieval unavailable during hybrid retrieval" in caplog.text
+    assert "GraphRetrievalDependencyError" in caplog.text
+
+
+def test_retrieve_hybrid_logs_unexpected_graph_error_and_returns_semantic_only_scores(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    secret = "raw-sql-select-secret"
+    chunk_id = "14141414-1414-1414-1414-141414141414"
+    semantic_search = Mock(
+        return_value=SearchResponse(
+            question="What is the policy?",
+            results=[_semantic_candidate(chunk_id, semantic_similarity=0.7)],
+        )
+    )
+    graph_retrieval = Mock(side_effect=RuntimeError(f"internal stack {secret}"))
+    monkeypatch.setattr(hybrid_retrieval_service, "get_settings", lambda: _settings())
+
+    with caplog.at_level(logging.WARNING, logger=hybrid_retrieval_service.logger.name):
+        response = hybrid_retrieval_service.retrieve_hybrid(
+            "What is the policy?",
+            semantic_search=semantic_search,
+            graph_retrieval=graph_retrieval,
+        )
+
+    assert [candidate.chunk_id for candidate in response.candidates] == [UUID(chunk_id)]
+    assert response.candidates[0].graph_relevance == 0.0
+    assert secret not in caplog.text
+    assert "Graph retrieval unavailable during hybrid retrieval" in caplog.text
+    assert "RuntimeError" in caplog.text
 
 
 @pytest.mark.parametrize(

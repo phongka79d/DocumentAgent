@@ -517,7 +517,7 @@ Hybrid retrieval must be safe under provider failures, graph gaps, invalid input
 
 ### Tasks
 
-- [ ] (04A): Add guarded rerank placeholder that is disabled unless configured
+- [x] (04A): Add guarded rerank placeholder that is disabled unless configured
   - Source of Truth: `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 4. Out of Scope`; `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.5 Optional Rerank`
   - Source Requirements:
     - Add optional rerank placeholder that is disabled unless configured.
@@ -534,7 +534,7 @@ Hybrid retrieval must be safe under provider failures, graph gaps, invalid input
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live enabled rerank validation if API key, base URL, model, or provider setup is missing.
   - Files: `backend/app/services/shopaikey_service.py`, `backend/app/services/hybrid_retrieval_service.py`, `backend/tests/test_hybrid_retrieval_service.py`, optional ShopAIKey service tests
 
-- [ ] (04B): Implement safe hybrid retrieval failure handling
+- [x] (04B): Implement safe hybrid retrieval failure handling
   - Source of Truth: `docs/plans/Plan_8.md` > `## 13. Failure Handling`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_8.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Semantic retrieval failure should fail hybrid retrieval unless a deliberate fallback is implemented and documented.
@@ -553,7 +553,7 @@ Hybrid retrieval must be safe under provider failures, graph gaps, invalid input
   - Blocked Condition: None.
   - Files: `backend/app/services/hybrid_retrieval_service.py`, `backend/app/services/graph_retrieval_service.py`, `backend/app/utils/scoring.py`, `backend/tests/test_hybrid_retrieval_service.py`
 
-- [ ] (04C): Optionally add `/api/retrieval/search` hybrid mode without changing semantic default
+- [x] (04C): Optionally add `/api/retrieval/search` hybrid mode without changing semantic default
   - Source of Truth: `docs/plans/Plan_8.md` > `## 8. API Design`; `docs/plans/Plan_8.md` > `## 4. Out of Scope`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `README.md` > `### Semantic Retrieval API`
   - Source Requirements:
     - No required new public API endpoint exists in this plan.
@@ -847,9 +847,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch04
 
-- [ ] (04A): Add guarded rerank placeholder that is disabled unless configured
-- [ ] (04B): Implement safe hybrid retrieval failure handling
-- [ ] (04C): Optionally add `/api/retrieval/search` hybrid mode without changing semantic default
+- [x] (04A): Add guarded rerank placeholder that is disabled unless configured
+- [x] (04B): Implement safe hybrid retrieval failure handling
+- [x] (04C): Optionally add `/api/retrieval/search` hybrid mode without changing semantic default
 
 #### Batch05
 
