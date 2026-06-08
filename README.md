@@ -400,7 +400,7 @@ Backend tests are under `backend/tests/`. From `backend/`:
 pytest
 ```
 
-The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, guarded rerank placeholder behavior, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, hybrid retrieval merge/scoring/ranking/reason/failure behavior, retrieval API semantic and hybrid mode contracts/error behavior, and the development indexing API. Later-batch Plan 8 manual validation work is still planned.
+The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, guarded rerank placeholder behavior, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, hybrid retrieval merge/scoring/ranking/reason/failure behavior, retrieval API semantic and hybrid mode contracts/error behavior, and the development indexing API. Plan 8 Batch05 also completed the required scoring, graph retrieval, and hybrid retrieval test runs plus a service-level hybrid retrieval smoke check against local processed, indexed, graph-built data.
 
 Frontend validation commands from `frontend/package.json`:
 

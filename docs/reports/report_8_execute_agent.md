@@ -1,5 +1,3 @@
----
-
 # Task Execution Report - (01A)
 
 ## Source Task File
@@ -1481,3 +1479,532 @@ complete
 - next task ID: (05A)
 - can proceed: yes
 - handoff notes: Optional hybrid API mode is implemented and validated; Batch05 can proceed after A2 review/acceptance and any batch gate requirements.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch05 - Required Tests, Manual Validation, and Handoff
+
+## Task
+(05A) - Add and run scoring tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_8.md` > `## 11. Required Tests`
+- `docs/plans/Plan_8.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Tests, Manual Validation, and Handoff
+- Task ID: (05A)
+- Task title: Add and run scoring tests
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added `backend/tests/test_scoring.py` covering score weights, clamp behavior, keyword overlap, metadata match, position/recency scoring, exact final score formula math, all-1.0 and all-0.0 formula checks, and invalid component bounds.
+- Kept implementation scope to tests only; no scoring helper changes were required.
+
+## Files Created or Modified
+- `backend/tests/test_scoring.py`
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_scoring.py -v`: Passed
+- evidence or reason: collected 10 items; 10 passed in 0.04s.
+- `cd backend` then `pytest tests/test_scoring.py -v`: Failed on first run before assertion adjustment
+- evidence or reason: 9 passed, 1 failed due to expected `0.9` vs actual floating point representation `0.9000000000000001`; corrected with `pytest.approx` and reran successfully.
+
+## Acceptance Check
+- Task acceptance condition: Tests verify formula exactness and normalization behavior.
+- Status: satisfied
+- Evidence: New scoring tests assert exact Plan 8 weights `0.45`, `0.25`, `0.15`, `0.10`, `0.05`; all-one components return `1.0`; all-zero components return `0.0`; mixed components match the weighted formula; invalid and out-of-range component values are clamped before weighting.
+
+## Artifacts Produced
+- `backend/tests/test_scoring.py`
+- Passing scoring test suite output for `pytest tests/test_scoring.py -v`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: user hard rules state A2 handles checkbox updates after ACCEPTED review; no batch status updates were requested.
+
+## Key Implementation Decisions
+- Used `pytest.approx` only for the metadata score floating point sum while keeping weight equality and all-1.0/all-0.0 formula checks exact.
+- Did not modify `backend/app/utils/scoring.py` because existing helpers satisfied Plan 8 behavior under the new tests.
+
+## Risks or Open Issues
+- Existing uncommitted work from other task batches remains in the worktree and was not reverted or modified.
+
+## Minor Issues Fixed During Execution
+- Adjusted one new test assertion to account for Python floating point representation after the first validation run failed.
+
+## Workflow Integrity Check
+- Source-of-truth fields were present in the selected task block.
+- Dependency Batch01 scoring helpers were present via `backend/app/utils/scoring.py`.
+- No source conflict identified.
+- Scope boundaries respected: only `(05A)` was executed; sibling tasks `(05B)`, `(05C)`, `(05D)`, and `(05E)` were not implemented; no checkboxes were updated; no commit was created.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: Scoring tests are added and passing; A2 can review `(05A)` and handle progress updates if accepted.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+[docs/tasks/task_8.md](docs/tasks/task_8.md)
+
+## Report File
+[docs/reports/report_8_execute_agent.md](docs/reports/report_8_execute_agent.md)
+
+## Batch
+Batch05 - Required Tests, Manual Validation, and Handoff
+
+## Task
+(05B) - Add and run graph retrieval service tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_8.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_8.md` > `## 11. Required Tests`
+- `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_8.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Tests, Manual Validation, and Handoff
+- Task ID: (05B)
+- Task title: Add and run graph retrieval service tests
+
+## Completed Work
+- Validated the graph retrieval service test suite for entity matching, relationship expansion, graph relevance, graph-only candidates, missing graph rows, and selected document filtering.
+- The required test module was already present in the worktree, so no code changes were needed in this run.
+
+## Files Created or Modified
+- None in this run
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_graph_retrieval_service.py -v`: Passed
+- evidence or reason: 14 tests collected; 14 passed in 0.92s.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove entity matching, relationship expansion, graph relevance, graph-only candidates, no graph rows, and document filtering.
+- Status: satisfied
+- Evidence: The suite passed and covers the required behaviors with mocked graph rows and selected-document filters.
+
+## Artifacts Produced
+- Passing `backend/tests/test_graph_retrieval_service.py` validation output.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator rule says A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used mock repository fixtures instead of live Supabase calls.
+
+## Risks or Open Issues
+- Manual hybrid smoke validation remains for `(05D)`.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Source-of-truth fields were present and aligned with the task.
+- Dependency Batch02 graph retrieval service was already present.
+- No scope conflict identified.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes
+- handoff notes: Graph retrieval tests are passing; continue with hybrid retrieval service tests.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+`docs/tasks/task_8.md`
+
+## Report File
+`docs/reports/report_8_execute_agent.md`
+
+## Batch
+Batch05 - Required Tests, Manual Validation, and Handoff
+
+## Task
+(05C) - Add and run hybrid retrieval service tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_8.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_8.md` > `## 11. Required Tests`
+- `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_8.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Tests, Manual Validation, and Handoff
+- Task ID: (05C)
+- Task title: Add and run hybrid retrieval service tests
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Complete.
+- Extended `backend/tests/test_hybrid_retrieval_service.py` with a deterministic mixed-source ranking test that asserts exact final ordering and exact weighted final scores.
+- Verified the existing hybrid retrieval suite still covers candidate merge, semantic-only candidates, graph-only candidates, score population, Top-K truncation, guarded rerank pass-through, empty candidate sets, invalid Top-K validation, and dependency failure behavior.
+
+## Files Created or Modified
+- `backend/tests/test_hybrid_retrieval_service.py`
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_hybrid_retrieval_service.py -v`: Passed
+- evidence or reason: 24 tests collected; 24 passed in 1.89s.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove merge, score population, exact final ranking, Top-K truncation, graph-only and semantic-only candidates, disabled rerank, and failure behavior.
+- Status: satisfied
+- Evidence: The suite passed with explicit coverage for merge behavior, semantic-only and graph-only candidates, deterministic exact ranking, final ordering, empty candidates, invalid Top-K, rerank pass-through, and safe dependency error handling.
+
+## Artifacts Produced
+- Passing `backend/tests/test_hybrid_retrieval_service.py` validation output.
+- Scored candidate example from deterministic ranking test: `semantic_similarity=0.70`, `graph_relevance=0.60`, `keyword_overlap=0.50`, `metadata_match=1.00`, `recency_or_position_score=0.85`, `final_score=0.6825`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator rule says A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- Added one exact-score ranking case instead of broad refactoring because the existing suite already covered the rest of the hybrid contract.
+- Kept the test fully deterministic by mocking semantic and graph retrieval inputs and relying on the shared scoring utility for the expected final-score math.
+
+## Risks or Open Issues
+- Manual smoke validation for `(05D)` remains separate and was not attempted in this task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- no issue identified
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes
+- handoff notes: Hybrid retrieval automated tests are passing; the next step is the manual smoke check if a processed, indexed, graph-built document is available.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+`docs/tasks/task_8.md`
+
+## Report File
+`docs/reports/report_8_execute_agent.md`
+
+## Batch
+Batch05 - Required Tests, Manual Validation, and Handoff
+
+## Task
+(05C) - Add and run hybrid retrieval service tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_8.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_8.md` > `## 11. Required Tests`
+- `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_8.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Tests, Manual Validation, and Handoff
+- Task ID: (05C)
+- Task title: Add and run hybrid retrieval service tests
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Complete.
+- Replaced the mocked rerank shortcut with a test that exercises the real `enable_rerank=False` guard in `shopaikey_service.rerank_candidates` through hybrid retrieval.
+- Preserved the deterministic mixed-source ranking coverage that asserts exact final ordering and exact weighted final scores.
+
+## Files Created or Modified
+- `backend/tests/test_hybrid_retrieval_service.py`
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_hybrid_retrieval_service.py -v`: Passed
+- evidence or reason: 24 tests collected; 24 passed in 1.56s after the rerank-guard repair.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove merge, score population, exact final ranking, Top-K truncation, graph-only and semantic-only candidates, disabled rerank, and failure behavior.
+- Status: satisfied
+- Evidence: The suite passed with explicit coverage for merge behavior, semantic-only and graph-only candidates, deterministic exact ranking, final ordering, empty candidates, invalid Top-K, real disabled-rerank behavior, and safe dependency error handling.
+
+## Artifacts Produced
+- Passing `backend/tests/test_hybrid_retrieval_service.py` validation output.
+- Scored candidate example from deterministic ranking test: `semantic_similarity=0.70`, `graph_relevance=0.60`, `keyword_overlap=0.50`, `metadata_match=1.00`, `recency_or_position_score=0.85`, `final_score=0.6825`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator rule says A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- Replaced the mocked rerank identity function with the real `shopaikey_service.rerank_candidates` guard by patching its settings to `enable_rerank=False`.
+- Kept the test fully deterministic by mocking semantic and graph retrieval inputs and relying on the shared scoring utility for the expected final-score math.
+
+## Risks or Open Issues
+- Manual smoke validation for `(05D)` remains separate and was not attempted in this task.
+
+## Minor Issues Fixed During Execution
+- Removed the rerank mock shortcut and reran the suite after the review flagged the missing disabled-rerank coverage.
+
+## Workflow Integrity Check
+- source-of-truth fields were present and aligned with the task.
+- dependency Batch03 and Batch04 hybrid retrieval pieces were already present.
+- no scope conflict identified.
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes
+- handoff notes: Hybrid retrieval automated tests are passing after the rerank-guard repair; the next step is the manual smoke check if a processed, indexed, graph-built document is available.
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch05 - Required Tests, Manual Validation, and Handoff
+
+## Task
+(05D) - Run manual hybrid retrieval smoke check when data is available
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_8.md > (05D)
+- docs/plans/Plan_8.md > ## 11. Required Tests
+- docs/plans/Plan_8.md > ## 14. Agent Report Requirement
+- docs/plans/Plan_8.md > ## 12. Acceptance Criteria
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Tests, Manual Validation, and Handoff
+- Task ID: (05D)
+- Task title: Run manual hybrid retrieval smoke check when data is available
+
+## Completed Work
+- Completed the manual hybrid retrieval smoke check because local data was available.
+- Verified one local document had chunks, indexed Qdrant point IDs, graph entities, and graph relationships.
+- Ran service-level hybrid retrieval with safe sample question text against that selected document.
+- Confirmed the returned results were sorted by `final_score` descending.
+- Confirmed every sampled result exposed `semantic_similarity`, `graph_relevance`, `keyword_overlap`, `metadata_match`, `recency_or_position_score`, and `final_score`.
+- Reported one scored candidate example without document content or secrets.
+
+## Files Created or Modified
+- docs/reports/report_8_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_scoring.py -v`: Passed
+- evidence or reason: 10 tests collected; 10 passed in 0.03s.
+- `cd backend` then `pytest tests/test_graph_retrieval_service.py -v`: Passed
+- evidence or reason: 14 tests collected; 14 passed in 0.95s.
+- `cd backend` then `pytest tests/test_hybrid_retrieval_service.py -v`: Passed
+- evidence or reason: 24 tests collected; 24 passed in 1.73s.
+- Supabase local data preflight: Passed
+- evidence or reason: 6 user document rows checked; 1 eligible document found with `chunks=1`, `indexed_chunks=1`, `entities=3`, and `relationships=7`. Document ID was masked in command output and report.
+- Manual hybrid retrieval smoke command: Passed
+- evidence or reason: Ran `retrieve_hybrid("What is this document about?", document_ids=[eligible_document_id], final_top_k=5)` from `backend`; returned 1 candidate, `SORTED_BY_FINAL_SCORE=True`, and `ALL_REQUIRED_SCORE_FIELDS=True`.
+
+## Acceptance Check
+- Task acceptance condition: Results are sorted by `final_score`; each sampled result includes `semantic_similarity`, `graph_relevance`, `keyword_overlap`, `metadata_match`, `recency_or_position_score`, and `final_score`.
+- Status: satisfied
+- Evidence: The service-level smoke check returned 1 candidate sorted by `final_score`. The sampled candidate included all required score fields. Candidate example: `semantic_similarity=0.37899327`, `graph_relevance=0.0`, `keyword_overlap=0.6`, `metadata_match=0.4`, `recency_or_position_score=0.5`, `final_score=0.3255469715`.
+
+## Artifacts Produced
+- Manual smoke result summary for one local eligible processed, indexed, graph-built document.
+- Scored candidate example with all five score components and `final_score`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator rule says A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used the existing service-level `retrieve_hybrid` path instead of adding a smoke script because the task allowed a local service-level check and required no file changes beyond the report.
+- Used a safe generic question, `What is this document about?`, and reported only score fields and masked identifiers to avoid exposing document content or secrets.
+
+## Risks or Open Issues
+- The sampled result had `graph_relevance=0.0` because the safe generic question did not match persisted graph entity terms, but the document itself had graph rows and the result included the required graph score component.
+- No document content, full identifiers, or secrets were included in the report.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Source-of-truth fields were present and aligned with the task.
+- Dependency Batch01 through Batch04 task checkboxes were already complete in `docs/tasks/task_8.md`.
+- Local processed, indexed, graph-built document availability was verified before the live smoke check.
+- No sibling task `(05E)` or future task was implemented.
+
+## Notes for Next Task
+- next task ID: (05E)
+- can proceed: yes
+- handoff notes: Manual hybrid retrieval smoke validation is complete. The next task can compile the final Plan 8 execution report and scope boundary review using the automated test evidence and the candidate example above.
+
+---
+
+# Task Execution Report - (05E)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Report File
+docs/reports/report_8_execute_agent.md
+
+## Batch
+Batch05 - Required Tests, Manual Validation, and Handoff
+
+## Task
+(05E) - Complete execution report and scope boundary review
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_8.md > (05E)
+- docs/plans/Plan_8.md > ## 4. Out of Scope
+- docs/plans/Plan_8.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_8.md > ## 14. Agent Report Requirement
+- docs/plans/Plan_8.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Tests, Manual Validation, and Handoff
+- Task ID: (05E)
+- Task title: Complete execution report and scope boundary review
+
+## Completed Work
+- Completed the Plan 8 execution report and reviewer handoff consolidation for the selected `(05E)` task.
+- Reviewed prior Batch05 evidence for `(05A)`, `(05B)`, `(05C)`, and `(05D)` in `docs/reports/report_8_execute_agent.md`.
+- Confirmed the report includes files created or modified, commands run, test results, known issues, intentionally out-of-scope work, manual smoke status, and scored candidate examples.
+- Re-ran the three required automated validation commands for current evidence.
+- Confirmed the manual smoke check from `(05D)` completed with local processed, indexed, graph-built data and reported a safe candidate example.
+- Confirmed Plan 8 out-of-scope boundaries for this handoff: no Agent 1 wrapper, no Evidence Verification Agent, no answer generation, no unguarded ShopAIKey rerank, no final chat API, and no frontend retrieval UI were added by this task.
+- Prepared reviewer checklist notes covering scope, tests, acceptance, secrets, architecture, formula weights, score normalization, rerank boundary, and selected document filters.
+
+Plan 8 file evidence consolidated from prior execution entries:
+- Created or modified implementation/config files: `backend/app/core/config.py`, `backend/.env.example`, `backend/app/schemas/retrieval.py`, `backend/app/schemas/__init__.py`, `backend/app/utils/scoring.py`, `backend/app/utils/__init__.py`, `backend/app/services/graph_retrieval_service.py`, `backend/app/services/hybrid_retrieval_service.py`, `backend/app/services/shopaikey_service.py`, `backend/app/api/retrieval.py`.
+- Created or modified test files: `backend/tests/test_scoring.py`, `backend/tests/test_graph_retrieval_service.py`, `backend/tests/test_hybrid_retrieval_service.py`, `backend/tests/test_retrieval_api.py`, plus prior supporting config/rerank test evidence reported in this file.
+- Documentation/report files: `docs/tasks/task_8.md`, `docs/reports/report_8_execute_agent.md`, and `docs/review/review_8_review_agent.md` already had uncommitted orchestration/review updates before this append.
+
+Scored candidate example for reviewer:
+- Manual smoke candidate from `(05D)`: `semantic_similarity=0.37899327`, `graph_relevance=0.0`, `keyword_overlap=0.6`, `metadata_match=0.4`, `recency_or_position_score=0.5`, `final_score=0.3255469715`.
+- Deterministic hybrid ranking test candidate from `(05C)`: `semantic_similarity=0.70`, `graph_relevance=0.60`, `keyword_overlap=0.50`, `metadata_match=1.00`, `recency_or_position_score=0.85`, `final_score=0.6825`.
+
+Reviewer handoff checklist:
+- Scope: verify only Plan 8 hybrid retrieval/scoring, tests, optional API mode, and guarded rerank placeholder are included.
+- Tests: verify the three required Batch05 test commands were run and passed.
+- Acceptance: verify merge behavior, score fields, exact final formula, descending `final_score` sort, configurable Top-K, semantic-only and graph-only candidates, optional rerank, and no verification/answer generation logic.
+- Secrets: verify no raw keys or provider secrets are in reports, env examples, frontend files, or test fixtures.
+- Architecture: verify services and utilities remain in the Plan 8 locations and align with the Master Plan retrieval architecture.
+- Formula weights: verify `0.45`, `0.25`, `0.15`, `0.10`, and `0.05` are unchanged.
+- Score normalization: verify every component is clamped or otherwise normalized to `0.0` through `1.0`.
+- Rerank boundary: verify rerank remains disabled unless `ENABLE_RERANK` and required backend model configuration are present, and that rerank does not replace later evidence verification.
+- Selected document filters: verify semantic, graph, and hybrid retrieval tests preserve selected document filtering.
+
+## Files Created or Modified
+- docs/reports/report_8_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_scoring.py -v`: Passed
+- evidence or reason: 10 tests collected; 10 passed in 0.03s. Tests verify exact Plan 8 weights, clamping, keyword overlap, metadata match, position scoring, all-one formula result, all-zero formula result, mixed weighted formula math, and invalid component bounds.
+- `cd backend` then `pytest tests/test_graph_retrieval_service.py -v`: Passed
+- evidence or reason: 14 tests collected; 14 passed in 0.90s. Tests cover graph contract import, entity matching, relationship expansion, graph relevance, no graph rows/irrelevant rows, selected document filtering, invalid Top-K validation, and graph-only candidate paths.
+- `cd backend` then `pytest tests/test_hybrid_retrieval_service.py -v`: Passed
+- evidence or reason: 24 tests collected; 24 passed in 1.67s. Tests cover semantic and graph calls, merge, semantic-only candidates, graph-only candidates, score population, exact final ranking, Top-K truncation, disabled rerank, empty results, dependency failure handling, selected filters, and invalid Top-K validation.
+- Prior manual hybrid retrieval smoke check from `(05D)`: Passed
+- evidence or reason: One local eligible document was verified with chunks, indexed Qdrant point IDs, graph entities, and graph relationships. `retrieve_hybrid("What is this document about?", document_ids=[eligible_document_id], final_top_k=5)` returned 1 candidate with `SORTED_BY_FINAL_SCORE=True` and `ALL_REQUIRED_SCORE_FIELDS=True`.
+- Scope boundary review against Plan 8 sections 4, 12, 14, and 15: Passed
+- evidence or reason: This report explicitly documents out-of-scope confirmations, acceptance evidence, test results, known issues, scored examples, and reviewer checks.
+
+## Acceptance Check
+- Task acceptance condition: Report includes all required fields, test commands and results, manual check status, scored candidate example or blocked status, out-of-scope confirmation, and known issues.
+- Status: satisfied
+- Evidence: This appended `(05E)` report includes files created/modified, commands run, current test results, manual check status, two scored candidate examples, out-of-scope confirmation, known issues, and reviewer handoff notes.
+
+## Artifacts Produced
+- Final Plan 8 `(05E)` execution report and scope boundary review appended to `docs/reports/report_8_execute_agent.md`.
+- Reviewer handoff checklist for Plan 8 acceptance and scope review.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run hard rule says A2 handles `(05E)` checkbox and batch status updates after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used existing Batch05 reports as the evidence source instead of modifying runtime code.
+- Re-ran required automated tests for current validation evidence.
+- Included both the live manual smoke candidate and deterministic test candidate so the reviewer has a real local validation example and a nonzero graph relevance formula example.
+- Did not update `docs/tasks/task_8.md` progress checkboxes because this run is orchestrated.
+
+## Risks or Open Issues
+- Manual smoke candidate had `graph_relevance=0.0` because the safe generic question did not match persisted graph entity terms; the selected document still had graph rows and the candidate included the required graph score component.
+- Existing uncommitted work from prior Plan 8 tasks and reviews remains in the worktree and was not reverted.
+- No blocking known issues for `(05E)` acceptance.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Selected task `(05E)` had source-of-truth fields, dependencies, acceptance, validation, blocked condition, and files listed.
+- Dependencies `(05A)`, `(05B)`, `(05C)`, and `(05D)` were already checked complete in `docs/tasks/task_8.md`, and prior reports contain their validation evidence.
+- No dependency issue or source conflict identified.
+- No runtime code was changed for this documentation-only handoff task.
+- No secrets were printed or added; manual validation identifiers remained masked in prior report evidence.
+- No out-of-scope Agent 1 wrapper, evidence verification, answer generation, final chat API, or frontend retrieval UI work was performed in this task.
+
+## Notes for Next Task
+- next task ID: none in Batch05 after `(05E)`
+- can proceed: yes
+- handoff notes: Ready for A2 review of `(05E)`. A2 should verify the final report against Plan 8 sections 4, 12, 14, and 15, then decide whether to accept and update the `(05E)` checkbox and Batch05 progress.

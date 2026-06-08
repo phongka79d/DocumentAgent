@@ -555,7 +555,116 @@ def test_retrieve_hybrid_sorts_by_final_score_desc_and_uses_configured_final_top
     )
 
 
-def test_retrieve_hybrid_passes_ranked_candidates_through_guarded_rerank(
+def test_retrieve_hybrid_computes_exact_final_ranking_for_mixed_candidate_sources(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    document_id = "21212121-2121-2121-2121-212121212121"
+    merged_chunk_id = "31313131-3131-3131-3131-313131313131"
+    semantic_only_chunk_id = "41414141-4141-4141-4141-414141414141"
+    graph_only_chunk_id = "51515151-5151-5151-5151-515151515151"
+    semantic_search = Mock(
+        return_value=SearchResponse(
+            question="policy summary page 1 policy",
+            results=[
+                _semantic_candidate(
+                    merged_chunk_id,
+                    document_id=document_id,
+                    content="policy summary",
+                    semantic_similarity=0.7,
+                    file_name="policy.pdf",
+                    page_number=1,
+                    section_title="Summary",
+                    chunk_index=0,
+                ),
+                _semantic_candidate(
+                    semantic_only_chunk_id,
+                    document_id=document_id,
+                    content="summary page 1",
+                    semantic_similarity=0.55,
+                    file_name=None,
+                    page_number=1,
+                    section_title=None,
+                    chunk_index=None,
+                ),
+            ],
+        )
+    )
+    graph_retrieval = Mock(
+        return_value=[
+            _graph_candidate(
+                merged_chunk_id,
+                document_id=document_id,
+                content="policy summary",
+                graph_relevance=0.6,
+                file_name="policy.pdf",
+                page_number=1,
+                section_title="Summary",
+                chunk_index=0,
+            ),
+            _graph_candidate(
+                graph_only_chunk_id,
+                document_id=document_id,
+                content="policy appendix",
+                graph_relevance=0.9,
+                file_name="appendix.pdf",
+                page_number=4,
+                section_title="Appendix",
+                chunk_index=9,
+            ),
+        ]
+    )
+    monkeypatch.setattr(
+        hybrid_retrieval_service,
+        "get_settings",
+        lambda: _settings(final_top_k=3),
+    )
+
+    response = hybrid_retrieval_service.retrieve_hybrid(
+        "policy summary page 1 policy",
+        document_ids=[UUID(document_id)],
+        semantic_search=semantic_search,
+        graph_retrieval=graph_retrieval,
+    )
+
+    assert [candidate.chunk_id for candidate in response.candidates] == [
+        UUID(merged_chunk_id),
+        UUID(semantic_only_chunk_id),
+        UUID(graph_only_chunk_id),
+    ]
+    assert [candidate.final_score for candidate in response.candidates] == pytest.approx(
+        [
+            final_score(
+                {
+                    "semantic_similarity": 0.7,
+                    "graph_relevance": 0.6,
+                    "keyword_overlap": 0.5,
+                    "metadata_match": 1.0,
+                    "recency_or_position_score": 0.85,
+                }
+            ),
+            final_score(
+                {
+                    "semantic_similarity": 0.55,
+                    "graph_relevance": 0.0,
+                    "keyword_overlap": 0.75,
+                    "metadata_match": 0.6,
+                    "recency_or_position_score": 0.35,
+                }
+            ),
+            final_score(
+                {
+                    "semantic_similarity": 0.0,
+                    "graph_relevance": 0.9,
+                    "keyword_overlap": 0.25,
+                    "metadata_match": 0.4,
+                    "recency_or_position_score": 0.0,
+                }
+            ),
+        ]
+    )
+
+
+def test_retrieve_hybrid_returns_ranked_candidates_when_rerank_is_disabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     low_chunk_id = "abababab-abab-abab-abab-abababababab"
@@ -584,12 +693,11 @@ def test_retrieve_hybrid_passes_ranked_candidates_through_guarded_rerank(
         )
     )
     graph_retrieval = Mock(return_value=[])
-    rerank_candidates = Mock(side_effect=lambda _question, candidates, top_n: candidates)
     monkeypatch.setattr(hybrid_retrieval_service, "get_settings", lambda: _settings())
     monkeypatch.setattr(
         hybrid_retrieval_service.shopaikey_service,
-        "rerank_candidates",
-        rerank_candidates,
+        "get_settings",
+        lambda: _settings(),
     )
 
     response = hybrid_retrieval_service.retrieve_hybrid(
@@ -598,15 +706,6 @@ def test_retrieve_hybrid_passes_ranked_candidates_through_guarded_rerank(
         graph_retrieval=graph_retrieval,
     )
 
-    rerank_candidates.assert_called_once()
-    rerank_question, ranked_candidates = rerank_candidates.call_args.args[:2]
-    rerank_top_n = rerank_candidates.call_args.kwargs["top_n"]
-    assert rerank_question == "unmatched query"
-    assert rerank_top_n == 5
-    assert [candidate.chunk_id for candidate in ranked_candidates] == [
-        UUID(high_chunk_id),
-        UUID(low_chunk_id),
-    ]
     assert [candidate.chunk_id for candidate in response.candidates] == [
         UUID(high_chunk_id),
         UUID(low_chunk_id),

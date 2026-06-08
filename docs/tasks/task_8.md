@@ -630,7 +630,7 @@ Plan 8 is only complete when score math, graph lookup, candidate merging, final 
 
 ### Tasks
 
-- [ ] (05A): Add and run scoring tests
+- [x] (05A): Add and run scoring tests
   - Source of Truth: `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 11. Required Tests`; `docs/plans/Plan_8.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Add `backend/tests/test_scoring.py`.
@@ -649,7 +649,7 @@ Plan 8 is only complete when score math, graph lookup, candidate merging, final 
   - Blocked Condition: None.
   - Files: `backend/tests/test_scoring.py`, `backend/app/utils/scoring.py`
 
-- [ ] (05B): Add and run graph retrieval service tests
+- [x] (05B): Add and run graph retrieval service tests
   - Source of Truth: `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 11. Required Tests`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_8.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add `backend/tests/test_graph_retrieval_service.py`.
@@ -667,7 +667,7 @@ Plan 8 is only complete when score math, graph lookup, candidate merging, final 
   - Blocked Condition: None.
   - Files: `backend/tests/test_graph_retrieval_service.py`, `backend/app/services/graph_retrieval_service.py`
 
-- [ ] (05C): Add and run hybrid retrieval service tests
+- [x] (05C): Add and run hybrid retrieval service tests
   - Source of Truth: `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 11. Required Tests`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_8.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add `backend/tests/test_hybrid_retrieval_service.py`.
@@ -686,7 +686,7 @@ Plan 8 is only complete when score math, graph lookup, candidate merging, final 
   - Blocked Condition: None.
   - Files: `backend/tests/test_hybrid_retrieval_service.py`, `backend/app/services/hybrid_retrieval_service.py`
 
-- [ ] (05D): Run manual hybrid retrieval smoke check when data is available
+- [x] (05D): Run manual hybrid retrieval smoke check when data is available
   - Source of Truth: `docs/plans/Plan_8.md` > `## 11. Required Tests`; `docs/plans/Plan_8.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Run hybrid retrieval for a question against a processed, indexed, graph-built document.
@@ -703,7 +703,7 @@ Plan 8 is only complete when score math, graph lookup, candidate merging, final 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if no processed, indexed, graph-built document or required local service credentials are available.
   - Files: No required file changes beyond tests or optional smoke script if the repo already uses one.
 
-- [ ] (05E): Complete execution report and scope boundary review
+- [x] (05E): Complete execution report and scope boundary review
   - Source of Truth: `docs/plans/Plan_8.md` > `## 4. Out of Scope`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_8.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_8.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created, files modified, commands run, test results, known issues, and intentionally out-of-scope work.
@@ -853,11 +853,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch05
 
-- [ ] (05A): Add and run scoring tests
-- [ ] (05B): Add and run graph retrieval service tests
-- [ ] (05C): Add and run hybrid retrieval service tests
-- [ ] (05D): Run manual hybrid retrieval smoke check when data is available
-- [ ] (05E): Complete execution report and scope boundary review
+- [x] (05A): Add and run scoring tests
+- [x] (05B): Add and run graph retrieval service tests
+- [x] (05C): Add and run hybrid retrieval service tests
+- [x] (05D): Run manual hybrid retrieval smoke check when data is available
+- [x] (05E): Complete execution report and scope boundary review
 
 ## Completion Reporting Rules for Future Execution Agents
 
