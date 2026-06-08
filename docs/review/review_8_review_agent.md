@@ -1437,3 +1437,900 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Hybrid Candidate Merge and Final Ranking
+- Task ID: (03A)
+- Task title: Create hybrid retrieval service and call semantic and graph retrieval
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_8.md > ## 1. Goal; ## 3. Scope; ## 5. Dependencies; ## 6. Required Files and Folders; ## 9. Implementation Steps; README.md > ### Semantic Retrieval Service
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching (03A) report. Prior Batch01 and Batch02 reports/checkmarks were treated as dependency evidence, not re-reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_8_execute_agent.md
+  - docs/tasks/task_8.md (reviewer checkbox update only, after acceptance)
+  - backend/app/services/hybrid_retrieval_service.py (untracked)
+  - backend/tests/test_hybrid_retrieval_service.py (untracked)
+- untracked files:
+  - backend/app/services/hybrid_retrieval_service.py
+  - backend/tests/test_hybrid_retrieval_service.py
+
+## Files Reviewed
+- `docs/reports/report_8_execute_agent.md`: in scope - latest (03A) execution report appended.
+- `docs/tasks/task_8.md`: in scope - selected task block, dependency checkboxes, and reviewer checkbox update for (03A) only.
+- `docs/plans/Plan_8.md`: in scope - cited source sections for goal, scope, dependencies, required files, and implementation steps.
+- `README.md`: in scope - cited semantic retrieval service context.
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - new service for (03A).
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - targeted tests for (03A) orchestration and validation.
+- `backend/app/services/retrieval_service.py`: in scope - existing semantic search contract verified.
+- `backend/app/schemas/retrieval.py`: in scope - HybridSearchResponse and SearchResponse contracts verified.
+- `backend/app/core/config.py`: in scope - Top-K settings used by the service verified.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements `retrieve_hybrid`, validation, settings-based Top-K resolution, and mockable semantic/graph dependencies.
+- file from execution report: backend/tests/test_hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers import, empty question validation, configured semantic and graph Top-K use, document filter pass-through, and invalid Top-K validation.
+
+## Dependency Review
+- Required dependencies: Batch01 settings/schemas/scoring utilities, Batch02 graph retrieval service, existing semantic retrieval service from Plan 6, completed Plan 5 vector indexing.
+- Dependency status: satisfied for selected (03A) scope. Batch01 and Batch02 task checkboxes were already complete in docs/tasks/task_8.md before this review; existing semantic retrieval contract is present.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Backend-only service added in the planned location; uses existing semantic retrieval service and graph retrieval service instead of duplicating Qdrant, embedding, or graph logic; dependency injection keeps tests mockable; no API, frontend, database schema, Agent 1 wrapper, answer generation, or rerank implementation was added.
+- Failed: None.
+- Uncertain: Plan 8 and the task block contain broad full-hybrid orchestration language, but (03B)-(03E) explicitly own merge, scoring, ranking, and retrieval reasons. For (03A), the task output and acceptance criteria are limited to calling semantic and graph retrieval with configured counts and filters.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `retrieve_hybrid` trims and validates the question, resolves semantic/graph/final Top-K values from settings or parameters, calls semantic and graph dependencies with the selected document filter, and returns a typed `HybridSearchResponse`. The empty candidate list is intentionally scoped to pre-merge (03A) and is documented for later sibling tasks.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production Top-K values come from settings or explicit parameters; no fixed document IDs, fixture text, provider responses, or result ordering are hardcoded in runtime logic. Test fixtures use fixed values only for assertions.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_hybrid_retrieval_service.py -v`
+- Reported result: Passed, 7 tests passed.
+- Rerun result: Passed, 7 tests passed.
+- Status: satisfied
+- Notes: Rerun covered the selected task validation. Live validation remains outside this mocked unit-test task and depends on indexed and graph-built local documents.
+
+## Acceptance Review
+- Task acceptance: Semantic retrieval is called with semantic Top-K; graph retrieval is called with graph Top-K; document filters are passed through; empty question and invalid Top-K behavior follow validation rules.
+- Status: satisfied
+- Evidence: Tests assert configured semantic Top-K `13`, graph Top-K `9`, selected document ID pass-through to both dependencies, question trimming, empty question rejection before dependency calls, and invalid semantic/graph/final Top-K rejection before dependency calls.
+
+## Progress Tracking
+- Selected task checkbox: changed from unchecked to checked for (03A) only after ACCEPTED decision.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch03 remains unchecked because sibling tasks are still incomplete.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material to acceptance. Git also shows the execution report append as expected workflow evidence.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The service currently discards semantic and graph dependency results and returns no candidates, which is acceptable for (03A) only because merge, score population, ranking, and reasons are separate unchecked tasks (03B)-(03E).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch03 - Hybrid Candidate Merge and Final Ranking",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_8_execute_agent.md",
+    "docs/tasks/task_8.md",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Hybrid Candidate Merge and Final Ranking
+- Task ID: (03B)
+- Task title: Merge semantic and graph candidates by chunk ID
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_8.md selected task block for (03B); docs/plans/Plan_8.md > ## 3. Scope; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; ## 12. Acceptance Criteria
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest matching (03B) execution report was reviewed. Prior accepted uncommitted (03A) changes in the same Batch03 working tree were treated as dependency/workflow context only and were not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_8_execute_agent.md
+  - docs/review/review_8_review_agent.md
+  - docs/tasks/task_8.md
+  - backend/app/services/hybrid_retrieval_service.py (untracked)
+  - backend/tests/test_hybrid_retrieval_service.py (untracked)
+- untracked files:
+  - backend/app/services/hybrid_retrieval_service.py
+  - backend/tests/test_hybrid_retrieval_service.py
+
+## Files Reviewed
+- `docs/reports/report_8_execute_agent.md`: in scope - contains appended (03B) execution report after prior task reports.
+- `docs/tasks/task_8.md`: in scope - selected (03B) task block, dependency checkbox for accepted (03A), and reviewer checkbox update for (03B) only.
+- `docs/review/review_8_review_agent.md`: in scope - existing prior accepted (03A) review was present before this review; this (03B) report is appended at EOF.
+- `docs/plans/Plan_8.md`: in scope - cited scope, schema, implementation, acceptance, failure handling, and reviewer checklist sections reviewed.
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - selected implementation for merge-by-chunk behavior.
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - selected validation tests for duplicate merge, semantic-only, graph-only, and metadata precedence.
+- `backend/app/schemas/retrieval.py`: in scope - hybrid candidate and response schema contract verified.
+- `backend/app/services/graph_retrieval_service.py`: in scope - graph candidate contract verified.
+- `backend/app/services/retrieval_service.py`: in scope - semantic response contract verified.
+- `backend/app/utils/scoring.py`: in scope - `clamp_score` dependency for semantic and graph score normalization verified.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements deterministic semantic/graph merge by `chunk_id`, zero-fills missing semantic or graph score, preserves richer content and metadata, and leaves later score/rank fields as placeholders for sibling tasks.
+- file from execution report: backend/tests/test_hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Includes targeted coverage for duplicate chunks, semantic-only output, graph-only output, and sparse semantic metadata enriched from graph fields.
+- file from execution report: docs/reports/report_8_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Workflow report file was appended with the selected task report.
+
+## Dependency Review
+- Required dependencies: (03A) accepted hybrid retrieval service contract; Batch01 schemas/settings/scoring utilities; Batch02 graph retrieval candidate contract; existing semantic retrieval contract.
+- Dependency status: satisfied. (03A) is checked complete in the task file from prior accepted review, and the service/test code contains the required dependency boundaries.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: The implementation stays in the planned backend hybrid retrieval service, uses existing semantic and graph retrieval dependency boundaries, merges on the stable `chunk_id` key, preserves selected document filter pass-through from (03A), and keeps scoring, final ranking, rerank, API mode, answer generation, evidence verification, frontend UI, and database changes out of (03B).
+- Failed: None.
+- Uncertain: None for selected (03B). Later tasks must replace placeholder `keyword_overlap`, `metadata_match`, `recency_or_position_score`, and `final_score` values and apply final ranking/top-k.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_merge_candidates_by_chunk_id` constructs semantic candidates first, merges duplicate graph candidates by `chunk_id`, appends graph-only candidates, and returns one `HybridRetrievalCandidate` per chunk. `_candidate_from_semantic`, `_candidate_from_graph`, and `_merge_duplicate_candidate` populate the required score defaults and metadata/content fields.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime logic does not hardcode document IDs, chunk IDs, fixture strings, expected answers, or dataset order beyond deterministic preservation of semantic order followed by graph-only order. Fixed UUIDs and strings appear only in tests.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_hybrid_retrieval_service.py -v`
+- Reported result: Passed, 11 tests passed.
+- Rerun result: Passed, 11 tests passed.
+- Status: satisfied
+- Notes: Rerun validated the selected task's required hybrid merge behaviors. Broader final scoring/ranking tests are intentionally reserved for later Batch03/Batch05 tasks.
+
+## Acceptance Review
+- Task acceptance: Duplicate chunks are merged once; semantic-only candidates have `graph_relevance = 0.0`; graph-only candidates have `semantic_similarity = 0.0`; metadata is not lost when one source is sparse.
+- Status: satisfied
+- Evidence: Tests verify one output row for duplicate semantic/graph chunks, correct zero-filled missing scores, graph-only and semantic-only candidate retention, and enrichment of sparse semantic content/file/page/section/chunk metadata from graph candidates.
+
+## Progress Tracking
+- Selected task checkbox: changed from unchecked to checked for (03B) only after ACCEPTED decision.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch03 remains unchecked because (03C), (03D), and (03E) are still incomplete.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated. User requested only the next two tasks; Batch03 remains incomplete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material to acceptance. The report accurately states the remaining placeholder scores and final ranking/top-k as future sibling task work.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The service preserves deterministic merge order by semantic candidates first and graph-only candidates afterward. Final sorting and Top-K truncation remain correctly deferred to (03D).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch03 - Hybrid Candidate Merge and Final Ranking",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_8_execute_agent.md",
+    "docs/review/review_8_review_agent.md",
+    "docs/tasks/task_8.md",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Hybrid Candidate Merge and Final Ranking
+- Task ID: (03C)
+- Task title: Calculate keyword, metadata, position, and final scores for every merged candidate
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_8.md > ## 1. Goal; ## 3. Scope; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; docs/plans/Master_Plan.md > # 10. Agent 1: Retrieval Agent > ## 10.4 Scoring Formula
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: Reviewed the latest matching (03C) execution report only. Prior accepted uncommitted (03A) and (03B) changes in the same Batch03 working tree were treated as dependencies and workflow context, not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_8_execute_agent.md
+  - docs/review/review_8_review_agent.md
+  - docs/tasks/task_8.md
+  - backend/app/services/hybrid_retrieval_service.py (untracked)
+  - backend/tests/test_hybrid_retrieval_service.py (untracked)
+- untracked files:
+  - backend/app/services/hybrid_retrieval_service.py
+  - backend/tests/test_hybrid_retrieval_service.py
+
+## Files Reviewed
+- `docs/reports/report_8_execute_agent.md`: in scope - contains appended (03C) execution report after prior task reports.
+- `docs/tasks/task_8.md`: in scope - selected (03C) task block, dependency checkboxes for accepted (03A)/(03B), and reviewer checkbox update for (03C) only.
+- `docs/review/review_8_review_agent.md`: in scope - prior accepted (03A)/(03B) reviews were present before this review; this (03C) report is appended at EOF.
+- `docs/plans/Plan_8.md`: in scope - cited goal, scope, schema, and implementation step sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited scoring formula section reviewed.
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - selected implementation for post-merge score component calculation.
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - selected validation tests for score component population, normalization, and final formula integration.
+- `backend/app/utils/scoring.py`: in scope - existing Batch01 scoring helpers and exact final formula dependency verified.
+- `backend/app/schemas/retrieval.py`: in scope - hybrid candidate score fields verified.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds `_score_candidates` / `_score_candidate` post-merge scoring, uses Batch01 scoring helpers, clamps semantic and graph components, and populates all required component fields plus `final_score`.
+- file from execution report: backend/tests/test_hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Includes targeted tests for all score components, formula integration via the shared `final_score` helper, and clamping invalid semantic/graph inputs before final score math.
+- file from execution report: docs/reports/report_8_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Workflow report file was appended with the selected task report.
+
+## Dependency Review
+- Required dependencies: (03B), Batch01 scoring helpers, hybrid candidate schema.
+- Dependency status: satisfied. (03B) is checked complete from prior accepted review, and the service uses existing `keyword_overlap_score`, `metadata_match_score`, `recency_or_position_score`, `clamp_score`, and `final_score` helpers.
+- Missing or invalid dependency: None found for (03C). Standalone `backend/tests/test_scoring.py` is absent, but task (05A) explicitly owns adding and running that file; (03C) validates formula integration in hybrid tests.
+
+## Architecture Alignment
+- Passed: Scoring is applied after merge in the backend hybrid retrieval service; scoring formula logic is reused from `app.utils.scoring` rather than duplicated; semantic-only and graph-only score defaults are preserved; no final ranking, Top-K truncation, retrieval reason generation, rerank, API mode, answer generation, evidence verification, frontend work, database schema change, or commit was introduced by this selected task.
+- Failed: None.
+- Uncertain: None for selected (03C). Sorting and final Top-K remain explicitly deferred to (03D), despite broader Plan 8 language that describes the complete hybrid retrieval sequence.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `retrieve_hybrid` now sends merged candidates through `_score_candidates`; `_score_candidate` calculates keyword overlap from question/content, metadata match from question/candidate/selected documents, position score from candidate metadata, and final score using the shared exact formula helper.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime scoring uses candidate data, question text, selected document IDs, and reusable helper functions. Fixed UUIDs, file names, and text are limited to deterministic test fixtures.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_hybrid_retrieval_service.py -v`
+- Reported result: Passed, 13 passed in 1.49s.
+- Rerun result: Passed, 13 passed in 1.55s.
+- Status: satisfied
+- Notes: Rerun validates score component presence, normalized bounds, clamping before final formula math, and formula integration through the shared `final_score` helper.
+- Command/check: `cd backend; Test-Path tests/test_scoring.py`
+- Reported result: Not run because file is absent.
+- Rerun result: False.
+- Status: warning
+- Notes: Standalone scoring tests are absent by design until (05A), which explicitly owns adding `backend/tests/test_scoring.py`. This does not block (03C) because selected task implementation uses the existing Batch01 scoring helpers and validates hybrid formula integration.
+
+## Acceptance Review
+- Task acceptance: Every returned candidate includes all five score components plus `final_score`; all values are normalized; formula math is exact.
+- Status: satisfied
+- Evidence: `test_retrieve_hybrid_calculates_score_components_for_every_merged_candidate` verifies merged and graph-only candidates receive all score fields and final scores computed by the shared helper. `test_retrieve_hybrid_clamps_invalid_component_scores_before_final_formula` verifies invalid semantic and graph inputs are clamped before final score calculation. The schema contains all required score fields.
+
+## Progress Tracking
+- Selected task checkbox: changed from unchecked to checked for (03C) only after ACCEPTED decision.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch03 remains unchecked because (03D) and (03E) are still incomplete.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material to acceptance. The report accurately states that standalone scoring tests are absent, final sorting/top-k is deferred to (03D), and retrieval reason generation is deferred to (03E).
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- `backend/tests/test_scoring.py` is absent and standalone scoring utility tests remain deferred to (05A). This is acceptable for (03C) because hybrid formula integration is covered and (05A) explicitly owns the standalone scoring test file.
+
+### Observations
+- Scored candidates remain in merge order. This is correct for (03C) because final descending sort and final Top-K truncation are reserved for (03D).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch03 - Hybrid Candidate Merge and Final Ranking",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_8_execute_agent.md",
+    "docs/review/review_8_review_agent.md",
+    "docs/tasks/task_8.md",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Standalone backend/tests/test_scoring.py remains deferred to (05A)."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03D)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Hybrid Candidate Merge and Final Ranking
+- Task ID: (03D)
+- Task title: Sort by final score and return final configurable Top-K
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_8.md > ## 1. Goal; ## 3. Scope; ## 9. Implementation Steps; ## 10. Configuration and Environment Variables; ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > # 10. Agent 1: Retrieval Agent > ## 10.3 Top-K Settings
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03D)
+- Reviewed task ID: (03D)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching (03D) execution report. Prior accepted uncommitted Batch03 changes for (03A), (03B), and (03C) were treated as dependencies and current working-tree context, not as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_8_execute_agent.md
+  - docs/review/review_8_review_agent.md
+  - docs/tasks/task_8.md
+  - backend/app/services/hybrid_retrieval_service.py (untracked)
+  - backend/tests/test_hybrid_retrieval_service.py (untracked)
+- untracked files:
+  - backend/app/services/hybrid_retrieval_service.py
+  - backend/tests/test_hybrid_retrieval_service.py
+
+## Files Reviewed
+- `docs/reports/report_8_execute_agent.md`: in scope - contains the appended (03D) execution report after prior task reports.
+- `docs/tasks/task_8.md`: in scope - selected (03D) task block, accepted dependency checkboxes, and reviewer checkbox update for (03D) only.
+- `docs/review/review_8_review_agent.md`: in scope - prior review entries inspected before appending this report at EOF.
+- `docs/plans/Plan_8.md`: in scope - cited goal, scope, implementation, configuration, acceptance, failure handling, and reviewer checklist sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited Top-K settings reviewed.
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - selected implementation for final ranking and final Top-K slicing reviewed directly because the file is untracked.
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - selected validation tests for final ordering, Top-K truncation, empty candidates, deterministic ties, and invalid Top-K reviewed directly because the file is untracked.
+- `backend/app/core/config.py`: in scope - dependency for configured `retrieval_final_top_k` default and bounds verified.
+- `backend/app/schemas/retrieval.py`: in scope - hybrid response and candidate contract verified.
+- `backend/app/utils/scoring.py`: in scope - existing final score helper dependency considered for score-populated candidates.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds `_rank_and_limit_candidates`, resolves `final_top_k`, applies descending stable sort by `candidate.final_score`, and slices to the resolved final Top-K after scoring.
+- file from execution report: backend/tests/test_hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Includes coverage for configured final Top-K ordering/truncation, explicit `final_top_k` override, deterministic equal-score ordering, empty merged candidates, and invalid Top-K validation before dependency calls.
+- file from execution report: docs/reports/report_8_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Workflow report file was appended with the selected task report.
+
+## Dependency Review
+- Required dependencies: (03C) scored candidates and (01A) backend final Top-K configuration.
+- Dependency status: satisfied. (03C) and (01A) are checked complete in the task file, `retrieve_hybrid` receives scored candidates before ranking, and settings expose `retrieval_final_top_k` with configured bounds.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Final ranking remains inside the backend hybrid retrieval service, uses the configured or explicit final Top-K, preserves semantic and graph dependency boundaries, sorts after score calculation, returns an empty candidate list for empty merged sets, and avoids sibling (03E) retrieval reason work. No rerank, API mode, answer generation, evidence verification, frontend UI, database schema changes, or commits were introduced by this selected task.
+- Failed: None.
+- Uncertain: None for selected (03D). Later Batch04 and Batch05 items still own rerank/failure hardening and broader required test/manual validation work.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `retrieve_hybrid` resolves `final_top_k` before dependency calls, scores merged candidates, then returns `HybridSearchResponse(..., candidates=_rank_and_limit_candidates(scored_candidates, resolved_final_top_k))`. `_rank_and_limit_candidates` uses Python stable `sorted(..., key=lambda candidate: candidate.final_score, reverse=True)[:final_top_k]`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime logic uses candidate `final_score` values and configured or caller-provided Top-K values. Fixed UUIDs and sample strings appear only in tests.
+
+## Validations Reviewed
+- Command/check: `python -m pytest backend/tests/test_hybrid_retrieval_service.py`
+- Reported result: Passed, 17 tests collected and 17 passed in 1.91s.
+- Rerun result: Passed, 17 tests collected and 17 passed in 1.50s.
+- Status: satisfied
+- Notes: Rerun validates final descending ordering, configured final Top-K truncation, explicit override, equal-score deterministic order, empty candidate response, and invalid Top-K validation before semantic or graph dependency calls.
+
+## Acceptance Review
+- Task acceptance: Results sorted descending by `final_score`; only final Top-K candidates returned; empty merged sets return `[]`; invalid Top-K values return validation errors before dependency calls; ties remain deterministic; no sibling (03E) retrieval reason work.
+- Status: satisfied
+- Evidence: `_rank_and_limit_candidates` sorts descending and slices. Tests assert sorted/truncated candidates by configured Top-K, explicit override to one result, stable tie order, empty candidates as `[]`, and invalid `final_top_k` values raising `HybridRetrievalValidationError` with mocked dependencies not called. Retrieval reason behavior is unchanged from prior graph merge behavior and no new answer-generation or reason-generation logic was added.
+
+## Progress Tracking
+- Selected task checkbox: changed from unchecked to checked for (03D) only after ACCEPTED decision, in both the task block and progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch03 remains unchecked because (03E) is still incomplete.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated. (03E), Batch03, Batch04, and Batch05 remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material to acceptance. The report accurately states the code/test files are untracked, so their content was reviewed directly outside standard `git diff` output.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected service and test files remain untracked as part of ongoing Batch03 work. This does not block acceptance but must be included by the orchestrator's later batch commit.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch03 - Hybrid Candidate Merge and Final Ranking",
+  "selected_task_id": "(03D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_8_execute_agent.md",
+    "docs/review/review_8_review_agent.md",
+    "docs/tasks/task_8.md",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03E)
+
+## Source Task File
+docs/tasks/task_8.md
+
+## Execution Report Reviewed
+docs/reports/report_8_execute_agent.md
+
+## Review Report File
+docs/review/review_8_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Hybrid Candidate Merge and Final Ranking
+- Task ID: (03E)
+- Task title: Generate retrieval reasons without answer generation
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_8.md > ## 7. Data Model / Schema Changes; docs/plans/Plan_8.md > ## 4. Out of Scope; docs/plans/Plan_8.md > ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > # 10. Agent 1: Retrieval Agent > ## 10.6 Agent 1 Output Schema
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03E)
+- Reviewed task ID: (03E)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching (03E) execution report. Prior accepted uncommitted Batch03 changes for (03A), (03B), (03C), and (03D) were treated as dependencies and current working-tree context, not as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - docs/reports/report_8_execute_agent.md
+  - docs/review/review_8_review_agent.md
+  - docs/tasks/task_8.md
+  - backend/app/services/hybrid_retrieval_service.py (untracked)
+  - backend/tests/test_hybrid_retrieval_service.py (untracked)
+- untracked files:
+  - backend/app/services/hybrid_retrieval_service.py
+  - backend/tests/test_hybrid_retrieval_service.py
+
+## Files Reviewed
+- `docs/reports/report_8_execute_agent.md`: in scope - contains the appended (03E) execution report after prior task reports.
+- `docs/tasks/task_8.md`: in scope - selected (03E) task block, prior accepted dependency checkboxes, and reviewer checkbox update for (03E) only.
+- `docs/review/review_8_review_agent.md`: in scope - prior review entries inspected before appending this report at EOF.
+- `docs/plans/Plan_8.md`: in scope - cited schema, out-of-scope, acceptance criteria, test, and reviewer checklist sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited Agent 1 output schema reviewed for `retrieval_reason` support.
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - selected (03E) implementation reviewed directly because the file is untracked. The selected additions generate retrieval reasons after scoring from deterministic graph, semantic, keyword, metadata, and position signals.
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - selected (03E) tests reviewed directly because the file is untracked. The selected additions cover semantic-only retrieval reason generation without answer-like chunk text and graph-backed reason composition.
+- `backend/app/schemas/retrieval.py`: in scope - verified `retrieval_reason: str | None = None` keeps reasons optional where omitted.
+- `backend/app/services/graph_retrieval_service.py`: in scope - verified existing graph `retrieval_reason` is deterministic entity/path metadata, not verified evidence or answer generation.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds `_build_retrieval_reason`, token overlap helpers, and assigns optional `retrieval_reason` during `_score_candidate` from existing candidate fields and computed scores.
+- file from execution report: backend/tests/test_hybrid_retrieval_service.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Includes coverage for semantic-only deterministic reason generation and graph-backed reason composition without answer text.
+- file from execution report: docs/reports/report_8_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Workflow report file was appended with the selected task report.
+
+## Dependency Review
+- Required dependencies: (03C) scored hybrid candidates and hybrid candidate schema support for optional `retrieval_reason`.
+- Dependency status: satisfied. (03C) is checked complete from prior accepted review, score components are available before reason generation, and `HybridRetrievalCandidate.retrieval_reason` is optional.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Reason generation remains inside the backend hybrid retrieval service, runs after deterministic scoring, uses existing candidate fields and score components, preserves optional schema behavior, and does not add Agent 1 wrapper, evidence verification, answer generation, LLM/provider calls, rerank, API mode, frontend work, database changes, or commits.
+- Failed: None.
+- Uncertain: None for selected (03E). Batch04 still owns rerank and failure handling; Batch05 still owns broader required test/manual validation work.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_score_candidate` updates `retrieval_reason` with `_build_retrieval_reason(...)`. `_build_retrieval_reason` constructs concise strings from graph reason/score, semantic score, matched keyword tokens, metadata score, and position score. `_keyword_overlap_terms` derives terms from normalized question/content token intersection and caps the list.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime logic uses candidate scores, existing graph retrieval reason metadata, question/content token overlap, and scoring outputs. Fixed UUIDs, sample text, and expected reason strings appear only in tests.
+
+## Validations Reviewed
+- Command/check: `python -m pytest backend/tests/test_hybrid_retrieval_service.py -q`
+- Reported result: Failed first during TDD red step, then passed with 19 passed in 1.56s.
+- Rerun result: Passed, 19 passed in 1.70s.
+- Status: satisfied
+- Notes: Confirms selected retrieval-reason tests and existing hybrid merge/scoring/ranking behavior pass.
+- Command/check: `cd backend; pytest tests/test_hybrid_retrieval_service.py -v`
+- Reported result: Passed, 19 tests collected and 19 passed in 1.51s.
+- Rerun result: Passed, 19 tests collected and 19 passed in 1.58s.
+- Status: satisfied
+- Notes: Rerun validates semantic-only reasons, graph-backed reason composition, no answer-like chunk text in the semantic reason fixture, and no regression to prior Batch03 hybrid behavior.
+- Command/check: `rg -n "ShopAIKey|shopaikey|rerank|answer|verification|verify|Agent 1|agent|mode|frontend|api|LLM|provider|retrieval_reason|_build_retrieval_reason" backend/app/services/hybrid_retrieval_service.py backend/tests/test_hybrid_retrieval_service.py -S`
+- Reported result: Not reported by executor.
+- Rerun result: Only comments/test names/reason code matched; no provider call, rerank, API mode, frontend, verification, or answer-generation implementation found.
+- Status: satisfied
+- Notes: The only `answer` match is the service docstring stating reasons are not answers, and test naming around not including answer text.
+
+## Acceptance Review
+- Task acceptance: Retrieval reasons are deterministic, based on existing fields/scores/metadata, do not answer the question, do not cite evidence as verified, do not invoke an LLM/provider, and remain optional where the schema permits omission.
+- Status: satisfied
+- Evidence: Runtime reason parts are generated from deterministic values already present in the candidate or score calculation. The semantic reason test asserts answer-like chunk text `approval conditions` is not copied. Graph-backed reasons are prefixed as graph match context and score/overlap signals, not verified evidence. `retrieval_reason` remains optional in `HybridRetrievalCandidate`, and `_build_retrieval_reason` returns `None` when no reason parts exist.
+
+## Progress Tracking
+- Selected task checkbox: changed from unchecked to checked for (03E) only after ACCEPTED decision, in both the task block and progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch03 batch checkbox remains unchecked per instruction not to mark the batch complete.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated. Batch04 and Batch05 remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material to acceptance. The report accurately states the service/test files remain untracked, so their content was reviewed directly outside standard `git diff` output.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected service and test files remain untracked as part of ongoing Batch03 work. This does not block acceptance but must be included by the orchestrator's later batch commit.
+- Batch03 task IDs are now all checked after this selected task acceptance, but the Batch03 batch checkbox was intentionally left unchanged because the user explicitly instructed not to mark the batch complete.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, per user instruction not to mark the batch complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_8.md",
+  "execution_report_reviewed": "docs/reports/report_8_execute_agent.md",
+  "review_report_file": "docs/review/review_8_review_agent.md",
+  "selected_batch": "Batch03 - Hybrid Candidate Merge and Final Ranking",
+  "selected_task_id": "(03E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_8_execute_agent.md",
+    "docs/review/review_8_review_agent.md",
+    "docs/tasks/task_8.md",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/tests/test_hybrid_retrieval_service.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

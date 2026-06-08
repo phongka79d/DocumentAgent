@@ -370,7 +370,7 @@ The product needs one retrieval service contract that combines semantic and grap
 
 ### Tasks
 
-- [ ] (03A): Create hybrid retrieval service and call semantic and graph retrieval
+- [x] (03A): Create hybrid retrieval service and call semantic and graph retrieval
   - Source of Truth: `docs/plans/Plan_8.md` > `## 1. Goal`; `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 5. Dependencies`; `docs/plans/Plan_8.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `README.md` > `### Semantic Retrieval Service`
   - Source Requirements:
     - Create `backend/app/services/hybrid_retrieval_service.py`.
@@ -388,7 +388,7 @@ The product needs one retrieval service contract that combines semantic and grap
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live validation if indexed and graph-built documents are unavailable.
   - Files: `backend/app/services/hybrid_retrieval_service.py`, `backend/tests/test_hybrid_retrieval_service.py`
 
-- [ ] (03B): Merge semantic and graph candidates by chunk ID
+- [x] (03B): Merge semantic and graph candidates by chunk ID
   - Source of Truth: `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Merge semantic and graph candidates by `chunk_id`.
@@ -405,7 +405,7 @@ The product needs one retrieval service contract that combines semantic and grap
   - Blocked Condition: None.
   - Files: `backend/app/services/hybrid_retrieval_service.py`, `backend/tests/test_hybrid_retrieval_service.py`
 
-- [ ] (03C): Calculate keyword, metadata, position, and final scores for every merged candidate
+- [x] (03C): Calculate keyword, metadata, position, and final scores for every merged candidate
   - Source of Truth: `docs/plans/Plan_8.md` > `## 1. Goal`; `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.4 Scoring Formula`
   - Source Requirements:
     - Return sorted candidates with `semantic_similarity`, `graph_relevance`, `keyword_overlap`, `metadata_match`, `recency_or_position_score`, and `final_score`.
@@ -422,7 +422,7 @@ The product needs one retrieval service contract that combines semantic and grap
   - Blocked Condition: None.
   - Files: `backend/app/services/hybrid_retrieval_service.py`, `backend/app/utils/scoring.py`, `backend/tests/test_hybrid_retrieval_service.py`, `backend/tests/test_scoring.py`
 
-- [ ] (03D): Sort by final score and return final configurable Top-K
+- [x] (03D): Sort by final score and return final configurable Top-K
   - Source of Truth: `docs/plans/Plan_8.md` > `## 1. Goal`; `docs/plans/Plan_8.md` > `## 3. Scope`; `docs/plans/Plan_8.md` > `## 9. Implementation Steps`; `docs/plans/Plan_8.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.3 Top-K Settings`
   - Source Requirements:
     - Add final Top-K selection.
@@ -440,7 +440,7 @@ The product needs one retrieval service contract that combines semantic and grap
   - Blocked Condition: None.
   - Files: `backend/app/services/hybrid_retrieval_service.py`, `backend/tests/test_hybrid_retrieval_service.py`
 
-- [ ] (03E): Generate retrieval reasons without answer generation
+- [x] (03E): Generate retrieval reasons without answer generation
   - Source of Truth: `docs/plans/Plan_8.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_8.md` > `## 4. Out of Scope`; `docs/plans/Plan_8.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.6 Agent 1 Output Schema`
   - Source Requirements:
     - Hybrid candidate schema includes `retrieval_reason`.
@@ -839,11 +839,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch03
 
-- [ ] (03A): Create hybrid retrieval service and call semantic and graph retrieval
-- [ ] (03B): Merge semantic and graph candidates by chunk ID
-- [ ] (03C): Calculate keyword, metadata, position, and final scores for every merged candidate
-- [ ] (03D): Sort by final score and return final configurable Top-K
-- [ ] (03E): Generate retrieval reasons without answer generation
+- [x] (03A): Create hybrid retrieval service and call semantic and graph retrieval
+- [x] (03B): Merge semantic and graph candidates by chunk ID
+- [x] (03C): Calculate keyword, metadata, position, and final scores for every merged candidate
+- [x] (03D): Sort by final score and return final configurable Top-K
+- [x] (03E): Generate retrieval reasons without answer generation
 
 #### Batch04
 
