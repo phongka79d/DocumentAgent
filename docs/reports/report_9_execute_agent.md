@@ -352,3 +352,255 @@ complete
 - next task ID: (02A)
 - can proceed: yes
 - handoff notes: backend-only settings are already configured/documented; `retrieve_hybrid` can supply Agent 1's default final candidate count from `Settings.retrieval_final_top_k` when Agent 1 delegates without an explicit override. Live persistence validation still requires user-provided Supabase setup.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch02 - Agent Step Logging Service
+
+## Task
+(02A) - Add Supabase helper for inserting agent step logs
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 6. Required Files and Folders
+- docs/plans/Plan_9.md > ## 7. Data Model / Schema Changes
+- docs/plans/Master_Plan.md > ## Table: agent_steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Agent Step Logging Service
+- Task ID: (02A)
+- Task title: Add Supabase helper for inserting agent step logs
+
+## Completed Work
+- Task is complete for the selected local scope.
+- Added `insert_agent_step_log` to `backend/app/services/supabase_service.py`.
+- Helper inserts exactly one `agent_steps` row with `agent_run_id`, `step_name`, `agent_name`, `input`, `output`, `status`, and nullable `error_message`.
+- Helper follows existing Supabase insert conventions by using `get_supabase_client`, `client.table(...).insert(...).execute()`, `_first_response_row`, and safe `SupabaseConnectionError` wrapping.
+- Added direct mocked unit tests for required row shape and safe insert failure behavior.
+
+## Files Created or Modified
+- backend/app/services/supabase_service.py
+- backend/tests/test_supabase_service.py
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed
+- evidence or reason: 36 tests collected, 36 passed.
+- Live Supabase insert validation: Blocked
+- evidence or reason: BLOCKED_BY_USER_ACTION because live validation requires user-confirmed Supabase credentials, applied Plan 2 migration, and a valid `agent_run_id`.
+- Schema migration check: Passed
+- evidence or reason: `git diff --name-only -- backend/app/db backend/app/services/agent_log_service.py` returned no changed files.
+
+## Acceptance Check
+- Task acceptance condition: Helper builds the exact row shape required by Plan 9 and Master Plan; no schema migration is added; tests can mock the helper.
+- Status: satisfied
+- Evidence: Mocked test asserts insert into `agent_steps` with the required row keys and payload values; changed files are limited to `backend/app/services/supabase_service.py`, `backend/tests/test_supabase_service.py`, and this report; no migration files were changed.
+
+## Artifacts Produced
+- Supabase helper: `insert_agent_step_log`
+- Unit tests: `test_insert_agent_step_log_inserts_required_row_shape`, `test_insert_agent_step_log_reports_safe_insert_failure`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction says not to update task checkbox or batch status; A2 updates after accepted review.
+
+## Key Implementation Decisions
+- Kept the helper narrow and did not create `agent_log_service.py`, workflow orchestration, public APIs, or sibling-task behavior.
+- Accepted JSON-compatible dictionaries at the Supabase service boundary so later services can mock or serialize payloads before calling the helper.
+
+## Risks or Open Issues
+- Live `agent_steps` persistence remains unverified until the user provides or confirms Supabase credentials, applied migration, and a valid `agent_run_id`.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, architecture concerns, or task/source conflicts identified.
+- Stayed within `(02A)` and did not implement `(02B)`, `(02C)`, Batch03, `agent_log_service.py`, or schema migrations.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: next task can call or mock `supabase_service.insert_agent_step_log` when implementing the focused agent log service. Live database validation is still pending user setup.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch02 - Agent Step Logging Service
+
+## Task
+(02B) - Implement focused agent log service
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_9.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_9.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_9.md` > `## 9. Implementation Steps`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Agent Step Logging Service
+- Task ID: (02B)
+- Task title: Implement focused agent log service
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Created `backend/app/services/agent_log_service.py` with `log_agent_step(agent_run_id, step_name, agent_name, input_payload, output_payload, status, error_message=None)`.
+- Added Agent 1 constants for `step_name = "agent_1_retrieval"` and `agent_name = "retrieval_agent"`.
+- Added status validation for `success` and `failed`.
+- Added safe JSON-compatible payload conversion for Pydantic models and dictionaries without mutating caller data.
+- Delegated persistence to the existing `(02A)` Supabase helper `insert_agent_step_log`.
+- Added focused mocked unit tests for success, failed, invalid status, and invalid payload behavior.
+
+## Files Created or Modified
+- `backend/app/services/agent_log_service.py`
+- `backend/tests/test_agent_log_service.py`
+- `docs/reports/report_9_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_agent_log_service.py -v`: Passed
+- evidence or reason: 4 tests collected, 4 passed.
+- `cd backend; pytest tests/test_supabase_service.py -v`: Passed
+- evidence or reason: 36 tests collected, 36 passed; adjacent Supabase helper boundary still passes.
+- `rg "print\(|SUPABASE_SERVICE_ROLE_KEY|fake-service-role-key|secret" backend/app/services/agent_log_service.py backend/tests/test_agent_log_service.py`: Passed
+- evidence or reason: no matches in new service or service tests.
+
+## Acceptance Check
+- Task acceptance condition: Agent log service can write success and failed rows through the Supabase helper; it accepts Pydantic models or dictionaries; it does not print or expose secrets.
+- Status: satisfied
+- Evidence: Mocked tests assert success and failed calls delegate to `insert_agent_step_log` with JSON-compatible payloads; Pydantic models and dictionaries are accepted; dictionary caller data remains unmutated; no print or secret matches were found in new files.
+
+## Artifacts Produced
+- `backend/app/services/agent_log_service.py`
+- `backend/tests/test_agent_log_service.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction says not to update task checkbox or batch status; A2 updates after accepted review.
+
+## Key Implementation Decisions
+- Kept the service focused on a single step log and did not implement agent workflow, agent run lifecycle, retrieval callable, or safe log failure policy reserved for `(02C)`.
+- Used Pydantic JSON-mode serialization for both Pydantic models and mapping payloads so UUIDs and nested models become JSON-compatible while preserving caller data.
+- Let Supabase helper exceptions propagate rather than adding broader failure behavior that belongs to `(02C)`.
+
+## Risks or Open Issues
+- Live `agent_steps` persistence remains unverified because this task only requires mocked tests; live checks still require user Supabase setup and a valid `agent_run_id`.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, architecture concerns, or task/source conflicts identified.
+- `(02A)` was already checked in the task file, and this task reused its Supabase helper without changing schema or implementing sibling tasks.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes
+- handoff notes: `(02C)` can build safe log failure behavior on top of `log_agent_step`; current service validates payload/status and delegates to `insert_agent_step_log` with mocked test coverage.
+
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+[docs/tasks/task_9.md](../tasks/task_9.md)
+
+## Report File
+[docs/reports/report_9_execute_agent.md](report_9_execute_agent.md)
+
+## Batch
+[Batch02 - Agent Step Logging Service]
+
+## Task
+(02C) - Define safe log failure behavior
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_9.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Agent Step Logging Service
+- Task ID: (02C)
+- Task title: Define safe log failure behavior
+
+## Completed Work
+- Added a non-fatal `try_log_agent_step(...)` wrapper in `backend/app/services/agent_log_service.py` that preserves the original retrieval outcome by returning an `AgentStepLogAttempt` instead of raising on persistence failure.
+- Kept the existing strict `log_agent_step(...)` path intact so insert failures still emit logged exceptions and raise `AgentLogPersistenceError` when callers need the hard failure.
+- Added tests that prove successful logging returns a persisted attempt, failed inserts are visible, and the original retrieval error message is preserved in the failed-log path.
+
+## Files Created or Modified
+- `backend/app/services/agent_log_service.py`
+- `backend/tests/test_agent_log_service.py`
+- `docs/reports/report_9_execute_agent.md`
+
+## Tests or Validations Run
+- `pytest tests/test_agent_log_service.py -v`: Passed
+- `pytest tests/test_supabase_service.py -v`: Passed
+- evidence or reason: 8 agent log service tests passed; 36 Supabase service tests passed; failure-path logging behavior is covered by mocked insert failures.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove original retrieval failures remain visible even if log insertion also fails; success-path log failure is visible and handled according to the chosen safe behavior.
+- Status: satisfied
+- Evidence: `try_log_agent_step(...)` returns a non-fatal attempt result with `persisted=False` and preserves the original `error_message` on failed retrieval logging, while `log_agent_step(...)` still logs and raises on persistence failure.
+
+## Artifacts Produced
+- `AgentStepLogAttempt` result type
+- `try_log_agent_step(...)` safe wrapper
+- Additional unit tests for safe failure behavior
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction says not to update the task checkbox; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Chose a result-returning safe wrapper rather than weakening the strict logger, so retrieval code can preserve success/failure semantics without losing the persistence error signal.
+
+## Risks or Open Issues
+- Live Supabase `agent_steps` persistence for this behavior remains unverified; tests only cover the mocked insert-failure boundary.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No source-of-truth conflicts or out-of-scope workflow logic added.
+- Batch02 stayed within the log-service boundary and did not implement Batch03 retrieval callable behavior.
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes
+- handoff notes: `try_log_agent_step(...)` now gives Batch03 a safe way to preserve retrieval outcomes when log persistence fails.

@@ -283,6 +283,77 @@ def test_insert_document_metadata_reports_empty_insert_result(
     assert "document metadata insert" in str(exc_info.value)
 
 
+def test_insert_agent_step_log_inserts_required_row_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    inserted_row = {
+        "id": "step-id",
+        "agent_run_id": "11111111-1111-1111-1111-111111111111",
+        "step_name": "agent_1_retrieval",
+        "agent_name": "retrieval_agent",
+        "input": {"question": "When can I start?"},
+        "output": {"candidates": []},
+        "status": "success",
+        "error_message": None,
+    }
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[inserted_row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_agent_step_log(
+        agent_run_id="11111111-1111-1111-1111-111111111111",
+        step_name="agent_1_retrieval",
+        agent_name="retrieval_agent",
+        input_payload={"question": "When can I start?"},
+        output_payload={"candidates": []},
+        status="success",
+        error_message=None,
+    )
+
+    assert result == inserted_row
+    client.table.assert_called_once_with("agent_steps")
+    query.insert.assert_called_once_with(
+        {
+            "agent_run_id": "11111111-1111-1111-1111-111111111111",
+            "step_name": "agent_1_retrieval",
+            "agent_name": "retrieval_agent",
+            "input": {"question": "When can I start?"},
+            "output": {"candidates": []},
+            "status": "success",
+            "error_message": None,
+        }
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_insert_agent_step_log_reports_safe_insert_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.insert_agent_step_log(
+            agent_run_id="11111111-1111-1111-1111-111111111111",
+            step_name="agent_1_retrieval",
+            agent_name="retrieval_agent",
+            input_payload={"question": "When can I start?"},
+            output_payload={},
+            status="failed",
+            error_message="Safe error",
+        )
+
+    message = str(exc_info.value)
+    assert "agent step log insert" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message
+
+
 def test_list_document_metadata_filters_user_and_orders_created_desc(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

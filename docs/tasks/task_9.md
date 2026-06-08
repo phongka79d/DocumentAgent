@@ -215,7 +215,7 @@ Agent 1 completion is only traceable when success and failure inputs/outputs are
 
 ### Tasks
 
-- [ ] (02A): Add Supabase helper for inserting agent step logs
+- [x] (02A): Add Supabase helper for inserting agent step logs
   - Source of Truth: `docs/plans/Plan_9.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_9.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Master_Plan.md` > `## Table: agent_steps`
   - Source Requirements:
     - `backend/app/services/supabase_service.py` may add a helper for inserting agent step logs if not already present.
@@ -231,7 +231,7 @@ Agent 1 completion is only traceable when success and failure inputs/outputs are
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live database insert checks if Supabase credentials, migration, or a valid `agent_run_id` are unavailable.
   - Files: `backend/app/services/supabase_service.py`, `backend/tests/test_supabase_service.py` if adding direct helper tests
 
-- [ ] (02B): Implement focused agent log service
+- [x] (02B): Implement focused agent log service
   - Source of Truth: `docs/plans/Plan_9.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_9.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Create `backend/app/services/agent_log_service.py`.
@@ -247,7 +247,7 @@ Agent 1 completion is only traceable when success and failure inputs/outputs are
   - Blocked Condition: None for mocked tests; `BLOCKED_BY_USER_ACTION` only for live persistence checks.
   - Files: `backend/app/services/agent_log_service.py`, `backend/app/services/__init__.py` if needed, `backend/tests/test_retrieval_agent.py` or dedicated service tests
 
-- [ ] (02C): Define safe log failure behavior
+- [x] (02C): Define safe log failure behavior
   - Source of Truth: `docs/plans/Plan_9.md` > `## 13. Failure Handling`; `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Agent log insert failure must be logged.
@@ -698,9 +698,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch02
 
-- [ ] (02A): Add Supabase helper for inserting agent step logs
-- [ ] (02B): Implement focused agent log service
-- [ ] (02C): Define safe log failure behavior
+- [x] (02A): Add Supabase helper for inserting agent step logs
+- [x] (02B): Implement focused agent log service
+- [x] (02C): Define safe log failure behavior
 
 #### Batch03
 

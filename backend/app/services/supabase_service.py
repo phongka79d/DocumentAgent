@@ -194,6 +194,35 @@ def insert_document_metadata(document_row: dict) -> dict:
     return _first_response_row("document metadata insert", response)
 
 
+def insert_agent_step_log(
+    *,
+    agent_run_id: str,
+    step_name: str,
+    agent_name: str,
+    input_payload: dict[str, Any],
+    output_payload: dict[str, Any],
+    status: str,
+    error_message: str | None = None,
+) -> dict:
+    client = get_supabase_client()
+    row = {
+        "agent_run_id": agent_run_id,
+        "step_name": step_name,
+        "agent_name": agent_name,
+        "input": input_payload,
+        "output": output_payload,
+        "status": status,
+        "error_message": error_message,
+    }
+
+    try:
+        response = client.table("agent_steps").insert(row).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("agent step log insert", exc)
+
+    return _first_response_row("agent step log insert", response)
+
+
 def list_document_metadata(user_id: str) -> list[dict]:
     client = get_supabase_client()
 
