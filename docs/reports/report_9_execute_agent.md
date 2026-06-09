@@ -604,3 +604,495 @@ complete
 - next task ID: (03A)
 - can proceed: yes
 - handoff notes: `try_log_agent_step(...)` now gives Batch03 a safe way to preserve retrieval outcomes when log persistence fails.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+/docs/tasks/task_9.md
+
+## Report File
+[docs/reports/report_9_execute_agent.md]
+
+## Batch
+Batch03 - Retrieval Agent Callable and Failure Handling
+
+## Task
+(03A) - Create retrieval agent module and controlled error type
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_9.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_9.md` > `## 8. API Design`
+- `docs/plans/Plan_9.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03A)
+- Task title: Create retrieval agent module and controlled error type
+
+## Completed Work
+- Added `backend/app/agents/retrieval_agent.py` as a backend-only service module.
+- Defined `AGENT_1_RETRIEVAL_STEP_NAME` and `RETRIEVAL_AGENT_NAME` constants.
+- Defined controlled `RetrievalAgentError`.
+- Added the internal callable `run_retrieval_agent(input_data: RetrievalAgentInput) -> RetrievalAgentOutput` as a stub ready for later implementation.
+- Re-exported the new symbols from `backend/app/agents/__init__.py`.
+
+## Files Created or Modified
+- `backend/app/agents/retrieval_agent.py`
+- `backend/app/agents/__init__.py`
+
+## Tests or Validations Run
+- `cd backend; python -c "from app.agents import AGENT_1_RETRIEVAL_STEP_NAME, RETRIEVAL_AGENT_NAME, RetrievalAgentError, run_retrieval_agent; from app.agents.retrieval_agent import RetrievalAgentError as RAE; print(AGENT_1_RETRIEVAL_STEP_NAME, RETRIEVAL_AGENT_NAME, RAE.__name__)"`: Passed
+- `cd backend; python -c "import app.agents.retrieval_agent as m; print(m.AGENT_1_RETRIEVAL_STEP_NAME, m.RETRIEVAL_AGENT_NAME, m.RetrievalAgentError.__name__)"`: Passed
+
+## Acceptance Check
+- Task acceptance condition: Module imports cleanly; no public endpoint is added; error type is available for workflow layers.
+- Status: satisfied
+- Evidence: Direct import checks succeeded, and no API route files were added or changed.
+
+## Artifacts Produced
+- Importable `app.agents.retrieval_agent` module with controlled error type and callable skeleton.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction says not to update the task checkbox; A2 handles checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Kept the module backend-only and service-level, with module imports positioned for later patching in tests.
+
+## Risks or Open Issues
+- The callable is still a skeleton and will be implemented in the next Batch03 tasks.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No source-of-truth conflicts or out-of-scope workflow logic added.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes
+- handoff notes: `run_retrieval_agent` and the new error/constants are now available for the input-validation and hybrid-retrieval implementation work.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch03 - Retrieval Agent Callable and Failure Handling
+
+## Task
+(03B) - Implement input validation and hybrid retrieval call
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 8. API Design
+- docs/plans/Plan_9.md > ## 9. Implementation Steps
+- docs/plans/Plan_9.md > ## 10. Configuration and Environment Variables
+- README.md > ### Hybrid Retrieval Configuration, Schemas, Scoring Utilities, Graph Candidates, and API Mode
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03B)
+- Task title: Implement input validation and hybrid retrieval call
+
+## Completed Work
+- Updated `backend/app/agents/retrieval_agent.py` to validate raw or model input through `RetrievalAgentInput.model_validate(...)`.
+- Wired `run_retrieval_agent(...)` to call `hybrid_retrieval_service.retrieve_hybrid(question, document_ids, final_top_k)` using backend settings.
+- Preserved backend-only service boundaries and kept the module free of routers or public endpoints.
+- Added focused tests covering valid hybrid retrieval delegation and invalid input rejection before retrieval.
+
+## Files Created or Modified
+- backend/app/agents/retrieval_agent.py
+- backend/tests/test_retrieval_agent.py
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed, 4 passed.
+- `cd backend; python -c "from app.agents import RetrievalAgentInput, RetrievalAgentOutput, RetrievalCandidate, run_retrieval_agent, RetrievalAgentError; print(...)"`: Passed.
+- `cd backend; python -c "import app.agents.retrieval_agent as m; print(m.AGENT_1_RETRIEVAL_STEP_NAME, m.RETRIEVAL_AGENT_NAME, m.RetrievalAgentError.__name__)"`: Passed.
+
+## Acceptance Check
+- Task acceptance condition: Hybrid retrieval is called exactly through the approved service boundary; selected document IDs are passed through; invalid input fails before retrieval.
+- Status: satisfied
+- Evidence: Tests prove the delegated `retrieve_hybrid` call receives trimmed question text, validated UUID document IDs, and the backend default `retrieval_final_top_k`; invalid input cases raise `ValidationError` before retrieval is invoked.
+
+## Artifacts Produced
+- Retrieval-agent hybrid retrieval delegation in `backend/app/agents/retrieval_agent.py`.
+- Focused retrieval-agent tests in `backend/tests/test_retrieval_agent.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction leaves checkbox updates to A2 after an accepted review.
+
+## Key Implementation Decisions
+- Validated raw inputs through `RetrievalAgentInput.model_validate(...)` so the retrieval boundary fails before the hybrid call when input is malformed.
+- Kept the callable service-level and backend-only so later Batch03 steps can add output shaping and failure logging without changing the module boundary.
+
+## Risks or Open Issues
+- The callable currently returns the hybrid retrieval response directly; output shaping and logging are still deferred to later Batch03 tasks.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No source-of-truth conflicts, dependency issues, or architecture concerns identified.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes
+- handoff notes: hybrid retrieval delegation and invalid-input rejection are now covered by direct tests.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch03 - Retrieval Agent Callable and Failure Handling
+
+## Task
+(03C) - Convert hybrid candidates into validated Agent 1 output and log success
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 1. Goal
+- docs/plans/Plan_9.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_9.md > ## 9. Implementation Steps
+- docs/plans/Plan_9.md > ## 12. Acceptance Criteria
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03C)
+- Task title: Convert hybrid candidates into validated Agent 1 output and log success
+
+## Completed Work
+- Updated `backend/app/agents/retrieval_agent.py` to convert `HybridRetrievalCandidate` items into `RetrievalCandidate` models.
+- Validated and returned a `RetrievalAgentOutput` model before logging.
+- Wrote a success log through `agent_log_service.log_agent_step(...)` using the validated input and output models.
+- Added a focused test that proves output conversion, candidate ordering preservation, and success-log payload behavior.
+
+## Files Created or Modified
+- backend/app/agents/retrieval_agent.py
+- backend/tests/test_retrieval_agent.py
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed, 4 passed.
+- `cd backend; python -c "from app.agents import run_retrieval_agent, RetrievalAgentOutput; print(callable(run_retrieval_agent), RetrievalAgentOutput.__name__)"`: Passed.
+
+## Acceptance Check
+- Task acceptance condition: Output matches required JSON schema; success log uses `step_name = "agent_1_retrieval"`, `agent_name = "retrieval_agent"`, `status = "success"`, safe input payload, and validated output payload.
+- Status: satisfied
+- Evidence: The retrieval-agent test asserts the returned `RetrievalAgentOutput`, ordered `RetrievalCandidate` list, and the `agent_log_service.log_agent_step(...)` call with validated payload models.
+
+## Artifacts Produced
+- Retrieval-agent output conversion and success logging in `backend/app/agents/retrieval_agent.py`.
+- Focused success-path retrieval-agent test coverage in `backend/tests/test_retrieval_agent.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction leaves checkbox updates to A2 after an accepted review.
+
+## Key Implementation Decisions
+- Mapped hybrid candidates through the Agent 1 candidate schema instead of passing the hybrid schema through directly, so the Agent 1 output contract stays explicit and validated.
+- Logged the already-validated input and output models to keep the persistence payload safe and consistent.
+
+## Risks or Open Issues
+- Retrieval failure handling and log-failure preservation are still deferred to `(03D)`.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No source-of-truth conflicts, dependency issues, or architecture concerns identified.
+
+## Notes for Next Task
+- next task ID: (03D)
+- can proceed: yes
+- handoff notes: Agent 1 now returns validated structured output and records success logs for the retrieval path.
+---
+
+# Task Execution Report - (03D)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch03 - Retrieval Agent Callable and Failure Handling
+
+## Task
+(03D) - Implement retrieval failure handling and failed-step logging
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 8. API Design
+- docs/plans/Plan_9.md > ## 9. Implementation Steps
+- docs/plans/Plan_9.md > ## 13. Failure Handling
+- docs/plans/Plan_9.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03D)
+- Task title: Implement retrieval failure handling and failed-step logging
+
+## Completed Work
+- Task is complete.
+- Added deterministic retrieval failure handling in `run_retrieval_agent`: validated input remains before retrieval, hybrid retrieval exceptions are wrapped in a controlled `RetrievalAgentError`, and the public error message is static and safe.
+- Added failed-step logging through the existing non-fatal `try_log_agent_step(...)` service path with `status = "failed"`, `step_name = "agent_1_retrieval"`, `agent_name = "retrieval_agent"`, safe input payload, empty output payload, and safe error message.
+- Added retrieval-agent visibility for failed log persistence without replacing the original controlled retrieval failure.
+- Added mocked failure tests for hybrid retrieval exception, failed-step log insertion failure, and invalid input not invoking retrieval or log calls.
+
+## Files Created or Modified
+- backend/app/agents/retrieval_agent.py
+- backend/tests/test_retrieval_agent.py
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed
+- evidence or reason: 6 tests collected and 6 passed, including retrieval failure, log persistence failure preservation, and invalid-input-before-retrieval cases.
+- `cd backend; pytest tests/test_agent_log_service.py -v`: Passed
+- evidence or reason: 8 tests collected and 8 passed, confirming the existing non-fatal log wrapper behavior used by the retrieval failure branch.
+- Scope scan: `rg -n "LangGraph|/api/chat/ask|answer|verified|mark.*verified|Agent 2|Agent 3" backend/app/agents/retrieval_agent.py backend/tests/test_retrieval_agent.py`: Passed
+- evidence or reason: no matches found.
+
+## Acceptance Check
+- Task acceptance condition: Retrieval exceptions produce a failed log entry and `RetrievalAgentError`; log insertion failures are visible; invalid input raises validation before retrieval and does not create fake success.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_logs_failed_step_and_raises_controlled_error` asserts a failed log call and safe `RetrievalAgentError`; `test_run_retrieval_agent_reports_failed_log_insert_without_erasing_retrieval_error` asserts log persistence failure visibility while preserving the safe retrieval error; invalid input parametrized tests assert retrieval and non-fatal logging are not called.
+
+## Artifacts Produced
+- Mocked retrieval failure tests in `backend/tests/test_retrieval_agent.py`
+- Failed retrieval handling in `backend/app/agents/retrieval_agent.py`
+- Appended execution report in `docs/reports/report_9_execute_agent.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction leaves checkbox and batch updates to A2 after an accepted review.
+
+## Key Implementation Decisions
+- Used a single static safe message, `Retrieval failed. Please try again later.`, for failed agent-step logs and controlled workflow-facing exceptions to avoid leaking provider, Qdrant, Supabase, SQL, private content, or stack-trace details.
+- Raised `RetrievalAgentError` with `from None` so the workflow-facing exception does not chain raw dependency details.
+- Kept candidate/output validation errors outside the retrieval exception wrapper so schema mismatches still fail normally before workflow continuation, as Plan 9 requires.
+
+## Risks or Open Issues
+- None for this task.
+
+## Minor Issues Fixed During Execution
+- Extended the invalid-input test to assert the failed-log path is also not called before input validation succeeds.
+
+## Workflow Integrity Check
+- Dependencies were satisfied in the task file: Batch02 tasks are checked complete and `(03B)` had already been implemented in existing Batch03 work.
+- No source-of-truth conflicts or architecture concerns identified.
+- Existing uncommitted Batch01-Batch03 changes were preserved; no task checkbox was changed.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes
+- handoff notes: `(03D)` retrieval failure behavior is implemented and covered by mocked tests. Batch03 can be reviewed before Batch04 begins.
+
+---
+
+# Task Execution Report - Batch03 Repair
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch03 - Retrieval Agent Callable and Failure Handling
+
+## Task
+Batch03 repair - Repair A3 audit task-tracking inconsistency for accepted task IDs (03A), (03B), (03C), and (03D)
+
+## Status
+complete
+
+## Source of Truth Used
+- A3 audit feedback supplied by user
+- docs/tasks/task_9.md > Mandatory Batch03 - Retrieval Agent Callable and Failure Handling
+- docs/tasks/task_9.md > Progress Tracker
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: Batch03 repair for accepted IDs (03A), (03B), (03C), and (03D)
+- Task title: Repair task-tracking consistency after A3 audit feedback
+
+## Completed Work
+- Repair is complete.
+- Updated only the task-tracking evidence in `docs/tasks/task_9.md` so Batch03 completion is internally consistent for accepted task IDs `(03A)`, `(03B)`, `(03C)`, and `(03D)`.
+- Marked the Progress Tracker Batch03 batch checkbox as complete.
+- Marked Progress Tracker entries `(03A)` and `(03B)` complete to match the already accepted and checked Batch03 task block.
+- Preserved existing implementation, tests, README, execution report content, review report content, and future Batch04/Batch05 task state.
+
+## Files Created or Modified
+- docs/tasks/task_9.md
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `rg -n "Batch03|\(03A\)|\(03B\)|\(03C\)|\(03D\)|Batch04|Batch05|\(04A\)|\(05A\)" docs/tasks/task_9.md`: Passed
+- evidence or reason: Batch03 task block shows `(03A)`, `(03B)`, `(03C)`, and `(03D)` checked; Progress Tracker shows Batch03 checked and `(03A)`, `(03B)`, `(03C)`, and `(03D)` checked; Batch04, Batch05, `(04A)`, and `(05A)` remain unchecked.
+- `git diff -- docs/tasks/task_9.md`: Passed
+- evidence or reason: diff is limited to Batch03 task checkbox evidence and Progress Tracker Batch03 checkbox evidence.
+- `git diff --stat`: Passed
+- evidence or reason: changed files remain within accepted Batch03 implementation/tests/reports/review/task-tracking scope already present in the working tree; this repair added no implementation, test, README, Batch04, or Batch05 changes.
+
+## Acceptance Check
+- Task acceptance condition: Repair the task-tracking evidence so every accepted Batch03 task ID is checked in both the Batch03 task block and Progress Tracker, no future Batch04 or Batch05 task is checked, and implementation scope is unchanged.
+- Status: satisfied
+- Evidence: `docs/tasks/task_9.md` now shows `(03A)`, `(03B)`, `(03C)`, and `(03D)` checked in the Batch03 task block and Progress Tracker; Batch03 batch checkbox is checked; Batch04 and Batch05 remain unchecked.
+
+## Artifacts Produced
+- Appended repair execution report in `docs/reports/report_9_execute_agent.md`.
+- Repaired task-tracking evidence in `docs/tasks/task_9.md`.
+
+## Progress Update
+- task checkbox updated: yes
+- batch status updated: yes
+- reason: A3 specifically required repairing contradictory Batch03 task-tracking evidence for accepted task IDs `(03A)`, `(03B)`, `(03C)`, and `(03D)` before rerunning A3.
+
+## Key Implementation Decisions
+- Limited edits to `docs/tasks/task_9.md` checkbox state and this appended execution report.
+- Did not modify implementation, tests, README, review content, future Batch04 tasks, or future Batch05 tasks.
+
+## Risks or Open Issues
+- None for this repair.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for this repair.
+- A3 audit feedback was followed exactly: task-tracking evidence was repaired without changing implementation scope or committing.
+
+## Notes for Next Task
+- next task ID: A2 validation of Batch03 repair, then rerun A3 audit if accepted.
+- can proceed: yes
+- handoff notes: A2 should verify Batch03 and `(03A)` through `(03D)` are checked in both locations, Batch04 and Batch05 remain unchecked, and git diff remains limited to accepted Batch03 implementation, tests, reports, reviews, and task-tracking changes.
+
+---
+
+# Task Execution Report - Batch03 Repair Formatting Follow-up
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch03 - Retrieval Agent Callable and Failure Handling
+
+## Task
+Batch03 repair follow-up - Fix A2-rejected Batch03 task-block formatting for accepted task ID (03A)
+
+## Status
+complete
+
+## Source of Truth Used
+- A2 review outcome and repair instructions supplied by user
+- docs/tasks/task_9.md > Mandatory Batch03 - Retrieval Agent Callable and Failure Handling
+- docs/tasks/task_9.md > Progress Tracker
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: Batch03 repair formatting follow-up for accepted ID (03A)
+- Task title: Remove unintended indentation from the Batch03 task-block `(03A)` checkbox line
+
+## Completed Work
+- Repair follow-up is complete.
+- In the Batch03 task block only, changed `  - [x] (03A): Create retrieval agent module and controlled error type` to `- [x] (03A): Create retrieval agent module and controlled error type`.
+- Preserved all checked Batch03 states in the Batch03 task block and Progress Tracker.
+- Left Batch04 and Batch05 unchecked.
+- Did not modify implementation, tests, README, future tasks, or unrelated files.
+
+## Files Created or Modified
+- docs/tasks/task_9.md
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `rg -n "Batch03|\(03A\)|\(03B\)|\(03C\)|\(03D\)|Batch04|Batch05|\(04A\)|\(05A\)" docs/tasks/task_9.md`: Passed
+- evidence or reason: Batch03 task block shows `(03A)`, `(03B)`, `(03C)`, and `(03D)` checked with `(03A)` no longer indented as a child item; Progress Tracker shows Batch03 and `(03A)` through `(03D)` checked; Batch04, Batch05, `(04A)`, and `(05A)` remain unchecked.
+- `git diff -- docs/tasks/task_9.md`: Passed
+- evidence or reason: diff shows Batch03 accepted task checkboxes and Progress Tracker Batch03 checkboxes checked, with `(03A)` in the Batch03 task block formatted as a top-level task line.
+
+## Acceptance Check
+- Task acceptance condition: In the Batch03 task block only, change the `(03A)` line to remove two leading spaces, preserve all checked Batch03 states, and leave Batch04/Batch05 unchecked.
+- Status: satisfied
+- Evidence: `rg` output shows line 320 as `- [x] (03A): Create retrieval agent module and controlled error type`; lines 445 and 566 show `(04A)` and `(05A)` unchecked; Progress Tracker lines show Batch04 and Batch05 unchecked.
+
+## Artifacts Produced
+- Appended repair follow-up execution report in `docs/reports/report_9_execute_agent.md`.
+- Corrected Batch03 task-block formatting in `docs/tasks/task_9.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: this follow-up only repaired formatting for an already checked accepted Batch03 task line.
+
+## Key Implementation Decisions
+- Limited the task file edit to the exact A2-requested formatting change.
+- Did not change implementation files, tests, README, review content, Batch04 tasks, or Batch05 tasks.
+
+## Risks or Open Issues
+- None for this repair follow-up.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for this formatting repair.
+- A2 repair instructions were followed exactly, and no commit was created.
+
+## Notes for Next Task
+- next task ID: A2 validation of Batch03 repair follow-up, then rerun A3 audit if accepted.
+- can proceed: yes
+- handoff notes: A2 should verify the Batch03 task-block `(03A)` line has no leading spaces, all Batch03 accepted IDs remain checked in both locations, and Batch04/Batch05 remain unchecked.

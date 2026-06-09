@@ -1320,3 +1320,1080 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03A)
+- Task title: Create retrieval agent module and controlled error type
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_9.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_9.md` > `## 8. API Design`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: none
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The appended report entry at the end of `docs/reports/report_9_execute_agent.md` matches the requested task ID and batch.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `docs/reports/report_9_execute_agent.md`
+- untracked files: `backend/app/agents/retrieval_agent.py`
+
+## Files Reviewed
+- `backend/app/agents/retrieval_agent.py`: in scope - new backend-only module, controlled error type, callable skeleton
+- `backend/app/agents/__init__.py`: in scope - re-exports new Agent 1 symbols
+- `docs/tasks/task_9.md`: in scope - reviewed selected checkbox and batch scope
+- `docs/reports/report_9_execute_agent.md`: in scope - reviewed latest execution entry for (03A)
+- `docs/plans/Plan_9.md`: in scope - checked Batch03 requirements and acceptance
+- `docs/plans/Master_Plan.md`: in scope - checked broader Agent 1 and backend-only boundaries
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/retrieval_agent.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: New module exists and imports cleanly.
+- file from execution report: `backend/app/agents/__init__.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Re-exports the new Agent 1 symbols without adding API surface.
+
+## Dependency Review
+- Required dependencies: Batch01 schemas; Batch02 log service; completed Plan 8 hybrid retrieval boundary
+- Dependency status: satisfied for this task
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: backend-only module location, no router added, controlled error type exported, no schema or API boundary changes
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The module and error type are real; the callable is intentionally a skeleton for later Batch03 tasks and matches the task acceptance for (03A).
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture answers, file-specific logic, or fake success paths were introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -c "from app.agents import AGENT_1_RETRIEVAL_STEP_NAME, RETRIEVAL_AGENT_NAME, RetrievalAgentError, run_retrieval_agent; from app.agents.retrieval_agent import RetrievalAgentError as RAE; print(AGENT_1_RETRIEVAL_STEP_NAME, RETRIEVAL_AGENT_NAME, RAE.__name__)"`
+  - Reported result: Passed
+  - Rerun result: Passed
+  - Status: satisfied
+  - Notes: Verified package-level export and direct module import.
+- Command/check: `cd backend; python -c "import app.agents.retrieval_agent as m; print(m.AGENT_1_RETRIEVAL_STEP_NAME, m.RETRIEVAL_AGENT_NAME, m.RetrievalAgentError.__name__)"`
+  - Reported result: Passed
+  - Rerun result: Passed
+  - Status: satisfied
+  - Notes: Verified direct module import and controlled error export.
+
+## Acceptance Review
+- Task acceptance: satisfied
+- Status: satisfied
+- Evidence: Module imports cleanly; no public endpoint was added; `RetrievalAgentError` is available for workflow layers.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: sibling task checkboxes were not changed
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The callable is still a skeleton, which is consistent with task (03A) but leaves the real retrieval flow to later Batch03 tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Agent Callable and Failure Handling",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+---
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03B)
+- Task title: Implement input validation and hybrid retrieval call
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_9.md` > `## 8. API Design`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 10. Configuration and Environment Variables`; `README.md` > `### Hybrid Retrieval Configuration, Schemas, Scoring Utilities, Graph Candidates, and API Mode`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry matches the selected Batch03 task and does not include sibling-task claims.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`, `docs/reports/report_9_execute_agent.md`, `docs/tasks/task_9.md`
+- untracked files: `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`
+
+## Files Reviewed
+- `backend/app/agents/retrieval_agent.py`: in scope - validates input and delegates to Plan 8 hybrid retrieval
+- `backend/tests/test_retrieval_agent.py`: in scope - proves hybrid call arguments and invalid-input rejection
+- `backend/app/agents/schemas.py`: in scope - input validation rules used by the callable
+- `backend/app/agents/__init__.py`: in scope - exports the callable and error type
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - verified call boundary and default Top-K contract
+- `backend/app/core/config.py`: in scope - verified backend default for `retrieval_final_top_k`
+- `docs/tasks/task_9.md`: in scope - reviewed selected task checkbox and dependencies
+- `docs/reports/report_9_execute_agent.md`: in scope - reviewed latest execution entry for (03B)
+- `docs/plans/Plan_9.md`: in scope - checked task scope and acceptance requirements
+- `docs/plans/Master_Plan.md`: in scope - checked broader Agent 1 candidate and scoring contract
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/retrieval_agent.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Input validation happens through `RetrievalAgentInput.model_validate(...)` before the hybrid call.
+- file from execution report: `backend/tests/test_retrieval_agent.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Tests cover the approved service boundary and invalid input rejection.
+
+## Dependency Review
+- Required dependencies: Batch01 schemas, completed Plan 8 hybrid retrieval, backend settings for `RETRIEVAL_FINAL_TOP_K`
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: backend-only callable, no router added, Pydantic validation precedes retrieval, approved hybrid service boundary preserved
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The callable validates inputs, fetches backend settings, and calls the real hybrid retrieval service; invalid cases are rejected before the call.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture answers, sample IDs, or fake success paths were introduced in runtime logic.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_agent.py -v`
+  - Reported result: Passed, 4 passed.
+  - Rerun result: Passed, 4 passed.
+  - Status: satisfied
+  - Notes: Confirms valid delegation and invalid input rejection.
+- Command/check: `cd backend; python -c "from app.agents import RetrievalAgentInput, RetrievalAgentOutput, RetrievalCandidate, run_retrieval_agent, RetrievalAgentError; print(...)"` and `cd backend; python -c "import app.agents.retrieval_agent as m; print(m.AGENT_1_RETRIEVAL_STEP_NAME, m.RETRIEVAL_AGENT_NAME, m.RetrievalAgentError.__name__)"`
+  - Reported result: Passed
+  - Rerun result: Not rerun during this review, but the files were inspected directly and the pytest run covered the callable path.
+  - Status: satisfied
+  - Notes: Package exports were already present and consistent with the reviewed module.
+
+## Acceptance Review
+- Task acceptance: satisfied
+- Status: satisfied
+- Evidence: Hybrid retrieval is called through the approved service boundary, selected document IDs are passed through, and invalid input fails before retrieval.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: sibling task checkboxes were not changed
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- This task intentionally stops before output conversion and logging, which remain for later Batch03 tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Agent Callable and Failure Handling",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/retrieval_agent.py",
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03C)
+- Task title: Convert hybrid candidates into validated Agent 1 output and log success
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_9.md > ## 1. Goal; ## 7. Data Model / Schema Changes; ## 9. Implementation Steps; ## 12. Acceptance Criteria
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest matching execution entry for (03C) was reviewed. Prior accepted Batch01, Batch02, and earlier Batch03 entries were treated as context only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/agents/__init__.py; docs/reports/report_9_execute_agent.md; docs/review/review_9_review_agent.md; docs/tasks/task_9.md
+- untracked files: backend/app/agents/retrieval_agent.py; backend/tests/test_retrieval_agent.py
+
+## Files Reviewed
+- `backend/app/agents/retrieval_agent.py`: in scope - implements Agent 1 output conversion, output validation, and success logging for (03C); also contains prior Batch03 callable setup.
+- `backend/tests/test_retrieval_agent.py`: in scope - includes mocked success-path assertions for converted output, candidate ordering, and success log payload.
+- `backend/app/agents/schemas.py`: in scope - verifies `RetrievalCandidate` and `RetrievalAgentOutput` validation contract used by the selected task.
+- `backend/app/services/agent_log_service.py`: in scope - verifies `log_agent_step` service boundary and payload serialization expected by the selected task.
+- `backend/app/schemas/retrieval.py`: in scope - verifies hybrid candidate fields converted into Agent 1 output.
+- `backend/app/agents/__init__.py`: in scope for prior accepted Batch03 dependency, not a selected (03C) executor-reported change.
+- `docs/reports/report_9_execute_agent.md`: in scope - execution evidence for selected task.
+- `docs/tasks/task_9.md`: in scope - selected (03C) checkbox updated by reviewer only after acceptance.
+- `docs/review/review_9_review_agent.md`: in scope - review report appended.
+- `docs/plans/Plan_9.md`: in scope - cited source-of-truth sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - agent_steps and Agent 1 output context reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/retrieval_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains conversion from `HybridRetrievalCandidate` to `RetrievalCandidate`, validates `RetrievalAgentOutput`, logs success after validation, and returns the validated model.
+- file from execution report: `backend/tests/test_retrieval_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Mocked test covers output shape, ordering preservation, and success log payload.
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Selected execution entry was appended and accurately describes the selected work.
+
+## Dependency Review
+- Required dependencies: (03B), Batch02 log service
+- Dependency status: satisfied for this review; (03B) and Batch02 have prior accepted review entries and required code is present.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Backend-only internal callable; uses existing hybrid retrieval service; maps to explicit Agent 1 schemas; logs success through `agent_log_service.log_agent_step`; no public route, Agent 2, Agent 3, LangGraph, final answer, or verified-chunk behavior added.
+- Failed: none
+- Uncertain: none for selected mocked success path; live database persistence remains outside this task's required local validation.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `run_retrieval_agent` validates input, calls `hybrid_retrieval_service.retrieve_hybrid`, constructs `RetrievalAgentOutput` from converted candidates, calls `agent_log_service.log_agent_step` with status `success`, and returns the validated output.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses schema fields and service outputs, not fixed answers, fixture IDs, document IDs, filenames, or expected candidate text. Constants `agent_1_retrieval` and `retrieval_agent` are required by Plan 9.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_agent.py -v`
+- Reported result: Passed, 4 passed
+- Rerun result: Passed, 4 passed
+- Status: passed
+- Notes: Rerun collected 4 items and all passed.
+- Command/check: `cd backend; python -c "from app.agents import run_retrieval_agent, RetrievalAgentOutput; print(callable(run_retrieval_agent), RetrievalAgentOutput.__name__)"`
+- Reported result: Passed
+- Rerun result: Passed, printed `True RetrievalAgentOutput`
+- Status: passed
+- Notes: Import/callable smoke check matches executor report.
+- Command/check: scope and secret scan over `backend/app/agents` and `backend/tests/test_retrieval_agent.py`
+- Reported result: not separately reported
+- Rerun result: no matches for out-of-scope Agent 2/Agent 3/LangGraph/chat/final-answer markers or backend secret variable names
+- Status: passed
+- Notes: `rg` returned no matches.
+
+## Acceptance Review
+- Task acceptance: Output matches required JSON schema; success log uses required step name, agent name, status, safe input payload, and validated output payload.
+- Status: satisfied
+- Evidence: Code validates `RetrievalAgentOutput` before logging; test asserts `RetrievalAgentOutput` contents, ordered `RetrievalCandidate` list, and `log_agent_step` call with `agent_run_id`, `step_name = "agent_1_retrieval"`, `agent_name = "retrieval_agent"`, validated input model, validated output model, and `status = "success"`.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and progress tracker for (03C)
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete; (03D) remains unchecked
+- Execution report entry: appended
+- Review report entry: appended
+- Other: Prior uncommitted checkbox changes for (03A) and (03B) were not made by this review and were not modified except as existing context.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none for selected (03C). `backend/app/agents/__init__.py` remains an uncommitted prior Batch03 dependency change, not a reported (03C) file.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live Supabase persistence was not required for this task; the selected acceptance path is covered by mocked logging.
+- Batch03 must remain open because (03D) retrieval failure handling and failed-step logging is not complete.
+- The task file has pre-existing Batch03 tracker differences for prior accepted (03A)/(03B) entries; they were left untouched because this review is scoped only to (03C).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Agent Callable and Failure Handling",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/retrieval_agent.py",
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/review/review_9_review_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03D)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: (03D)
+- Task title: Implement retrieval failure handling and failed-step logging
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_9.md` > `## 8. API Design`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`; `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03D)
+- Reviewed task ID: (03D)
+- Correct selection: yes
+- Notes: The latest appended execution report entry matches the requested Batch03 task. Earlier Batch03 entries were treated as prior context only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, `docs/tasks/task_9.md`; untracked implementation/test files `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`
+- untracked files: `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`
+
+## Files Reviewed
+- `backend/app/agents/retrieval_agent.py`: in scope - selected failure branch wraps hybrid retrieval exceptions, logs failed step through non-fatal wrapper, and raises controlled error.
+- `backend/tests/test_retrieval_agent.py`: in scope - selected failure tests cover hybrid retrieval failure, failed log persistence visibility, and invalid input before retrieval/logging.
+- `backend/app/services/agent_log_service.py`: in scope - dependency service for `try_log_agent_step` non-fatal persistence behavior.
+- `backend/app/agents/schemas.py`: in scope - validates selected input boundary before retrieval.
+- `backend/app/agents/__init__.py`: prior Batch03 dependency - exports retrieval agent symbols; not a new selected-task-only concern.
+- `docs/reports/report_9_execute_agent.md`: in scope - execution evidence for selected task.
+- `docs/tasks/task_9.md`: in scope - selected task checkbox updated after acceptance only.
+- `docs/review/review_9_review_agent.md`: in scope - review report appended.
+- `docs/plans/Plan_9.md`: in scope - cited source-of-truth sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/retrieval_agent.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Contains controlled failure handling and failed-step logging for hybrid retrieval exceptions.
+- file from execution report: `backend/tests/test_retrieval_agent.py`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Contains mocked failure tests for the selected task.
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Selected execution entry was appended and accurately reports mocked validation.
+
+## Dependency Review
+- Required dependencies: (03B), Batch02 safe log behavior.
+- Dependency status: satisfied; prior Batch02 review entries are accepted, and required `try_log_agent_step` code and tests are present.
+- Missing or invalid dependency: none for selected task.
+
+## Architecture Alignment
+- Passed: no public endpoint added; invalid input validates before retrieval; hybrid dependency failures are converted to `RetrievalAgentError`; failed-step logging uses `step_name = "agent_1_retrieval"`, `agent_name = "retrieval_agent"`, `status = "failed"`, safe input payload, empty output payload, and static safe error text; no Agent 2, Agent 3, LangGraph, final-answer, or verified-chunk behavior added.
+- Failed: none.
+- Uncertain: none for mocked failure behavior; live Supabase persistence remains outside this selected task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `run_retrieval_agent` catches hybrid retrieval exceptions after input validation, calls `_log_failed_retrieval`, and raises `RetrievalAgentError(RETRIEVAL_FAILURE_MESSAGE) from None`; `_log_failed_retrieval` calls `agent_log_service.try_log_agent_step` and emits a generic error log if persistence fails.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The static failure message and required step/agent constants are approved by Plan 9 safety requirements. Runtime logic does not hardcode fixture IDs, filenames, expected answers, document content, or dataset order.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_agent.py -v`
+  - Reported result: Passed; 6 tests collected and 6 passed.
+  - Rerun result: Passed; 6 tests collected and 6 passed.
+  - Status: passed
+  - Notes: Covered retrieval failure, failed-log persistence preservation, and invalid input before retrieval/logging.
+- Command/check: `cd backend; pytest tests/test_agent_log_service.py -v`
+  - Reported result: Passed; 8 tests collected and 8 passed.
+  - Rerun result: Passed; 8 tests collected and 8 passed.
+  - Status: passed
+  - Notes: Confirmed non-fatal log wrapper behavior used by the selected failure branch.
+- Command/check: `rg -n "LangGraph|/api/chat/ask|answer|verified|mark.*verified|Agent 2|Agent 3" backend/app/agents/retrieval_agent.py backend/tests/test_retrieval_agent.py`
+  - Reported result: Passed; no matches found.
+  - Rerun result: Passed; no matches found.
+  - Status: passed
+  - Notes: `rg` returned exit code 1 because there were no matches.
+- Command/check: secret scan over selected runtime/test files for service-role/API-key/private-key markers
+  - Reported result: not separately reported.
+  - Rerun result: Passed; no matches found.
+  - Status: passed
+  - Notes: No hardcoded secrets found in selected files.
+
+## Acceptance Review
+- Task acceptance: Retrieval exceptions produce a failed log entry and `RetrievalAgentError`; log insertion failures are visible; invalid input raises validation before retrieval and does not create fake success.
+- Status: satisfied
+- Evidence: Failure tests assert `try_log_agent_step` receives failed-step payload and safe message, `RetrievalAgentError` hides raw dependency details and has no chained cause, failed log insertion emits visibility without replacing the controlled retrieval error, and invalid input does not call retrieval or logging.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and progress tracker for (03D).
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete.
+- Execution report entry: appended.
+- Review report entry: appended.
+- Other: Existing prior accepted Batch03 checkbox state was left untouched except for the selected `(03D)` checkbox. The Batch03 batch checkbox was not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none for selected (03D). Git status includes prior accepted uncommitted Batch03 changes and review/report/task files from earlier A2 work; those were treated as context, not new selected-task scope.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live Supabase `agent_steps` persistence is still not verified by this selected task; the selected acceptance path relies on mocked tests, which matches the task requirements.
+- The task file's global Batch03 progress tracker still has pre-existing unchecked entries for prior accepted `(03A)` and `(03B)`; this review did not modify sibling task checkboxes under the user's hard rule.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete and the orchestrator directs the batch-level update
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Agent Callable and Failure Handling",
+  "selected_task_id": "(03D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/retrieval_agent.py",
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/review/review_9_review_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - Batch03 Repair
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+REJECTED_WITH_WARNINGS
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: Batch03 repair for accepted IDs (03A), (03B), (03C), and (03D)
+- Task title: Repair A3 audit task-tracking inconsistency
+- Task status reported by executor: complete
+- Source of Truth: A3 audit feedback supplied by user; `docs/tasks/task_9.md` > `Mandatory Batch03 - Retrieval Agent Callable and Failure Handling`; `docs/tasks/task_9.md` > `Progress Tracker`
+- Supplemental documents: `docs/plans/Plan_9.md` cited Batch03 sections reviewed for scope boundary
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: Batch03 repair after A3 audit feedback
+- Reviewed task ID: Batch03 repair for accepted IDs (03A), (03B), (03C), and (03D)
+- Correct selection: yes
+- Notes: The latest appended execution report is `Task Execution Report - Batch03 Repair`, so this review is limited to whether the A3 tracking inconsistency was repaired and whether the repair stayed inside accepted Batch03 scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, `docs/tasks/task_9.md`; untracked accepted Batch03 files `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`
+- untracked files: `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`
+
+## Files Reviewed
+- `docs/tasks/task_9.md`: in scope - contains the A3 repair target; Batch03 completion evidence is now consistent, but the Batch03 task-block `(03A)` line was indented by two extra spaces.
+- `docs/reports/report_9_execute_agent.md`: in scope - latest repair execution report was appended and describes the checkbox repair.
+- `docs/review/review_9_review_agent.md`: in scope - prior accepted Batch03 review entries were reviewed before appending this report.
+- `backend/app/agents/__init__.py`: in scope as prior accepted Batch03 implementation evidence; not modified by this repair entry.
+- `backend/app/agents/retrieval_agent.py`: in scope as prior accepted Batch03 implementation evidence; no Batch04/Batch05 scope found.
+- `backend/tests/test_retrieval_agent.py`: in scope as prior accepted Batch03 test evidence; no Batch04/Batch05 task completion state changed.
+- `docs/plans/Plan_9.md`: in scope - cited Batch03 source sections reviewed for out-of-scope boundaries.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_9.md`
+  - present in git/repo: yes
+  - matches task scope: partial
+  - notes: Batch03 and `(03A)` through `(03D)` are checked in both the Batch03 task block and Progress Tracker, and Batch04/Batch05 remain unchecked. However, the `(03A)` task-block checkbox line now has two leading spaces, changing the existing Markdown list nesting.
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Repair execution report was appended; no implementation, test, README, Batch04, or Batch05 change is introduced by the repair report.
+
+## Dependency Review
+- Required dependencies: Accepted Batch03 task IDs `(03A)`, `(03B)`, `(03C)`, and `(03D)` plus A3 audit feedback.
+- Dependency status: satisfied for review; prior A2 review entries accepted the Batch03 task IDs, and A3 supplied a concrete repair instruction.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: No public endpoint, Agent 2, Agent 3, LangGraph, final-answer, verified-chunk, Batch04, or Batch05 implementation was added by the repair.
+- Failed: none.
+- Uncertain: none for implementation scope.
+
+## Implementation Reality
+- Real implementation: not applicable to repair; task-tracking repair only.
+- Stub or fake logic found: no.
+- Evidence: The latest repair changed task-tracking evidence and appended the repair report; it did not modify runtime logic beyond prior accepted Batch03 files already in the working tree.
+
+## Hardcoding Review
+- Hardcoding found: no.
+- Evidence: No runtime constants, fixture IDs, expected answers, document IDs, filenames, dataset order, or fake success logic were introduced by this repair.
+
+## Validations Reviewed
+- Command/check: `rg -n "Batch03|\(03A\)|\(03B\)|\(03C\)|\(03D\)|Batch04|Batch05|\(04A\)|\(05A\)" docs/tasks/task_9.md`
+  - Reported result: Passed.
+  - Rerun result: Passed; showed Batch03 checked, `(03A)` through `(03D)` checked in both locations, and Batch04/Batch05 plus `(04A)`/`(05A)` unchecked.
+  - Status: passed with warning.
+  - Notes: The same output shows `docs/tasks/task_9.md:320` as `  - [x] (03A)`, with two leading spaces in the task block.
+- Command/check: `rg -- "- \[x\].*(\(04|\(05|Batch04|Batch05)" docs/tasks/task_9.md`
+  - Reported result: not separately reported.
+  - Rerun result: Passed; no matches found.
+  - Status: passed.
+  - Notes: `rg` returned exit code 1 because there were no checked Batch04 or Batch05 task/batch entries.
+- Command/check: `git diff -- docs/tasks/task_9.md`
+  - Reported result: Passed.
+  - Rerun result: Partially passed.
+  - Status: warning.
+  - Notes: Diff is limited to Batch03 task-tracking evidence, but it also changes the `(03A)` task-line indentation from `- [ ]` to `  - [x]`, which violates the repair instruction to preserve existing task content/formatting while correcting checkbox state.
+- Command/check: `git status --short`, `git diff --stat`, and `git diff`
+  - Reported result: Passed.
+  - Rerun result: Reviewed.
+  - Status: passed.
+  - Notes: Working tree remains limited to accepted Batch03 implementation/tests/reports/reviews/task tracking plus this repair evidence. Untracked `retrieval_agent.py` and `test_retrieval_agent.py` are accepted Batch03 files.
+
+## Acceptance Review
+- Task acceptance: Repair task-tracking evidence so every accepted Batch03 task ID is checked in both the Batch03 task block and Progress Tracker, no future Batch04 or Batch05 task is checked, and implementation scope is unchanged.
+- Status: partially satisfied.
+- Evidence: The A3 contradiction is fixed: Batch03 and `(03A)` through `(03D)` are checked in both locations, and Batch04/Batch05 remain unchecked. The repair still needs one formatting correction because the Batch03 task-block `(03A)` line has two leading spaces.
+
+## Progress Tracking
+- Selected task checkbox: not applicable; this is a Batch03 repair review, not a new task ID.
+- Checkbox updated by reviewer: no.
+- Batch status: Batch03 is checked in the Progress Tracker; Batch04 and Batch05 remain unchecked.
+- Execution report entry: appended.
+- Review report entry: appended.
+- Other: A2 did not update task checkboxes or repair implementation.
+
+## Report Accuracy
+- Partial.
+- Mismatches: The repair report says `git diff -- docs/tasks/task_9.md` is limited to checkbox evidence, but the diff also includes an unintended Markdown indentation change on the `(03A)` task-block line.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- `docs/tasks/task_9.md:320` has `  - [x] (03A): Create retrieval agent module and controlled error type` in the Batch03 task block. The checkbox state is correct, but the two leading spaces alter the original list structure and do not preserve the existing task entry formatting.
+
+### Warnings
+- The A3 tracking inconsistency itself is repaired; this rejection is limited to the one formatting preservation issue above.
+
+### Observations
+- No checked Batch04 or Batch05 batch/task entries were found.
+- No implementation repair was performed by A2.
+
+## Decision
+- Accept selected task? no.
+- Repair required? yes.
+- Can next task proceed? no; A1 should repair the task-file formatting first, then A2 should re-review before A3 reruns.
+- Should batch be marked complete? no, not until the repair review is accepted and A3 reruns successfully.
+
+## Repair Instructions
+- target: `docs/tasks/task_9.md`
+- change: In the Batch03 task block only, change line `  - [x] (03A): Create retrieval agent module and controlled error type` to `- [x] (03A): Create retrieval agent module and controlled error type`. Preserve all checked Batch03 states and leave Batch04/Batch05 unchecked.
+- validation: Rerun `rg -n "Batch03|\(03A\)|\(03B\)|\(03C\)|\(03D\)|Batch04|Batch05|\(04A\)|\(05A\)" docs/tasks/task_9.md` and `git diff -- docs/tasks/task_9.md`; confirm all accepted Batch03 IDs remain checked in both locations, Batch04/Batch05 remain unchecked, and the diff has no unintended indentation changes.
+- blocks next task: yes.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED_WITH_WARNINGS",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Agent Callable and Failure Handling",
+  "selected_task_id": "Batch03 repair for accepted IDs (03A), (03B), (03C), and (03D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/retrieval_agent.py",
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/review/review_9_review_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": false,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "A3 checkbox consistency is fixed, but docs/tasks/task_9.md:320 has an unintended two-space indentation change on the Batch03 task-block (03A) checkbox line."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - Batch03 Repair Formatting Follow-up
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Agent Callable and Failure Handling
+- Task ID: Batch03 repair formatting follow-up for accepted ID (03A)
+- Task title: Remove unintended indentation from the Batch03 task-block `(03A)` checkbox line
+- Task status reported by executor: complete
+- Source of Truth: Prior A2 repair instruction; `docs/tasks/task_9.md` > `Mandatory Batch03 - Retrieval Agent Callable and Failure Handling`; `docs/tasks/task_9.md` > `Progress Tracker`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: Batch03 repair formatting follow-up after A2 `REJECTED_WITH_WARNINGS`
+- Reviewed task ID: Batch03 repair formatting follow-up for accepted ID (03A)
+- Correct selection: yes
+- Notes: The latest appended execution report is `Task Execution Report - Batch03 Repair Formatting Follow-up`, matching the requested follow-up review.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, `docs/tasks/task_9.md`; untracked accepted Batch03 files `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`
+- untracked files: `backend/app/agents/retrieval_agent.py`, `backend/tests/test_retrieval_agent.py`
+
+## Files Reviewed
+- `docs/tasks/task_9.md`: in scope - `(03A)` task-block line is now top-level and checked; `(03A)` through `(03D)` remain checked in both Batch03 task block and Progress Tracker; Batch04/Batch05 remain unchecked.
+- `docs/reports/report_9_execute_agent.md`: in scope - latest follow-up execution report was appended and accurately describes the formatting-only repair.
+- `docs/review/review_9_review_agent.md`: in scope - prior A2 rejection was reviewed before appending this follow-up report.
+- `backend/app/agents/__init__.py`: in scope as prior accepted Batch03 implementation evidence; not part of this formatting repair.
+- `backend/app/agents/retrieval_agent.py`: in scope as prior accepted Batch03 implementation evidence; no new review of implementation performed.
+- `backend/tests/test_retrieval_agent.py`: in scope as prior accepted Batch03 test evidence; no Batch04/Batch05 completion state found.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/tasks/task_9.md`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: The Batch03 task-block `(03A)` line is `- [x] (03A): Create retrieval agent module and controlled error type`, with no unintended leading spaces.
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+  - present in git/repo: yes
+  - matches task scope: yes
+  - notes: Follow-up execution report was appended and did not introduce implementation, test, README, Batch04, or Batch05 changes.
+
+## Dependency Review
+- Required dependencies: Prior A2 `REJECTED_WITH_WARNINGS` repair instruction and accepted Batch03 IDs `(03A)`, `(03B)`, `(03C)`, and `(03D)`.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Follow-up is documentation/task-tracking only; no public endpoint, Agent 2, Agent 3, LangGraph, final-answer, verified-chunk, Batch04, or Batch05 implementation was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: not applicable to formatting follow-up.
+- Stub or fake logic found: no.
+- Evidence: The only reviewed follow-up behavior is the task-file line formatting and preserved checkbox state.
+
+## Hardcoding Review
+- Hardcoding found: no.
+- Evidence: No runtime code changes were introduced by the follow-up repair.
+
+## Validations Reviewed
+- Command/check: `rg -n -- "^(-|  -) \[[x ]\] \(03A\)|^- \[[x ]\] \(03B\)|^- \[[x ]\] \(03C\)|^- \[[x ]\] \(03D\)|^- \[[x ]\] Batch03|^- \[[x ]\] Batch04|^- \[[x ]\] Batch05|^- \[[x ]\] \(04A\)|^- \[[x ]\] \(05A\)" docs/tasks/task_9.md`
+  - Reported result: Passed.
+  - Rerun result: Passed; `(03A)` through `(03D)` are checked in the task block and Progress Tracker, Batch03 is checked, and Batch04/Batch05 plus `(04A)`/`(05A)` remain unchecked.
+  - Status: passed.
+  - Notes: Output showed `docs/tasks/task_9.md:320` as `- [x] (03A): Create retrieval agent module and controlled error type`.
+- Command/check: `rg -- "^- \[x\].*(\(04|\(05|Batch04|Batch05)" docs/tasks/task_9.md`
+  - Reported result: not separately reported.
+  - Rerun result: Passed; no checked Batch04 or Batch05 entries found.
+  - Status: passed.
+  - Notes: `rg` returned exit code 1 because there were no matches.
+- Command/check: `git diff -- docs/tasks/task_9.md`
+  - Reported result: Passed.
+  - Rerun result: Passed.
+  - Status: passed.
+  - Notes: Diff now shows `(03A)` as a top-level checked task line and contains only the accepted Batch03 checkbox/tracker state changes.
+- Command/check: `git status --short`, `git diff --stat`, and `git diff`
+  - Reported result: not all separately reported in latest follow-up.
+  - Rerun result: Reviewed.
+  - Status: passed.
+  - Notes: Working tree remains within accepted Batch03 implementation/tests/reports/reviews/task-tracking evidence and this follow-up report.
+
+## Acceptance Review
+- Task acceptance: Fix A2 formatting issue and preserve the A3 task-tracking repair.
+- Status: satisfied.
+- Evidence: The Batch03 task-block `(03A)` line no longer has two leading spaces; all accepted Batch03 IDs remain checked in both locations; Batch04 and Batch05 remain unchecked.
+
+## Progress Tracking
+- Selected task checkbox: not applicable; this is a repair follow-up review, not a new task ID.
+- Checkbox updated by reviewer: no.
+- Batch status: Batch03 remains checked in Progress Tracker; Batch04 and Batch05 remain unchecked.
+- Execution report entry: appended.
+- Review report entry: appended.
+- Other: A2 did not repair implementation or modify task checkboxes.
+
+## Report Accuracy
+- Accurate.
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The prior A2 formatting rejection is resolved.
+- The orchestrator should rerun A3 for Batch03 before proceeding beyond the batch gate.
+
+## Decision
+- Accept selected task? yes.
+- Repair required? no.
+- Can next task proceed? yes, to rerun A3 audit as required by the orchestrator flow.
+- Should batch be marked complete? no additional A2 action; A3 must rerun and decide the batch gate.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Agent Callable and Failure Handling",
+  "selected_task_id": "Batch03 repair formatting follow-up for accepted ID (03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/retrieval_agent.py",
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/review/review_9_review_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

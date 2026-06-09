@@ -317,7 +317,7 @@ Plan 9's core deliverable is a workflow-compatible retrieval agent wrapper aroun
 
 ### Tasks
 
-- [ ] (03A): Create retrieval agent module and controlled error type
+- [x] (03A): Create retrieval agent module and controlled error type
   - Source of Truth: `docs/plans/Plan_9.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_9.md` > `## 8. API Design`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Create `backend/app/agents/retrieval_agent.py`.
@@ -333,7 +333,7 @@ Plan 9's core deliverable is a workflow-compatible retrieval agent wrapper aroun
   - Blocked Condition: None.
   - Files: `backend/app/agents/retrieval_agent.py`, `backend/app/agents/__init__.py`
 
-- [ ] (03B): Implement input validation and hybrid retrieval call
+- [x] (03B): Implement input validation and hybrid retrieval call
   - Source of Truth: `docs/plans/Plan_9.md` > `## 8. API Design`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 10. Configuration and Environment Variables`; `README.md` > `### Hybrid Retrieval Configuration, Schemas, Scoring Utilities, Graph Candidates, and API Mode`
   - Source Requirements:
     - Validate input with Pydantic.
@@ -349,7 +349,7 @@ Plan 9's core deliverable is a workflow-compatible retrieval agent wrapper aroun
   - Blocked Condition: None.
   - Files: `backend/app/agents/retrieval_agent.py`, tests
 
-- [ ] (03C): Convert hybrid candidates into validated Agent 1 output and log success
+- [x] (03C): Convert hybrid candidates into validated Agent 1 output and log success
   - Source of Truth: `docs/plans/Plan_9.md` > `## 1. Goal`; `docs/plans/Plan_9.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Convert retrieval candidates into `RetrievalCandidate` models.
@@ -366,7 +366,7 @@ Plan 9's core deliverable is a workflow-compatible retrieval agent wrapper aroun
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live database log verification when required Supabase setup is missing.
   - Files: `backend/app/agents/retrieval_agent.py`, tests
 
-- [ ] (03D): Implement retrieval failure handling and failed-step logging
+- [x] (03D): Implement retrieval failure handling and failed-step logging
   - Source of Truth: `docs/plans/Plan_9.md` > `## 8. API Design`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`; `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - If retrieval fails, write an `agent_steps` row with status `failed` and a safe error message.
@@ -682,9 +682,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ### Batches
 
-- [ ] Batch01 - Agent Package, Schemas, and Configuration Boundary
-- [ ] Batch02 - Agent Step Logging Service
-- [ ] Batch03 - Retrieval Agent Callable and Failure Handling
+- [x] Batch01 - Agent Package, Schemas, and Configuration Boundary
+- [x] Batch02 - Agent Step Logging Service
+- [x] Batch03 - Retrieval Agent Callable and Failure Handling
 - [ ] Batch04 - Required Automated Tests
 - [ ] Batch05 - Manual Validation, Reporting, and Scope Review
 
@@ -704,10 +704,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch03
 
-- [ ] (03A): Create retrieval agent module and controlled error type
-- [ ] (03B): Implement input validation and hybrid retrieval call
-- [ ] (03C): Convert hybrid candidates into validated Agent 1 output and log success
-- [ ] (03D): Implement retrieval failure handling and failed-step logging
+- [x] (03A): Create retrieval agent module and controlled error type
+- [x] (03B): Implement input validation and hybrid retrieval call
+- [x] (03C): Convert hybrid candidates into validated Agent 1 output and log success
+- [x] (03D): Implement retrieval failure handling and failed-step logging
 
 #### Batch04
 
