@@ -650,33 +650,33 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ## Global Verification Checklist
 
-- [ ] `docs/plans/Plan_9.md` remained the scope authority.
-- [ ] No database schema changes were added.
-- [ ] `backend/app/agents/__init__.py` was created.
-- [ ] `backend/app/agents/schemas.py` defines Agent 1 input, candidate, and output schemas.
-- [ ] `backend/app/agents/retrieval_agent.py` exposes `run_retrieval_agent`.
-- [ ] `run_retrieval_agent` validates input with Pydantic before retrieval.
-- [ ] Agent 1 calls the existing Plan 8 hybrid retrieval service instead of reimplementing retrieval.
-- [ ] `RETRIEVAL_FINAL_TOP_K` is used or preserved as the Agent 1 default final candidate count.
-- [ ] Agent 1 output includes all required candidate score components.
-- [ ] Candidate ordering by `final_score` is preserved from hybrid retrieval.
-- [ ] Successful runs write an `agent_steps` row with `step_name = "agent_1_retrieval"`.
-- [ ] Failed retrieval runs write a failed `agent_steps` row when possible.
-- [ ] Retrieval failures raise controlled `RetrievalAgentError`.
-- [ ] Invalid input raises validation error before retrieval.
-- [ ] Empty retrieval results return `candidates: []` with success status.
-- [ ] Agent log insertion failure is visible and does not erase retrieval failure context.
-- [ ] No Agent 2 verification logic was implemented.
-- [ ] No Agent 3 answer generation logic was implemented.
-- [ ] No LangGraph workflow was implemented.
-- [ ] No `/api/chat/ask` endpoint was created.
-- [ ] No final answer generation was added.
-- [ ] Agent 1 does not mark chunks as verified.
-- [ ] Backend-only secrets and provider settings stayed out of frontend code.
-- [ ] `cd backend` then `pytest tests/test_retrieval_agent.py -v` was run and reported.
-- [ ] Manual Agent 1 smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
-- [ ] Execution report states whether `agent_steps` was verified through live database or mocked tests.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `docs/plans/Plan_9.md` remained the scope authority.
+- [x] No database schema changes were added.
+- [x] `backend/app/agents/__init__.py` was created.
+- [x] `backend/app/agents/schemas.py` defines Agent 1 input, candidate, and output schemas.
+- [x] `backend/app/agents/retrieval_agent.py` exposes `run_retrieval_agent`.
+- [x] `run_retrieval_agent` validates input with Pydantic before retrieval.
+- [x] Agent 1 calls the existing Plan 8 hybrid retrieval service instead of reimplementing retrieval.
+- [x] `RETRIEVAL_FINAL_TOP_K` is used or preserved as the Agent 1 default final candidate count.
+- [x] Agent 1 output includes all required candidate score components.
+- [x] Candidate ordering by `final_score` is preserved from hybrid retrieval.
+- [x] Successful runs write an `agent_steps` row with `step_name = "agent_1_retrieval"`.
+- [x] Failed retrieval runs write a failed `agent_steps` row when possible.
+- [x] Retrieval failures raise controlled `RetrievalAgentError`.
+- [x] Invalid input raises validation error before retrieval.
+- [x] Empty retrieval results return `candidates: []` with success status.
+- [x] Agent log insertion failure is visible and does not erase retrieval failure context.
+- [x] No Agent 2 verification logic was implemented.
+- [x] No Agent 3 answer generation logic was implemented.
+- [x] No LangGraph workflow was implemented.
+- [x] No `/api/chat/ask` endpoint was created.
+- [x] No final answer generation was added.
+- [x] Agent 1 does not mark chunks as verified.
+- [x] Backend-only secrets and provider settings stayed out of frontend code.
+- [x] `cd backend` then `pytest tests/test_retrieval_agent.py -v` was run and reported.
+- [x] Manual Agent 1 smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
+- [x] Execution report states whether `agent_steps` was verified through live database or mocked tests.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
@@ -685,8 +685,8 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] Batch01 - Agent Package, Schemas, and Configuration Boundary
 - [x] Batch02 - Agent Step Logging Service
 - [x] Batch03 - Retrieval Agent Callable and Failure Handling
-- [ ] Batch04 - Required Automated Tests
-- [ ] Batch05 - Manual Validation, Reporting, and Scope Review
+- [x] Batch04 - Required Automated Tests
+- [x] Batch05 - Manual Validation, Reporting, and Scope Review
 
 ### Task IDs
 
