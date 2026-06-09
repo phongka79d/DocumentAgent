@@ -141,6 +141,36 @@ def test_require_shopaikey_settings_returns_values_when_configured() -> None:
     }
 
 
+def test_require_shopaikey_chat_settings_raises_clear_error_without_secret_values() -> None:
+    settings = Settings(
+        _env_file=None,
+        shopaikey_api_key="private-shopaikey-value",
+        shopaikey_base_url="https://api.shopaikey.com/v1",
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        settings.require_shopaikey_chat_settings()
+
+    message = str(exc_info.value)
+    assert "SHOPAIKEY_CHAT_MODEL" in message
+    assert "private-shopaikey-value" not in message
+
+
+def test_require_shopaikey_chat_settings_returns_values_when_configured() -> None:
+    settings = Settings(
+        _env_file=None,
+        shopaikey_api_key="shopaikey-key",
+        shopaikey_base_url="https://api.shopaikey.com/v1",
+        shopaikey_chat_model="gpt-5-mini",
+    )
+
+    assert settings.require_shopaikey_chat_settings() == {
+        "api_key": "shopaikey-key",
+        "base_url": "https://api.shopaikey.com/v1",
+        "chat_model": "gpt-5-mini",
+    }
+
+
 def test_require_qdrant_settings_raises_clear_error_without_secret_values() -> None:
     settings = Settings(
         _env_file=None,
