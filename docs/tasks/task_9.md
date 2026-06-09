@@ -563,7 +563,7 @@ Plan 9 requires future execution agents to state whether `agent_steps` persisten
 
 ### Tasks
 
-- [ ] (05A): Run manual Agent 1 smoke check when live setup is available
+- [x] (05A): Run manual Agent 1 smoke check when live setup is available
   - Source of Truth: `docs/plans/Plan_9.md` > `## 11. Required Tests`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`; `docs/plans/Plan_9.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Create or reuse an `agent_run_id`.
@@ -581,7 +581,7 @@ Plan 9 requires future execution agents to state whether `agent_steps` persisten
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if a valid `agent_run_id`, live Supabase credentials, applied migration, indexed documents, or provider setup is missing.
   - Files: No required file changes beyond execution report; optional smoke script only if the repo already uses that pattern.
 
-- [ ] (05B): Complete execution report and scope boundary review
+- [x] (05B): Complete execution report and scope boundary review
   - Source of Truth: `docs/plans/Plan_9.md` > `## 4. Out of Scope`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_9.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created, files modified, commands run, test results, known issues, and intentionally out-of-scope work.
@@ -718,8 +718,8 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch05
 
-- [ ] (05A): Run manual Agent 1 smoke check when live setup is available
-- [ ] (05B): Complete execution report and scope boundary review
+- [x] (05A): Run manual Agent 1 smoke check when live setup is available
+- [x] (05B): Complete execution report and scope boundary review
 
 ## Completion Reporting Rules for Future Execution Agents
 

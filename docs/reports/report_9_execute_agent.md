@@ -1463,3 +1463,211 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after A2 review accepts `(04D)` and updates Batch04 progress if appropriate.
 - handoff notes: Reviewer should verify the required pytest result, changed-file-based adjacent-test decision, secret scan, no fake success, and that `(04D)` remains unchecked until A2 acceptance.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch05 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(05A) - Run manual Agent 1 smoke check when live setup is available
+
+## Status
+blocked
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 11. Required Tests
+- docs/plans/Plan_9.md > ## 13. Failure Handling
+- docs/plans/Plan_9.md > ## 14. Agent Report Requirement
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Manual Validation, Reporting, and Scope Review
+- Task ID: (05A)
+- Task title: Run manual Agent 1 smoke check when live setup is available
+
+## Completed Work
+- Status: blocked with `BLOCKED_BY_USER_ACTION`.
+- Inspected the selected task and cited Plan 9 sections.
+- Confirmed `run_retrieval_agent` exists and Batch03/Batch04 prerequisites are present in the task file.
+- Performed a non-secret local configuration check: Supabase, ShopAIKey embedding settings, and Qdrant settings are present in `backend/.env`; rerank is disabled.
+- Performed a safe live Supabase prerequisite lookup without printing document content or secrets.
+- Live Supabase lookup found 0 existing `agent_runs`, 0 reusable runs with selected document IDs, 6 document rows, 5 ready document rows, 4 indexed chunks, and 4 indexed document IDs.
+- Did not call `run_retrieval_agent` because no valid existing or user-confirmed `agent_run_id` was available, and the task explicitly forbids fabricating one.
+- Did not create an `agent_runs` row or document rows on behalf of the user.
+
+## Files Created or Modified
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `python - <<non-secret settings diagnostic>>` from `backend`: Passed
+- evidence or reason: confirmed required live-service setting names were populated without printing values; `enable_rerank=False`.
+- command/check: `python - <<safe Supabase prerequisite lookup>>` from `backend`: Blocked manual smoke
+- evidence or reason: live Supabase was reachable for prerequisite lookup, but `agent_runs_found=0` and `agent_runs_with_selected_document_ids=0`; indexed document data existed but no valid `agent_run_id` was available.
+- command/check: `pytest tests/test_retrieval_agent.py -v` from `backend`: Passed
+- evidence or reason: collected 16 tests and passed 16/16 in 1.60s; this is mocked automated evidence and remains separate from live verification.
+- command/check: service-level invocation of `run_retrieval_agent`: Blocked
+- evidence or reason: blocked by missing valid existing or user-confirmed `agent_run_id`.
+- command/check: safe `agent_steps` row lookup after Agent 1 smoke: Not run
+- evidence or reason: no Agent 1 smoke call was made because the prerequisite `agent_run_id` was missing.
+
+## Acceptance Check
+- Task acceptance condition: Manual check confirms candidate score fields and one `agent_1_retrieval` row, or the report safely explains why live verification is blocked.
+- Status: blocked
+- Evidence: live verification is blocked by missing valid existing or user-confirmed `agent_run_id`; no fake `agent_run_id`, document row, provider credential, or live success was created. Mocked automated tests passed separately and do not count as live `agent_steps` verification.
+
+## Artifacts Produced
+- Appended `(05A)` blocked manual validation report in `docs/reports/report_9_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Treated the absence of an existing `agent_runs` row as `BLOCKED_BY_USER_ACTION` instead of creating a production `agent_run_id` implicitly.
+- Kept live-vs-mocked evidence separate: live prerequisite lookup was performed, but Agent 1 retrieval and `agent_steps` persistence were not live-verified.
+
+## Risks or Open Issues
+- Manual Agent 1 smoke remains blocked until the user provides or confirms a valid `agent_run_id` associated with selected processed/indexed document IDs, or explicitly authorizes creation of an `agent_runs` row for smoke validation.
+- `agent_steps` live persistence for Agent 1 remains unverified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified for `(05A)`.
+- Dependencies Batch03 callable and Batch04 automated tests are present in the task file.
+- No sibling task `(05B)` work was performed.
+- No task checkbox was updated and no commit was created.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes, after A2 review accepts this blocked acceptance path for `(05A)`; live manual validation itself remains blocked until the missing `agent_run_id` prerequisite is resolved.
+- handoff notes: To complete the live smoke later, provide or confirm a valid `agent_run_id` and selected processed/indexed document IDs. Then call `run_retrieval_agent`, verify candidates include all score fields, and query `agent_steps` for exactly one `agent_1_retrieval` row for that run.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch05 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(05B) - Complete execution report and scope boundary review
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 4. Out of Scope
+- docs/plans/Plan_9.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_9.md > ## 14. Agent Report Requirement
+- docs/plans/Plan_9.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Manual Validation, Reporting, and Scope Review
+- Task ID: (05B)
+- Task title: Complete execution report and scope boundary review
+
+## Completed Work
+- Status: complete.
+- Appended this Plan 9 execution and scope-boundary handoff report to the established report file.
+- Summarized Batch04 automated validation evidence and the accepted `(05A)` blocked-live manual validation evidence.
+- Documented that `agent_steps` verification is covered by mocked automated tests only; live `agent_steps` persistence remains unverified because `(05A)` was blocked by missing valid existing or user-confirmed `agent_run_id`.
+- Documented intentionally out-of-scope work: Agent 2 verification, Agent 3 answer generation, LangGraph workflow, `/api/chat/ask`, final-answer generation, and any Agent 1 behavior that marks chunks as verified.
+- Did not rerun or complete the live `(05A)` smoke validation.
+- Did not update task checkboxes, mark Batch05 complete, change runtime code, or commit.
+
+## Files Created or Modified
+- Files created by `(05B)`: None.
+- Files modified by `(05B)`: `docs/reports/report_9_execute_agent.md`.
+- Existing working-tree files observed but not modified by `(05B)` before this append: `docs/tasks/task_9.md`, `docs/review/review_9_review_agent.md`.
+
+## Tests or Validations Run
+- command/check: `pytest tests/test_retrieval_agent.py -v` from `backend`: Passed
+- evidence or reason: collected 16 items; all 16 passed in 1.66s. This is mocked automated evidence, not live database verification.
+- command/check: `git diff --name-only`: Passed
+- evidence or reason: reported `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, and `docs/tasks/task_9.md`; `(05B)` modified only the execution report append.
+- command/check: `rg --pcre2 -n "sk-[A-Za-z0-9_-]+|SUPABASE_SERVICE_ROLE_KEY\s*=\s*(?!your-supabase-service-role-key(?:\r?\n)?$)|SHOPAIKEY_API_KEY\s*=\s*(?!shopaikey-placeholder(?:\r?\n)?$)|QDRANT_API_KEY\s*=\s*(?!qdrant-placeholder(?:\r?\n)?$)|password\s*=|secret\s*=|token\s*=" backend/app/agents backend/tests/test_retrieval_agent.py backend/.env.example; if ($LASTEXITCODE -eq 1) { 'NO_MATCHES' }`: Passed
+- evidence or reason: output was `NO_MATCHES`; no hardcoded secret pattern was found in the reviewed source, test, or env-example files.
+- command/check: `rg -n "Agent 2|Agent 3|LangGraph|/api/chat/ask|final answer|mark.*verified|answer generation" backend/app/agents backend/tests/test_retrieval_agent.py; if ($LASTEXITCODE -eq 1) { 'NO_MATCHES' }`: Passed
+- evidence or reason: output was `NO_MATCHES`; no reviewed Agent 1 source/test file referenced the out-of-scope behaviors.
+- command/check: `Test-Path backend/app/agents/verification_agent.py; Test-Path backend/app/agents/answer_agent.py; Test-Path backend/app/agents/graph.py; Test-Path backend/app/api/chat.py`: Passed
+- evidence or reason: output was `False`, `False`, `False`, `False`; no out-of-scope Agent 2, Agent 3, graph, or chat API files were found at those paths.
+- command/check: Report review against Plan 9 Agent Report Requirement and Reviewer Checklist: Passed
+- evidence or reason: this report includes files created/modified, commands run, test results, known issues, intentionally out-of-scope work, live-vs-mocked `agent_steps` status, scope, tests, acceptance, secrets, architecture, output validation, and visible failure/blocker notes.
+
+## Batch04 Automated Evidence Reviewed
+- `(04A)` reported command: `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed; 15 tests collected and 15 passed in 1.64s.
+- `(04B)` reported command: `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed; 15 tests collected and 15 passed in 1.71s.
+- `(04C)` reported command: `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed; 16 tests collected and 16 passed in 1.59s.
+- `(04D)` reported command: `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed; 16 tests collected and 16 passed in 1.97s.
+- `(04D)` also reported required changed-file, secret-scan, and out-of-scope scans as passed.
+- Current `(05B)` rerun of `pytest tests/test_retrieval_agent.py -v` from `backend`: Passed; 16 tests collected and 16 passed in 1.66s.
+
+## Manual Validation and agent_steps Status
+- `(05A)` accepted outcome: blocked safe path, reviewed and accepted by A2.
+- Live `run_retrieval_agent` invocation: not performed in `(05A)` and not rerun in `(05B)`.
+- Live `agent_steps` lookup after smoke: not performed because no smoke invocation occurred.
+- Reason live validation remains blocked: no valid existing or user-confirmed `agent_run_id` was available; the execution agent did not fabricate an `agent_run_id` or create production rows.
+- Mocked `agent_steps` coverage: automated tests cover successful and failed Agent 1 logging behavior through mocked boundaries. This does not prove live database persistence.
+
+## Acceptance Check
+- Task acceptance condition: Report includes required fields, exact test command results, live-vs-mocked `agent_steps` status, known issues, out-of-scope confirmations, and safe handoff notes.
+- Status: satisfied
+- Evidence: this report records exact relevant pytest results from Batch04 and current `(05B)` validation, states live `agent_steps` was not verified, records mocked logging coverage separately, lists known issues, confirms out-of-scope boundaries, and provides reviewer handoff notes.
+
+## Artifacts Produced
+- Appended `(05B)` Plan 9 execution and scope-boundary report in `docs/reports/report_9_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status updates are reserved for A2 after an ACCEPTED review. User explicitly instructed not to update the task checkbox or mark Batch05 complete.
+
+## Key Implementation Decisions
+- Treated `(05B)` as a documentation-only task and avoided runtime implementation changes.
+- Used the accepted `(05A)` evidence instead of rerunning or completing the live smoke validation.
+- Reported the live manual validation as blocked rather than complete because it was not actually performed.
+
+## Risks or Open Issues
+- Live Agent 1 smoke remains blocked until a valid `agent_run_id` is provided or explicitly authorized for creation.
+- Live `agent_steps` persistence for Agent 1 remains unverified; only mocked automated tests currently verify the logging boundary.
+- Existing dirty working-tree files include A2/task-tracking artifacts outside this `(05B)` append; they were not reverted or normalized by this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified for `(05B)`.
+- Dependency `(05A)` is accepted, with live validation safely blocked; Batch04 test evidence is present and revalidated by current targeted pytest.
+- Scope was followed: no Agent 2, Agent 3, LangGraph, chat API, final-answer generation, or chunk-verification behavior was added.
+- No hardcoded secrets found in reviewed Agent 1 source/test/env-example files.
+- No fake success claimed for live `agent_steps` persistence or manual smoke validation.
+- Architecture remains aligned with Plan 9 boundaries: Agent 1 retrieval is report-reviewed only here, and downstream workflow/answer behavior remains out of scope.
+- No commit was created.
+
+## Notes for Next Task
+- next task ID: none in Batch05
+- can proceed: yes, after A2 reviews and accepts `(05B)`; Batch05 can be considered for completion only after A2 updates progress and any required A3 batch audit is complete.
+- handoff notes: Reviewer should verify this report against Plan 9 sections 4, 12, 14, and 15; confirm `(05B)` made only the report append; confirm live manual validation remains blocked by missing valid `agent_run_id`; confirm mocked logging tests are not represented as live database proof; confirm out-of-scope scans and secret scan results are acceptable.
