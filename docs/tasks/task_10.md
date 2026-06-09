@@ -366,7 +366,7 @@ The final answer must rely only on verified chunks. Agent 2 must not trust LLM o
 
 ### Tasks
 
-- [ ] (03A): Reject or fail unknown returned chunk IDs
+- [x] (03A): Reject or fail unknown returned chunk IDs
   - Source of Truth: `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`; `docs/plans/Plan_10.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Confirm every returned `chunk_id` exists in Agent 1 candidates.
@@ -382,7 +382,7 @@ The final answer must rely only on verified chunks. Agent 2 must not trust LLM o
   - Blocked Condition: None.
   - Files: `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`
 
-- [ ] (03B): Validate verified and rejected quotes against source candidate content
+- [x] (03B): Validate verified and rejected quotes against source candidate content
   - Source of Truth: `docs/plans/Plan_10.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Ensure quotes are substrings or faithful excerpts from candidate content.
@@ -397,7 +397,7 @@ The final answer must rely only on verified chunks. Agent 2 must not trust LLM o
   - Blocked Condition: None.
   - Files: `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`
 
-- [ ] (03C): Add deterministic duplicate filtering
+- [x] (03C): Add deterministic duplicate filtering
   - Source of Truth: `docs/plans/Plan_10.md` > `## 3. Scope`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 11. Agent 2: Evidence Verification Agent` > `## 11.2 Verification Rules`
   - Source Requirements:
     - Implement deterministic duplicate filtering so repeated chunks are not verified twice.
@@ -412,7 +412,7 @@ The final answer must rely only on verified chunks. Agent 2 must not trust LLM o
   - Blocked Condition: None.
   - Files: `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`
 
-- [ ] (03D): Add basic contradiction and missing-information adjustment
+- [x] (03D): Add basic contradiction and missing-information adjustment
   - Source of Truth: `docs/plans/Plan_10.md` > `## 3. Scope`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `# 11. Agent 2: Evidence Verification Agent` > `## 11.3 Missing Information Rule`
   - Source Requirements:
     - Add basic contradiction check for conflicting dates or mutually incompatible claims when clear from verified chunks.
@@ -429,7 +429,7 @@ The final answer must rely only on verified chunks. Agent 2 must not trust LLM o
   - Blocked Condition: None.
   - Files: `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`
 
-- [ ] (03E): Preserve final output shape after post-processing
+- [x] (03E): Preserve final output shape after post-processing
   - Source of Truth: `docs/plans/Plan_10.md` > `## 1. Goal`; `docs/plans/Plan_10.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `# 11. Agent 2: Evidence Verification Agent` > `## 11.4 Agent 2 Output Schema`
   - Source Requirements:
     - Agent 2 returns exactly `verified_chunks`, `rejected_chunks`, `missing_information`, and `confidence`.
@@ -920,11 +920,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch03
 
-- [ ] (03A): Reject or fail unknown returned chunk IDs
-- [ ] (03B): Validate verified and rejected quotes against source candidate content
-- [ ] (03C): Add deterministic duplicate filtering
-- [ ] (03D): Add basic contradiction and missing-information adjustment
-- [ ] (03E): Preserve final output shape after post-processing
+- [x] (03A): Reject or fail unknown returned chunk IDs
+- [x] (03B): Validate verified and rejected quotes against source candidate content
+- [x] (03C): Add deterministic duplicate filtering
+- [x] (03D): Add basic contradiction and missing-information adjustment
+- [x] (03E): Preserve final output shape after post-processing
 
 #### Batch04
 

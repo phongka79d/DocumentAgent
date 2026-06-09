@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from app.agents.verification_agent import VerificationAgentError, run_verificati
 AGENT_RUN_ID = "11111111-1111-1111-1111-111111111111"
 CANDIDATE_CHUNK_ID = "22222222-2222-2222-2222-222222222222"
 CANDIDATE_DOCUMENT_ID = "33333333-3333-3333-3333-333333333333"
+SECOND_CANDIDATE_CHUNK_ID = "44444444-4444-4444-4444-444444444444"
 
 
 def _verification_output_payload(confidence: float) -> dict[str, object]:
@@ -45,6 +47,13 @@ def _candidate_payload() -> dict[str, object]:
         "final_score": 0.91,
         "retrieval_reason": "Matched probation date terms.",
     }
+
+
+def _second_candidate_payload() -> dict[str, object]:
+    payload = _candidate_payload()
+    payload["chunk_id"] = SECOND_CANDIDATE_CHUNK_ID
+    payload["final_score"] = 0.89
+    return payload
 
 
 @pytest.mark.parametrize("confidence", [0.0, 0.42, 1.0])
@@ -253,6 +262,573 @@ def test_verification_agent_rejects_out_of_range_llm_confidence(
                 "candidates": [_candidate_payload()],
             }
         )
+
+
+@pytest.mark.parametrize("chunk_list_name", ["verified_chunks", "rejected_chunks"])
+def test_verification_agent_rejects_unknown_returned_chunk_ids(
+    monkeypatch: pytest.MonkeyPatch,
+    chunk_list_name: str,
+) -> None:
+    unknown_chunk_id = "44444444-4444-4444-4444-444444444444"
+    response_payload: dict[str, object] = {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.5,
+    }
+    if chunk_list_name == "verified_chunks":
+        response_payload[chunk_list_name] = [
+            {
+                "chunk_id": unknown_chunk_id,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Probation starts on June 1, 2026.",
+                "page_number": 3,
+                "verification_reason": "States the requested date.",
+                "supports_simple_reasoning": False,
+            }
+        ]
+    else:
+        response_payload[chunk_list_name] = [
+            {
+                "chunk_id": unknown_chunk_id,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "This chunk is unrelated.",
+                "rejection_reason": "Does not answer the question.",
+            }
+        ]
+
+    def fake_chat_completion(messages, response_format=None):
+        return json.dumps(response_payload)
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    with pytest.raises(VerificationAgentError):
+        run_verification_agent(
+            {
+                "agent_run_id": AGENT_RUN_ID,
+                "question": "When does probation start?",
+                "candidates": [_candidate_payload()],
+            }
+        )
+
+
+def test_verification_agent_keeps_verified_quote_found_in_candidate_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert len(output.verified_chunks) == 1
+    assert output.verified_chunks[0].quote == (
+        "Probation starts on June 1, 2026 and lasts two months."
+    )
+    assert output.rejected_chunks == []
+
+
+def test_verification_agent_accepts_quote_with_whitespace_variation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026\\n   and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert len(output.verified_chunks) == 1
+    assert output.verified_chunks[0].quote == (
+        "Probation starts on June 1, 2026\n   and lasts two months."
+    )
+    assert output.rejected_chunks == []
+
+
+def test_verification_agent_moves_fabricated_verified_quote_to_rejected_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on May 1, 2026 and lasts six months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert output.verified_chunks == []
+    assert len(output.rejected_chunks) == 1
+    assert output.rejected_chunks[0].chunk_id.hex == CANDIDATE_CHUNK_ID.replace("-", "")
+    assert output.rejected_chunks[0].quote == (
+        "Probation starts on June 1, 2026 and lasts two months."
+    )
+    assert (
+        "Quote was not found in source candidate content."
+        in output.rejected_chunks[0].rejection_reason
+    )
+
+
+def test_verification_agent_corrects_fabricated_rejected_quote_to_source_excerpt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [],
+          "rejected_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "The office closes on Fridays.",
+              "rejection_reason": "Does not answer the probation question."
+            }
+          ],
+          "missing_information": true,
+          "confidence": 0.1
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert output.verified_chunks == []
+    assert len(output.rejected_chunks) == 1
+    assert output.rejected_chunks[0].quote == (
+        "Probation starts on June 1, 2026 and lasts two months."
+    )
+    assert output.rejected_chunks[0].rejection_reason == (
+        "Does not answer the probation question."
+    )
+
+
+def test_verification_agent_marks_missing_information_when_no_verified_chunks_remain(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on May 1, 2026 and lasts six months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert output.verified_chunks == []
+    assert output.missing_information is True
+    assert 0.0 <= output.confidence <= 1.0
+
+
+def test_verification_agent_filters_duplicate_verified_chunk_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            },
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This is a repeated verified copy.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert len(output.verified_chunks) == 1
+    assert output.verified_chunks[0].chunk_id.hex == CANDIDATE_CHUNK_ID.replace("-", "")
+    assert len(output.rejected_chunks) == 1
+    assert output.rejected_chunks[0].chunk_id.hex == CANDIDATE_CHUNK_ID.replace("-", "")
+    assert "Duplicate verified chunk_id" in output.rejected_chunks[0].rejection_reason
+
+
+def test_verification_agent_filters_duplicate_verified_content_across_chunk_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            },
+            {
+              "chunk_id": "44444444-4444-4444-4444-444444444444",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This duplicate content states the same facts.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload(), _second_candidate_payload()],
+        }
+    )
+
+    assert [chunk.chunk_id.hex for chunk in output.verified_chunks] == [
+        CANDIDATE_CHUNK_ID.replace("-", "")
+    ]
+    assert len(output.rejected_chunks) == 1
+    assert output.rejected_chunks[0].chunk_id.hex == SECOND_CANDIDATE_CHUNK_ID.replace(
+        "-",
+        "",
+    )
+    assert (
+        "Duplicate verified content"
+        in output.rejected_chunks[0].rejection_reason
+    )
+
+
+def test_verification_agent_marks_missing_information_for_conflicting_verified_dates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = (
+        "Probation starts on July 1, 2026 and lasts two months."
+    )
+
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start date.",
+              "supports_simple_reasoning": true
+            },
+            {
+              "chunk_id": "44444444-4444-4444-4444-444444444444",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on July 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states a different probation start date.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload(), second_candidate],
+        }
+    )
+
+    assert len(output.verified_chunks) == 2
+    assert output.missing_information is True
+    assert output.confidence < 0.82
+    assert 0.0 <= output.confidence <= 1.0
+    assert any(
+        "contradict" in chunk.verification_reason.lower()
+        for chunk in output.verified_chunks
+    )
+
+
+def test_verification_agent_marks_missing_information_for_incompatible_short_claims(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = "The employee is eligible for official work."
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = "The employee is not eligible for official work."
+
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "The employee is eligible for official work.",
+              "page_number": 3,
+              "verification_reason": "This chunk states eligibility.",
+              "supports_simple_reasoning": false
+            },
+            {
+              "chunk_id": "44444444-4444-4444-4444-444444444444",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "The employee is not eligible for official work.",
+              "page_number": 3,
+              "verification_reason": "This chunk states ineligibility.",
+              "supports_simple_reasoning": false
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "Is the employee eligible for official work?",
+            "candidates": [first_candidate, second_candidate],
+        }
+    )
+
+    assert output.missing_information is True
+    assert output.confidence < 0.82
+    assert any(
+        "contradict" in chunk.verification_reason.lower()
+        for chunk in output.verified_chunks
+    )
+
+
+def test_verification_agent_final_output_serializes_with_exact_top_level_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    def add_internal_helper_metadata(output):
+        payload = output.model_dump()
+        payload["internal_reasons"] = ["post-processing diagnostic metadata"]
+        return payload
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_apply_missing_information_adjustments",
+        add_internal_helper_metadata,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert isinstance(output, VerificationAgentOutput)
+    assert list(output.model_dump().keys()) == [
+        "verified_chunks",
+        "rejected_chunks",
+        "missing_information",
+        "confidence",
+    ]
 
 
 def test_verification_prompt_contains_required_output_shape() -> None:

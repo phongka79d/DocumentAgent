@@ -675,3 +675,439 @@ complete
 - next task ID: (03A)
 - can proceed: yes
 - handoff notes: The LLM response is now parsed and schema-validated before success. Batch03 can add candidate-ID validation and other deterministic evidence safety checks on top of this validated preliminary output.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch03 - Deterministic Evidence Safety Checks
+
+## Task
+(03A) - Reject or fail unknown returned chunk IDs
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+- docs/plans/Plan_10.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Deterministic Evidence Safety Checks
+- Task ID: (03A)
+- Task title: Reject or fail unknown returned chunk IDs
+
+## Completed Work
+- Status: complete.
+- Added candidate membership validation after LLM JSON parsing and Pydantic validation.
+- Built a candidate lookup by chunk_id from Agent 1 candidates.
+- Validated both verified_chunks and rejected_chunks against that lookup.
+- Unknown verified or rejected chunk IDs now raise VerificationAgentError and cannot appear in successful Agent 2 output.
+- Added a unit test covering unknown chunk IDs in both verified_chunks and rejected_chunks.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_verification_agent.py::test_verification_agent_rejects_unknown_returned_chunk_ids -v: Failed before implementation / Passed after implementation
+- evidence or reason: Initially failed with DID NOT RAISE VerificationAgentError for verified_chunks and rejected_chunks; after the implementation, 2 passed.
+- pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 16 passed in 1.56s.
+
+## Acceptance Check
+- Task acceptance condition: Unknown IDs never appear in successful Agent 2 output; unknown-ID output triggers controlled validation failure.
+- Status: satisfied
+- Evidence: The added parametrized test returns an unknown chunk_id from the mocked LLM in verified_chunks and rejected_chunks and asserts VerificationAgentError. The full targeted test file passes.
+
+## Artifacts Produced
+- Candidate-bound verification result behavior in backend/app/agents/verification_agent.py.
+- Unknown chunk ID regression test in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Per (03A), unknown chunk IDs are treated as invalid verification output and raise the existing controlled VerificationAgentError.
+- Candidate membership validation runs after schema validation so malformed UUIDs and shape errors remain handled by Pydantic first.
+- The check intentionally covers only candidate membership; quote validation, duplicate filtering, contradiction handling, logging, Agent 3, LangGraph, APIs, and frontend work remain out of scope.
+
+## Risks or Open Issues
+- Batch04 failure logging is not yet connected, so this task raises VerificationAgentError without agent_steps failure persistence as expected for (03A).
+- Later Batch03 tasks still need quote validation, duplicate filtering, contradiction handling, and final post-processing shape checks.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified. Batch02 dependencies are checked in docs/tasks/task_10.md. User Action is None. No sibling Batch03 tasks or future logging/API/frontend work was implemented.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes
+- handoff notes: Candidate membership validation is in place for verified and rejected chunks, so quote validation can assume returned chunk IDs are from Agent 1 candidates after successful Agent 2 validation.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch03 - Deterministic Evidence Safety Checks
+
+## Task
+(03B) - Validate verified and rejected quotes against source candidate content
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Deterministic Evidence Safety Checks
+- Task ID: (03B)
+- Task title: Validate verified and rejected quotes against source candidate content
+
+## Completed Work
+- The task is complete.
+- Added deterministic quote validation after candidate membership validation for verified and rejected chunks.
+- Added light whitespace-normalized substring matching so source-backed quote variants remain valid.
+- Demoted unsupported verified quotes into rejected chunks with a safe source excerpt and rejection reason when candidate content is available.
+- Corrected unsupported rejected quote text to a source-backed candidate excerpt when candidate content is available.
+- Added tests for faithful quote handling, whitespace variation, fabricated verified quote demotion, and fabricated rejected quote correction.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_verification_agent.py -k "quote" -v: Failed before implementation / Passed after implementation
+- evidence or reason: Initially 2 failed and 2 passed; fabricated verified quotes remained verified and fabricated rejected quotes were not corrected. After implementation, 4 passed.
+- pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 20 passed in 1.53s.
+
+## Acceptance Check
+- Task acceptance condition: Verified chunks contain only source-backed quotes; fabricated or untraceable quotes are not verified.
+- Status: satisfied
+- Evidence: Unsupported verified quotes are removed from verified_chunks and added to rejected_chunks with a source-backed excerpt when candidate content is available. Rejected quote text is also corrected to source-backed candidate content when the LLM quote is not found.
+
+## Artifacts Produced
+- Quote-faithful verified and rejected evidence post-processing in backend/app/agents/verification_agent.py.
+- Quote validation regression tests in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used simple whitespace normalization with substring matching to allow faithful whitespace variants without broad fuzzy matching.
+- Used the full candidate content as the safe replacement excerpt rather than inventing or synthesizing quote text.
+- Preserved existing rejected chunks for a chunk ID when a verified quote for the same chunk was unsupported, avoiding extra in-scope duplicate behavior beyond quote safety.
+
+## Risks or Open Issues
+- If a candidate has empty or missing content, unsupported quotes for that candidate cannot be safely corrected and are omitted from quote-backed output.
+- Duplicate filtering, contradiction handling, final output shape validation, logging, Agent 3, LangGraph, public APIs, and frontend work remain out of scope for this task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified. Dependency (03A) is checked in docs/tasks/task_10.md, User Action is None, and only the selected (03B) quote-validation scope was implemented.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes, after A2 review accepts (03B)
+- handoff notes: Candidate membership and quote validation now run before later duplicate filtering. Verified chunks returned by the successful path have source-backed quotes under deterministic whitespace-normalized matching.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch03 - Deterministic Evidence Safety Checks
+
+## Task
+(03C) - Add deterministic duplicate filtering
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 3. Scope
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > # 11. Agent 2: Evidence Verification Agent > ## 11.2 Verification Rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Deterministic Evidence Safety Checks
+- Task ID: (03C)
+- Task title: Add deterministic duplicate filtering
+
+## Completed Work
+- Status: complete.
+- Added deterministic post-processing for duplicate verified evidence after candidate membership and quote validation.
+- Repeated verified chunks are filtered by chunk_id first.
+- Duplicate verified content across different chunk IDs is filtered using conservative whitespace-normalized candidate content, falling back to verified quote text when candidate content is unavailable.
+- Duplicate verified entries are added to rejected_chunks with explicit duplicate rejection reasons when they affect output.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_verification_agent.py -k "duplicate" -v: Failed before implementation / Passed after implementation
+- evidence or reason: Initially 2 failed because duplicate verified chunks remained in verified_chunks. After implementation, 2 passed.
+- pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 22 passed in 1.55s.
+
+## Acceptance Check
+- Task acceptance condition: A repeated chunk_id appears at most once in verified_chunks; duplicate evidence is rejected or removed with a reason where possible.
+- Status: satisfied
+- Evidence: Duplicate chunk_id output now keeps one verified entry and moves the duplicate to rejected_chunks with a Duplicate verified chunk_id reason. Duplicate content under a different chunk_id now keeps the first clearly useful verified entry and moves the duplicate to rejected_chunks with a Duplicate verified content reason.
+
+## Artifacts Produced
+- Deterministic duplicate filtering helper in backend/app/agents/verification_agent.py.
+- Unit tests covering duplicate verified chunk IDs and duplicate verified content across different chunk IDs in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Duplicate filtering runs after quote validation so rejected duplicate records keep source-backed quote text.
+- For duplicate chunk IDs, the first verified instance is retained deterministically.
+- For duplicate content under different chunk IDs, exact whitespace-normalized candidate content is used as the conservative duplicate key, with quote text as the fallback.
+- The first clearly useful evidence is retained for content duplicates, matching the task allowance to keep stronger or first useful evidence.
+
+## Risks or Open Issues
+- Exact normalized duplicate detection intentionally avoids fuzzy semantic matching, so near-duplicate paraphrases remain out of scope for this deterministic task.
+- Contradiction handling, final output shape post-processing, logging, Agent 3, LangGraph, public APIs, and frontend work remain out of scope for this task.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified. Dependencies (03A) and (03B) are checked in docs/tasks/task_10.md, User Action is None, and only the selected (03C) duplicate-filtering scope was implemented.
+
+## Notes for Next Task
+- next task ID: (03D)
+- can proceed: yes, after A2 review accepts (03C)
+- handoff notes: Duplicate filtering now follows candidate membership and quote validation, and Agent 2 success output contains no repeated verified chunk IDs for the covered deterministic duplicate cases.
+
+---
+
+# Task Execution Report - (03D)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch03 - Deterministic Evidence Safety Checks
+
+## Task
+(03D) - Add basic contradiction and missing-information adjustment
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 3. Scope
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > # 11. Agent 2: Evidence Verification Agent > ## 11.3 Missing Information Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Deterministic Evidence Safety Checks
+- Task ID: (03D)
+- Task title: Add basic contradiction and missing-information adjustment
+
+## Completed Work
+- The task is complete.
+- Added a final deterministic safety adjustment after candidate membership, quote validation, and duplicate filtering.
+- If no verified chunks remain after post-processing, Agent 2 now sets missing_information = true and caps confidence safely.
+- Added conservative contradiction detection for obvious date conflicts where the same statement has different date values.
+- Added conservative contradiction detection for short mutually incompatible claims with explicit negation.
+- When unresolved contradictions are detected, Agent 2 now sets missing_information = true, lowers confidence, and appends safe contradiction wording to verification reasons.
+- Preserved confidence values within the existing 0.0 to 1.0 bounds.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_verification_agent.py -k "no_verified_chunks_remain or conflicting_verified_dates" -v: Failed before implementation / Passed after implementation
+- evidence or reason: Initially 2 failed because missing_information stayed false for no verified chunks and date-conflicting verified chunks. After implementation, 2 passed.
+- pytest tests/test_verification_agent.py -k "incompatible_short_claims" -v: Failed before helper correction / Passed after helper correction
+- evidence or reason: Initially 1 failed because positive and negated short claims were not compared. After correction, 1 passed.
+- pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 25 passed in 1.53s.
+
+## Acceptance Check
+- Task acceptance condition: No verified chunks results in missing_information = true; clear contradictions are detected or reported; confidence remains in range.
+- Status: satisfied
+- Evidence: Tests cover no verified chunks after quote filtering, conflicting verified dates, incompatible short claims, contradiction reason text, confidence reduction, and confidence bounds preservation. Full targeted verification-agent tests passed.
+
+## Artifacts Produced
+- Contradiction-aware post-processing helper in backend/app/agents/verification_agent.py.
+- Unit tests for no verified chunks after filtering, conflicting date evidence, and incompatible short claims in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Contradiction checks are intentionally conservative and deterministic: date conflicts require matching normalized statement text with different normalized dates.
+- Short-claim conflicts are limited to brief claims where explicit negation changes the polarity of the same normalized claim.
+- Unresolved contradiction handling keeps verified chunks visible for debugging but marks missing_information true, caps confidence, and adds contradiction wording to verification reasons.
+- No verified chunks after filtering caps confidence at 0.2; unresolved contradictions cap confidence at 0.4.
+
+## Risks or Open Issues
+- Date detection supports common English month dates, ISO-style dates, and slash/dash numeric dates, but intentionally avoids broad natural-language date interpretation.
+- Short-claim contradiction detection is narrow by design and does not attempt broad natural-language theorem proving.
+- Logging, final output-shape preservation, Agent 3, LangGraph, public APIs, and frontend work remain out of scope for this task.
+
+## Minor Issues Fixed During Execution
+- Tightened the short-claim helper so positive and explicitly negated versions of the same short claim can be compared.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies (03B) and (03C) are checked in docs/tasks/task_10.md, User Action is None, and only selected (03D) contradiction and missing-information behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (03E)
+- can proceed: yes, after A2 review accepts (03D)
+- handoff notes: Agent 2 now applies missing-information and contradiction adjustments after deterministic quote and duplicate post-processing while preserving bounded confidence.
+
+---
+
+# Task Execution Report - (03E)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch03 - Deterministic Evidence Safety Checks
+
+## Task
+(03E) - Preserve final output shape after post-processing
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 1. Goal
+- docs/plans/Plan_10.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_10.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > # 11. Agent 2: Evidence Verification Agent > ## 11.4 Agent 2 Output Schema
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Deterministic Evidence Safety Checks
+- Task ID: (03E)
+- Task title: Preserve final output shape after post-processing
+
+## Completed Work
+- Complete.
+- Added a final Agent 2 output finalization pass immediately before returning from run_verification_agent.
+- The finalization pass returns a VerificationAgentOutput validated from the public four-key payload and prevents internal helper metadata from appearing as top-level return data.
+- Added a regression unit test that simulates post-processing helper metadata and asserts the serialized output has exactly verified_chunks, rejected_chunks, missing_information, and confidence.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- .\.venv\Scripts\python.exe -m pytest tests/test_verification_agent.py::test_verification_agent_final_output_serializes_with_exact_top_level_keys -v: Failed first / Passed after implementation
+- evidence or reason: Initial failure showed run_verification_agent returned a dict containing internal_reasons instead of a VerificationAgentOutput. After finalization was added, the single regression test passed.
+- .\.venv\Scripts\python.exe -m pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 26 passed in 1.50s.
+
+## Acceptance Check
+- Task acceptance condition: Returned object/dict serializes to exactly the required top-level shape.
+- Status: satisfied
+- Evidence: The new unit test asserts list(output.model_dump().keys()) equals verified_chunks, rejected_chunks, missing_information, and confidence after post-processing. Full targeted verification-agent tests passed.
+
+## Artifacts Produced
+- Final output validation helper in backend/app/agents/verification_agent.py.
+- Exact serialized output keys regression test in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Final validation is performed at the last return boundary after candidate membership, quote validation, duplicate filtering, and missing-information adjustments.
+- Internal helper metadata is excluded from the public payload before Pydantic validation so the returned Agent 2 object serializes to the required four top-level keys.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies (03A), (03B), (03C), and (03D) are checked in docs/tasks/task_10.md; User Action is None; no sibling task was implemented.
+
+## Notes for Next Task
+- next task ID: Batch04 first eligible task after review gates
+- can proceed: yes, after A2 review accepts (03E) and any required batch gate completes
+- handoff notes: Agent 2 now performs final Pydantic validation and returns only the required top-level output shape after all Batch03 post-processing.
