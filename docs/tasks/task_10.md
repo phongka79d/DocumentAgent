@@ -244,7 +244,7 @@ The evidence verification contract must be executable and safe against malformed
 
 ### Tasks
 
-- [ ] (02A): Create verification agent module and controlled error type
+- [x] (02A): Create verification agent module and controlled error type
   - Source of Truth: `docs/plans/Plan_10.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_10.md` > `## 8. API Design`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 16. Suggested Project Structure`
   - Source Requirements:
     - Add `backend/app/agents/verification_agent.py`.
@@ -261,7 +261,7 @@ The evidence verification contract must be executable and safe against malformed
   - Blocked Condition: None.
   - Files: `backend/app/agents/verification_agent.py`, `backend/app/agents/__init__.py`
 
-- [ ] (02B): Implement deterministic empty-candidates behavior
+- [x] (02B): Implement deterministic empty-candidates behavior
   - Source of Truth: `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `# 11. Agent 2: Evidence Verification Agent` > `## 11.3 Missing Information Rule`
   - Source Requirements:
     - If `candidates` is empty, return no verified chunks, no rejected chunks, `missing_information = true`, and `confidence = 0.0`.
@@ -276,7 +276,7 @@ The evidence verification contract must be executable and safe against malformed
   - Blocked Condition: None.
   - Files: `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`
 
-- [ ] (02C): Build compact evidence payload and call ShopAIKey chat
+- [x] (02C): Build compact evidence payload and call ShopAIKey chat
   - Source of Truth: `docs/plans/Plan_10.md` > `## 3. Scope`; `docs/plans/Plan_10.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 10. Configuration and Environment Variables`; `README.md` > `### ShopAIKey`
   - Source Requirements:
     - Prepare a compact evidence list for the LLM.
@@ -292,7 +292,7 @@ The evidence verification contract must be executable and safe against malformed
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live ShopAIKey provider validation when real credentials are missing.
   - Files: `backend/app/agents/verification_agent.py`, `backend/app/services/shopaikey_service.py`, `backend/tests/test_verification_agent.py`
 
-- [ ] (02D): Parse and validate LLM JSON response
+- [x] (02D): Parse and validate LLM JSON response
   - Source of Truth: `docs/plans/Plan_10.md` > `## 3. Scope`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Parse response JSON.
@@ -913,10 +913,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch02
 
-- [ ] (02A): Create verification agent module and controlled error type
-- [ ] (02B): Implement deterministic empty-candidates behavior
-- [ ] (02C): Build compact evidence payload and call ShopAIKey chat
-- [ ] (02D): Parse and validate LLM JSON response
+- [x] (02A): Create verification agent module and controlled error type
+- [x] (02B): Implement deterministic empty-candidates behavior
+- [x] (02C): Build compact evidence payload and call ShopAIKey chat
+- [x] (02D): Parse and validate LLM JSON response
 
 #### Batch03
 
