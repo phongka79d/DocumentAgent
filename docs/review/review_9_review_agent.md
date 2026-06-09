@@ -2397,3 +2397,682 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04A)
+- Task title: Add Agent 1 schema validation tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_9.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The latest matching report entry is the appended `(04A)` execution report. Prior accepted Batch03 reports and task-tracking repairs were not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_retrieval_agent.py`, `docs/reports/report_9_execute_agent.md`, `docs/tasks/task_9.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_retrieval_agent.py`: in scope - added schema validation, invalid-input-before-retrieval, empty-output, missing-score-field, and candidate-schema-mismatch tests.
+- `backend/app/agents/schemas.py`: in scope - verified existing Pydantic schema behavior under test.
+- `backend/app/agents/retrieval_agent.py`: in scope - verified output validation occurs before success logging and invalid input validates before retrieval.
+- `docs/reports/report_9_execute_agent.md`: in scope - latest `(04A)` execution report is appended and matches the changed test scope.
+- `docs/tasks/task_9.md`: in scope - reviewer updated only `(04A)` in the Batch04 task block and Progress Tracker after acceptance.
+- `docs/plans/Plan_9.md`: in scope - cited sections reviewed for schema, implementation, and failure-handling requirements.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_retrieval_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds focused tests only; no runtime implementation changes were introduced for `(04A)`.
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended with the `(04A)` entry.
+
+## Dependency Review
+- Required dependencies: Batch01 schemas.
+- Dependency status: satisfied; `backend/app/agents/schemas.py` defines the required Agent 1 input, candidate, and output schemas, and Batch01 is already checked complete.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Tests remain backend-only, deterministic, pytest-based, and use Pydantic validation and mocked retrieval/log boundaries. No public API, Agent 2, Agent 3, LangGraph, frontend, database, or provider behavior was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Tests exercise actual `RetrievalAgentInput`, `RetrievalCandidate`, `RetrievalAgentOutput`, and `run_retrieval_agent` behavior. The workflow-level schema mismatch test verifies malformed hybrid candidate output raises `ValidationError` before `log_agent_step` is called.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: UUIDs and sample strings are test fixtures only. No production logic was added or overfit to fixture data.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_retrieval_agent.py -v` from `backend`
+- Reported result: passed, 15 tests collected and 15 passed in 1.64s.
+- Rerun result: passed, 15 tests collected and 15 passed in 1.59s.
+- Status: passed
+- Notes: Required targeted validation was rerun successfully.
+- Command/check: scope/secret/out-of-scope scan over changed test file, agent package, API/frontend paths, and task file
+- Reported result: no sibling task implementation reported.
+- Rerun result: no runtime/test additions for Agent 2, Agent 3, LangGraph, `/api/chat/ask`, verified chunk marking, or secrets; matches found only in task-document text.
+- Status: passed
+- Notes: No hardcoded secrets or out-of-scope workflow behavior found in changed code.
+
+## Acceptance Review
+- Task acceptance: Invalid input cannot call retrieval; invalid candidate output is rejected; empty candidates remain valid.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_rejects_invalid_input_before_retrieval` asserts no retrieval/log calls for invalid input; `test_retrieval_candidate_rejects_missing_score_fields` and `test_run_retrieval_agent_rejects_candidate_schema_mismatch_before_logging` assert schema mismatches fail; `test_retrieval_agent_output_accepts_empty_candidates` proves `candidates: []` remains valid.
+
+## Progress Tracking
+- Selected task checkbox: checked in the Batch04 task block and Progress Tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked because `(04B)`, `(04C)`, and `(04D)` are still unchecked.
+- Execution report entry: appended and accurate for `(04A)`.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The rerun duration was 1.59s rather than the reported 1.64s, with the same 15 passing tests.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(04A)` adds some coverage that overlaps earlier Batch03 tests, but the new tests are valid for the schema-validation task and do not complete sibling Batch04 task checkboxes.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04A)` is accepted and `(04B)`, `(04C)`, and `(04D)` remain unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch04 - Required Automated Tests",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04B)
+- Task title: Add successful retrieval and success-log tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_9.md` > `## 1. Goal`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 11. Required Tests`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The latest matching report entry is the appended `(04B)` execution report. Prior accepted `(04A)` uncommitted test and task-tracking changes were separated from this review; only the success-path retrieval/logging assertions were reviewed for `(04B)` acceptance.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_retrieval_agent.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, `docs/tasks/task_9.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_retrieval_agent.py`: in scope - selected `(04B)` changes tighten the success-path test with complete candidate fields, preserved final-score order, mocked `retrieve_hybrid`, mocked `log_agent_step`, and validated success log payload/status. Earlier `(04A)` schema tests are prior accepted uncommitted changes.
+- `backend/app/agents/retrieval_agent.py`: in scope - verified the success path validates output before calling `log_agent_step` and returns `RetrievalAgentOutput`.
+- `backend/app/agents/schemas.py`: in scope - verified required Agent 1 candidate/output fields exercised by the success-path test.
+- `backend/app/services/agent_log_service.py`: in scope - verified the success logging call contract and default `error_message=None` behavior.
+- `docs/reports/report_9_execute_agent.md`: in scope - latest `(04B)` execution report is appended and matches the selected test scope.
+- `docs/review/review_9_review_agent.md`: in scope - existing uncommitted `(04A)` review entry was present; this `(04B)` review is appended at EOF.
+- `docs/tasks/task_9.md`: in scope - reviewer updated only `(04B)` in the Batch04 task block and Progress Tracker after acceptance; prior `(04A)` accepted checkboxes remain unchanged.
+- `docs/plans/Plan_9.md`: in scope - cited sections reviewed for goal, implementation steps, required tests, acceptance criteria, out-of-scope boundaries, and reviewer checklist.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_retrieval_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The selected success-path test asserts structured output, candidate score/order preservation, success logging, and mocked-service independence.
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended with the `(04B)` entry.
+
+## Dependency Review
+- Required dependencies: Batch03 success path; prior `(04A)` schema test task already accepted and checked.
+- Dependency status: satisfied; `run_retrieval_agent` exists, validates input/output, calls hybrid retrieval, and logs successful output. `(04A)` is checked in both task locations from prior A2 acceptance.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Tests remain backend-only, deterministic, and independent from live Supabase, Qdrant, and ShopAIKey by monkeypatching hybrid retrieval, agent logging, and settings. The selected task does not add public APIs, frontend behavior, Agent 2, Agent 3, LangGraph, answer generation, or verified-chunk behavior.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The success-path test executes the real `run_retrieval_agent` callable while mocking only approved external boundaries. It asserts a real `RetrievalAgentOutput`, complete `RetrievalCandidate` field set, exact hybrid retrieval call arguments, and exact success `log_agent_step` call.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: UUIDs, document names, content strings, and scores are deterministic test fixtures only. No production runtime logic was added or overfit to fixture data.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_agent.py -v`
+- Reported result: passed, 15 tests collected and 15 passed in 1.71s.
+- Rerun result: passed, 15 tests collected and 15 passed in 1.57s.
+- Status: passed
+- Notes: Required targeted validation was rerun successfully.
+- Command/check: scope/secret/out-of-scope scan over changed test file, agent package, API/frontend paths, and task file
+- Reported result: no sibling task implementation reported.
+- Rerun result: no runtime/test additions for Agent 2, Agent 3, LangGraph, `/api/chat/ask`, verified chunk marking, or secrets; matches were limited to task-document scope text.
+- Status: passed
+- Notes: No hardcoded secrets or out-of-scope workflow behavior found in changed code.
+
+## Acceptance Review
+- Task acceptance: Tests prove the callable returns structured output and calls `log_agent_step` with success after output validation; candidate chunks are sorted by `final_score` as returned by hybrid retrieval; tests remain independent from live services.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval` asserts complete candidate fields, returned scores `[0.91, 0.82]`, preserved chunk order, normalized retrieval call inputs, `RetrievalAgentOutput` log payload, Agent 1 step constants, `status="success"`, and omitted success `error_message`.
+
+## Progress Tracking
+- Selected task checkbox: checked in the Batch04 task block and Progress Tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked because `(04C)` and `(04D)` are still unchecked.
+- Execution report entry: appended and accurate for `(04B)`.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not updated; prior accepted `(04A)` checkboxes were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The rerun duration was 1.57s rather than the reported 1.71s, with the same 15 passing tests.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The working tree still contains prior accepted `(04A)` uncommitted changes in the same test/task/review/report files. They were not re-reviewed as part of `(04B)` except where needed to distinguish scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(04A)` and `(04B)` are accepted; `(04C)` and `(04D)` remain unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch04 - Required Automated Tests",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/review/review_9_review_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04C)
+- Task title: Add empty result and retrieval failure tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/tasks/task_9.md` > `(04C): Add empty result and retrieval failure tests`; `docs/plans/Plan_9.md` > `## 11. Required Tests`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The latest matching report entry is the appended `(04C)` execution report. Prior accepted uncommitted `(04A)` and `(04B)` changes were distinguished and not re-reviewed beyond dependency/scope separation.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_retrieval_agent.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, `docs/tasks/task_9.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_retrieval_agent.py`: in scope - selected `(04C)` coverage adds empty-candidate success behavior and strengthens retrieval-failure failed-log assertions; prior `(04A)` and `(04B)` test changes are accepted uncommitted dependencies.
+- `backend/app/agents/retrieval_agent.py`: in scope - verified empty hybrid responses produce validated output and success logging, while retrieval exceptions use failed-step logging and raise controlled `RetrievalAgentError`.
+- `backend/app/agents/schemas.py`: in scope - verified `RetrievalAgentOutput` accepts explicit `candidates: []`.
+- `backend/app/services/agent_log_service.py`: in scope - verified `try_log_agent_step` preserves retrieval failure context when persistence fails.
+- `docs/reports/report_9_execute_agent.md`: in scope - latest `(04C)` execution report is appended and matches selected task scope.
+- `docs/review/review_9_review_agent.md`: in scope - existing accepted `(04A)` and `(04B)` reviews were present; this `(04C)` review is appended at EOF.
+- `docs/tasks/task_9.md`: in scope - reviewer updated only `(04C)` in the Batch04 task block and Progress Tracker after acceptance; `(04D)` and Batch04 remain unchecked.
+- `docs/plans/Plan_9.md`: in scope - cited required tests, acceptance criteria, and failure-handling sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_retrieval_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `test_run_retrieval_agent_treats_empty_candidates_as_success`, retrieval failure assertions for failed log shape, safe error message, controlled exception, and failed-log preservation.
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended with the `(04C)` entry.
+
+## Dependency Review
+- Required dependencies: Batch03 failure handling; accepted `(04A)` schema tests; accepted `(04B)` success-path tests.
+- Dependency status: satisfied; Batch03 is checked complete, `(04A)` and `(04B)` are checked complete in both Batch04 task locations, and `run_retrieval_agent` exposes the required success and failure boundaries.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Tests remain backend-only, deterministic, and independent from live Supabase, Qdrant, and ShopAIKey by mocking hybrid retrieval, agent logging, failed-log preservation, and settings. The selected task adds no runtime architecture changes, public API, frontend behavior, Agent 2, Agent 3, LangGraph workflow, answer generation, or verified-chunk behavior.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `(04C)` tests execute the real `run_retrieval_agent` callable while mocking approved external boundaries. Empty results are validated through `RetrievalAgentOutput(candidates=[])`; retrieval failures assert failed-step log calls, controlled `RetrievalAgentError`, and preservation of retrieval error context when failed-log persistence fails.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: UUIDs, strings, scores, and error messages are deterministic test fixtures and expected safe constants. No production runtime logic was added or overfit to fixture data.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_agent.py -v`
+- Reported result: passed, 16 tests collected and 16 passed in 1.59s.
+- Rerun result: passed, 16 tests collected and 16 passed in 1.60s.
+- Status: passed
+- Notes: Required targeted validation was rerun successfully.
+- Command/check: scope/secret/out-of-scope scan over changed test file, agent package, API/frontend paths, and task file
+- Reported result: no sibling task `(04D)` implementation reported.
+- Rerun result: no runtime/test additions for Agent 2, Agent 3, LangGraph, `/api/chat/ask`, verified chunk marking, or secrets; matches were limited to task-document text.
+- Status: passed
+- Notes: No hardcoded secrets or out-of-scope workflow behavior found in changed code.
+
+## Acceptance Review
+- Task acceptance: Empty results are not treated as failure; retrieval failure is visible in logs and surfaces as `RetrievalAgentError`; log failure preservation is covered.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_treats_empty_candidates_as_success` asserts empty hybrid candidates return `RetrievalAgentOutput(candidates=[])`, call `log_agent_step` with `status="success"`, and do not call `try_log_agent_step`. `test_run_retrieval_agent_logs_failed_step_and_raises_controlled_error` asserts failed-step log shape with `status="failed"`, `output_payload={}`, and the safe error message. `test_run_retrieval_agent_reports_failed_log_insert_without_erasing_retrieval_error` asserts failed persistence is logged safely while the raised error remains the controlled retrieval error.
+
+## Progress Tracking
+- Selected task checkbox: checked in the Batch04 task block and Progress Tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked because `(04D)` is still unchecked.
+- Execution report entry: appended and accurate for `(04C)`.
+- Review report entry: appended at EOF.
+- Other: Sibling and future task checkboxes were not updated; prior accepted `(04A)` and `(04B)` checkboxes were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The rerun duration was 1.60s rather than the reported 1.59s, with the same 16 passing tests.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The working tree still contains prior accepted `(04A)` and `(04B)` uncommitted changes in the same test/task/review/report files. They were treated as dependencies and not re-reviewed as selected task scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(04D)` remains unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch04 - Required Automated Tests",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/review/review_9_review_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04D)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Execution Report Reviewed
+docs/reports/report_9_execute_agent.md
+
+## Review Report File
+docs/review/review_9_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04D)
+- Task title: Run required targeted automated validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_9.md` > `## 11. Required Tests`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04D)
+- Reviewed task ID: (04D)
+- Correct selection: yes
+- Notes: The latest matching report entry is the appended `(04D)` execution report. Prior accepted uncommitted `(04A)`, `(04B)`, and `(04C)` test/task/review/report changes were treated as dependencies and distinguished from this validation-only task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_retrieval_agent.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, `docs/tasks/task_9.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_retrieval_agent.py`: in scope - validated by `(04D)`; changes are prior accepted `(04A)` through `(04C)` test additions, not new `(04D)` implementation.
+- `backend/app/agents/retrieval_agent.py`: in scope - checked to confirm tests exercise real Agent 1 callable behavior and no out-of-scope answer/verification workflow is present.
+- `backend/app/agents/schemas.py`: in scope - checked to confirm Pydantic validation contracts exercised by the targeted test suite.
+- `backend/.env.example`: in scope - included in the reported secret scan.
+- `docs/reports/report_9_execute_agent.md`: in scope - contains the selected `(04D)` validation report appended after prior execution reports.
+- `docs/review/review_9_review_agent.md`: in scope - existing accepted review entries were present; this `(04D)` review is appended at EOF.
+- `docs/tasks/task_9.md`: in scope - reviewer updated only `(04D)` in the Batch04 task block and Progress Tracker after acceptance; Batch04 and Batch05 batch checkboxes remain unchecked.
+- `docs/plans/Plan_9.md`: in scope - cited Required Tests, Acceptance Criteria, and Reviewer Checklist sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_9_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The selected task is validation-only, and the execution report append is the only file the executor listed as created or modified for `(04D)`.
+
+## Dependency Review
+- Required dependencies: `(04A)`, `(04B)`, and `(04C)`.
+- Dependency status: satisfied; all three prerequisite Batch04 task IDs were already accepted and checked in both the Batch04 task block and Progress Tracker before `(04D)` acceptance.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: `(04D)` added no runtime architecture changes. The rerun validation confirms backend-only deterministic tests cover schema validation, structured output, success logging, empty-result success, retrieval failure logging, and failed-log preservation. Secret and out-of-scope scans found no Agent 2, Agent 3, LangGraph, `/api/chat/ask`, final-answer, verified-chunk, or hardcoded-secret additions in the reviewed Agent 1 files.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes for validation evidence; no production implementation was claimed for this validation-only task.
+- Stub or fake logic found: no
+- Evidence: `pytest tests/test_retrieval_agent.py -v` executed the real `run_retrieval_agent` callable through mocked external service boundaries approved by Plan 9. No fixed runtime success values or fake production paths were added by `(04D)`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The secret scan returned no matches. Deterministic UUIDs, scores, filenames, and messages are test fixtures from prior accepted automated-test tasks, not runtime hardcoding.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_retrieval_agent.py -v`
+- Reported result: passed, 16 tests collected and 16 passed in 1.97s.
+- Rerun result: passed, 16 tests collected and 16 passed in 1.60s.
+- Status: passed
+- Notes: The rerun listed all 16 test items and showed each as PASSED.
+- Command/check: `rg --pcre2 -n "sk-[A-Za-z0-9_-]+|SUPABASE_SERVICE_ROLE_KEY\\s*=\\s*(?!your-supabase-service-role-key(?:\\r?\\n)?$)|SHOPAIKEY_API_KEY\\s*=\\s*(?!shopaikey-placeholder(?:\\r?\\n)?$)|QDRANT_API_KEY\\s*=\\s*(?!qdrant-placeholder(?:\\r?\\n)?$)|password\\s*=|secret\\s*=|token\\s*=" backend/app/agents backend/tests/test_retrieval_agent.py backend/.env.example`
+- Reported result: passed, no matches.
+- Rerun result: passed, no matches.
+- Status: passed
+- Notes: Exit code 1 from `rg` means no matches were found.
+- Command/check: `rg -n "Agent 2|Agent 3|LangGraph|/api/chat/ask|final answer|mark.*verified|answer generation" backend/app/agents backend/tests/test_retrieval_agent.py`
+- Reported result: passed, no matches.
+- Rerun result: passed, no matches.
+- Status: passed
+- Notes: Exit code 1 from `rg` means no matches were found.
+- Command/check: `git diff --name-only`
+- Reported result: changed files were `backend/tests/test_retrieval_agent.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, and `docs/tasks/task_9.md`; no shared config, Supabase service, or hybrid retrieval implementation files were changed.
+- Rerun result: same changed-file set before the reviewer checkbox/report append; after reviewer changes, only docs task/review files were additionally updated by A2.
+- Status: passed
+- Notes: Adjacent shared-service tests were not required because shared config, Supabase service, and hybrid retrieval implementation files were not changed by `(04D)`.
+
+## Acceptance Review
+- Task acceptance: Required tests pass or failures are reported honestly; tests were actually run; no hardcoded secrets or fake success found; additional shared-service tests were not applicable.
+- Status: satisfied
+- Evidence: Fresh pytest rerun collected and passed 16 targeted Agent 1 tests. Fresh scans found no hardcoded secrets or out-of-scope Agent 2/Agent 3/LangGraph/chat/final-answer behavior in the reviewed Agent 1 files. Git diff shows `(04D)` did not alter shared config, Supabase service, or hybrid retrieval contracts.
+
+## Progress Tracking
+- Selected task checkbox: checked in the Batch04 task block and Progress Tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 batch checkbox intentionally remains unchecked per user instruction; Batch05 remains unchecked.
+- Execution report entry: appended and accurate for `(04D)`.
+- Review report entry: appended at EOF.
+- Other: No future Batch05 checkboxes were updated; no commit was created.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The rerun duration was 1.60s rather than the reported 1.97s, with the same 16 passing tests. The execution report accurately states adjacent shared-service tests were not run because applicable shared-service files were not changed.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The working tree still contains prior accepted uncommitted `(04A)`, `(04B)`, and `(04C)` changes in the same test/task/review/report files. They were separated from `(04D)` scope and not re-reviewed except as dependencies.
+- All Batch04 task IDs are now checked, but the Batch04 batch checkbox remains unchecked for the orchestrator/A3 flow as instructed.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to A3 batch-scope audit/orchestrator flow; do not start Batch05 from this A2 review.
+- Should batch be marked complete? no by A2 in this review; Batch04 batch checkbox was intentionally left unchecked despite all Batch04 task IDs now being accepted.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_9.md",
+  "execution_report_reviewed": "docs/reports/report_9_execute_agent.md",
+  "review_report_file": "docs/review/review_9_review_agent.md",
+  "selected_batch": "Batch04 - Required Automated Tests",
+  "selected_task_id": "(04D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_retrieval_agent.py",
+    "docs/reports/report_9_execute_agent.md",
+    "docs/review/review_9_review_agent.md",
+    "docs/tasks/task_9.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

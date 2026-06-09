@@ -442,7 +442,7 @@ Agent 1 must be proven through deterministic tests before any manual database or
 
 ### Tasks
 
-- [ ] (04A): Add Agent 1 schema validation tests
+- [x] (04A): Add Agent 1 schema validation tests
   - Source of Truth: `docs/plans/Plan_9.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Agent 1 input and output must be Pydantic-validated.
@@ -458,7 +458,7 @@ Agent 1 must be proven through deterministic tests before any manual database or
   - Blocked Condition: None.
   - Files: `backend/tests/test_retrieval_agent.py`, `backend/app/agents/schemas.py`
 
-- [ ] (04B): Add successful retrieval and success-log tests
+- [x] (04B): Add successful retrieval and success-log tests
   - Source of Truth: `docs/plans/Plan_9.md` > `## 1. Goal`; `docs/plans/Plan_9.md` > `## 9. Implementation Steps`; `docs/plans/Plan_9.md` > `## 11. Required Tests`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Add tests that mock hybrid retrieval and agent logging.
@@ -475,7 +475,7 @@ Agent 1 must be proven through deterministic tests before any manual database or
   - Blocked Condition: None.
   - Files: `backend/tests/test_retrieval_agent.py`
 
-- [ ] (04C): Add empty result and retrieval failure tests
+- [x] (04C): Add empty result and retrieval failure tests
   - Source of Truth: `docs/plans/Plan_9.md` > `## 11. Required Tests`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_9.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Empty results return `candidates: []` with status `success`.
@@ -491,7 +491,7 @@ Agent 1 must be proven through deterministic tests before any manual database or
   - Blocked Condition: None.
   - Files: `backend/tests/test_retrieval_agent.py`
 
-- [ ] (04D): Run required targeted automated validation
+- [x] (04D): Run required targeted automated validation
   - Source of Truth: `docs/plans/Plan_9.md` > `## 11. Required Tests`; `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Run `cd backend` then `pytest tests/test_retrieval_agent.py -v`.
@@ -711,10 +711,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch04
 
-- [ ] (04A): Add Agent 1 schema validation tests
-- [ ] (04B): Add successful retrieval and success-log tests
-- [ ] (04C): Add empty result and retrieval failure tests
-- [ ] (04D): Run required targeted automated validation
+- [x] (04A): Add Agent 1 schema validation tests
+- [x] (04B): Add successful retrieval and success-log tests
+- [x] (04C): Add empty result and retrieval failure tests
+- [x] (04D): Run required targeted automated validation
 
 #### Batch05
 

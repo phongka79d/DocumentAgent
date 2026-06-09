@@ -1096,3 +1096,370 @@ complete
 - next task ID: A2 validation of Batch03 repair follow-up, then rerun A3 audit if accepted.
 - can proceed: yes
 - handoff notes: A2 should verify the Batch03 task-block `(03A)` line has no leading spaces, all Batch03 accepted IDs remain checked in both locations, and Batch04/Batch05 remain unchecked.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch04 - Required Automated Tests
+
+## Task
+(04A) - Add Agent 1 schema validation tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_9.md > ## 9. Implementation Steps
+- docs/plans/Plan_9.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04A)
+- Task title: Add Agent 1 schema validation tests
+
+## Completed Work
+- Task is complete.
+- Added focused Agent 1 schema validation tests for valid input, malformed UUID fields, empty document IDs, empty/whitespace questions, valid empty candidate outputs, missing candidate score fields, and workflow-level candidate schema mismatch rejection before success logging.
+
+## Files Created or Modified
+- backend/tests/test_retrieval_agent.py
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed
+- evidence or reason: 15 tests collected and 15 passed in 1.64s.
+
+## Acceptance Check
+- Task acceptance condition: Invalid input cannot call retrieval.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_rejects_invalid_input_before_retrieval` asserts validation errors and no retrieval/log calls for invalid input.
+- Task acceptance condition: Invalid candidate output is rejected.
+- Status: satisfied
+- Evidence: `test_retrieval_candidate_rejects_missing_score_fields` and `test_run_retrieval_agent_rejects_candidate_schema_mismatch_before_logging` assert missing score fields raise `ValidationError` before success logging.
+- Task acceptance condition: Empty candidates remain valid.
+- Status: satisfied
+- Evidence: `test_retrieval_agent_output_accepts_empty_candidates` validates `candidates: []` successfully.
+
+## Artifacts Produced
+- Focused Agent 1 schema validation tests in `backend/tests/test_retrieval_agent.py`.
+- Appended execution report in `docs/reports/report_9_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Added only test coverage required by (04A); did not alter runtime Agent 1 code or implement sibling task scope.
+- Used direct Pydantic model validation for schema boundaries and a mocked malformed hybrid candidate to prove workflow output validation stops before success logging.
+
+## Risks or Open Issues
+- None identified for (04A).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Batch01 schema dependency was present.
+- No sibling tasks (04B), (04C), or (04D) were implemented.
+- No task checkbox was updated and no commit was created.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: A2 should review only the added schema validation coverage and confirm `(04A)` acceptance before any checkbox update.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch04 - Required Automated Tests
+
+## Task
+(04B) - Add successful retrieval and success-log tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_9.md > ## 1. Goal
+- docs/plans/Plan_9.md > ## 9. Implementation Steps
+- docs/plans/Plan_9.md > ## 11. Required Tests
+- docs/plans/Plan_9.md > ## 12. Acceptance Criteria
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04B)
+- Task title: Add successful retrieval and success-log tests
+
+## Completed Work
+- Task is complete.
+- Expanded the mocked successful retrieval test so deterministic hybrid candidates include all Agent 1 candidate fields and every score component.
+- Asserted Agent 1 returns a validated `RetrievalAgentOutput` with the required candidate schema fields.
+- Asserted candidate order and `final_score` order are preserved from the mocked hybrid retrieval response.
+- Asserted `retrieve_hybrid` is called with normalized question, UUID document IDs, and configured final top-k.
+- Asserted `log_agent_step` is called once after output validation with `status="success"`, the Agent 1 step constants, validated input payload, and validated output payload.
+- Kept tests independent from live Supabase, Qdrant, and ShopAIKey by mocking hybrid retrieval, logging, and settings.
+
+## Files Created or Modified
+- backend/tests/test_retrieval_agent.py
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed
+- evidence or reason: 15 tests collected, 15 passed in 1.71s.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove the callable returns structured output.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval` asserts the returned value equals a `RetrievalAgentOutput` containing required candidate fields, including all score fields.
+- Task acceptance condition: Tests prove success logging occurs after output validation.
+- Status: satisfied
+- Evidence: The same test asserts `log_agent_step` receives a `RetrievalAgentOutput` instance as `output_payload` and exact `status="success"` with Agent 1 step constants.
+- Task acceptance condition: Candidate chunks are sorted by `final_score` as returned by hybrid retrieval.
+- Status: satisfied
+- Evidence: The same test asserts returned candidate scores `[0.91, 0.82]` and chunk IDs preserve the mocked hybrid response order.
+- Task acceptance condition: Tests remain independent from live Supabase, Qdrant, and ShopAIKey.
+- Status: satisfied
+- Evidence: The test monkeypatches `retrieve_hybrid`, `log_agent_step`, and `get_settings`; no live service calls are required.
+
+## Artifacts Produced
+- Focused success-path Agent 1 retrieval and success-log test coverage in `backend/tests/test_retrieval_agent.py`.
+- Appended execution report in `docs/reports/report_9_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Tightened the existing success-path test instead of adding duplicate coverage.
+- Asserted the output/log payload schema through Pydantic models and `model_dump(mode="json")` field sets.
+- Matched the actual logging call contract where `error_message` is omitted on success and therefore defaults to `None` in the log service.
+
+## Risks or Open Issues
+- None identified for (04B).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Batch03 success path dependency was present.
+- Did not update task checkboxes or commit.
+- Did not intentionally implement sibling tasks (04C) or (04D) in this run.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes, after A2 review accepts (04B)
+- handoff notes: Review should focus on success retrieval output schema, success log payload/status, preserved candidate ordering, and mocked-service independence.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch04 - Required Automated Tests
+
+## Task
+(04C) - Add empty result and retrieval failure tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_9.md > (04C): Add empty result and retrieval failure tests
+- docs/plans/Plan_9.md > ## 11. Required Tests
+- docs/plans/Plan_9.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_9.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04C)
+- Task title: Add empty result and retrieval failure tests
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added a dedicated `run_retrieval_agent` empty-candidate test proving `candidates: []` returns successfully and writes a `success` agent step log.
+- Verified the empty-result path uses the normal success log service and does not call the failed-log preservation helper.
+- Preserved and strengthened retrieval failure coverage by asserting the failed-log preservation call shape includes `output_payload={}`, `status="failed"`, and the safe retrieval error message.
+- Existing retrieval failure tests also assert `RetrievalAgentError` is raised without provider detail leakage and that failed log insertion does not erase the controlled retrieval error.
+
+## Files Created or Modified
+- backend/tests/test_retrieval_agent.py
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed
+- evidence or reason: 16 tests collected, 16 passed in 1.59s.
+
+## Acceptance Check
+- Task acceptance condition: Empty results are not treated as failure.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_treats_empty_candidates_as_success` asserts an empty hybrid response returns `RetrievalAgentOutput(candidates=[])`, writes `status="success"`, and does not call `try_log_agent_step`.
+- Task acceptance condition: Retrieval failure is visible in logs and surfaces as `RetrievalAgentError`.
+- Status: satisfied
+- Evidence: failure tests assert failed-step log calls use `status="failed"`, safe `error_message`, empty output payload, and raise `RetrievalAgentError` with the controlled message.
+- Task acceptance condition: Log failure preservation is covered.
+- Status: satisfied
+- Evidence: `test_run_retrieval_agent_reports_failed_log_insert_without_erasing_retrieval_error` asserts failed persistence is logged safely while the raised error remains the controlled retrieval error.
+
+## Artifacts Produced
+- Empty-result success-path test coverage in `backend/tests/test_retrieval_agent.py`.
+- Retrieval failure and failed-log preservation assertions in `backend/tests/test_retrieval_agent.py`.
+- Appended execution report in `docs/reports/report_9_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Added a separate empty-result callable test instead of relying on schema-only empty candidate validation.
+- Kept retrieval failure assertions mocked and deterministic, with no live Supabase, Qdrant, or provider calls.
+- Used the safe constant message expected by Agent 1 failure handling instead of asserting raw provider exception details.
+
+## Risks or Open Issues
+- None identified for (04C).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Batch03 failure handling dependency was present.
+- Did not update task checkboxes or commit.
+- Did not implement sibling task (04D); only ran the validation required by (04C).
+
+## Notes for Next Task
+- next task ID: (04D)
+- can proceed: yes, after A2 review accepts (04C)
+- handoff notes: Review should focus on empty-result success logging, failed-step log shape, safe error message assertions, controlled `RetrievalAgentError`, and the passing targeted pytest result.
+---
+
+# Task Execution Report - (04D)
+
+## Source Task File
+docs/tasks/task_9.md
+
+## Report File
+docs/reports/report_9_execute_agent.md
+
+## Batch
+Batch04 - Required Automated Tests
+
+## Task
+(04D) - Run required targeted automated validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_9.md` > `## 11. Required Tests`
+- `docs/plans/Plan_9.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_9.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Required Automated Tests
+- Task ID: (04D)
+- Task title: Run required targeted automated validation
+
+## Completed Work
+- Task is complete.
+- Ran the required targeted automated validation for Agent 1 retrieval tests.
+- Verified pytest actually collected and ran the targeted tests.
+- Inspected the changed-file set and focused Agent 1 files for hardcoded secrets, fake success, and out-of-scope Agent 2/Agent 3/LangGraph/chat/final-answer behavior.
+- Determined adjacent shared-service tests were not required for this task execution because the current changed implementation/test surface does not include shared config, Supabase service, or hybrid retrieval contract files.
+
+## Files Created or Modified
+- docs/reports/report_9_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_retrieval_agent.py -v`: Passed
+- evidence or reason: pytest collected 16 items and all 16 passed in 1.97s; individual results showed PASSED for schema validation, success logging, empty candidates, invalid input before retrieval, candidate schema mismatch, retrieval failure logging, and failed-log preservation tests.
+- `git diff --name-only`: Passed
+- evidence or reason: changed files were `backend/tests/test_retrieval_agent.py`, `docs/reports/report_9_execute_agent.md`, `docs/review/review_9_review_agent.md`, and `docs/tasks/task_9.md`; no shared config, Supabase service, or hybrid retrieval implementation files were changed in the current diff.
+- `rg --pcre2 -n "sk-[A-Za-z0-9_-]+|SUPABASE_SERVICE_ROLE_KEY\\s*=\\s*(?!your-supabase-service-role-key(?:\\r?\\n)?$)|SHOPAIKEY_API_KEY\\s*=\\s*(?!shopaikey-placeholder(?:\\r?\\n)?$)|QDRANT_API_KEY\\s*=\\s*(?!qdrant-placeholder(?:\\r?\\n)?$)|password\\s*=|secret\\s*=|token\\s*=" backend/app/agents backend/tests/test_retrieval_agent.py backend/.env.example`: Passed
+- evidence or reason: no matches found.
+- `rg -n "Agent 2|Agent 3|LangGraph|/api/chat/ask|final answer|mark.*verified|answer generation" backend/app/agents backend/tests/test_retrieval_agent.py`: Passed
+- evidence or reason: no matches found.
+- Adjacent shared-service tests: Not run
+- evidence or reason: optional adjacent tests were not triggered because changed implementation files did not touch shared config, Supabase service, or hybrid retrieval contracts.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass or failures are reported honestly with cause.
+- Status: satisfied
+- Evidence: `pytest tests/test_retrieval_agent.py -v` was run from `backend`, collected 16 tests, and passed 16/16.
+- Task acceptance condition: Verify tests were actually run.
+- Status: satisfied
+- Evidence: pytest output listed each `tests/test_retrieval_agent.py` test item and ended with `16 passed in 1.97s`.
+- Task acceptance condition: Confirm no hardcoded secrets and no fake success.
+- Status: satisfied
+- Evidence: focused secret scan returned no matches in Agent 1 files/test/env example; tests execute real schema and `run_retrieval_agent` behavior with approved mocked external boundaries rather than fake success.
+- Task acceptance condition: Additional changed shared-service tests pass where applicable.
+- Status: satisfied
+- Evidence: not applicable; changed files did not include shared config, Supabase service, or hybrid retrieval contract files.
+
+## Artifacts Produced
+- Appended automated validation evidence for `(04D)` in `docs/reports/report_9_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Did not run optional adjacent tests because the current changed-file set did not touch shared config, Supabase service, or hybrid retrieval contracts.
+- Did not modify runtime code or test code for this validation-only task.
+
+## Risks or Open Issues
+- None identified for `(04D)`.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- Dependencies `(04A)`, `(04B)`, and `(04C)` are checked complete in the task file.
+- Did not update task checkboxes or commit.
+- Did not continue into Batch05.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after A2 review accepts `(04D)` and updates Batch04 progress if appropriate.
+- handoff notes: Reviewer should verify the required pytest result, changed-file-based adjacent-test decision, secret scan, no fake success, and that `(04D)` remains unchecked until A2 acceptance.

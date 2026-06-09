@@ -246,7 +246,7 @@ Key files:
 - `backend/app/services/embedding_service.py`: document chunk indexing orchestration.
 - `backend/app/services/supabase_service.py`: Supabase database and storage operations.
 - `backend/tests/test_agent_log_service.py`: mocked coverage for Agent 1 step log persistence and safe failure behavior.
-- `backend/tests/test_retrieval_agent.py`: mocked coverage for Agent 1 retrieval delegation, validated output conversion, success logging, invalid-input rejection, and controlled retrieval failure logging.
+- `backend/tests/test_retrieval_agent.py`: mocked coverage for Agent 1 schema validation, retrieval delegation, validated output conversion, success logging, empty-result success, candidate schema mismatch rejection, invalid-input rejection, controlled retrieval failure logging, and failed-log preservation.
 - `backend/app/services/qdrant_service.py`: Qdrant collection, upsert, and search helpers.
 - `backend/app/services/shopaikey_service.py`: embedding API calls.
 - `backend/app/services/retrieval_service.py`: semantic retrieval orchestration, result mapping, Supabase content fallback, and safe dependency failure wrapping.
@@ -406,7 +406,7 @@ Backend tests are under `backend/tests/`. From `backend/`:
 pytest
 ```
 
-The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, guarded rerank placeholder behavior, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, hybrid retrieval merge/scoring/ranking/reason/failure behavior, retrieval API semantic and hybrid mode contracts/error behavior, Agent 1 step logging behavior, Agent 1 retrieval callable behavior, and the development indexing API. Plan 8 Batch05 also completed the required scoring, graph retrieval, and hybrid retrieval test runs plus a service-level hybrid retrieval smoke check against local processed, indexed, graph-built data.
+The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, guarded rerank placeholder behavior, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, hybrid retrieval merge/scoring/ranking/reason/failure behavior, retrieval API semantic and hybrid mode contracts/error behavior, Agent 1 step logging behavior, Agent 1 retrieval callable behavior, Agent 1 schema/output/failure automated-test coverage, and the development indexing API. Plan 8 Batch05 also completed the required scoring, graph retrieval, and hybrid retrieval test runs plus a service-level hybrid retrieval smoke check against local processed, indexed, graph-built data.
 
 Frontend validation commands from `frontend/package.json`:
 
