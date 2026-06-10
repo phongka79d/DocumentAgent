@@ -202,7 +202,8 @@ def test_verification_agent_calls_shopaikey_with_compact_evidence_payload(
     user_payload = captured_messages[1]["content"]
     assert "When does probation start?" in user_payload
     assert CANDIDATE_CHUNK_ID in user_payload
-    assert CANDIDATE_DOCUMENT_ID not in user_payload
+    assert CANDIDATE_DOCUMENT_ID in user_payload
+    assert f'"document_id": "{CANDIDATE_DOCUMENT_ID}"' in user_payload
     assert "contract.pdf" in user_payload
     assert '"page_number": 3' in user_payload
     assert '"section_title": "Probation"' in user_payload

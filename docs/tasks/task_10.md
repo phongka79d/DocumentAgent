@@ -746,7 +746,7 @@ Automated tests prove deterministic behavior, but Plan 10 also requires a manual
 
 ### Tasks
 
-- [ ] (06A): Run manual Agent 1 output into Agent 2 when setup is available
+- [x] (06A): Run manual Agent 1 output into Agent 2 when setup is available
   - Source of Truth: `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`; `README.md` > `## Configuration`; `README.md` > `## Known Gaps or Unclear Areas`
   - Source Requirements:
     - Run Agent 1 for the sample question.
@@ -763,7 +763,7 @@ Automated tests prove deterministic behavior, but Plan 10 also requires a manual
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if required ShopAIKey credentials, Supabase settings, valid `agent_run_id`, or sample processed/indexed candidate data are missing.
   - Files: No runtime files expected; execution report records result
 
-- [ ] (06B): Create execution report with example Agent 2 output
+- [x] (06B): Create execution report with example Agent 2 output
   - Source of Truth: `docs/plans/Plan_10.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_10.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created.
@@ -783,7 +783,7 @@ Automated tests prove deterministic behavior, but Plan 10 also requires a manual
   - Blocked Condition: None.
   - Files: `docs/reports/report_10_execute_agent.md`
 
-- [ ] (06C): Complete scope, secret, and architecture review
+- [x] (06C): Complete scope, secret, and architecture review
   - Source of Truth: `docs/plans/Plan_10.md` > `## 4. Out of Scope`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_10.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - Scope was followed.
@@ -900,7 +900,7 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] Batch03 - Deterministic Evidence Safety Checks
 - [x] Batch04 - Agent Step Logging and Failure Handling
 - [x] Batch05 - Required Automated Tests
-- [ ] Batch06 - Manual Validation, Reporting, and Scope Review
+- [x] Batch06 - Manual Validation, Reporting, and Scope Review
 
 ### Task IDs
 
@@ -942,9 +942,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch06
 
-- [ ] (06A): Run manual Agent 1 output into Agent 2 when setup is available
-- [ ] (06B): Create execution report with example Agent 2 output
-- [ ] (06C): Complete scope, secret, and architecture review
+- [x] (06A): Run manual Agent 1 output into Agent 2 when setup is available
+- [x] (06B): Create execution report with example Agent 2 output
+- [x] (06C): Complete scope, secret, and architecture review
 
 ## Completion Reporting Rules for Future Execution Agents
 

@@ -94,6 +94,7 @@ def _build_compact_evidence_payload(
         "evidence": [
             {
                 "chunk_id": str(candidate.chunk_id),
+                "document_id": str(candidate.document_id),
                 "file_name": candidate.file_name,
                 "page_number": candidate.page_number,
                 "section_title": candidate.section_title,
