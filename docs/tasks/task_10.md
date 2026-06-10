@@ -857,39 +857,39 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ## Global Verification Checklist
 
-- [ ] `docs/plans/Plan_10.md` remained the scope authority.
-- [ ] No database schema changes were added.
-- [ ] `backend/app/agents/schemas.py` defines Agent 2 input and output schemas.
-- [ ] Agent 2 output contains exactly `verified_chunks`, `rejected_chunks`, `missing_information`, and `confidence`.
-- [ ] `confidence` is validated between `0.0` and `1.0`.
-- [ ] `backend/app/agents/prompts.py` contains the Agent 2 verification prompt.
-- [ ] Verification prompt rejects weak, loose, duplicate, contradicted, unclear, or wrong-document chunks.
-- [ ] Verification prompt accepts directly useful or simple-reasoning-supporting evidence.
-- [ ] Verification prompt requires valid JSON only.
-- [ ] `backend/app/agents/verification_agent.py` exposes `run_verification_agent`.
-- [ ] Empty candidates return missing information with confidence `0.0` without calling ShopAIKey.
-- [ ] Non-empty candidates call ShopAIKey chat completion through backend service code.
-- [ ] LLM JSON output is parsed and Pydantic-validated.
-- [ ] Unknown chunk IDs from LLM output are not accepted.
-- [ ] Verified quotes are faithful excerpts from Agent 1 candidate content.
-- [ ] Duplicate verified chunks are filtered.
-- [ ] Clear contradictions are detected or reported.
-- [ ] No verified evidence sets `missing_information = true`.
-- [ ] Agent 2 logs successful verification steps to `agent_steps`.
-- [ ] Agent 2 logs failed verification steps when possible.
-- [ ] ShopAIKey, invalid JSON, schema validation, unknown-ID, and provider failures raise `VerificationAgentError`.
-- [ ] Rejected chunks are not passed as verified evidence.
-- [ ] Agent 2 does not generate final answers.
-- [ ] Agent 2 does not add citation formatting for users.
-- [ ] Agent 2 does not retrieve new chunks beyond Agent 1 candidates.
-- [ ] Agent 3 was not implemented.
-- [ ] LangGraph workflow was not implemented.
-- [ ] No public chat, evidence, or agent log API was added.
-- [ ] Backend-only secrets and provider settings stayed out of frontend code.
-- [ ] `cd backend` then `pytest tests/test_verification_agent.py -v` was run and reported.
-- [ ] Manual Agent 1 -> Agent 2 smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
-- [ ] Execution report includes files created, files modified, commands run, test results, known issues, out-of-scope work, and example Agent 2 output.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `docs/plans/Plan_10.md` remained the scope authority.
+- [x] No database schema changes were added.
+- [x] `backend/app/agents/schemas.py` defines Agent 2 input and output schemas.
+- [x] Agent 2 output contains exactly `verified_chunks`, `rejected_chunks`, `missing_information`, and `confidence`.
+- [x] `confidence` is validated between `0.0` and `1.0`.
+- [x] `backend/app/agents/prompts.py` contains the Agent 2 verification prompt.
+- [x] Verification prompt rejects weak, loose, duplicate, contradicted, unclear, or wrong-document chunks.
+- [x] Verification prompt accepts directly useful or simple-reasoning-supporting evidence.
+- [x] Verification prompt requires valid JSON only.
+- [x] `backend/app/agents/verification_agent.py` exposes `run_verification_agent`.
+- [x] Empty candidates return missing information with confidence `0.0` without calling ShopAIKey.
+- [x] Non-empty candidates call ShopAIKey chat completion through backend service code.
+- [x] LLM JSON output is parsed and Pydantic-validated.
+- [x] Unknown chunk IDs from LLM output are not accepted.
+- [x] Verified quotes are faithful excerpts from Agent 1 candidate content.
+- [x] Duplicate verified chunks are filtered.
+- [x] Clear contradictions are detected or reported.
+- [x] No verified evidence sets `missing_information = true`.
+- [x] Agent 2 logs successful verification steps to `agent_steps`.
+- [x] Agent 2 logs failed verification steps when possible.
+- [x] ShopAIKey, invalid JSON, schema validation, unknown-ID, and provider failures raise `VerificationAgentError`.
+- [x] Rejected chunks are not passed as verified evidence.
+- [x] Agent 2 does not generate final answers.
+- [x] Agent 2 does not add citation formatting for users.
+- [x] Agent 2 does not retrieve new chunks beyond Agent 1 candidates.
+- [x] Agent 3 was not implemented.
+- [x] LangGraph workflow was not implemented.
+- [x] No public chat, evidence, or agent log API was added.
+- [x] Backend-only secrets and provider settings stayed out of frontend code.
+- [x] `cd backend` then `pytest tests/test_verification_agent.py -v` was run and reported.
+- [x] Manual Agent 1 -> Agent 2 smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
+- [x] Execution report includes files created, files modified, commands run, test results, known issues, out-of-scope work, and example Agent 2 output.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
