@@ -1,19 +1,32 @@
+import json
 import sys
+from copy import deepcopy
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import app.agents.answer_agent as answer_agent_module
 from app.agents.answer_agent import (
+    ANSWER_FAILURE_MESSAGE,
+    AnswerAgentError,
     AnswerEvidenceValidationError,
     READY_SELF_CHECK_REQUIRED_VALUES,
+    build_answer_generation_messages,
+    build_answer_generation_payload,
+    build_answer_evidence_lookup,
     enforce_answer_self_check,
     format_citation,
+    normalize_answer_agent_input,
     normalize_answer_self_check,
+    run_answer_agent,
     validate_answer_evidence_contract,
 )
+from app.agents import AnswerAgentError as ExportedAnswerAgentError
+from app.agents import run_answer_agent as exported_run_answer_agent
 from app.agents.prompts import (
     ANSWER_GENERATION_OUTPUT_KEYS,
     ANSWER_GENERATION_SYSTEM_PROMPT,
@@ -21,6 +34,7 @@ from app.agents.prompts import (
     SELF_CHECK_OUTPUT_KEYS,
 )
 from app.agents.schemas import (
+    AnswerAgentInput,
     AnswerAgentOutput,
     AnswerSelfCheck,
     Citation,
@@ -33,22 +47,33 @@ REJECTED_CHUNK_ID = "33333333-3333-3333-3333-333333333333"
 DOCUMENT_ID = "44444444-4444-4444-4444-444444444444"
 VERIFIED_QUOTE = "The probation period starts on 01/06/2026 and lasts 2 months."
 REJECTED_QUOTE = "The probation period starts on 01/05/2026 and lasts 3 months."
+EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER = (
+    "Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời."
+)
 
 
-def _verification_output() -> VerificationAgentOutput:
+def _verification_output(
+    *,
+    missing_information: bool = False,
+    verified_chunks: list[dict[str, object]] | None = None,
+) -> VerificationAgentOutput:
     return VerificationAgentOutput.model_validate(
         {
-            "verified_chunks": [
-                {
-                    "chunk_id": VERIFIED_CHUNK_ID,
-                    "document_id": DOCUMENT_ID,
-                    "file_name": "contract.pdf",
-                    "quote": VERIFIED_QUOTE,
-                    "page_number": 3,
-                    "verification_reason": "Directly answers the probation period.",
-                    "supports_simple_reasoning": True,
-                }
-            ],
+            "verified_chunks": (
+                [
+                    {
+                        "chunk_id": VERIFIED_CHUNK_ID,
+                        "document_id": DOCUMENT_ID,
+                        "file_name": "contract.pdf",
+                        "quote": VERIFIED_QUOTE,
+                        "page_number": 3,
+                        "verification_reason": "Directly answers the probation period.",
+                        "supports_simple_reasoning": True,
+                    }
+                ]
+                if verified_chunks is None
+                else verified_chunks
+            ),
             "rejected_chunks": [
                 {
                     "chunk_id": REJECTED_CHUNK_ID,
@@ -58,7 +83,7 @@ def _verification_output() -> VerificationAgentOutput:
                     "rejection_reason": "Contradicts verified evidence.",
                 }
             ],
-            "missing_information": False,
+            "missing_information": missing_information,
             "confidence": 0.82,
         }
     )
@@ -94,6 +119,219 @@ def _answer_output(
             },
         }
     )
+
+
+def _answer_input_payload() -> dict[str, object]:
+    return {
+        "agent_run_id": "11111111-1111-1111-1111-111111111111",
+        "question": " When can I start official work? ",
+        "verification": _verification_output().model_dump(mode="json"),
+    }
+
+
+def _assert_insufficient_evidence_output(output: AnswerAgentOutput) -> None:
+    assert output.final_answer == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
+    assert output.citations == []
+    assert output.reasoning_summary == "Insufficient verified evidence."
+    assert output.confidence == 0.0
+    assert output.self_check == AnswerSelfCheck(
+        uses_only_verified_chunks=True,
+        has_citation=False,
+        has_unsupported_claims=False,
+        is_ready=False,
+    )
+
+
+def test_answer_agent_exports_internal_callable_and_error() -> None:
+    assert exported_run_answer_agent is run_answer_agent
+    assert ExportedAnswerAgentError is AnswerAgentError
+
+
+def test_run_answer_agent_accepts_answer_agent_input_for_validation() -> None:
+    input_model = AnswerAgentInput.model_validate(_answer_input_payload())
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(input_model)
+
+
+def test_run_answer_agent_accepts_mapping_for_validation() -> None:
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+
+def test_run_answer_agent_wraps_input_validation_failures_safely() -> None:
+    invalid_payload = _answer_input_payload()
+    invalid_payload["question"] = "   "
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(invalid_payload)
+
+
+def test_normalize_answer_agent_input_accepts_agent_2_verification_payload_without_mutation() -> None:
+    payload = _answer_input_payload()
+    original_payload = deepcopy(payload)
+
+    normalized = normalize_answer_agent_input(payload)
+
+    assert str(normalized.agent_run_id) == original_payload["agent_run_id"]
+    assert normalized.question == "When can I start official work?"
+    assert normalized.verification == _verification_output()
+    assert payload == original_payload
+
+
+@pytest.mark.parametrize(
+    "invalid_update",
+    [
+        {"agent_run_id": "not-a-uuid"},
+        {"verification": {"verified_chunks": [], "rejected_chunks": []}},
+        {"verification": {"missing_information": False, "confidence": 0.5}},
+        {"verification": _verification_output().model_dump(mode="json") | {"confidence": 1.5}},
+    ],
+)
+def test_normalize_answer_agent_input_rejects_invalid_pydantic_cases(
+    invalid_update: dict[str, object],
+) -> None:
+    payload = _answer_input_payload()
+    payload.update(invalid_update)
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        normalize_answer_agent_input(payload)
+
+
+def test_build_answer_evidence_lookup_maps_verified_and_rejected_evidence() -> None:
+    verification = _verification_output()
+
+    evidence_lookup = build_answer_evidence_lookup(verification)
+
+    assert evidence_lookup.verified_quotes == frozenset({VERIFIED_QUOTE})
+    assert evidence_lookup.verified_file_names == frozenset({"contract.pdf"})
+    assert evidence_lookup.verified_citation_pairs == frozenset(
+        {("contract.pdf", VERIFIED_QUOTE)}
+    )
+    assert evidence_lookup.verified_chunk_ids == frozenset({VERIFIED_CHUNK_ID})
+    assert evidence_lookup.rejected_quotes == frozenset({REJECTED_QUOTE})
+    assert evidence_lookup.rejected_file_names == frozenset({"draft.pdf"})
+    assert evidence_lookup.rejected_citation_pairs == frozenset(
+        {("draft.pdf", REJECTED_QUOTE)}
+    )
+    assert evidence_lookup.rejected_chunk_ids == frozenset({REJECTED_CHUNK_ID})
+
+
+def test_build_answer_generation_payload_contains_question_and_verified_evidence_only() -> None:
+    answer_input = AnswerAgentInput.model_validate(_answer_input_payload())
+
+    payload = build_answer_generation_payload(answer_input)
+
+    assert payload == {
+        "question": "When can I start official work?",
+        "verified_chunks": [
+            {
+                "file_name": "contract.pdf",
+                "quote": VERIFIED_QUOTE,
+                "page_number": 3,
+                "verification_reason": "Directly answers the probation period.",
+                "supports_simple_reasoning": True,
+            }
+        ],
+    }
+    payload_json = json.dumps(payload)
+    assert "rejected_chunks" not in payload
+    assert "chunk_id" not in payload_json
+    assert "document_id" not in payload_json
+    assert REJECTED_QUOTE not in payload_json
+    assert REJECTED_CHUNK_ID not in payload_json
+    assert "rejection_reason" not in payload_json
+
+
+def test_build_answer_generation_messages_exclude_rejected_chunks_from_user_evidence() -> None:
+    answer_input = AnswerAgentInput.model_validate(_answer_input_payload())
+
+    messages = build_answer_generation_messages(answer_input)
+
+    assert messages[0]["role"] == "system"
+    assert messages[0]["content"] == ANSWER_GENERATION_SYSTEM_PROMPT
+    assert messages[1]["role"] == "user"
+
+    provider_payload = json.loads(messages[1]["content"])
+    assert provider_payload["question"] == "When can I start official work?"
+    assert provider_payload["verified_chunks"][0]["quote"] == VERIFIED_QUOTE
+    assert "rejected_chunks" not in provider_payload
+    assert REJECTED_QUOTE not in messages[1]["content"]
+    assert REJECTED_CHUNK_ID not in messages[1]["content"]
+
+
+def test_run_answer_agent_sends_verified_evidence_only_to_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(return_value='{"final_answer":"draft"}')
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    chat_completion.assert_called_once()
+    messages = chat_completion.call_args.args[0]
+    assert chat_completion.call_args.kwargs == {
+        "response_format": answer_agent_module.ANSWER_GENERATION_RESPONSE_FORMAT
+    }
+    user_payload = json.loads(messages[1]["content"])
+    assert user_payload["question"] == "When can I start official work?"
+    assert user_payload["verified_chunks"] == [
+        {
+            "file_name": "contract.pdf",
+            "quote": VERIFIED_QUOTE,
+            "page_number": 3,
+            "verification_reason": "Directly answers the probation period.",
+            "supports_simple_reasoning": True,
+        }
+    ]
+    assert "rejected_chunks" not in user_payload
+    assert REJECTED_QUOTE not in messages[1]["content"]
+    assert REJECTED_CHUNK_ID not in messages[1]["content"]
+
+
+def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(side_effect=AssertionError("ShopAIKey must not be called"))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    payload = _answer_input_payload()
+    payload["verification"] = _verification_output(
+        missing_information=True
+    ).model_dump(mode="json")
+
+    output = run_answer_agent(payload)
+
+    _assert_insufficient_evidence_output(output)
+    chat_completion.assert_not_called()
+
+
+def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_empty_verified_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(side_effect=AssertionError("ShopAIKey must not be called"))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    payload = _answer_input_payload()
+    payload["verification"] = _verification_output(
+        verified_chunks=[]
+    ).model_dump(mode="json")
+
+    output = run_answer_agent(payload)
+
+    _assert_insufficient_evidence_output(output)
+    chat_completion.assert_not_called()
 
 
 def test_citation_schema_normalizes_fields_and_formats_for_display() -> None:

@@ -456,3 +456,443 @@ complete
 - next task ID: (02A)
 - can proceed: yes
 - handoff notes: Agent 3 runtime work can call `app.services.shopaikey_service.chat_completion()` and rely on backend `Settings.require_shopaikey_chat_settings()` for `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, and `SHOPAIKEY_CHAT_MODEL`. Live provider validation requires user-provided real values in `backend/.env`.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+
+## Task
+(02A) - Create answer agent module and controlled error type
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_11.md > (02A)
+- docs/plans/Plan_11.md > ## 6. Required Files and Folders
+- docs/plans/Plan_11.md > ## 8. API Design
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > # 16. Suggested Project Structure
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02A)
+- Task title: Create answer agent module and controlled error type
+
+## Completed Work
+- Task is complete.
+- Extended existing backend/app/agents/answer_agent.py without reverting Batch01 helpers.
+- Added AnswerAgentError and internal typed failure wrapper for controlled safe failures.
+- Added run_answer_agent(input_data), accepting AnswerAgentInput or compatible mappings and validating through AnswerAgentInput.model_validate.
+- Kept sufficient-evidence LLM drafting, missing-information output behavior, logging, LangGraph, public routes, frontend chat, retrieval, and memory out of scope.
+- Exported the internal callable and controlled error through backend/app/agents/__init__.py.
+- Added targeted tests for package exports, AnswerAgentInput instance acceptance, mapping acceptance, and safe wrapping of input validation failures.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/app/agents/__init__.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_answer_agent.py -v: Passed
+- evidence or reason: 23 passed in 1.64s.
+- cd backend; python -c "from app.agents import AnswerAgentError, run_answer_agent; from app.agents.schemas import AnswerAgentInput; print(AnswerAgentError.__name__, callable(run_answer_agent), AnswerAgentInput.__name__)": Passed
+- evidence or reason: printed "AnswerAgentError True AnswerAgentInput".
+
+## Acceptance Check
+- Task acceptance condition: run_answer_agent imports successfully and accepts AnswerAgentInput or a compatible mapping for validation.
+- Status: satisfied
+- Evidence: Targeted tests passed for package export import, AnswerAgentInput instance input, mapping input, and controlled validation failure behavior; import smoke check printed callable status successfully.
+
+## Artifacts Produced
+- Internal Agent 3 callable shell and controlled error type.
+- Targeted answer-agent tests.
+- Execution report entry.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- run_answer_agent currently validates input and fails closed with AnswerAgentError because provider drafting, insufficient-evidence behavior, self-check execution, and logging are assigned to later tasks.
+- ValidationError details are not exposed to callers; callers receive the safe AnswerAgentError message.
+- Existing Batch01 evidence/self-check helpers were preserved and extended in place.
+
+## Risks or Open Issues
+- run_answer_agent is a callable shell only; it intentionally does not yet return an AnswerAgentOutput until later Batch02/Batch03/Batch04 tasks add runtime paths.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency on Batch01 schemas is satisfied by existing AnswerAgentInput and AnswerAgentOutput schemas.
+- No public API endpoint, LangGraph orchestration, provider call, frontend chat, retrieval expansion, conversation memory, database change, or secret was added.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: Future tasks can build on run_answer_agent by replacing the current fail-closed runtime path with deterministic insufficient-evidence behavior first, then provider drafting and self-check enforcement in their assigned tasks.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+
+## Task
+(02B) - Implement deterministic missing-information behavior
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.4 Insufficient Evidence Answer
+- docs/plans/Master_Plan.md > ## 18.4 Missing Information Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02B)
+- Task title: Implement deterministic missing-information behavior
+
+## Completed Work
+- Status: complete.
+- Added a deterministic insufficient-evidence branch in run_answer_agent after input validation and before any provider call path.
+- Returned the exact insufficient-evidence final answer with empty citations, confidence 0.0, and self-check fields that do not mark the answer ready.
+- Kept sufficient-evidence behavior fail-closed with AnswerAgentError for later Batch03 work.
+- Added tests for missing_information=true and empty verified_chunks proving ShopAIKey chat_completion is not called.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_answer_agent.py -v: Passed
+- evidence or reason: 25 passed in 1.59s.
+- python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py: Passed
+- evidence or reason: command completed with exit code 0.
+
+## Acceptance Check
+- Task acceptance condition: Missing information and empty verified chunks return the insufficient-evidence output without provider calls.
+- Status: satisfied
+- Evidence: test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information and test_run_answer_agent_returns_insufficient_evidence_without_provider_for_empty_verified_chunks both passed and assert mocked ShopAIKey chat_completion was not called.
+
+## Artifacts Produced
+- Safe insufficient-evidence Agent 3 output path.
+- Targeted no-provider-call tests for insufficient evidence.
+- Execution report entry.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- Insufficient evidence returns an AnswerAgentOutput rather than raising AnswerAgentError.
+- confidence is set to 0.0, citations is an empty list, and self_check is uses_only_verified_chunks=true, has_citation=false, has_unsupported_claims=false, is_ready=false.
+- answer_agent imports shopaikey_service so tests and later provider wiring can assert or control the provider boundary from the agent module.
+
+## Risks or Open Issues
+- Sufficient-evidence provider drafting remains intentionally unimplemented and still fails closed until Batch03.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (02A) was complete before execution and run_answer_agent was available.
+- No public API endpoint, LangGraph orchestration, frontend chat, retrieval expansion, conversation memory, database change, logging behavior, or Batch03 provider drafting was added.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes
+- handoff notes: Next task can normalize Agent 2 verification input on top of the deterministic insufficient-evidence branch; sufficient evidence still intentionally fails closed until provider drafting is implemented later.
+
+---
+
+# Task Execution Repair Report - (02B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+
+## Task
+(02B) - Implement deterministic missing-information behavior
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.4 Insufficient Evidence Answer
+- docs/plans/Master_Plan.md > ## 18.4 Missing Information Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02B)
+- Task title: Implement deterministic missing-information behavior
+
+## Completed Work
+- Status: complete.
+- Repaired the insufficient-evidence answer text so runtime output equals the exact required Vietnamese sentence: Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.
+- Updated tests so insufficient-evidence assertions compare runtime output against an independently defined expected literal instead of importing INSUFFICIENT_EVIDENCE_ANSWER from the implementation.
+- Preserved the no-provider-call assertions for both missing_information=true and empty verified_chunks.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- python runtime equality check: Passed
+- evidence or reason: implementation_constant_equals_expected=True, test_literal_equals_expected=True, runtime_output_equals_expected=True for Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.
+- pytest tests/test_answer_agent.py -v: Passed
+- evidence or reason: 25 passed in 1.58s.
+- python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py: Passed
+- evidence or reason: command completed with exit code 0.
+
+## Acceptance Check
+- Task acceptance condition: Missing information and empty verified chunks return the insufficient-evidence output without provider calls, using the exact required answer text.
+- Status: satisfied
+- Evidence: test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information and test_run_answer_agent_returns_insufficient_evidence_without_provider_for_empty_verified_chunks passed; both compare against an independent expected literal and assert mocked ShopAIKey chat_completion was not called. Runtime equality check also confirmed output.final_answer equals the exact required Vietnamese string.
+
+## Artifacts Produced
+- Corrected safe insufficient-evidence Agent 3 output path.
+- Independent exact-literal tests for insufficient-evidence output.
+- Repair execution report entry.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- The implementation constant now evaluates to the exact required sentence: Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.
+- The test file owns its expected insufficient-evidence literal independently from the implementation constant to catch future mismatches.
+- No sibling task behavior was added; sufficient-evidence provider drafting remains fail-closed for later Batch03 work.
+
+## Risks or Open Issues
+- None for the A2-rejected issue.
+
+## Minor Issues Fixed During Execution
+- Removed UTF-8 BOM markers introduced during repair editing before final validation.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Repaired only A2's rejected issue for (02B).
+- No public API endpoint, LangGraph orchestration, frontend chat, retrieval expansion, conversation memory, database change, logging behavior, Batch03 provider drafting, or sibling Batch02 task work was added.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes
+- handoff notes: (02B) repair is ready for A2 re-review; next task remains blocked until A2 accepts this repair.
+
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+
+## Task
+(02C) - Normalize Agent 2 verification input for Agent 3
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 8. API Design
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 12. Acceptance Criteria
+- README.md > ## Architecture
+- README.md > ## Known Gaps or Unclear Areas
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02C)
+- Task title: Normalize Agent 2 verification input for Agent 3
+
+## Completed Work
+- State: complete.
+- Added public Agent 3 input normalization through `normalize_answer_agent_input`, preserving controlled `AnswerAgentError` wrapping for invalid mapping input.
+- Added immutable `AnswerEvidenceLookup` and `build_answer_evidence_lookup` to derive verified and rejected quote, file-name, citation-pair, and chunk-id lookup sets from Agent 2 verification output.
+- Rewired existing citation and visible-text safety checks to consume the normalized evidence lookup without mutating Agent 2 verification output.
+- Preserved the existing fail-closed sufficient-evidence path; Batch03 provider drafting was not implemented.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_answer_agent.py -v: Passed
+- evidence or reason: 31 passed in 1.53s.
+- python -m py_compile app/agents/answer_agent.py app/agents/schemas.py tests/test_answer_agent.py: Passed
+- evidence or reason: command completed with exit code 0.
+
+## Acceptance Check
+- Task acceptance condition: Invalid input raises controlled `AnswerAgentError` or Pydantic validation; valid Agent 2 verification output is accepted.
+- Status: satisfied
+- Evidence: `test_normalize_answer_agent_input_accepts_agent_2_verification_payload_without_mutation` accepts current Agent 2 verification payload shape and confirms caller payload is unchanged; parametrized invalid-input tests raise controlled `AnswerAgentError`; existing mapping/model `run_answer_agent` validation tests still pass.
+
+## Artifacts Produced
+- Normalized Agent 3 input helper.
+- Immutable evidence lookup structure for verified/rejected evidence sets.
+- Unit tests for lookup mapping, non-mutation, and Pydantic input cases.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructed A1 not to update task checkboxes or batch status; A2 handles checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- Evidence lookup uses `frozenset` fields inside a frozen dataclass so downstream checks can share lookup data without mutating Agent 2 verification output.
+- File-name sets omit `None` file names while quote and chunk-id sets preserve all verified/rejected evidence needed for citation and content-safety checks.
+- `run_answer_agent` now normalizes input and builds the lookup before existing insufficient-evidence handling, but still raises the existing controlled not-implemented failure for sufficient evidence until Batch03.
+
+## Risks or Open Issues
+- Sufficient-evidence answer drafting remains intentionally unimplemented for Batch03.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (02A) and completed Plan 10 were present in the task tracker/context.
+- No public API route, LangGraph orchestration, frontend chat, retrieval expansion, logging behavior, conversation memory, database change, sibling (02D), or Batch03 provider drafting was added.
+
+## Notes for Next Task
+- next task ID: (02D)
+- can proceed: yes, after A2 accepts (02C)
+- handoff notes: Agent 3 can now receive normalized Agent 2 verification input and build verified/rejected evidence lookup sets for later compact evidence payload preparation.
+
+---
+
+# Task Execution Report - (02D)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+
+## Task
+(02D) - Prepare compact verified-evidence payload for answer generation
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 18.1 Grounding Rule
+- docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02D)
+- Task title: Prepare compact verified-evidence payload for answer generation
+
+## Completed Work
+- Task is complete.
+- Added a compact answer-generation payload builder that includes the normalized question and verified chunk fields needed for answering and citations: file_name, quote, page_number, verification_reason, and supports_simple_reasoning.
+- Added ShopAIKey chat message construction using the Agent 3 answer-generation system prompt and a compact JSON user payload.
+- Updated sufficient-evidence `run_answer_agent` flow to call ShopAIKey with the verified-only provider messages and JSON response format, while intentionally leaving draft parsing/validation for Batch03.
+- Added tests that inspect the mocked ShopAIKey messages and prove rejected chunks, rejected quotes, rejected chunk IDs, and rejection reasons are absent from the provider evidence payload.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence: 34 passed in 64.34s
+
+## Acceptance Check
+- Task acceptance condition: Provider messages contain the question and verified evidence only; rejected chunks are excluded from the generation prompt.
+- Status: satisfied
+- Evidence: `test_run_answer_agent_sends_verified_evidence_only_to_provider` inspects the mocked ShopAIKey call and verifies the user payload contains the question plus verified chunk evidence only, with no rejected chunk key, rejected quote, or rejected chunk ID.
+
+## Artifacts Produced
+- Provider-ready verified evidence payload and ShopAIKey message builder.
+- Targeted unit tests for rejected-evidence exclusion from provider messages.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run requested no checkbox or batch-status updates; A2 will update after ACCEPTED review.
+
+## Key Implementation Decisions
+- The provider user message is compact JSON with only verified evidence fields needed for answering and citations.
+- Internal chunk IDs and document IDs are intentionally omitted from the answer-generation payload because normal answer generation does not need them and citations must use file name plus quote.
+- `run_answer_agent` calls the provider for sufficient evidence but raises the existing controlled not-implemented failure afterward because Batch03 owns draft parsing and output validation.
+
+## Risks or Open Issues
+- Sufficient-evidence provider draft parsing and returned answer generation remain intentionally incomplete until Batch03.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (02C) and Batch01 prompts were marked complete in the task tracker.
+- No public APIs, LangGraph, frontend chat, retrieval expansion, conversation memory, LLM draft parsing, citation enforcement expansion, self-check execution, or logging behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes, after A2 accepts (02D)
+- handoff notes: Agent 3 can now build verified-only provider messages and call ShopAIKey for sufficient evidence. Batch03 can parse and validate the provider draft without adding rejected chunks to the answer-generation evidence payload.

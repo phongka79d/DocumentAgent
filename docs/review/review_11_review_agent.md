@@ -900,3 +900,902 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02A)
+- Task title: Create answer agent module and controlled error type
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 16. Suggested Project Structure`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching `(02A)` report entry and distinguished it from accepted prior Batch01 work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`, `docs/reports/report_11_execute_agent.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - contains the Agent 3 callable shell, controlled error type, input normalization, and existing Batch01 validation helpers preserved.
+- `backend/app/agents/__init__.py`: in scope - exports `AnswerAgentError`, `run_answer_agent`, and answer-agent constants for internal use.
+- `backend/tests/test_answer_agent.py`: in scope - adds targeted tests for exports, valid model input, compatible mapping input, and safe validation-failure wrapping.
+- `docs/reports/report_11_execute_agent.md`: in scope - contains the selected `(02A)` execution report entry.
+- `docs/tasks/task_11.md`: in scope - reviewed source task and updated only `(02A)` checkboxes after acceptance.
+- `docs/plans/Plan_11.md`: in scope - reviewed cited source sections.
+- `docs/plans/Master_Plan.md`: in scope - reviewed cited project-structure section.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Existing Batch01 helper module was extended rather than replaced.
+- file from execution report: `backend/app/agents/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Exports are internal package exports only; no public endpoint added.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover the `(02A)` shell behavior and safe validation boundary.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report entry accurately describes the task and validations.
+
+## Dependency Review
+- Required dependencies: Batch01 schemas and existing Agent 2 verification schema output.
+- Dependency status: satisfied; `AnswerAgentInput`, `AnswerAgentOutput`, and `VerificationAgentOutput` are available and used.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Internal callable added in `backend/app/agents/answer_agent.py`; no public API route, frontend, LangGraph orchestration, retrieval, database, provider call, or secret/config change was introduced.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `run_answer_agent` validates `AnswerAgentInput` or compatible mappings via Pydantic and fails closed with `AnswerAgentError` for unimplemented drafting. That is consistent with `(02A)` being a callable shell; `(02B)` and later tasks own insufficient-evidence behavior and provider drafting.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Static constants are generic agent/error names and safe failure text. Tests use fixed UUIDs and evidence strings as fixtures only; runtime logic does not branch on fixture values.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_answer_agent.py -v`
+- Reported result: Passed, 23 passed in 1.64s.
+- Rerun result: Passed, 23 passed in 1.55s.
+- Status: passed
+- Notes: Covers existing Batch01 helper tests plus new `(02A)` export/input-validation shell tests.
+- Command/check: `cd backend; python -c "from app.agents import AnswerAgentError, run_answer_agent; from app.agents.schemas import AnswerAgentInput; print(AnswerAgentError.__name__, callable(run_answer_agent), AnswerAgentInput.__name__)"`
+- Reported result: Passed; printed `AnswerAgentError True AnswerAgentInput`.
+- Rerun result: Passed; printed `AnswerAgentError True AnswerAgentInput`.
+- Status: passed
+- Notes: Confirms internal package imports and callable export.
+
+## Acceptance Review
+- Task acceptance: `run_answer_agent` imports successfully and accepts `AnswerAgentInput` or a compatible mapping for validation.
+- Status: satisfied
+- Evidence: Tests and smoke check prove importability, mapping/model normalization, and safe `AnswerAgentError` wrapping. The fail-closed post-validation path is intentionally deferred by task scope.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(02A)` in both the detailed Batch02 task list and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete.
+- Execution report entry: present and appended.
+- Review report entry: appended at EOF.
+- Other: Sibling and future Batch02 tasks remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `run_answer_agent` currently always raises `AnswerAgentError` after successful input validation; this is acceptable for `(02A)` because `(02B)` owns deterministic insufficient-evidence behavior and later tasks own provider drafting/self-check execution.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(02A)` is accepted in Batch02.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch02 - Answer Agent Callable and Insufficient-Evidence Path",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02B)
+- Task title: Implement deterministic missing-information behavior
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.4 Insufficient Evidence Answer`; `docs/plans/Master_Plan.md` > `## 18.4 Missing Information Rule`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02B)
+- Reviewed task ID: (02B)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching `(02B)` report entry. Prior accepted uncommitted `(02A)` changes in `backend/app/agents/__init__.py`, the callable shell, and prior tests were treated as baseline and not re-reviewed as selected work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`, `docs/reports/report_11_execute_agent.md`, `docs/review/review_11_review_agent.md`, `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - selected `(02B)` adds `_has_insufficient_evidence()` and `_build_insufficient_evidence_output()`, but the insufficient-evidence answer constant is mojibaked and does not match Plan 11's required text.
+- `backend/tests/test_answer_agent.py`: in scope - selected `(02B)` adds no-provider tests for `missing_information=true` and empty `verified_chunks`; tests pass but assert against the implementation constant rather than the source-of-truth exact text.
+- `docs/reports/report_11_execute_agent.md`: in scope - contains the selected `(02B)` execution report entry.
+- `docs/tasks/task_11.md`: in scope - selected `(02B)` source task was reviewed; checkbox remains unchecked because outcome is rejected.
+- `docs/plans/Plan_11.md`: in scope - cited sections reviewed; line 90-91 require exact insufficient-evidence answer text.
+- `docs/plans/Master_Plan.md`: in scope - cited missing-information sections reviewed.
+- `backend/app/agents/__init__.py`: in scope as prior accepted `(02A)` baseline only - no selected `(02B)` change required here.
+- `docs/review/review_11_review_agent.md`: in scope as review artifact - prior `(02A)` review existed before this append.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Deterministic insufficient-evidence branch exists, but the exact answer text is wrong.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover no provider call, but not exact source-of-truth answer text independently.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report entry is present, but the claim that the exact insufficient-evidence final answer is returned is inaccurate.
+
+## Dependency Review
+- Required dependencies: Accepted `(02A)` callable shell and controlled error type; Batch01 Agent 3 schemas and evidence helpers.
+- Dependency status: satisfied; `run_answer_agent`, `AnswerAgentInput`, `AnswerAgentOutput`, and `VerificationAgentOutput` are available.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Deterministic branch runs after input validation and before any provider path; sufficient-evidence behavior still fails closed; no public API, frontend, LangGraph orchestration, retrieval expansion, database change, logging behavior, or Batch03 provider drafting was added.
+- Failed: none architecturally.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: `run_answer_agent()` returns an `AnswerAgentOutput` for `missing_information=true` or empty `verified_chunks`, and raises controlled `AnswerAgentError` for sufficient evidence. However, the returned `final_answer` uses corrupted text. Python codepoint comparison showed `INSUFFICIENT_EVIDENCE_ANSWER` is not equal to the Plan 11 sentence.
+
+## Hardcoding Review
+- Hardcoding found: yes
+- Evidence: The exact insufficient-evidence response is intentionally a required constant, but it is hardcoded incorrectly as mojibaked text. Runtime value escaped as `T\xc3\xa0i li\xe1\xbb\u2021u...`, while the source-of-truth string should escape as `T\xe0i li\u1ec7u hi\u1ec7n t\u1ea1i ch\u01b0a cung c\u1ea5p \u0111\u1ee7 th\xf4ng tin \u0111\u1ec3 x\xe1c \u0111\u1ecbnh c\xe2u tr\u1ea3 l\u1eddi.`
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed, 25 passed in 1.59s.
+- Rerun result: Passed, 25 passed in 1.79s.
+- Status: passed but insufficient
+- Notes: The new tests prove provider calls are avoided, but they compare the answer to `INSUFFICIENT_EVIDENCE_ANSWER` imported from the implementation, so they do not catch the corrupted required text.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: Passed.
+- Rerun result: Passed.
+- Status: passed
+- Notes: Syntax validation passed.
+- Command/check: Python runtime string comparison between `INSUFFICIENT_EVIDENCE_ANSWER` and the Plan 11 required Unicode codepoints.
+- Reported result: not reported by executor.
+- Rerun result: Failed comparison; output was `False`.
+- Status: failed
+- Notes: This directly invalidates the task acceptance requirement for the exact insufficient-evidence answer.
+
+## Acceptance Review
+- Task acceptance: Missing information and empty verified chunks return the insufficient-evidence output without provider calls.
+- Status: partially satisfied
+- Evidence: No-provider behavior is implemented and tested. The required exact insufficient-evidence `final_answer` is not satisfied because the runtime constant is mojibaked instead of the Plan 11/Master Plan Vietnamese sentence.
+
+## Progress Tracking
+- Selected task checkbox: unchecked in both the detailed Batch02 task list and Task IDs progress tracker.
+- Checkbox updated by reviewer: no
+- Batch status: not marked complete.
+- Execution report entry: present and appended.
+- Review report entry: appended at EOF.
+- Other: `(02A)` remains checked as prior accepted work; `(02C)` and `(02D)` remain unchecked.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report claims the exact insufficient-evidence final answer is returned, but repository evidence shows the runtime text does not match Plan 11's required sentence. The reported tests passed, but they do not validate this claim independently.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `backend/app/agents/answer_agent.py`: `INSUFFICIENT_EVIDENCE_ANSWER` is corrupted/mojibaked and does not match the exact insufficient-evidence answer required by `docs/plans/Plan_11.md` and `docs/plans/Master_Plan.md`.
+- `backend/tests/test_answer_agent.py`: insufficient-evidence tests assert output against the implementation constant, so they cannot catch wrong source-of-truth text.
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The control-flow placement is otherwise correct for `(02B)`: input is normalized first, insufficient evidence bypasses ShopAIKey, and sufficient evidence remains fail-closed for later Batch03 work.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, `(02B)` is rejected and sibling Batch02 tasks remain unchecked.
+
+## Repair Instructions
+- target: `backend/app/agents/answer_agent.py`
+- change: Replace `INSUFFICIENT_EVIDENCE_ANSWER` with the exact Plan 11 text `Tai lieu hien tai chua cung cap du thong tin de xac dinh cau tra loi.` using the proper Vietnamese Unicode characters from `docs/plans/Plan_11.md`: `T\u00e0i li\u1ec7u hi\u1ec7n t\u1ea1i ch\u01b0a cung c\u1ea5p \u0111\u1ee7 th\u00f4ng tin \u0111\u1ec3 x\u00e1c \u0111\u1ecbnh c\u00e2u tr\u1ea3 l\u1eddi.`
+- validation: Add or update `(02B)` tests so they compare `output.final_answer` to an independent source-of-truth expected literal/codepoint string, not to `INSUFFICIENT_EVIDENCE_ANSWER`; rerun `pytest tests/test_answer_agent.py -v` and `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch02 - Answer Agent Callable and Insufficient-Evidence Path",
+  "selected_task_id": "(02B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": true,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "Runtime exact insufficient-evidence answer text does not match Plan 11 required Unicode string."
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "INSUFFICIENT_EVIDENCE_ANSWER is mojibaked and not the exact Plan 11 answer.",
+    "Insufficient-evidence tests assert against the implementation constant instead of independent source-of-truth expected text."
+  ],
+  "warnings": [],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02B) Repair Review
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02B)
+- Task title: Implement deterministic missing-information behavior
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.4 Insufficient Evidence Answer`; `docs/plans/Master_Plan.md` > `## 18.4 Missing Information Rule`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02B)
+- Reviewed task ID: (02B)
+- Correct selection: yes
+- Notes: Reviewed the latest `(02B)` repair entry only. Prior accepted `(02A)` changes and the prior rejected `(02B)` review remain uncommitted context, not selected repair scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`, `docs/reports/report_11_execute_agent.md`, `docs/review/review_11_review_agent.md`, `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - `INSUFFICIENT_EVIDENCE_ANSWER` now uses Unicode escapes that evaluate to the exact required Vietnamese sentence; no-provider insufficient-evidence branch remains before provider work.
+- `backend/tests/test_answer_agent.py`: in scope - insufficient-evidence assertions now compare output against an independent `EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER` literal and still assert `shopaikey_service.chat_completion` is not called.
+- `docs/reports/report_11_execute_agent.md`: in scope - latest `(02B)` repair report documents the repaired text, independent test literal, and validations.
+- `docs/tasks/task_11.md`: in scope - selected `(02B)` checkbox updated by reviewer after acceptance in both task locations; Batch02 and sibling tasks remain unchecked.
+- `docs/plans/Plan_11.md`: in scope - cited exact answer text and missing-information behavior reviewed.
+- `backend/app/agents/__init__.py`: prior accepted `(02A)` baseline only - not part of selected repair.
+- `docs/review/review_11_review_agent.md`: review artifact - this report appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime constant and missing-information output now equal the required sentence.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests now use an independent expected literal and preserve no-provider-call assertions.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest repair report accurately describes the repair and validation evidence.
+
+## Dependency Review
+- Required dependencies: Accepted `(02A)` callable shell and controlled error type; Batch01 Agent 3 schemas and evidence helpers.
+- Dependency status: satisfied; `run_answer_agent`, `AnswerAgentInput`, `AnswerAgentOutput`, and `VerificationAgentOutput` are available.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Deterministic insufficient-evidence behavior remains inside internal `answer_agent.py`; input validation still precedes branching; insufficient-evidence paths avoid ShopAIKey; sufficient-evidence behavior remains fail-closed for later Batch03 work; no public API, frontend, LangGraph, retrieval expansion, database change, logging behavior, or sibling Batch02 work was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Runtime comparison confirmed `INSUFFICIENT_EVIDENCE_ANSWER`, the independent test literal, and `run_answer_agent()` output for `missing_information=true` all equal the exact required Unicode string.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The static insufficient-evidence sentence is required by Plan 11. It is now encoded safely with Unicode escapes and validated against an independent expected literal; runtime logic does not branch on fixture-specific IDs, filenames, or sample quote text.
+
+## Validations Reviewed
+- Command/check: Python runtime equality check for implementation constant, test literal, and `run_answer_agent()` output against the Plan 11 required Unicode codepoints.
+- Reported result: Passed.
+- Rerun result: Passed; `implementation_constant_equals_expected=True`, `test_literal_equals_expected=True`, and `runtime_output_equals_expected=True`.
+- Status: passed
+- Notes: Confirms the rejected mojibake issue is repaired.
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed, 25 passed in 1.58s.
+- Rerun result: Passed, 25 passed in 1.65s.
+- Status: passed
+- Notes: Covers the repaired insufficient-evidence cases plus existing answer-agent tests.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: Passed.
+- Rerun result: Passed.
+- Status: passed
+- Notes: Syntax validation passed.
+
+## Acceptance Review
+- Task acceptance: Missing information and empty verified chunks return the exact insufficient-evidence output without provider calls.
+- Status: satisfied
+- Evidence: `run_answer_agent()` returns an `AnswerAgentOutput` with `final_answer` equal to `Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.`, empty citations, confidence `0.0`, and non-ready self-check for insufficient evidence. Tests verify both `missing_information=true` and empty `verified_chunks` paths do not call ShopAIKey.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(02B)` in both the detailed Batch02 task list and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not marked complete.
+- Execution report entry: latest repair entry present and appended.
+- Review report entry: appended at EOF.
+- Other: `(02C)` and `(02D)` remain unchecked; Batch02 remains unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Console `Get-Content` rendering can still display Vietnamese text incorrectly depending on code page, but Python codepoint checks confirm the runtime values are correct.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, sibling Batch02 tasks remain unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch02 - Answer Agent Callable and Insufficient-Evidence Path",
+  "selected_task_id": "(02B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02C)
+- Task title: Normalize Agent 2 verification input for Agent 3
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `README.md` > `## Architecture`; `README.md` > `## Known Gaps or Unclear Areas`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(02C)` report entry. Prior accepted uncommitted `(02A)` and `(02B)` changes were treated as dependency context, not selected scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/__init__.py`, `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`, `docs/reports/report_11_execute_agent.md`, `docs/review/review_11_review_agent.md`, `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - contains `normalize_answer_agent_input`, frozen `AnswerEvidenceLookup`, `build_answer_evidence_lookup`, and existing validators rewired through the lookup.
+- `backend/tests/test_answer_agent.py`: in scope - covers valid Agent 2 verification mapping normalization without mutation, invalid input wrapping, lookup set mapping, and existing mapping/model callable paths.
+- `backend/app/agents/schemas.py`: in scope dependency - confirms `AnswerAgentInput` requires `agent_run_id`, `question`, and `VerificationAgentOutput` with `verified_chunks`, `rejected_chunks`, `missing_information`, and bounded `confidence`.
+- `backend/app/agents/__init__.py`: prior accepted `(02A)` dependency - exports the callable and error; no selected `(02C)` change required here.
+- `docs/reports/report_11_execute_agent.md`: in scope - latest `(02C)` execution report entry is present and appended.
+- `docs/tasks/task_11.md`: in scope - selected `(02C)` source task was reviewed and its checkbox was updated after acceptance only.
+- `docs/plans/Plan_11.md`: in scope - cited API design, implementation steps, and acceptance criteria reviewed.
+- `README.md`: in scope - cited architecture and known-gap sections reviewed for current project boundaries.
+- `docs/review/review_11_review_agent.md`: in scope as review artifact - existing review file was appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements normalization and evidence lookup without adding provider drafting.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains unit coverage for mapping/model input cases, invalid inputs, non-mutation, and lookup contents.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is accurate for `(02C)`.
+
+## Dependency Review
+- Required dependencies: `(02A)` callable/error shell and completed Plan 10 Agent 2 verification schemas/output.
+- Dependency status: satisfied; `run_answer_agent`, `AnswerAgentError`, `AnswerAgentInput`, and `VerificationAgentOutput` are present.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Agent 3 remains internal and backend-only; normalization uses existing Pydantic schemas; lookup data is derived in memory from Agent 2 output; rejected chunks are retained only for exclusion/safety checks; sufficient-evidence provider drafting remains fail-closed for later Batch03.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `normalize_answer_agent_input()` validates compatible mappings and `AnswerAgentInput` instances through Pydantic, wraps schema failures in controlled `AnswerAgentError`, preserves caller mappings, and `build_answer_evidence_lookup()` returns immutable frozenset-based verified/rejected quote, file-name, citation-pair, and chunk-id sets.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Lookup behavior derives from the supplied `VerificationAgentOutput`; runtime logic does not branch on fixture IDs, filenames, dataset order, or sample quotes. Test fixtures are limited to tests.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed, 31 passed in 1.53s.
+- Rerun result: Passed, 31 passed in 1.71s.
+- Status: passed
+- Notes: Covers selected `(02C)` normalization/lookup tests plus existing answer-agent behavior.
+- Command/check: `python -m py_compile app/agents/answer_agent.py app/agents/schemas.py tests/test_answer_agent.py`
+- Reported result: Passed.
+- Rerun result: Passed.
+- Status: passed
+- Notes: Syntax validation completed successfully.
+- Command/check: Direct runtime smoke check for normalization non-mutation and lookup sets.
+- Reported result: not separately reported by executor.
+- Rerun result: Passed; normalized question was trimmed, source payload remained unchanged, and verified/rejected quote and file-name sets matched the supplied Agent 2 payload.
+- Status: passed
+- Notes: Extra reviewer check confirms the key selected-task contract.
+
+## Acceptance Review
+- Task acceptance: Invalid input raises controlled `AnswerAgentError` or Pydantic validation; valid Agent 2 verification output is accepted.
+- Status: satisfied
+- Evidence: Tests and smoke check show valid Agent 2 verification mappings normalize into `AnswerAgentInput` without mutation, invalid Pydantic cases raise controlled `AnswerAgentError`, and lookup sets are built from valid verified/rejected evidence.
+
+## Progress Tracking
+- Selected task checkbox: checked for `(02C)` in both the detailed Batch02 task list and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked.
+- Execution report entry: latest `(02C)` entry present and appended.
+- Review report entry: appended at EOF.
+- Other: `(02A)` and `(02B)` remain checked as prior accepted uncommitted work; `(02D)` remains unchecked. No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `README.md` still describes some Agent 3 runtime pieces as planned, which is expected for this incremental batch and does not block `(02C)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(02D)` remains incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch02 - Answer Agent Callable and Insufficient-Evidence Path",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/answer_agent.py",
+    "backend/app/agents/schemas.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (02D)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- Task ID: (02D)
+- Task title: Prepare compact verified-evidence payload for answer generation
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Plan_11.md > ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > ## 18.1 Grounding Rule; docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02D)
+- Reviewed task ID: (02D)
+- Correct selection: yes
+- Notes: The latest matching report entry is the appended `(02D)` execution report. Prior `(02A)-(02C)` reports and accepted uncommitted changes were treated as dependency context, not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/agents/__init__.py
+  - backend/app/agents/answer_agent.py
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - reviewed compact provider payload, message construction, sufficient-evidence provider call, response-format boundary, and no Batch03 parsing/self-check/logging behavior.
+- `backend/tests/test_answer_agent.py`: in scope - reviewed payload/message/provider-call tests proving rejected evidence is excluded and verified evidence is sent.
+- `docs/reports/report_11_execute_agent.md`: in scope - reviewed latest `(02D)` execution report and report accuracy.
+- `docs/tasks/task_11.md`: in scope - reviewed `(02D)` task requirements and updated only `(02D)` after acceptance.
+- `backend/app/agents/__init__.py`: questionable - changed in git from prior accepted `(02A)`, not part of selected `(02D)` report; no new selected-task review issue.
+- `docs/review/review_11_review_agent.md`: in scope - existing prior review entries plus this appended review artifact.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `build_answer_generation_payload`, `build_answer_generation_messages`, and sufficient-evidence provider call with JSON response format.
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains tests for compact verified-only payload, user provider message content, and mocked provider call arguments.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest `(02D)` execution report is appended.
+
+## Dependency Review
+- Required dependencies: `(02C)` normalized Agent 2 verification input; Batch01 answer-generation prompt.
+- Dependency status: satisfied. `(02A)`, `(02B)`, and `(02C)` are checked as prior accepted uncommitted work; prompt constant exists and is used.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Agent 3 remains internal/backend-only; sufficient-evidence flow sends only question plus verified chunk evidence to ShopAIKey; insufficient-evidence path remains deterministic; provider draft parsing/validation is still deferred to Batch03.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `build_answer_generation_payload()` builds a concrete JSON-serializable payload from `AnswerAgentInput.verification.verified_chunks`; `build_answer_generation_messages()` creates system/user provider messages; `run_answer_agent()` calls `shopaikey_service.chat_completion()` for sufficient evidence and then raises the existing controlled not-implemented error because parsing belongs to Batch03.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Tests use fixtures, but production payload generation iterates over actual verified chunks and does not rely on fixed question text, chunk IDs, file names, or sample quotes.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_answer_agent.py -v`
+- Reported result: passed, 34 passed in 64.34s
+- Rerun result: passed, 34 passed in 22.32s
+- Status: passed
+- Notes: Targeted tests include provider-message verification for question plus verified evidence only and rejected chunk exclusion.
+
+## Acceptance Review
+- Task acceptance: Provider messages contain the question and verified evidence only; rejected chunks are excluded from the generation prompt.
+- Status: satisfied
+- Evidence: `build_answer_generation_payload()` includes `question` and `verified_chunks` with `file_name`, `quote`, `page_number`, `verification_reason`, and `supports_simple_reasoning`; it omits rejected chunks, rejected quotes, rejected chunk IDs, `rejection_reason`, internal chunk IDs, and document IDs. `test_run_answer_agent_sends_verified_evidence_only_to_provider` inspects the mocked ShopAIKey call and confirms the user payload contains only the normalized question and verified evidence. The system prompt contains grounding instructions, not rejected evidence data.
+
+## Progress Tracking
+- Selected task checkbox: checked for `(02D)` in both the detailed Batch02 task list and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked; this final Batch02 task was accepted, but batch completion is reserved for A3 batch-scope review.
+- Execution report entry: latest `(02D)` entry present and appended.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated by this review. `(02A)-(02C)` were already checked as prior accepted uncommitted work.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The provider call now occurs for sufficient evidence, but draft parsing, citation enforcement expansion, self-check execution, and logging remain intentionally deferred to later batches.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to A3 batch-scope audit before Batch03 orchestration.
+- Should batch be marked complete? no, A3 handles final Batch02 scope review and batch completion decision.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch02 - Answer Agent Callable and Insufficient-Evidence Path",
+  "selected_task_id": "(02D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/__init__.py",
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

@@ -24,15 +24,25 @@ from app.agents.verification_agent import (
     VerificationAgentError,
     run_verification_agent,
 )
+from app.agents.answer_agent import (
+    ANSWER_AGENT_NAME,
+    ANSWER_FAILURE_MESSAGE,
+    AnswerAgentError,
+    run_answer_agent,
+)
 
 __all__ = [
     "AGENT_1_RETRIEVAL_STEP_NAME",
     "AGENT_2_VERIFICATION_STEP_NAME",
+    "ANSWER_AGENT_NAME",
+    "ANSWER_FAILURE_MESSAGE",
     "RETRIEVAL_AGENT_NAME",
     "VERIFICATION_AGENT_NAME",
     "VERIFICATION_FAILURE_MESSAGE",
+    "AnswerAgentError",
     "RetrievalAgentError",
     "VerificationAgentError",
+    "run_answer_agent",
     "run_retrieval_agent",
     "run_verification_agent",
     "AnswerAgentInput",

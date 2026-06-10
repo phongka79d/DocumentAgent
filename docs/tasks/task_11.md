@@ -275,7 +275,7 @@ Agent 3 must refuse unsupported answers when Agent 2 reports missing information
 
 ### Tasks
 
-- [ ] (02A): Create answer agent module and controlled error type
+- [x] (02A): Create answer agent module and controlled error type
   - Source of Truth: `docs/plans/Plan_11.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 16. Suggested Project Structure`
   - Source Requirements:
     - Add `backend/app/agents/answer_agent.py`.
@@ -292,7 +292,7 @@ Agent 3 must refuse unsupported answers when Agent 2 reports missing information
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/app/agents/__init__.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (02B): Implement deterministic missing-information behavior
+- [x] (02B): Implement deterministic missing-information behavior
   - Source of Truth: `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.4 Insufficient Evidence Answer`; `docs/plans/Master_Plan.md` > `## 18.4 Missing Information Rule`
   - Source Requirements:
     - If `missing_information=true`, return insufficient-evidence answer.
@@ -309,7 +309,7 @@ Agent 3 must refuse unsupported answers when Agent 2 reports missing information
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (02C): Normalize Agent 2 verification input for Agent 3
+- [x] (02C): Normalize Agent 2 verification input for Agent 3
   - Source of Truth: `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `README.md` > `## Architecture`; `README.md` > `## Known Gaps or Unclear Areas`
   - Source Requirements:
     - Input includes `agent_run_id`, `question`, and `verification`.
@@ -326,7 +326,7 @@ Agent 3 must refuse unsupported answers when Agent 2 reports missing information
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/app/agents/schemas.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (02D): Prepare compact verified-evidence payload for answer generation
+- [x] (02D): Prepare compact verified-evidence payload for answer generation
   - Source of Truth: `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`; `docs/plans/Master_Plan.md` > `## 18.2 Simple Reasoning Rule`
   - Source Requirements:
     - For sufficient evidence, send question and verified chunks to ShopAIKey chat completion.
@@ -1030,7 +1030,7 @@ Optional future tracks are outside the mandatory dependency chain.
 ### Batches
 
 - [x] Batch01 - Answer Contracts, Prompts, and Backend-Only Configuration
-- [ ] Batch02 - Answer Agent Callable and Insufficient-Evidence Path
+- [x] Batch02 - Answer Agent Callable and Insufficient-Evidence Path
 - [ ] Batch03 - LLM Draft Answer Parsing and Citation Enforcement
 - [ ] Batch04 - Self-Check, Safe Failure Handling, and Logging
 - [ ] Batch05 - Required Automated Tests
@@ -1048,10 +1048,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch02
 
-- [ ] (02A): Create answer agent module and controlled error type
-- [ ] (02B): Implement deterministic missing-information behavior
-- [ ] (02C): Normalize Agent 2 verification input for Agent 3
-- [ ] (02D): Prepare compact verified-evidence payload for answer generation
+- [x] (02A): Create answer agent module and controlled error type
+- [x] (02B): Implement deterministic missing-information behavior
+- [x] (02C): Normalize Agent 2 verification input for Agent 3
+- [x] (02D): Prepare compact verified-evidence payload for answer generation
 
 #### Batch03
 
