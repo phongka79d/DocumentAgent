@@ -1111,3 +1111,276 @@ complete
 - next task ID: Batch04 first eligible task after review gates
 - can proceed: yes, after A2 review accepts (03E) and any required batch gate completes
 - handoff notes: Agent 2 now performs final Pydantic validation and returns only the required top-level output shape after all Batch03 post-processing.
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch04 - Agent Step Logging and Failure Handling
+
+## Task
+(04A) - Add Agent 2 success-step logging
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 3. Scope
+- docs/plans/Plan_10.md > ## 6. Required Files and Folders
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Plan_10.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## Table: agent_steps
+- docs/plans/Master_Plan.md > ### 5.5 Agent Logs / Debug Page
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Agent Step Logging and Failure Handling
+- Task ID: (04A)
+- Task title: Add Agent 2 success-step logging
+
+## Completed Work
+- Complete for mocked/local validation; live Supabase persistence validation is blocked by required user action only.
+- Added Agent 2 success-step logging through the existing agent log service for finalized verification outputs.
+- Added the same success logging path for the empty-candidate success branch.
+- Added mocked unit coverage proving one success log is written with safe Agent 2 input and final output payloads containing verified_chunks, rejected_chunks, missing_information, and confidence.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- python -m pytest backend/tests/test_verification_agent.py -q: Failed first / Passed after implementation
+- evidence or reason: Initial behavior failure showed the success log mock was called 0 times for both empty-candidate and final verification success paths; after implementation, 28 passed in 1.49s.
+- python -m pytest backend/tests/test_agent_log_service.py -q: Passed
+- evidence or reason: 8 passed in 1.47s.
+- python -m pytest backend/tests/test_verification_agent.py backend/tests/test_agent_log_service.py -q: Passed
+- evidence or reason: Fresh combined validation reported 36 passed in 1.92s.
+- Live Supabase agent_steps persistence with a valid agent_run_id: Blocked
+- evidence or reason: BLOCKED_BY_USER_ACTION; real Supabase settings, applied schema confirmation, and a valid live agent_run_id were not provided in this orchestrated run.
+
+## Acceptance Check
+- Task acceptance condition: Successful verification writes one safe success log when logging dependencies are available; log output includes final verified/rejected/missing/confidence result.
+- Status: satisfied for mocked/local validation; live persistence validation blocked by user action only.
+- Evidence: New tests assert exactly one Agent 2 success log for empty candidates and non-empty verification. The non-empty payload includes final verified_chunks, rejected_chunks, missing_information, and confidence.
+
+## Artifacts Produced
+- Agent 2 success agent_steps persistence path in backend/app/agents/verification_agent.py via agent_log_service.log_agent_step.
+- Mocked success-log payload tests in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused the existing agent_log_service.log_agent_step API and the existing Agent 2 step/agent names: agent_2_verification and verification_agent.
+- Logged Pydantic input/output models directly so the log service performs established JSON-compatible serialization.
+- Did not implement failed-step logging or log-failure control behavior because those belong to sibling tasks (04B) and (04C).
+
+## Risks or Open Issues
+- Live Supabase persistence validation remains BLOCKED_BY_USER_ACTION until real Supabase setup and a valid agent_run_id are provided.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Selected dependencies Batch02 and Batch03 are implemented at the individual task level; existing agent log service is present. Live Supabase validation is separately blocked by user action only.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 review accepts (04A)
+- handoff notes: Agent 2 success logging now exists for empty and non-empty successful verification paths; failure logging and log failure safety were intentionally left for (04B) and (04C).
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch04 - Agent Step Logging and Failure Handling
+
+## Task
+(04B) - Add Agent 2 failed-step logging
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 8. API Design
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > ## Table: agent_steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Agent Step Logging and Failure Handling
+- Task ID: (04B)
+- Task title: Add Agent 2 failed-step logging
+
+## Completed Work
+- Complete for mocked/local validation; live Supabase failed-log validation is blocked by user action only.
+- Added controlled Agent 2 failure classification for provider errors, invalid JSON, schema validation failures, unknown chunk IDs, post-processing validation failures, and fallback verification errors.
+- Added failed Agent 2 step log attempts through agent_log_service.try_log_agent_step before re-raising VerificationAgentError.
+- Failed logs use safe input payloads with run ID, question, candidate count, and candidate chunk IDs only; they do not include raw provider responses, raw LLM JSON, stack traces, provider error details, or candidate document content.
+- Added mocked unit coverage for invalid JSON failed log, provider failure failed log, schema mismatch failed log, and unknown-ID failed log.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- pytest backend/tests/test_verification_agent.py -k "failed_step_for_provider_failure or rejects_invalid_llm_json or rejects_llm_schema_mismatch or rejects_unknown_returned_chunk_ids" -q: Passed as TDD red check before implementation by failing for missing try_log_agent_step calls.
+- evidence or reason: 5 failed, 24 deselected; each failure showed try_log_agent_step was called 0 times.
+- pytest backend/tests/test_verification_agent.py -k "failed_step_for_provider_failure or rejects_invalid_llm_json or rejects_llm_schema_mismatch or rejects_unknown_returned_chunk_ids" -q: Passed after implementation.
+- evidence or reason: 5 passed, 24 deselected.
+- cd backend; pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 29 passed in 1.54s.
+- cd backend; pytest tests/test_agent_log_service.py -v: Passed
+- evidence or reason: 8 passed in 1.58s.
+- Live Supabase failed agent_steps persistence with a valid agent_run_id: Blocked
+- evidence or reason: BLOCKED_BY_USER_ACTION; real Supabase settings, applied schema confirmation, and a valid live agent_run_id were not provided in this orchestrated run.
+
+## Acceptance Check
+- Task acceptance condition: Provider errors, invalid JSON, schema mismatch, and unknown IDs create failed log attempts and raise VerificationAgentError.
+- Status: satisfied for mocked/local validation; live persistence validation blocked by user action only.
+- Evidence: New tests assert failed log attempts and VerificationAgentError for provider failure, invalid JSON, schema mismatch, and unknown returned chunk IDs. Tests also assert failed payloads omit raw provider details, raw LLM JSON, unknown IDs from LLM output, and private candidate content.
+
+## Artifacts Produced
+- Agent 2 failed agent_steps persistence path in backend/app/agents/verification_agent.py via agent_log_service.try_log_agent_step.
+- Mocked failed-log tests in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used a private _VerificationAgentFailure subclass to preserve public VerificationAgentError behavior while carrying safe internal failure type labels for logging.
+- Used try_log_agent_step for failed logs so log persistence failures do not replace the original VerificationAgentError.
+- Kept failed output to a generic safe error summary with the public VerificationAgentError message.
+
+## Risks or Open Issues
+- Live Supabase failed-log validation remains BLOCKED_BY_USER_ACTION until real Supabase setup and a valid agent_run_id are provided.
+- Pre-existing uncommitted Batch04 (04A) edits in the same files and docs were preserved and not reverted.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependency (04A) is checked in docs/tasks/task_10.md, Batch02 and Batch03 are treated as satisfied by the selected task context, and live validation is separately blocked by user action only.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes, after A2 review accepts (04B)
+- handoff notes: Agent 2 now attempts safe failed-step logs for controlled failure paths and preserves VerificationAgentError re-raise semantics; log-failure visibility hardening remains for (04C).
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch04 - Agent Step Logging and Failure Handling
+
+## Task
+(04C) - Keep log failures safe and visible
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+- docs/plans/Plan_10.md > ## 15. Reviewer Checklist
+- README.md > Important coordination rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Agent Step Logging and Failure Handling
+- Task ID: (04C)
+- Task title: Keep log failures safe and visible
+
+## Completed Work
+- Complete for mocked/local validation; live Supabase persistence validation is blocked by user action only.
+- Reused the existing non-fatal agent log attempt pattern for Agent 2 success logging.
+- Added a safe Agent 2 warning when a success or failed-step log insertion attempt is not persisted.
+- Preserved failed verification behavior when failed-step log insertion fails: Agent 2 still raises VerificationAgentError and does not return fake success.
+- Kept log failure warnings limited to agent name, step name, and status so raw provider responses, SQL internals, stack traces, candidate content, and secrets are not logged by Agent 2.
+
+## Files Created or Modified
+- backend/app/agents/verification_agent.py
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_verification_agent.py::test_verification_agent_warns_when_success_log_insert_fails tests/test_verification_agent.py::test_verification_agent_preserves_failure_when_failed_log_insert_fails -v: Failed first as TDD red check / Passed after implementation
+- evidence or reason: Initial red run collected 2 tests and failed because success logging did not call try_log_agent_step and failed-log insertion failures did not emit the Agent 2 safe warning; after implementation, 2 passed in 1.52s.
+- cd backend; pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 31 passed in 1.63s.
+- cd backend; pytest tests/test_agent_log_service.py -v: Passed
+- evidence or reason: 8 passed in 1.63s.
+- cd backend; pytest: Passed
+- evidence or reason: 341 passed in 2.72s.
+- Live Supabase agent_steps persistence with a valid agent_run_id: Blocked
+- evidence or reason: BLOCKED_BY_USER_ACTION for live validation only; real Supabase settings, applied schema confirmation, and a valid live agent_run_id were not provided in this orchestrated run.
+
+## Acceptance Check
+- Task acceptance condition: Verification success is not claimed if required validation failed; log failures are visible in tests or safe warnings; secrets are not logged.
+- Status: satisfied for mocked/local validation; live persistence validation blocked by user action only.
+- Evidence: New tests cover success-log insertion failure visibility and failed-verification log insertion failure. The failed-verification test asserts VerificationAgentError is still raised when the failed-step log insert attempt fails. Both new tests assert the Agent 2 warning does not include raw invalid LLM content or candidate document content.
+
+## Artifacts Produced
+- Agent 2 log failure visibility helper in backend/app/agents/verification_agent.py.
+- Mocked Agent 2 log insertion failure tests in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used agent_log_service.try_log_agent_step for Agent 2 success logs to match the existing Agent 1 non-fatal log insertion pattern.
+- Added _warn_if_agent_2_log_failed so both success and failed log insertion failures are visible through a safe Agent 2 warning.
+- Did not include exception text, raw SQL/provider details, raw LLM output, stack traces, or candidate content in the Agent 2 warning.
+
+## Risks or Open Issues
+- Live Supabase validation remains BLOCKED_BY_USER_ACTION until real Supabase setup and a valid agent_run_id are provided.
+- Pre-existing uncommitted Batch04 (04A) and (04B) edits in the same files and report were preserved and not reverted.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies (04A) and (04B) are checked in docs/tasks/task_10.md, and existing agent log service failure behavior is covered by backend/tests/test_agent_log_service.py.
+
+## Notes for Next Task
+- next task ID: (05A), after A2 review accepts (04C) and Batch04 gate requirements are satisfied
+- can proceed: no in this run
+- handoff notes: Agent 2 now attempts safe success and failure step logs, surfaces log insertion failures via safe warnings, preserves failed verification errors when failed-log insertion fails, and has mocked validation coverage for log insertion failure behavior.

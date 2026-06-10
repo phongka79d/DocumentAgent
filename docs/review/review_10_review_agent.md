@@ -2311,3 +2311,553 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Agent Step Logging and Failure Handling
+- Task ID: (04A)
+- Task title: Add Agent 2 success-step logging
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 3. Scope; docs/plans/Plan_10.md > ## 6. Required Files and Folders; docs/plans/Plan_10.md > ## 9. Implementation Steps; docs/plans/Plan_10.md > ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > ## Table: agent_steps; docs/plans/Master_Plan.md > ### 5.5 Agent Logs / Debug Page
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The last appended execution report entry is for (04A), matching the requested task. Sibling tasks (04B) and (04C) were not reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/agents/verification_agent.py; backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/tasks/task_10.md after reviewer checkbox update
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/verification_agent.py`: in scope - adds Agent 2 success logging helper and calls it for empty-candidate and finalized non-empty success outputs.
+- `backend/tests/test_verification_agent.py`: in scope - adds mocked success-log tests and disables real log persistence for existing verification-agent tests.
+- `backend/app/services/agent_log_service.py`: in scope - existing service contract reviewed for `log_agent_step` serialization and persistence behavior.
+- `backend/tests/test_agent_log_service.py`: in scope - existing log service tests reviewed and rerun as reported validation coverage.
+- `docs/reports/report_10_execute_agent.md`: in scope - latest execution report for (04A) was appended and matches repository evidence.
+- `docs/tasks/task_10.md`: in scope - reviewer updated only the (04A) checkbox after acceptance.
+- `docs/plans/Plan_10.md`: in scope - cited source sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited `agent_steps` and debug-log sections reviewed.
+- `docs/review/review_10_review_agent.md`: in scope - this review report appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds success log persistence through the existing log service only.
+- file from execution report: backend/tests/test_verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds mocked success-log assertions for empty and non-empty successful verification.
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest report entry accurately describes files, validations, blocked live Supabase validation, and out-of-scope sibling tasks.
+
+## Dependency Review
+- Required dependencies: Batch02 verification callable; Batch03 final post-processing behavior; existing Plan 2 `agent_steps` table/service pattern; existing `agent_log_service.py`.
+- Dependency status: satisfied for local/mocked review. Batch02 and Batch03 task IDs are checked complete in docs/tasks/task_10.md, and the existing log service is present.
+- Missing or invalid dependency: none for mocked/local acceptance. Live Supabase persistence remains correctly reported as BLOCKED_BY_USER_ACTION.
+
+## Architecture Alignment
+- Passed: Agent 2 remains an internal backend callable with no new public route, frontend change, Agent 3, LangGraph workflow, retrieval expansion, or final answer generation. Success logging uses the approved `agent_steps` service fields: agent_run_id, step_name, agent_name, input, output, and status.
+- Failed: None.
+- Uncertain: Live Supabase row persistence was not verified because required live settings and a valid agent_run_id were not available.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_log_successful_verification()` calls `agent_log_service.log_agent_step()` with validated Agent 2 input and finalized `VerificationAgentOutput`. `run_verification_agent()` calls it once for empty candidates and once after non-empty output finalization.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses reusable constants for step and agent names and passes runtime-validated input/output payloads. UUIDs, file names, and quote text in tests are fixtures only and are not runtime logic.
+
+## Validations Reviewed
+- Command/check: python -m pytest backend/tests/test_verification_agent.py backend/tests/test_agent_log_service.py -q
+- Reported result: Passed after implementation; combined validation reported 36 passed.
+- Rerun result: Passed, 36 passed in 1.66s.
+- Status: satisfied
+- Notes: Rerun covers the touched verification-agent tests and existing log service serialization/persistence tests. Live Supabase persistence was not rerun and remains blocked by required user setup.
+
+## Acceptance Review
+- Task acceptance: Successful verification writes one safe success log when logging dependencies are available; log output includes final verified/rejected/missing/confidence result.
+- Status: satisfied
+- Evidence: Mocked tests assert exactly one success log for empty candidates and non-empty successful verification. The logged output payload is the final Agent 2 shape with `verified_chunks`, `rejected_chunks`, `missing_information`, and `confidence`.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked by reviewer after ACCEPTED outcome.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch04 remains unchecked because (04B) and (04C) are still unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None. The report accurately limits implementation to success logging, distinguishes live Supabase validation as blocked by user action, and leaves failed-step logging/log-failure behavior to (04B)/(04C). Current uncommitted diff is limited to selected (04A) changes plus reviewer progress/report files; prior Batch03 post-processing work is already in the base and was not re-reviewed as selected work.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Success logging currently uses `log_agent_step`, so log persistence failures can still affect successful verification until sibling task (04C) defines and implements the approved safe log-failure behavior. This is within the planned Batch04 sequencing and does not block (04A).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (04A) is accepted and (04B)/(04C) remain incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch04 - Agent Step Logging and Failure Handling",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/verification_agent.py",
+    "backend/tests/test_verification_agent.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/tasks/task_10.md",
+    "docs/review/review_10_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Supabase agent_steps persistence requires user-provided settings and a valid agent_run_id"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Agent Step Logging and Failure Handling
+- Task ID: (04B)
+- Task title: Add Agent 2 failed-step logging
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 8. API Design; docs/plans/Plan_10.md > ## 9. Implementation Steps; docs/plans/Plan_10.md > ## 11. Required Tests; docs/plans/Plan_10.md > ## 13. Failure Handling; docs/plans/Master_Plan.md > ## Table: agent_steps
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for (04B). This review excludes (04C). Accepted uncommitted (04A) changes are present in the same runtime/test files and were distinguished from the new failed-step logging work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/agents/verification_agent.py; backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/review/review_10_review_agent.md; docs/tasks/task_10.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/verification_agent.py`: in scope - adds failed-step logging helpers and hooks for provider, invalid JSON, schema validation, unknown ID, post-processing validation, and fallback verification failures; also contains accepted uncommitted (04A) success logging.
+- `backend/tests/test_verification_agent.py`: in scope - adds mocked failed-log assertions for invalid JSON, provider failure, schema mismatch, and unknown returned chunk IDs; also contains accepted uncommitted (04A) success-log tests.
+- `backend/app/services/agent_log_service.py`: in scope - existing `try_log_agent_step` and serialization contract reviewed for failed log attempts.
+- `backend/tests/test_agent_log_service.py`: in scope - existing service-level tests reviewed and rerun because (04B) depends on this behavior.
+- `docs/reports/report_10_execute_agent.md`: in scope - includes appended (04B) execution report and prior accepted (04A) report.
+- `docs/tasks/task_10.md`: in scope - (04B) checkbox updated by reviewer after acceptance; no batch or sibling checkbox updated.
+- `docs/plans/Plan_10.md`: in scope - cited API, implementation, tests, and failure-handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited `agent_steps` table contract reviewed.
+- `docs/review/review_10_review_agent.md`: in scope - prior (04A) review existed; this (04B) review appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements failed-step logging through `agent_log_service.try_log_agent_step` and re-raises `VerificationAgentError`.
+- file from execution report: backend/tests/test_verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains targeted mocked tests for the required failed-log paths.
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report accurately lists files, validations, blocked live Supabase validation, and preservation of accepted uncommitted (04A) changes.
+
+## Dependency Review
+- Required dependencies: (04A), Batch02 verification callable and error behavior, Batch03 post-processing, existing Plan 2 `agent_steps` table/service pattern, existing `agent_log_service.py`.
+- Dependency status: satisfied for local/mocked review. (04A) is checked in docs/tasks/task_10.md, Batch02 and Batch03 task IDs are checked, and `agent_log_service.try_log_agent_step` exists.
+- Missing or invalid dependency: none for mocked/local acceptance. Live Supabase failed-log persistence remains blocked by required user setup.
+
+## Architecture Alignment
+- Passed: Agent 2 remains an internal backend callable; no new public API route, frontend screen, Agent 3, LangGraph workflow, retrieval expansion, final answer generation, database schema change, or secret-bearing configuration was added. Failed logs use the approved `agent_steps` fields and safe JSON payloads.
+- Failed: None.
+- Uncertain: Live Supabase row persistence was not verified because real Supabase settings, applied schema confirmation, and a valid `agent_run_id` were not available.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_VerificationAgentFailure` carries internal failure labels while preserving the public `VerificationAgentError` message. `_log_failed_verification()` calls `agent_log_service.try_log_agent_step()` with status `failed`, safe input, safe output, and generic error message. `run_verification_agent()` attempts failed logs for provider failures and for controlled parsing, schema, unknown-ID, post-processing, and fallback verification errors before re-raising.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses reusable constants and runtime-validated Agent 2 input. Failure types are stable internal classification labels, not fixture-specific branching. UUIDs, quotes, file names, and provider detail strings are test fixtures only.
+
+## Validations Reviewed
+- Command/check: pytest backend/tests/test_verification_agent.py -v
+- Reported result: Passed; execution report states 29 passed in 1.54s.
+- Rerun result: Passed; 29 passed in 1.55s.
+- Status: satisfied
+- Notes: Covers provider failure, invalid JSON, schema mismatch, unknown IDs, and existing Agent 2 behavior.
+- Command/check: pytest backend/tests/test_agent_log_service.py -v
+- Reported result: Passed; execution report states 8 passed in 1.58s.
+- Rerun result: Passed; 8 passed in 1.48s.
+- Status: satisfied
+- Notes: Confirms `try_log_agent_step` preserves original outcomes when persistence fails and validates log serialization behavior.
+- Command/check: Live Supabase failed agent_steps persistence with a valid agent_run_id
+- Reported result: Blocked by required user action.
+- Rerun result: Not rerun; required live Supabase settings, applied schema confirmation, and valid agent_run_id were not provided.
+- Status: blocked
+- Notes: Correctly reported as `BLOCKED_BY_USER_ACTION` and does not block mocked/local acceptance for this task.
+
+## Acceptance Review
+- Task acceptance: Provider errors, invalid JSON, schema mismatch, and unknown IDs create failed log attempts and raise `VerificationAgentError`.
+- Status: satisfied
+- Evidence: Tests assert `try_log_agent_step` is called once for provider failure, invalid JSON, schema mismatch, and unknown returned chunk IDs. The failed log payload contains safe run/question/count/chunk-ID input and a generic error summary, and tests assert raw provider detail, raw invalid LLM text, unknown LLM IDs, and candidate document content are not logged.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked by reviewer after ACCEPTED outcome.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch04 remains unchecked because (04C) is still unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: (04A) was already accepted and checked before this review. (04C), Batch04, Batch05, and Batch06 remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The TDD red-check wording is awkward, but the report clearly states the pre-implementation failures and the post-implementation passing results. Repository evidence and rerun validations match the completion claim.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live Supabase failed-log persistence remains blocked by user-provided environment and a valid live `agent_run_id`, as expected for this task.
+- `(04C)` remains open for explicit log-insertion failure visibility/hardening; this review did not accept or review that sibling task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, (04C) remains incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch04 - Agent Step Logging and Failure Handling",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/verification_agent.py",
+    "backend/tests/test_verification_agent.py",
+    "backend/app/services/agent_log_service.py",
+    "backend/tests/test_agent_log_service.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/tasks/task_10.md",
+    "docs/plans/Plan_10.md",
+    "docs/plans/Master_Plan.md",
+    "docs/review/review_10_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Supabase failed agent_steps persistence requires user-provided settings, applied schema confirmation, and a valid agent_run_id"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Agent Step Logging and Failure Handling
+- Task ID: (04C)
+- Task title: Keep log failures safe and visible
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 12. Acceptance Criteria; docs/plans/Plan_10.md > ## 13. Failure Handling; docs/plans/Plan_10.md > ## 15. Reviewer Checklist; README.md > Important coordination rules
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for (04C). Accepted uncommitted (04A) success logging and (04B) failed-step logging remain present in the same files and were treated as dependencies, not re-reviewed as selected work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/agents/verification_agent.py; backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/review/review_10_review_agent.md; docs/tasks/task_10.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/verification_agent.py`: in scope - (04C) changes success logging to the non-fatal `try_log_agent_step` pattern, adds safe Agent 2 log-failure warning behavior, and preserves failed verification errors when failed-log insertion is not persisted; file also contains accepted uncommitted (04A)/(04B) work.
+- `backend/tests/test_verification_agent.py`: in scope - adds mocked Agent 2 coverage for success-log insertion failure visibility and failed-verification behavior when failed-log insertion fails; file also contains accepted uncommitted (04A)/(04B) tests.
+- `backend/app/services/agent_log_service.py`: in scope - existing `try_log_agent_step` contract reviewed as the dependency reused by (04C).
+- `backend/tests/test_agent_log_service.py`: in scope - existing service-level log failure tests reviewed and rerun.
+- `docs/reports/report_10_execute_agent.md`: in scope - latest (04C) execution report was appended and matches repository evidence.
+- `docs/tasks/task_10.md`: in scope - reviewer updated only the (04C) checkbox entries after acceptance.
+- `docs/plans/Plan_10.md`: in scope - cited acceptance, failure-handling, and reviewer checklist sections reviewed.
+- `README.md`: in scope - cited coordination rules and validation expectations reviewed.
+- `docs/review/review_10_review_agent.md`: in scope - this review report appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements safe visibility for Agent 2 log persistence failures without converting verification failure into success.
+- file from execution report: backend/tests/test_verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new mocked tests for success-log and failed-log insertion failure behavior.
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report accurately lists files, validations, blocked live Supabase validation, and preservation of accepted uncommitted (04A)/(04B) changes.
+
+## Dependency Review
+- Required dependencies: (04A), (04B), and existing agent log service behavior.
+- Dependency status: satisfied for local/mocked review. (04A) and (04B) are checked in docs/tasks/task_10.md, and `agent_log_service.try_log_agent_step` exists with service-level coverage.
+- Missing or invalid dependency: none for automated mocked validation. Live Supabase persistence remains blocked by required user setup only.
+
+## Architecture Alignment
+- Passed: Agent 2 remains an internal backend callable; no new public API route, frontend screen, Agent 3, LangGraph workflow, retrieval expansion, final answer generation, database schema change, or frontend/backend secret-boundary change was added. Log insertion failures are handled through the existing non-fatal log attempt pattern.
+- Failed: None.
+- Uncertain: Live Supabase row persistence was not verified because real Supabase settings, applied schema confirmation, and a valid `agent_run_id` were not available.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_log_successful_verification()` now calls `agent_log_service.try_log_agent_step()` and passes the result to `_warn_if_agent_2_log_failed()`. `_log_failed_verification()` also passes failed-log attempts to the same warning helper, and `run_verification_agent()` still raises `VerificationAgentError` on verification failures.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code uses reusable Agent 2 constants, runtime-validated input/output payloads, and generic failure type labels. Fixture UUIDs, quotes, and invalid provider strings appear only in tests.
+
+## Validations Reviewed
+- Command/check: cd backend; pytest tests/test_verification_agent.py::test_verification_agent_warns_when_success_log_insert_fails tests/test_verification_agent.py::test_verification_agent_preserves_failure_when_failed_log_insert_fails -v
+- Reported result: Failed first as TDD red check / Passed after implementation.
+- Rerun result: Covered by rerunning the full `tests/test_verification_agent.py -v`; both named tests passed.
+- Status: satisfied
+- Notes: The focused cases prove log insertion failure visibility and preservation of the original verification failure.
+- Command/check: cd backend; pytest tests/test_verification_agent.py -v
+- Reported result: Passed; execution report states 31 passed in 1.63s.
+- Rerun result: Passed; 31 passed in 1.65s.
+- Status: satisfied
+- Notes: Covers Agent 2 verification behavior including logging success, failed-step logging, and log insertion failure behavior.
+- Command/check: cd backend; pytest tests/test_agent_log_service.py -v
+- Reported result: Passed; execution report states 8 passed in 1.63s.
+- Rerun result: Passed; 8 passed in 1.61s.
+- Status: satisfied
+- Notes: Confirms existing non-fatal logging contract used by Agent 2.
+- Command/check: cd backend; pytest
+- Reported result: Passed; execution report states 341 passed in 2.72s.
+- Rerun result: Passed; 341 passed in 2.56s.
+- Status: satisfied
+- Notes: Full backend regression suite passed.
+- Command/check: Live Supabase agent_steps persistence with a valid agent_run_id
+- Reported result: Blocked by required user action.
+- Rerun result: Not rerun; required live Supabase settings, applied schema confirmation, and a valid agent_run_id were not provided.
+- Status: blocked
+- Notes: Correctly reported as `BLOCKED_BY_USER_ACTION` for live validation only.
+
+## Acceptance Review
+- Task acceptance: Verification success is not claimed if required validation failed; log failures are visible in tests or safe warnings; secrets are not logged.
+- Status: satisfied
+- Evidence: Success-log insertion failure returns the valid verification output and emits a safe Agent 2 warning with only agent name, step name, and status. Failed-verification log insertion failure still raises `VerificationAgentError` and emits the same safe warning shape. Tests assert raw invalid LLM content and candidate document content are not included in Agent 2 warning calls.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked by reviewer after ACCEPTED outcome.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch04 batch checkbox remains unchecked because the orchestrator owns batch completion after review gates.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkbox was updated by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The execution report accurately describes mocked/local completion, live Supabase validation blocked by user action, files changed, validations run, and separation from accepted uncommitted (04A)/(04B) work.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live Supabase log persistence validation remains blocked by user-provided environment and a valid live `agent_run_id`, as expected for this task.
+- With (04C) accepted, all Batch04 task IDs are checked, but the Batch04 batch checkbox was intentionally not updated here.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, orchestrator should handle the batch gate/commit flow after A3; this review updated only (04C)
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch04 - Agent Step Logging and Failure Handling",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/verification_agent.py",
+    "backend/tests/test_verification_agent.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/review/review_10_review_agent.md",
+    "docs/tasks/task_10.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Supabase agent_steps persistence requires user-provided settings, applied schema confirmation, and a valid agent_run_id"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

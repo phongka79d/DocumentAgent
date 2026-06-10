@@ -505,7 +505,7 @@ Agent 2 must be auditable. Future users and reviewers need to inspect what candi
 
 ### Tasks
 
-- [ ] (04A): Add Agent 2 success-step logging
+- [x] (04A): Add Agent 2 success-step logging
   - Source of Truth: `docs/plans/Plan_10.md` > `## 3. Scope`; `docs/plans/Plan_10.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## Table: agent_steps`; `docs/plans/Master_Plan.md` > `### 5.5 Agent Logs / Debug Page`
   - Source Requirements:
     - Log Agent 2 input/output to `agent_steps`.
@@ -521,7 +521,7 @@ Agent 2 must be auditable. Future users and reviewers need to inspect what candi
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live Supabase validation when real Supabase settings, applied schema, or valid `agent_run_id` are missing.
   - Files: `backend/app/services/agent_log_service.py`, `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`, `backend/tests/test_agent_log_service.py` if needed
 
-- [ ] (04B): Add Agent 2 failed-step logging
+- [x] (04B): Add Agent 2 failed-step logging
   - Source of Truth: `docs/plans/Plan_10.md` > `## 8. API Design`; `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## Table: agent_steps`
   - Source Requirements:
     - Log Agent 2 step with status `failed`.
@@ -538,7 +538,7 @@ Agent 2 must be auditable. Future users and reviewers need to inspect what candi
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live Supabase validation when real Supabase settings, applied schema, or valid `agent_run_id` are missing.
   - Files: `backend/app/services/agent_log_service.py`, `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`, `backend/tests/test_agent_log_service.py` if needed
 
-- [ ] (04C): Keep log failures safe and visible
+- [x] (04C): Keep log failures safe and visible
   - Source of Truth: `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`; `docs/plans/Plan_10.md` > `## 15. Reviewer Checklist`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - Agent 2 logs success and failure steps.
@@ -928,9 +928,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch04
 
-- [ ] (04A): Add Agent 2 success-step logging
-- [ ] (04B): Add Agent 2 failed-step logging
-- [ ] (04C): Keep log failures safe and visible
+- [x] (04A): Add Agent 2 success-step logging
+- [x] (04B): Add Agent 2 failed-step logging
+- [x] (04C): Keep log failures safe and visible
 
 #### Batch05
 

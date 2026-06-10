@@ -13,6 +13,7 @@ from app.agents.schemas import (
     VerificationAgentOutput,
     VerifiedChunk,
 )
+from app.services import agent_log_service
 from app.services import shopaikey_service
 
 
@@ -79,6 +80,12 @@ class VerificationAgentError(RuntimeError):
     """Raised when Agent 2 verification fails in a controlled way."""
 
 
+class _VerificationAgentFailure(VerificationAgentError):
+    def __init__(self, failure_type: str) -> None:
+        self.failure_type = failure_type
+        super().__init__(VERIFICATION_FAILURE_MESSAGE)
+
+
 def _build_compact_evidence_payload(
     input_data: VerificationAgentInput,
 ) -> dict[str, Any]:
@@ -123,13 +130,13 @@ def _parse_verification_output(response_content: str) -> VerificationAgentOutput
         response_payload = json.loads(response_content)
     except json.JSONDecodeError as exc:
         logger.warning("Verification LLM returned invalid JSON.")
-        raise VerificationAgentError(VERIFICATION_FAILURE_MESSAGE) from exc
+        raise _VerificationAgentFailure("invalid_json") from exc
 
     try:
         return VerificationAgentOutput.model_validate(response_payload)
     except ValidationError as exc:
         logger.warning("Verification LLM returned invalid output schema.")
-        raise VerificationAgentError(VERIFICATION_FAILURE_MESSAGE) from exc
+        raise _VerificationAgentFailure("schema_validation_error") from exc
 
 
 def _validate_candidate_membership(
@@ -149,7 +156,7 @@ def _validate_candidate_membership(
                 "Verification LLM returned unknown chunk_id %s.",
                 chunk.chunk_id,
             )
-            raise VerificationAgentError(VERIFICATION_FAILURE_MESSAGE)
+            raise _VerificationAgentFailure("unknown_chunk_id")
 
     return verification_output
 
@@ -429,7 +436,80 @@ def _finalize_verification_output(
         return VerificationAgentOutput.model_validate(output_payload)
     except ValidationError as exc:
         logger.warning("Verification post-processing returned invalid output schema.")
-        raise VerificationAgentError(VERIFICATION_FAILURE_MESSAGE) from exc
+        raise _VerificationAgentFailure("post_processing_validation_error") from exc
+
+
+def _log_successful_verification(
+    validated_input: VerificationAgentInput,
+    validated_output: VerificationAgentOutput,
+) -> None:
+    log_attempt = agent_log_service.try_log_agent_step(
+        agent_run_id=str(validated_input.agent_run_id),
+        step_name=AGENT_2_VERIFICATION_STEP_NAME,
+        agent_name=VERIFICATION_AGENT_NAME,
+        input_payload=validated_input,
+        output_payload=validated_output,
+        status="success",
+    )
+    _warn_if_agent_2_log_failed(log_attempt)
+
+
+def _safe_failed_verification_input(
+    validated_input: VerificationAgentInput,
+) -> dict[str, Any]:
+    return {
+        "agent_run_id": str(validated_input.agent_run_id),
+        "question": validated_input.question,
+        "candidate_count": len(validated_input.candidates),
+        "candidate_chunk_ids": [
+            str(candidate.chunk_id) for candidate in validated_input.candidates
+        ],
+    }
+
+
+def _safe_failed_verification_output(failure_type: str) -> dict[str, Any]:
+    return {
+        "error": {
+            "type": failure_type,
+            "message": VERIFICATION_FAILURE_MESSAGE,
+        }
+    }
+
+
+def _log_failed_verification(
+    validated_input: VerificationAgentInput,
+    failure_type: str,
+) -> None:
+    try:
+        log_attempt = agent_log_service.try_log_agent_step(
+            agent_run_id=str(validated_input.agent_run_id),
+            step_name=AGENT_2_VERIFICATION_STEP_NAME,
+            agent_name=VERIFICATION_AGENT_NAME,
+            input_payload=_safe_failed_verification_input(validated_input),
+            output_payload=_safe_failed_verification_output(failure_type),
+            status="failed",
+            error_message=VERIFICATION_FAILURE_MESSAGE,
+        )
+        _warn_if_agent_2_log_failed(log_attempt)
+    except Exception:
+        logger.exception(
+            "Failed to record Agent 2 failed-step log for %s.",
+            validated_input.agent_run_id,
+        )
+
+
+def _warn_if_agent_2_log_failed(
+    log_attempt: agent_log_service.AgentStepLogAttempt,
+) -> None:
+    if log_attempt.persisted or log_attempt.persistence_error is None:
+        return
+
+    logger.warning(
+        "Agent 2 step log persistence failed for %s::%s [%s].",
+        log_attempt.persistence_error.agent_name,
+        log_attempt.persistence_error.step_name,
+        log_attempt.persistence_error.status,
+    )
 
 
 def run_verification_agent(
@@ -444,12 +524,14 @@ def run_verification_agent(
             "Verification skipped for %s because Agent 1 returned no candidates.",
             validated_input.agent_run_id,
         )
-        return VerificationAgentOutput(
+        empty_output = VerificationAgentOutput(
             verified_chunks=[],
             rejected_chunks=[],
             missing_information=True,
             confidence=0.0,
         )
+        _log_successful_verification(validated_input, empty_output)
+        return empty_output
 
     messages = _build_verification_messages(validated_input)
     try:
@@ -458,25 +540,37 @@ def run_verification_agent(
             response_format={"type": "json_object"},
         )
     except shopaikey_service.ShopAIKeyServiceError as exc:
-        raise VerificationAgentError(VERIFICATION_FAILURE_MESSAGE) from exc
+        failure = _VerificationAgentFailure("provider_error")
+        _log_failed_verification(validated_input, failure.failure_type)
+        raise failure from exc
 
-    verification_output = _parse_verification_output(response_content)
-    candidate_bound_output = _validate_candidate_membership(
-        verification_output,
-        validated_input,
-    )
-    quote_validated_output = _validate_candidate_quotes(
-        candidate_bound_output,
-        validated_input,
-    )
-    duplicate_filtered_output = _filter_duplicate_verified_chunks(
-        quote_validated_output,
-        validated_input,
-    )
-    post_processed_output = _apply_missing_information_adjustments(
-        duplicate_filtered_output
-    )
-    return _finalize_verification_output(post_processed_output)
+    try:
+        verification_output = _parse_verification_output(response_content)
+        candidate_bound_output = _validate_candidate_membership(
+            verification_output,
+            validated_input,
+        )
+        quote_validated_output = _validate_candidate_quotes(
+            candidate_bound_output,
+            validated_input,
+        )
+        duplicate_filtered_output = _filter_duplicate_verified_chunks(
+            quote_validated_output,
+            validated_input,
+        )
+        post_processed_output = _apply_missing_information_adjustments(
+            duplicate_filtered_output
+        )
+        finalized_output = _finalize_verification_output(post_processed_output)
+    except _VerificationAgentFailure as exc:
+        _log_failed_verification(validated_input, exc.failure_type)
+        raise
+    except VerificationAgentError:
+        _log_failed_verification(validated_input, "verification_error")
+        raise
+
+    _log_successful_verification(validated_input, finalized_output)
+    return finalized_output
 
 
 __all__ = [

@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from pydantic import ValidationError
@@ -14,12 +15,24 @@ from app.agents.prompts import (
 from app.agents.schemas import VerificationAgentOutput
 from app.agents import verification_agent
 from app.agents.verification_agent import VerificationAgentError, run_verification_agent
+from app.services import agent_log_service
 
 
 AGENT_RUN_ID = "11111111-1111-1111-1111-111111111111"
 CANDIDATE_CHUNK_ID = "22222222-2222-2222-2222-222222222222"
 CANDIDATE_DOCUMENT_ID = "33333333-3333-3333-3333-333333333333"
 SECOND_CANDIDATE_CHUNK_ID = "44444444-4444-4444-4444-444444444444"
+
+
+@pytest.fixture(autouse=True)
+def _disable_verification_agent_log_persistence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        agent_log_service,
+        "log_agent_step",
+        Mock(return_value={"id": "step-id"}),
+    )
 
 
 def _verification_output_payload(confidence: float) -> dict[str, object]:
@@ -98,6 +111,49 @@ def test_verification_agent_returns_missing_information_without_llm_for_empty_ca
 
     assert isinstance(output, VerificationAgentOutput)
     assert output.model_dump() == {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": True,
+        "confidence": 0.0,
+    }
+
+
+def test_verification_agent_logs_success_for_empty_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    log_agent_step = Mock(return_value={"id": "empty-step-id"})
+    monkeypatch.setattr(
+        agent_log_service,
+        "log_agent_step",
+        log_agent_step,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When can I start?",
+            "candidates": [],
+        }
+    )
+
+    assert output.model_dump() == {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": True,
+        "confidence": 0.0,
+    }
+    log_agent_step.assert_called_once()
+    log_call = log_agent_step.call_args.kwargs
+    assert log_call["agent_run_id"] == AGENT_RUN_ID
+    assert log_call["step_name"] == verification_agent.AGENT_2_VERIFICATION_STEP_NAME
+    assert log_call["agent_name"] == verification_agent.VERIFICATION_AGENT_NAME
+    assert log_call["status"] == "success"
+    assert log_call["input_payload"].model_dump(mode="json") == {
+        "agent_run_id": AGENT_RUN_ID,
+        "question": "When can I start?",
+        "candidates": [],
+    }
+    assert log_call["output_payload"].model_dump(mode="json") == {
         "verified_chunks": [],
         "rejected_chunks": [],
         "missing_information": True,
@@ -198,9 +254,179 @@ def test_verification_agent_returns_validated_llm_json(
     assert output.verified_chunks[0].chunk_id.hex == CANDIDATE_CHUNK_ID.replace("-", "")
 
 
+def test_verification_agent_logs_success_with_final_verification_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    log_agent_step = Mock(return_value={"id": "step-id"})
+    monkeypatch.setattr(
+        agent_log_service,
+        "log_agent_step",
+        log_agent_step,
+    )
+
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [
+            {
+              "chunk_id": "44444444-4444-4444-4444-444444444444",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "rejection_reason": "Duplicate evidence."
+            }
+          ],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload(), _second_candidate_payload()],
+        }
+    )
+
+    assert len(output.verified_chunks) == 1
+    assert len(output.rejected_chunks) == 1
+    log_agent_step.assert_called_once()
+    log_call = log_agent_step.call_args.kwargs
+    assert log_call["agent_run_id"] == AGENT_RUN_ID
+    assert log_call["step_name"] == verification_agent.AGENT_2_VERIFICATION_STEP_NAME
+    assert log_call["agent_name"] == verification_agent.VERIFICATION_AGENT_NAME
+    assert log_call["status"] == "success"
+    assert log_call["input_payload"].model_dump(mode="json") == {
+        "agent_run_id": AGENT_RUN_ID,
+        "question": "When does probation start?",
+        "candidates": [
+            _candidate_payload(),
+            _second_candidate_payload(),
+        ],
+    }
+    assert log_call["output_payload"].model_dump(mode="json") == {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Probation starts on June 1, 2026 and lasts two months.",
+                "page_number": 3,
+                "verification_reason": (
+                    "This chunk states the probation start and duration."
+                ),
+                "supports_simple_reasoning": True,
+            }
+        ],
+        "rejected_chunks": [
+            {
+                "chunk_id": SECOND_CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Probation starts on June 1, 2026 and lasts two months.",
+                "rejection_reason": "Duplicate evidence.",
+            }
+        ],
+        "missing_information": False,
+        "confidence": 0.82,
+    }
+
+
+def test_verification_agent_warns_when_success_log_insert_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    log_attempt = agent_log_service.AgentStepLogAttempt(
+        persisted=False,
+        row=None,
+        persistence_error=agent_log_service.AgentLogPersistenceError(
+            step_name=verification_agent.AGENT_2_VERIFICATION_STEP_NAME,
+            agent_name=verification_agent.VERIFICATION_AGENT_NAME,
+            status="success",
+        ),
+    )
+    try_log_agent_step = Mock(return_value=log_attempt)
+    logger_warning = Mock()
+    monkeypatch.setattr(
+        agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+    monkeypatch.setattr(verification_agent.logger, "warning", logger_warning)
+
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Probation starts on June 1, 2026 and lasts two months.",
+              "page_number": 3,
+              "verification_reason": "This chunk states the probation start and duration.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.82
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert isinstance(output, VerificationAgentOutput)
+    assert output.confidence == 0.82
+    try_log_agent_step.assert_called_once()
+    logger_warning.assert_called_once_with(
+        "Agent 2 step log persistence failed for %s::%s [%s].",
+        verification_agent.VERIFICATION_AGENT_NAME,
+        verification_agent.AGENT_2_VERIFICATION_STEP_NAME,
+        "success",
+    )
+    assert "Probation starts on June 1, 2026" not in str(logger_warning.call_args)
+
+
 def test_verification_agent_rejects_invalid_llm_json(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
     def fake_chat_completion(messages, response_format=None):
         return "Here is the JSON: {\"verified_chunks\": []}"
 
@@ -219,10 +445,137 @@ def test_verification_agent_rejects_invalid_llm_json(
             }
         )
 
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["agent_run_id"] == AGENT_RUN_ID
+    assert log_call["step_name"] == verification_agent.AGENT_2_VERIFICATION_STEP_NAME
+    assert log_call["agent_name"] == verification_agent.VERIFICATION_AGENT_NAME
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == verification_agent.VERIFICATION_FAILURE_MESSAGE
+    assert log_call["input_payload"] == {
+        "agent_run_id": AGENT_RUN_ID,
+        "question": "When does probation start?",
+        "candidate_count": 1,
+        "candidate_chunk_ids": [CANDIDATE_CHUNK_ID],
+    }
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "invalid_json",
+            "message": verification_agent.VERIFICATION_FAILURE_MESSAGE,
+        }
+    }
+    assert "Here is the JSON" not in str(log_call)
+    assert "Probation starts on June 1, 2026" not in str(log_call)
+
+
+def test_verification_agent_preserves_failure_when_failed_log_insert_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    log_attempt = agent_log_service.AgentStepLogAttempt(
+        persisted=False,
+        row=None,
+        persistence_error=agent_log_service.AgentLogPersistenceError(
+            step_name=verification_agent.AGENT_2_VERIFICATION_STEP_NAME,
+            agent_name=verification_agent.VERIFICATION_AGENT_NAME,
+            status="failed",
+            error_message=verification_agent.VERIFICATION_FAILURE_MESSAGE,
+        ),
+    )
+    try_log_agent_step = Mock(return_value=log_attempt)
+    logger_warning = Mock()
+    monkeypatch.setattr(
+        agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+    monkeypatch.setattr(verification_agent.logger, "warning", logger_warning)
+
+    def fake_chat_completion(messages, response_format=None):
+        return "raw invalid JSON with provider internal detail"
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    with pytest.raises(VerificationAgentError):
+        run_verification_agent(
+            {
+                "agent_run_id": AGENT_RUN_ID,
+                "question": "When does probation start?",
+                "candidates": [_candidate_payload()],
+            }
+        )
+
+    try_log_agent_step.assert_called_once()
+    assert (
+        (
+            "Agent 2 step log persistence failed for %s::%s [%s].",
+            verification_agent.VERIFICATION_AGENT_NAME,
+            verification_agent.AGENT_2_VERIFICATION_STEP_NAME,
+            "failed",
+        ),
+        {},
+    ) in logger_warning.call_args_list
+    assert "raw invalid JSON" not in str(logger_warning.call_args)
+    assert "Probation starts on June 1, 2026" not in str(logger_warning.call_args)
+
+
+def test_verification_agent_logs_failed_step_for_provider_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    def fake_chat_completion(messages, response_format=None):
+        raise verification_agent.shopaikey_service.ShopAIKeyServiceError(
+            "provider raw secret detail"
+        )
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    with pytest.raises(VerificationAgentError):
+        run_verification_agent(
+            {
+                "agent_run_id": AGENT_RUN_ID,
+                "question": "When does probation start?",
+                "candidates": [_candidate_payload()],
+            }
+        )
+
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == verification_agent.VERIFICATION_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "provider_error",
+            "message": verification_agent.VERIFICATION_FAILURE_MESSAGE,
+        }
+    }
+    assert "provider raw secret detail" not in str(log_call)
+    assert "Probation starts on June 1, 2026" not in str(log_call)
+
 
 def test_verification_agent_rejects_llm_schema_mismatch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
     def fake_chat_completion(messages, response_format=None):
         return '{"verified_chunks":[],"rejected_chunks":[],"confidence":0.5}'
 
@@ -240,6 +593,19 @@ def test_verification_agent_rejects_llm_schema_mismatch(
                 "candidates": [_candidate_payload()],
             }
         )
+
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == verification_agent.VERIFICATION_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "schema_validation_error",
+            "message": verification_agent.VERIFICATION_FAILURE_MESSAGE,
+        }
+    }
+    assert "missing_information" not in str(log_call)
+    assert "Probation starts on June 1, 2026" not in str(log_call)
 
 
 def test_verification_agent_rejects_out_of_range_llm_confidence(
@@ -269,6 +635,13 @@ def test_verification_agent_rejects_unknown_returned_chunk_ids(
     monkeypatch: pytest.MonkeyPatch,
     chunk_list_name: str,
 ) -> None:
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
     unknown_chunk_id = "44444444-4444-4444-4444-444444444444"
     response_payload: dict[str, object] = {
         "verified_chunks": [],
@@ -316,6 +689,19 @@ def test_verification_agent_rejects_unknown_returned_chunk_ids(
                 "candidates": [_candidate_payload()],
             }
         )
+
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == verification_agent.VERIFICATION_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "unknown_chunk_id",
+            "message": verification_agent.VERIFICATION_FAILURE_MESSAGE,
+        }
+    }
+    assert unknown_chunk_id not in str(log_call)
+    assert "Probation starts on June 1, 2026" not in str(log_call)
 
 
 def test_verification_agent_keeps_verified_quote_found_in_candidate_content(
