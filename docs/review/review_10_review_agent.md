@@ -2861,3 +2861,818 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05A)
+- Task title: Add accepted and rejected evidence tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 11. Required Tests; docs/plans/Plan_10.md > ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > # 11. Agent 2: Evidence Verification Agent > ## 11.2 Verification Rules
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching (05A) execution report entry; did not review (05B) or later tasks.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/tasks/task_10.md after reviewer checkbox update
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_verification_agent.py`: in scope - added accepted/rejected evidence test using mocked ShopAIKey and existing Agent 1-style candidate fixtures.
+- `docs/reports/report_10_execute_agent.md`: in scope - latest execution report entry for (05A) appended and matches repository evidence.
+- `docs/tasks/task_10.md`: in scope - reviewed selected task requirements and updated only (05A) checkboxes after acceptance.
+- `docs/plans/Plan_10.md`: in scope - reviewed cited Required Tests and Acceptance Criteria sections.
+- `docs/plans/Master_Plan.md`: in scope - reviewed cited Agent 2 verification rules.
+- `docs/review/review_10_review_agent.md`: in scope - review report append target.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds `test_verification_agent_accepts_direct_answer_and_rejects_weak_evidence`, focused on final post-processed output.
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the appended (05A) execution report with accurate file and validation claims.
+
+## Dependency Review
+- Required dependencies: Batch02, Batch03; batch chain also requires prior Batch04 completion before Batch05 proceeds.
+- Dependency status: satisfied; Batch02, Batch03, and Batch04 task checkboxes are marked complete in docs/tasks/task_10.md.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Test-only change stays within Batch05 automated validation scope; no public API, runtime behavior, Agent 3, LangGraph, frontend, database schema, or live provider dependency was added.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The new test invokes `run_verification_agent` with mocked ShopAIKey response, then asserts the final serialized `VerificationAgentOutput` contains the direct-answer candidate in `verified_chunks` and the weak candidate in `rejected_chunks` with a rejection reason.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs and fixture strings are appropriate deterministic test fixtures; no production logic was changed or overfit.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_verification_agent.py -v`
+- Reported result: Passed, 32 passed in 3.77s
+- Rerun result: Passed, 32 passed in 1.45s
+- Status: satisfied
+- Notes: Rerun used the task-required targeted validation command from the backend directory.
+
+## Acceptance Review
+- Task acceptance: Add automated coverage proving direct evidence is accepted and weak/irrelevant evidence is rejected with a reason using mocked ShopAIKey and final-output assertions.
+- Status: satisfied
+- Evidence: `test_verification_agent_accepts_direct_answer_and_rejects_weak_evidence` asserts the direct official-work-start-date evidence appears in `verified_chunks`, the office-etiquette candidate appears in `rejected_chunks`, the rejected candidate has a rejection reason, and the weak candidate is absent from verified evidence.
+
+## Progress Tracking
+- Selected task checkbox: checked for (05A) in both the detailed Batch05 task list and Progress Tracker Task IDs.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch05 remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: No sibling or future task checkboxes were changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The task is intentionally narrow; broader Batch05 cases remain unchecked for later tasks (05B)-(05E).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A) is complete and sibling Batch05 tasks remain unchecked
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_verification_agent.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/tasks/task_10.md",
+    "docs/review/review_10_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05B)
+- Task title: Add missing-information and empty-candidate tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 9. Implementation Steps; docs/plans/Plan_10.md > ## 11. Required Tests; docs/plans/Plan_10.md > ## 13. Failure Handling; docs/plans/Master_Plan.md > # 11. Agent 2: Evidence Verification Agent > ## 11.3 Missing Information Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: Reviewed the latest matching (05B) execution report entry. Prior accepted uncommitted (05A) changes in the same files were treated as existing batch context, not as part of this selected review.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/review/review_10_review_agent.md; docs/tasks/task_10.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_verification_agent.py`: in scope - selected (05B) changes strengthen empty-candidate no-LLM coverage and no-verified-result missing-information assertions. The additional accepted/rejected evidence test belongs to prior accepted (05A).
+- `backend/app/agents/verification_agent.py`: in scope - read to verify the runtime behavior exercised by the tests is real: empty candidates bypass ShopAIKey, and no verified chunks force missing_information with a deterministic confidence cap.
+- `docs/reports/report_10_execute_agent.md`: in scope - latest execution report entry for (05B) is appended and matches repository evidence.
+- `docs/tasks/task_10.md`: in scope - reviewed selected task requirements and updated only (05B) checkboxes after acceptance.
+- `docs/plans/Plan_10.md`: in scope - reviewed cited implementation, required test, and failure-handling requirements.
+- `docs/plans/Master_Plan.md`: in scope - reviewed cited missing-information rule.
+- `docs/review/review_10_review_agent.md`: in scope - review report append target; prior appended (05A) review was preserved.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff includes the (05B) empty-candidate mock/assert_not_called strengthening and the no-verified-result assertions for rejected chunk count, missing_information, and deterministic confidence cap.
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the appended (05B) execution report with accurate file and validation claims.
+
+## Dependency Review
+- Required dependencies: Batch02 and Batch03.
+- Dependency status: satisfied; Batch02 and Batch03 task checkboxes are complete, and prior Batch05 task (05A) is already accepted and checked.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Change is test-only for required Batch05 automated coverage; it uses mocked ShopAIKey and existing verification agent fixtures, with no public API, runtime architecture, database schema, frontend, Agent 3, LangGraph, or live provider dependency added.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Tests call `run_verification_agent` and assert final `VerificationAgentOutput` behavior. Runtime code confirms empty candidates return no verified/rejected chunks with `missing_information=True` and `confidence=0.0` before ShopAIKey, and post-processing forces `missing_information=True` when no verified chunks remain.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs, fixture content, and expected confidence cap are deterministic test fixtures and imported/runtime constants. No production code was changed or overfit to fixture-only behavior for this task.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_verification_agent.py -v`
+- Reported result: Passed, 32 passed in 3.80s
+- Rerun result: Passed, 32 passed in 1.54s
+- Status: satisfied
+- Notes: Rerun used the task-required targeted validation command from the backend directory.
+
+## Acceptance Review
+- Task acceptance: Missing-information behavior is deterministic and safe.
+- Status: satisfied
+- Evidence: `test_verification_agent_returns_missing_information_without_llm_for_empty_candidates` asserts empty candidates return empty verified/rejected lists, `missing_information=True`, confidence `0.0`, and ShopAIKey is not called. `test_verification_agent_marks_missing_information_when_no_verified_chunks_remain` asserts fabricated verified evidence is filtered out, one rejected chunk remains, `missing_information=True`, and confidence equals `NO_VERIFIED_CHUNKS_CONFIDENCE_CAP`.
+
+## Progress Tracking
+- Selected task checkbox: checked for (05B) in both the detailed Batch05 task list and Progress Tracker Task IDs.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch05 remains unchecked because (05C), (05D), and (05E) remain unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: Did not update sibling or future task checkboxes. Prior accepted uncommitted (05A) checkbox and earlier batch status changes were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The git diff still includes prior accepted uncommitted (05A) test/report/review/task updates; this review accepts only the selected (05B) scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, Batch05 still has unchecked sibling tasks (05C), (05D), and (05E)
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_verification_agent.py",
+    "backend/app/agents/verification_agent.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/tasks/task_10.md",
+    "docs/plans/Plan_10.md",
+    "docs/plans/Master_Plan.md",
+    "docs/review/review_10_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05C)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05C)
+- Task title: Add invalid JSON, unknown ID, and provider failure tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 8. API Design; docs/plans/Plan_10.md > ## 11. Required Tests; docs/plans/Plan_10.md > ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05C)
+- Reviewed task ID: (05C)
+- Correct selection: yes
+- Notes: Reviewed the latest matching (05C) execution report entry. Prior accepted uncommitted Batch05 changes for (05A) and (05B), plus earlier accepted batch changes, were treated as existing context and not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/review/review_10_review_agent.md; docs/tasks/task_10.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_verification_agent.py`: in scope - contains failure-handling tests for invalid LLM JSON, provider failure, schema mismatch, out-of-range confidence, and unknown returned chunk IDs; selected (05C) evidence is invalid JSON, provider failure, and unknown IDs.
+- `backend/app/agents/verification_agent.py`: in scope - read to verify controlled `VerificationAgentError` paths, failed-step logging, invalid JSON parsing failure, provider failure handling, and unknown chunk ID validation are real runtime behavior.
+- `docs/reports/report_10_execute_agent.md`: in scope - latest execution report entry for (05C) is appended and matches repository evidence.
+- `docs/tasks/task_10.md`: in scope - reviewed selected task requirements and updated only (05C) checkboxes after acceptance.
+- `docs/plans/Plan_10.md`: in scope - reviewed cited API Design, Required Tests, and Failure Handling sections.
+- `docs/review/review_10_review_agent.md`: in scope - review report append target; prior appended reviews were preserved.
+
+## Reported Files Cross-Check
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the appended (05C) execution report with accurate file, scope, and validation claims.
+- file from execution report: backend/tests/test_verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The selected failure tests are present in the working tree. The current diff does not show new (05C)-specific test additions because the equivalent coverage already existed from prior accepted uncommitted work; A1 accurately reported that it validated existing coverage instead of duplicating tests.
+
+## Dependency Review
+- Required dependencies: Batch02, Batch03, and Batch04.
+- Dependency status: satisfied; Batch02, Batch03, and Batch04 are marked complete in docs/tasks/task_10.md, and prior Batch05 tasks (05A) and (05B) are already accepted and checked.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Selected work remains test-only for Batch05 automated validation; tests mock ShopAIKey and agent log service, avoid live provider/database dependency, and exercise the internal `run_verification_agent` callable. No public API, frontend, database schema, Agent 3, LangGraph workflow, final-answer generation, or secret exposure was added.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Runtime code raises controlled `_VerificationAgentFailure`/`VerificationAgentError` for invalid JSON, provider errors, schema validation failures, and unknown chunk IDs, then attempts failed-step logging with safe payloads. Tests call `run_verification_agent` and assert the real error/logging behavior rather than testing isolated fake helpers.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs, fixture content, and fake provider responses are deterministic test fixtures. Production logic does not special-case the fixture IDs, strings, filenames, or expected answers.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_verification_agent.py -v`
+- Reported result: Passed, 32 passed in 1.62s
+- Rerun result: Passed, 32 passed in 1.64s
+- Status: satisfied
+- Notes: Rerun used the task-required targeted validation command from the backend directory.
+
+## Acceptance Review
+- Task acceptance: Each failure path raises controlled error and attempts safe failed-step logging.
+- Status: satisfied
+- Evidence: `test_verification_agent_rejects_invalid_llm_json` asserts invalid JSON raises `VerificationAgentError` and logs a failed step with `invalid_json` safe output. `test_verification_agent_logs_failed_step_for_provider_failure` asserts ShopAIKey failure raises `VerificationAgentError` and logs a failed step with `provider_error` safe output. Parameterized `test_verification_agent_rejects_unknown_returned_chunk_ids` covers unknown IDs returned in both `verified_chunks` and `rejected_chunks`, asserting `VerificationAgentError`, failed status, and safe `unknown_chunk_id` output.
+
+## Progress Tracking
+- Selected task checkbox: checked for (05C) in both the detailed Batch05 task list and Progress Tracker Task IDs.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch05 remains unchecked because (05D) and (05E) remain unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: Did not update sibling or future task checkboxes. Prior accepted uncommitted (05A)/(05B) checkbox updates and earlier batch status changes were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected coverage existed before the (05C) execution entry, apparently from earlier failure-logging work. Accepting (05C) is still supported because the required tests exist, are scoped correctly, and the required validation passed.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, Batch05 still has unchecked sibling tasks (05D) and (05E)
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_verification_agent.py",
+    "backend/app/agents/verification_agent.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/tasks/task_10.md",
+    "docs/plans/Plan_10.md",
+    "docs/review/review_10_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05D)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05D)
+- Task title: Add contradiction, quote, duplicate, and confidence tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 9. Implementation Steps; docs/plans/Plan_10.md > ## 11. Required Tests; docs/plans/Plan_10.md > ## 12. Acceptance Criteria; docs/plans/Plan_10.md > ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05D)
+- Reviewed task ID: (05D)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch05 (05D), and only that task was reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/review/review_10_review_agent.md; docs/tasks/task_10.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_verification_agent.py`: in scope - contains Agent 2 automated tests, including the selected quote, duplicate, contradiction, and confidence safety coverage.
+- `docs/reports/report_10_execute_agent.md`: in scope - contains the appended execution report for (05D), plus prior accepted Batch05 entries.
+- `docs/tasks/task_10.md`: in scope - selected task entry and progress tracker reviewed; only (05D) was updated by this reviewer after acceptance.
+- `docs/plans/Plan_10.md`: in scope - cited source-of-truth sections reviewed.
+- `docs/review/review_10_review_agent.md`: in scope - existing prior review entries inspected at EOF and this review appended.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_verification_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The file contains tests for quote validation/correction, duplicate verified chunk filtering, clear contradictions, schema confidence bounds, and out-of-range LLM confidence failure logging.
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The (05D) report entry is appended and accurately describes the selected test/report work.
+
+## Dependency Review
+- Required dependencies: Batch03 deterministic evidence safety checks.
+- Dependency status: satisfied; Batch03 tasks are checked complete in docs/tasks/task_10.md.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Work is test-only for Agent 2 backend verification behavior, uses mocked ShopAIKey responses, and does not add public routes, Agent 3 behavior, frontend code, retrieval expansion, or live provider/database dependency.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Tests execute `run_verification_agent` and assert final post-processed `VerificationAgentOutput` behavior, not only raw mocked LLM payloads. Mocks are limited to provider/log service boundaries appropriate for automated tests.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixture UUIDs and sample candidate text are used inside tests to create deterministic scenarios; production logic was not hardcoded or altered for selected-task success.
+
+## Validations Reviewed
+- Command/check: cd backend; pytest tests/test_verification_agent.py -v
+- Reported result: Passed, 32 tests
+- Rerun result: Passed, 32 tests in 1.62s
+- Status: passed
+- Notes: Rerun matched the executor's reported target command and covered selected-task tests.
+
+## Acceptance Review
+- Task acceptance: Tests prove final Agent 2 output is safe after LLM output is post-processed.
+- Status: satisfied
+- Evidence: The suite includes quote-found and whitespace quote acceptance; fabricated verified quotes moved to rejected chunks; fabricated rejected quotes corrected to source excerpts; no-verified-remain missing-information/confidence cap; duplicate chunk ID and duplicate content filtering; conflicting verified date and incompatible short-claim contradiction behavior; confidence schema bounds; and out-of-range LLM confidence controlled failure logging.
+
+## Progress Tracking
+- Selected task checkbox: checked in the Batch05 task list and Task IDs tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked because (05E) is still incomplete.
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: Prior accepted uncommitted changes for (05A), (05B), and (05C) were distinguished from this review and not modified except current-file context already present.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The current git diff includes prior accepted Batch05/report/review/task-tracker changes, but the selected (05D) work is identifiable and scoped.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_verification_agent.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/review/review_10_review_agent.md",
+    "docs/tasks/task_10.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05E)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Execution Report Reviewed
+docs/reports/report_10_execute_agent.md
+
+## Review Report File
+docs/review/review_10_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05E)
+- Task title: Run required targeted automated validation
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_10.md > ## 11. Required Tests; docs/plans/Plan_10.md > ## 12. Acceptance Criteria; docs/plans/Plan_10.md > ## 15. Reviewer Checklist; README.md > Important coordination rules
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05E)
+- Reviewed task ID: (05E)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch05 (05E), and only that selected task was reviewed. Prior accepted uncommitted Batch05 changes for (05A)-(05D) were treated as existing accepted batch context.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_verification_agent.py; docs/reports/report_10_execute_agent.md; docs/review/review_10_review_agent.md; docs/tasks/task_10.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_10_execute_agent.md`: in scope - contains the appended execution report for (05E), including the targeted validation result and the conditional agent-log-service test rationale.
+- `docs/tasks/task_10.md`: in scope - selected task entry, dependencies, validation requirement, and progress tracker reviewed; updated only (05E) and Batch05 after acceptance.
+- `docs/plans/Plan_10.md`: in scope - cited Required Tests, Acceptance Criteria, Failure Handling, and Reviewer Checklist sections reviewed for required validation and no-fake-success requirements.
+- `README.md`: in scope - cited coordination rule reviewed for validation expectations and mocked provider-test preference.
+- `backend/tests/test_verification_agent.py`: in scope - current validation target and prior accepted Batch05 test changes reviewed as the test suite exercised by (05E).
+- `backend/tests/test_agent_log_service.py`: in scope - conditional validation target checked through git status/diff; not modified, so the extra test command was not required.
+- `docs/review/review_10_review_agent.md`: in scope - existing review entries inspected at EOF and this review appended.
+
+## Reported Files Cross-Check
+- file from execution report: docs/reports/report_10_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The (05E) report entry is appended and accurately reports that only the required targeted validation was run for this task.
+
+## Dependency Review
+- Required dependencies: (05A), (05B), (05C), and (05D).
+- Dependency status: satisfied; all four prerequisite Batch05 task IDs were already checked in docs/tasks/task_10.md before accepting (05E).
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Selected task is validation-only and does not add public routes, runtime architecture changes, Agent 3 behavior, LangGraph workflow, frontend code, database schema changes, live provider dependency, or secret exposure.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The selected task required running automated validation, not implementing code. The pytest command was rerun from `backend` and exercised the real Agent 2 verification tests currently present in the working tree.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production implementation was changed for (05E). Existing deterministic test fixtures in `backend/tests/test_verification_agent.py` are appropriate for mocked automated validation.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_verification_agent.py -v`
+- Reported result: Passed, 32 tests collected and 32 passed in 1.57s
+- Rerun result: Passed, 32 tests collected and 32 passed in 1.50s
+- Status: satisfied
+- Notes: Rerun matched the task-required targeted validation command from the backend directory.
+- Command/check: `pytest tests/test_agent_log_service.py -v`
+- Reported result: Not run because `backend/tests/test_agent_log_service.py` was not modified
+- Rerun result: Not run
+- Status: satisfied
+- Notes: Current `git status --short` and `git diff --name-only` do not list `backend/tests/test_agent_log_service.py`, so the conditional validation did not apply.
+
+## Acceptance Review
+- Task acceptance: Required tests pass, or failures are documented with remaining in-scope work.
+- Status: satisfied
+- Evidence: `pytest tests/test_verification_agent.py -v` passed on reviewer rerun with 32/32 tests passing. No test failure, blocked dependency, or fake success was found.
+
+## Progress Tracking
+- Selected task checkbox: checked for (05E) in both the detailed Batch05 task list and Progress Tracker Task IDs.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 marked complete because all Batch05 task IDs are checked after accepting (05E).
+- Execution report entry: appended and present.
+- Review report entry: appended at EOF.
+- Other: Batch06 and the global verification checklist were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The current git diff includes prior accepted uncommitted Batch05 test/report/review/task-tracker changes. This review accepts only the selected validation task (05E).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch05 task IDs are now complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_10.md",
+  "execution_report_reviewed": "docs/reports/report_10_execute_agent.md",
+  "review_report_file": "docs/review/review_10_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_verification_agent.py",
+    "docs/reports/report_10_execute_agent.md",
+    "docs/review/review_10_review_agent.md",
+    "docs/tasks/task_10.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

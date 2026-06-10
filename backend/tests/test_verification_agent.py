@@ -93,12 +93,12 @@ def test_verification_agent_output_rejects_out_of_range_confidence(
 def test_verification_agent_returns_missing_information_without_llm_for_empty_candidates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def fail_if_called(*args: object, **kwargs: object) -> str:
-        raise AssertionError("ShopAIKey chat client must not be called")
+    chat_completion = Mock(side_effect=AssertionError("ShopAIKey must not be called"))
 
     monkeypatch.setattr(
-        "app.services.shopaikey_service.chat_completion",
-        fail_if_called,
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
     )
 
     output = run_verification_agent(
@@ -116,6 +116,7 @@ def test_verification_agent_returns_missing_information_without_llm_for_empty_ca
         "missing_information": True,
         "confidence": 0.0,
     }
+    chat_completion.assert_not_called()
 
 
 def test_verification_agent_logs_success_for_empty_candidates(
@@ -252,6 +253,104 @@ def test_verification_agent_returns_validated_llm_json(
     assert output.confidence == 0.82
     assert output.missing_information is False
     assert output.verified_chunks[0].chunk_id.hex == CANDIDATE_CHUNK_ID.replace("-", "")
+
+
+def test_verification_agent_accepts_direct_answer_and_rejects_weak_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    direct_candidate = _candidate_payload()
+    direct_candidate["content"] = (
+        "The official work start date is August 1, 2026 after the employee "
+        "completes a two-month probation period."
+    )
+    weak_candidate = _second_candidate_payload()
+    weak_candidate["content"] = (
+        "Employees should follow office etiquette and keep their work area tidy."
+    )
+
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "The official work start date is August 1, 2026 after the employee completes a two-month probation period.",
+              "page_number": 3,
+              "verification_reason": "This chunk directly states the official work start date and the probation period.",
+              "supports_simple_reasoning": false
+            }
+          ],
+          "rejected_chunks": [
+            {
+              "chunk_id": "44444444-4444-4444-4444-444444444444",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "Employees should follow office etiquette and keep their work area tidy.",
+              "rejection_reason": "This chunk is only loosely related to employment and does not mention the official work start date or probation duration."
+            }
+          ],
+          "missing_information": false,
+          "confidence": 0.86
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does official work start after probation?",
+            "candidates": [direct_candidate, weak_candidate],
+        }
+    )
+
+    output_payload = output.model_dump(mode="json")
+    assert output_payload == {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": (
+                    "The official work start date is August 1, 2026 after "
+                    "the employee completes a two-month probation period."
+                ),
+                "page_number": 3,
+                "verification_reason": (
+                    "This chunk directly states the official work start date "
+                    "and the probation period."
+                ),
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [
+            {
+                "chunk_id": SECOND_CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": (
+                    "Employees should follow office etiquette and keep their "
+                    "work area tidy."
+                ),
+                "rejection_reason": (
+                    "This chunk is only loosely related to employment and "
+                    "does not mention the official work start date or "
+                    "probation duration."
+                ),
+            }
+        ],
+        "missing_information": False,
+        "confidence": 0.86,
+    }
+    assert SECOND_CANDIDATE_CHUNK_ID not in {
+        chunk["chunk_id"] for chunk in output_payload["verified_chunks"]
+    }
 
 
 def test_verification_agent_logs_success_with_final_verification_result(
@@ -611,6 +710,13 @@ def test_verification_agent_rejects_llm_schema_mismatch(
 def test_verification_agent_rejects_out_of_range_llm_confidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
     def fake_chat_completion(messages, response_format=None):
         return '{"verified_chunks":[],"rejected_chunks":[],"missing_information":false,"confidence":1.5}'
 
@@ -628,6 +734,19 @@ def test_verification_agent_rejects_out_of_range_llm_confidence(
                 "candidates": [_candidate_payload()],
             }
         )
+
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == verification_agent.VERIFICATION_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "schema_validation_error",
+            "message": verification_agent.VERIFICATION_FAILURE_MESSAGE,
+        }
+    }
+    assert "1.5" not in str(log_call)
+    assert "Probation starts on June 1, 2026" not in str(log_call)
 
 
 @pytest.mark.parametrize("chunk_list_name", ["verified_chunks", "rejected_chunks"])
@@ -924,8 +1043,9 @@ def test_verification_agent_marks_missing_information_when_no_verified_chunks_re
     )
 
     assert output.verified_chunks == []
+    assert len(output.rejected_chunks) == 1
     assert output.missing_information is True
-    assert 0.0 <= output.confidence <= 1.0
+    assert output.confidence == verification_agent.NO_VERIFIED_CHUNKS_CONFIDENCE_CAP
 
 
 def test_verification_agent_filters_duplicate_verified_chunk_ids(

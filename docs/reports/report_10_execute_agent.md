@@ -1384,3 +1384,395 @@ complete
 - next task ID: (05A), after A2 review accepts (04C) and Batch04 gate requirements are satisfied
 - can proceed: no in this run
 - handoff notes: Agent 2 now attempts safe success and failure step logs, surfaces log insertion failures via safe warnings, preserves failed verification errors when failed-log insertion fails, and has mocked validation coverage for log insertion failure behavior.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05A) - Add accepted and rejected evidence tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_10.md > Batch05 > (05A)
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > # 11. Agent 2: Evidence Verification Agent > ## 11.2 Verification Rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05A)
+- Task title: Add accepted and rejected evidence tests
+
+## Completed Work
+- Task is complete.
+- Added a mocked ShopAIKey test using Agent 1-style candidate fixtures that verifies a candidate directly stating the answer appears in `verified_chunks` and a loosely related candidate appears in `rejected_chunks` with a rejection reason.
+- Asserted against the final serialized `VerificationAgentOutput` returned by `run_verification_agent`, not only the mocked raw LLM response.
+
+## Files Created or Modified
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 32 passed in 3.77s.
+
+## Acceptance Check
+- Task acceptance condition: Tests fail without correct verified/rejected chunk handling and pass with Plan 10 behavior.
+- Status: satisfied
+- Evidence: New test `test_verification_agent_accepts_direct_answer_and_rejects_weak_evidence` asserts the direct answer candidate is present only in `verified_chunks`, the weak employment-policy candidate is present in `rejected_chunks` with a reason, and the weak candidate chunk ID is absent from verified evidence after post-processing.
+
+## Artifacts Produced
+- Automated accepted/rejected evidence coverage in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used existing candidate fixture helpers and UUID constants to keep the test consistent with current Agent 1-style payloads.
+- Kept the test focused on final post-processed output by asserting `output.model_dump(mode="json")` from `run_verification_agent`.
+
+## Risks or Open Issues
+- None.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies Batch02 and Batch03 are marked complete in docs/tasks/task_10.md, and no user action is required for (05A).
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes, after A2 review accepts (05A)
+- handoff notes: (05A) added direct-evidence acceptance and weak-evidence rejection coverage with mocked ShopAIKey output; required targeted validation passed.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05B) - Add missing-information and empty-candidate tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > # 11. Agent 2: Evidence Verification Agent > ## 11.3 Missing Information Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05B)
+- Task title: Add missing-information and empty-candidate tests
+
+## Completed Work
+- The task is complete.
+- Strengthened the empty-candidate verification test to use a mocked ShopAIKey chat completion callable and assert it is not called.
+- Strengthened the no-verified-result test to prove that when a fabricated verified quote is filtered out, no verified chunks remain, one rejected chunk remains, `missing_information` is forced to true, and confidence is capped deterministically.
+
+## Files Created or Modified
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 32 passed in 3.80s.
+
+## Acceptance Check
+- Task acceptance condition: Missing-information behavior is deterministic and safe.
+- Status: satisfied
+- Evidence: Empty candidates return no verified chunks, no rejected chunks, `missing_information=true`, confidence `0.0`, and do not call ShopAIKey. When post-processing filters the only verified chunk into rejected chunks, the output has no verified chunks, `missing_information=true`, and deterministic capped confidence.
+
+## Artifacts Produced
+- Automated missing-information and empty-candidate coverage in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused the existing verification agent fixtures and constants to keep coverage consistent with the current test style.
+- Kept the selected task test-only because runtime behavior already satisfied the missing-information contract.
+
+## Risks or Open Issues
+- None.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies Batch02 and Batch03 are marked complete in docs/tasks/task_10.md, and no user action is required for (05B).
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes, after A2 review accepts (05B)
+- handoff notes: (05B) missing-information coverage passed the required targeted pytest command; task checkbox was intentionally left unchecked for A2 review.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05C) - Add invalid JSON, unknown ID, and provider failure tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 8. API Design
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05C)
+- Task title: Add invalid JSON, unknown ID, and provider failure tests
+
+## Completed Work
+- Status: complete.
+- Verified the current test suite contains the selected failure-handling coverage for invalid LLM JSON, unknown returned chunk IDs in verified and rejected outputs, and ShopAIKey provider failure.
+- Confirmed each selected failure path raises `VerificationAgentError` and attempts safe failed-step logging through the mocked log service.
+- No runtime implementation or sibling-task scope was added in this execution.
+
+## Files Created or Modified
+- docs/reports/report_10_execute_agent.md
+- backend/tests/test_verification_agent.py (existing working-tree coverage inspected and validated; no additional test edit was required in this run)
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 32 passed in 1.62s.
+
+## Acceptance Check
+- Task acceptance condition: Each failure path raises controlled error and attempts safe failed-step logging.
+- Status: satisfied
+- Evidence: `test_verification_agent_rejects_invalid_llm_json`, `test_verification_agent_logs_failed_step_for_provider_failure`, and parameterized `test_verification_agent_rejects_unknown_returned_chunk_ids` assert `VerificationAgentError`, failed log status, safe generic error payloads, and no raw provider/document details in failed-log arguments.
+
+## Artifacts Produced
+- Automated failure-handling coverage validated in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Treated the already-present working-tree failure tests as the selected task output and avoided duplicating equivalent tests.
+- Kept validation mocked so automated tests do not depend on live ShopAIKey or database setup.
+
+## Risks or Open Issues
+- None.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies Batch02, Batch03, and Batch04 are marked complete in docs/tasks/task_10.md, and no user action is required for (05C).
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes, after A2 review accepts (05C)
+- handoff notes: (05C) failure-handling coverage passed the required targeted pytest command; task checkbox was intentionally left unchecked for A2 review.
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05D) - Add contradiction, quote, duplicate, and confidence tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 9. Implementation Steps
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_10.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05D)
+- Task title: Add contradiction, quote, duplicate, and confidence tests
+
+## Completed Work
+- Status: complete.
+- Confirmed and preserved deterministic post-processing coverage for quote validation, duplicate verified chunk filtering, clear date contradictions, incompatible short-claim contradictions, and confidence bounds in backend/tests/test_verification_agent.py.
+- Added stronger confidence-bound safety coverage by asserting out-of-range LLM confidence raises a controlled verification failure and records a safe failed-step payload without leaking raw candidate content.
+
+## Files Created or Modified
+- backend/tests/test_verification_agent.py
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 32 passed in 1.64s.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove final Agent 2 output is safe after LLM output is post-processed.
+- Status: satisfied
+- Evidence: Quote mismatch tests reject or correct unsupported quotes to source excerpts; duplicate chunk-id and duplicate-content tests keep duplicates out of verified evidence; contradiction tests set missing_information true, reduce confidence, and include contradiction reasoning; confidence tests enforce 0.0 through 1.0 bounds and reject out-of-range LLM confidence with controlled failed logging.
+
+## Artifacts Produced
+- Automated deterministic safety-check coverage in backend/tests/test_verification_agent.py.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept the work test-only and scoped to Agent 2 safety-check coverage.
+- Reused mocked ShopAIKey responses so automated tests remain deterministic and do not depend on live provider or database setup.
+- Left existing uncommitted sibling-task/test coverage intact and only added the missing in-scope assertion for confidence failure safety.
+
+## Risks or Open Issues
+- None.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies Batch03 is marked complete in docs/tasks/task_10.md, and no user action is required for (05D).
+
+## Notes for Next Task
+- next task ID: (05E)
+- can proceed: yes, after A2 review accepts (05D)
+- handoff notes: Required targeted pytest command passed; task checkbox was intentionally left unchecked for A2 review.
+
+---
+
+# Task Execution Report - (05E)
+
+## Source Task File
+docs/tasks/task_10.md
+
+## Report File
+docs/reports/report_10_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05E) - Run required targeted automated validation
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_10.md > ## 11. Required Tests
+- docs/plans/Plan_10.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_10.md > ## 15. Reviewer Checklist
+- README.md > Important coordination rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05E)
+- Task title: Run required targeted automated validation
+
+## Completed Work
+- Complete.
+- Ran the required targeted pytest validation for Plan 10 Agent 2 verification behavior.
+- Confirmed `backend/tests/test_agent_log_service.py` was not listed as modified in the current git status, so the conditional extra validation was not required.
+- No in-scope fixes were needed because the required targeted validation passed.
+
+## Files Created or Modified
+- docs/reports/report_10_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; pytest tests/test_verification_agent.py -v: Passed
+- evidence or reason: 32 tests collected and 32 passed in 1.57s.
+- pytest tests/test_agent_log_service.py -v: Not run
+- evidence or reason: Conditional validation only applies if `backend/tests/test_agent_log_service.py` changed; current git status did not list that file as modified.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass, or failures are documented with remaining in-scope work.
+- Status: satisfied
+- Evidence: The exact required targeted pytest command was run from `backend`; all 32 tests in `tests/test_verification_agent.py` passed. No fake success was claimed.
+
+## Artifacts Produced
+- Test result evidence for Plan 10 targeted automated validation.
+- Appended execution report in docs/reports/report_10_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run instructions require A2 to update checkboxes after ACCEPTED review.
+
+## Key Implementation Decisions
+- None. This task only required running validation and reporting results.
+
+## Risks or Open Issues
+- None.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies (05A), (05B), (05C), and (05D) are marked complete in docs/tasks/task_10.md, and no user action is required for (05E).
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes, after A2 review accepts (05E)
+- handoff notes: Required targeted pytest command passed; task checkbox was intentionally left unchecked for A2 review.

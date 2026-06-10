@@ -611,7 +611,7 @@ Agent 2 is a safety gate. The required behavior must be verified through tests b
 
 ### Tasks
 
-- [ ] (05A): Add accepted and rejected evidence tests
+- [x] (05A): Add accepted and rejected evidence tests
   - Source of Truth: `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `# 11. Agent 2: Evidence Verification Agent` > `## 11.2 Verification Rules`
   - Source Requirements:
     - Candidate directly states the answer -> appears in `verified_chunks`.
@@ -627,7 +627,7 @@ Agent 2 is a safety gate. The required behavior must be verified through tests b
   - Blocked Condition: None.
   - Files: `backend/tests/test_verification_agent.py`
 
-- [ ] (05B): Add missing-information and empty-candidate tests
+- [x] (05B): Add missing-information and empty-candidate tests
   - Source of Truth: `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `# 11. Agent 2: Evidence Verification Agent` > `## 11.3 Missing Information Rule`
   - Source Requirements:
     - No candidates -> `missing_information = true`.
@@ -643,7 +643,7 @@ Agent 2 is a safety gate. The required behavior must be verified through tests b
   - Blocked Condition: None.
   - Files: `backend/tests/test_verification_agent.py`
 
-- [ ] (05C): Add invalid JSON, unknown ID, and provider failure tests
+- [x] (05C): Add invalid JSON, unknown ID, and provider failure tests
   - Source of Truth: `docs/plans/Plan_10.md` > `## 8. API Design`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`
   - Source Requirements:
     - LLM returns invalid JSON -> `VerificationAgentError` and failed log.
@@ -659,7 +659,7 @@ Agent 2 is a safety gate. The required behavior must be verified through tests b
   - Blocked Condition: None.
   - Files: `backend/tests/test_verification_agent.py`
 
-- [ ] (05D): Add contradiction, quote, duplicate, and confidence tests
+- [x] (05D): Add contradiction, quote, duplicate, and confidence tests
   - Source of Truth: `docs/plans/Plan_10.md` > `## 9. Implementation Steps`; `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_10.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Verified chunks conflict on a date -> `missing_information = true` or lower confidence with contradiction reason.
@@ -676,7 +676,7 @@ Agent 2 is a safety gate. The required behavior must be verified through tests b
   - Blocked Condition: None.
   - Files: `backend/tests/test_verification_agent.py`
 
-- [ ] (05E): Run required targeted automated validation
+- [x] (05E): Run required targeted automated validation
   - Source of Truth: `docs/plans/Plan_10.md` > `## 11. Required Tests`; `docs/plans/Plan_10.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_10.md` > `## 15. Reviewer Checklist`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - Run `cd backend` then `pytest tests/test_verification_agent.py -v`.
@@ -895,11 +895,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ### Batches
 
-- [ ] Batch01 - Verification Contracts, Prompt, and Backend-Only Configuration
-- [ ] Batch02 - Verification Agent Callable and LLM JSON Validation
-- [ ] Batch03 - Deterministic Evidence Safety Checks
-- [ ] Batch04 - Agent Step Logging and Failure Handling
-- [ ] Batch05 - Required Automated Tests
+- [x] Batch01 - Verification Contracts, Prompt, and Backend-Only Configuration
+- [x] Batch02 - Verification Agent Callable and LLM JSON Validation
+- [x] Batch03 - Deterministic Evidence Safety Checks
+- [x] Batch04 - Agent Step Logging and Failure Handling
+- [x] Batch05 - Required Automated Tests
 - [ ] Batch06 - Manual Validation, Reporting, and Scope Review
 
 ### Task IDs
@@ -934,11 +934,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch05
 
-- [ ] (05A): Add accepted and rejected evidence tests
-- [ ] (05B): Add missing-information and empty-candidate tests
-- [ ] (05C): Add invalid JSON, unknown ID, and provider failure tests
-- [ ] (05D): Add contradiction, quote, duplicate, and confidence tests
-- [ ] (05E): Run required targeted automated validation
+- [x] (05A): Add accepted and rejected evidence tests
+- [x] (05B): Add missing-information and empty-candidate tests
+- [x] (05C): Add invalid JSON, unknown ID, and provider failure tests
+- [x] (05D): Add contradiction, quote, duplicate, and confidence tests
+- [x] (05E): Run required targeted automated validation
 
 #### Batch06
 

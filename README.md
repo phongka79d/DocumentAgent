@@ -12,6 +12,8 @@ This repository is a mixed workspace:
 
 The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, Plan 8 hybrid retrieval configuration, schemas, deterministic scoring utilities, graph candidate lookup, hybrid candidate merge/scoring/final ranking service behavior, guarded rerank placeholder behavior, safe hybrid failure handling, optional hybrid mode routing on the existing retrieval search API, the Plan 9 Batch01 backend agent package with shared Agent 1 input/candidate/output Pydantic schemas, the Plan 9 Batch02 agent step logging service, the Plan 9 Batch03 Agent 1 retrieval callable with hybrid retrieval delegation, validated output conversion, success logging, and controlled failure logging, the Plan 10 Batch01 Agent 2 verification schemas, reusable verification prompt, confidence bounds, and backend-only ShopAIKey chat configuration checks, the Plan 10 Batch02 backend-only Agent 2 verification callable with deterministic empty-candidate handling, compact ShopAIKey verification requests, strict JSON parsing, and Pydantic output validation, the Plan 10 Batch03 Agent 2 deterministic evidence safety checks for candidate membership, quote fidelity, duplicate filtering, contradiction/missing-information adjustment, and final output shape validation, and the Plan 10 Batch04 Agent 2 success/failure step logging with safe log-insertion failure visibility. Public graph APIs, Agent 3 answer generation, chat agents, agent logs APIs, full agent workflow orchestration, and production frontend screens are still incomplete or planned.
 
+Plan 10 Batch05 also completed the required automated Agent 2 verification tests for accept/reject behavior, missing-information handling, invalid provider output, unknown chunk IDs, provider failures, quote safety, duplicate filtering, contradictions, confidence bounds, and targeted pytest validation.
+
 ## What This Folder Does
 
 This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
@@ -409,6 +411,13 @@ pytest
 ```
 
 The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, guarded rerank placeholder behavior, Supabase service behavior including graph helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, hybrid retrieval merge/scoring/ranking/reason/failure behavior, retrieval API semantic and hybrid mode contracts/error behavior, Agent 1 step logging behavior, Agent 1 retrieval callable behavior, Agent 1 schema/output/failure automated-test coverage, Agent 2 verification schema confidence bounds, prompt-content rules, empty-candidate behavior, compact ShopAIKey request construction, strict LLM JSON validation, deterministic evidence safety checks, Agent 2 success/failed step logging, Agent 2 log-insertion failure safety, and the development indexing API. Plan 8 Batch05 also completed the required scoring, graph retrieval, and hybrid retrieval test runs plus a service-level hybrid retrieval smoke check against local processed, indexed, graph-built data.
+
+For Plan 10 Agent 2 verification changes, the required targeted backend validation is:
+
+```powershell
+cd backend
+pytest tests/test_verification_agent.py -v
+```
 
 Frontend validation commands from `frontend/package.json`:
 
