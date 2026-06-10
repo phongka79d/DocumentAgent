@@ -103,7 +103,69 @@ class VerificationAgentOutput(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 
 
+class Citation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    file_name: str = Field(min_length=1)
+    quote: str = Field(min_length=1)
+
+    @field_validator("file_name", "quote")
+    @classmethod
+    def normalize_required_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("field must not be empty")
+        return normalized
+
+
+class AnswerSelfCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    uses_only_verified_chunks: bool
+    has_citation: bool
+    has_unsupported_claims: bool
+    is_ready: bool
+
+
+class AnswerAgentInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    agent_run_id: UUID
+    question: str = Field(min_length=1)
+    verification: VerificationAgentOutput
+
+    @field_validator("question")
+    @classmethod
+    def normalize_question(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("question must not be empty")
+        return normalized
+
+
+class AnswerAgentOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    final_answer: str = Field(min_length=1)
+    citations: list[Citation]
+    reasoning_summary: str = Field(min_length=1)
+    confidence: float = Field(ge=0.0, le=1.0)
+    self_check: AnswerSelfCheck
+
+    @field_validator("final_answer", "reasoning_summary")
+    @classmethod
+    def normalize_required_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("field must not be empty")
+        return normalized
+
+
 __all__ = [
+    "AnswerAgentInput",
+    "AnswerAgentOutput",
+    "AnswerSelfCheck",
+    "Citation",
     "RetrievalAgentInput",
     "RetrievalCandidate",
     "RetrievalAgentOutput",
