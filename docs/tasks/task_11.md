@@ -1032,8 +1032,8 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] Batch01 - Answer Contracts, Prompts, and Backend-Only Configuration
 - [x] Batch02 - Answer Agent Callable and Insufficient-Evidence Path
 - [x] Batch03 - LLM Draft Answer Parsing and Citation Enforcement
-- [ ] Batch04 - Self-Check, Safe Failure Handling, and Logging
-- [ ] Batch05 - Required Automated Tests
+- [x] Batch04 - Self-Check, Safe Failure Handling, and Logging
+- [x] Batch05 - Required Automated Tests
 - [ ] Batch06 - Manual Validation, Reporting, and Scope Review
 
 ### Task IDs
