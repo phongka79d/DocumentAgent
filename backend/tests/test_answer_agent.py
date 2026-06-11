@@ -21,6 +21,7 @@ from app.agents.answer_agent import (
     build_answer_generation_payload,
     build_answer_evidence_lookup,
     enforce_answer_self_check,
+    execute_answer_self_check,
     format_citation,
     normalize_answer_agent_input,
     normalize_answer_self_check,
@@ -154,6 +155,53 @@ def _draft_answer_payload(
     return payload
 
 
+def _ready_self_check_payload() -> dict[str, bool]:
+    return {
+        "uses_only_verified_chunks": True,
+        "has_citation": True,
+        "has_unsupported_claims": False,
+        "is_ready": True,
+    }
+
+
+def _unsupported_self_check_payload() -> dict[str, bool]:
+    return {
+        "uses_only_verified_chunks": True,
+        "has_citation": True,
+        "has_unsupported_claims": True,
+        "is_ready": False,
+    }
+
+
+def _unverified_self_check_payload() -> dict[str, bool]:
+    return {
+        "uses_only_verified_chunks": False,
+        "has_citation": True,
+        "has_unsupported_claims": True,
+        "is_ready": False,
+    }
+
+
+def _not_ready_self_check_payload() -> dict[str, bool]:
+    return {
+        "uses_only_verified_chunks": True,
+        "has_citation": True,
+        "has_unsupported_claims": False,
+        "is_ready": False,
+    }
+
+
+@pytest.fixture(autouse=True)
+def _mock_answer_agent_log_service(monkeypatch: pytest.MonkeyPatch) -> Mock:
+    log_agent_step = Mock(return_value={"id": "step-1"})
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "log_agent_step",
+        log_agent_step,
+    )
+    return log_agent_step
+
+
 def _assert_insufficient_evidence_output(output: AnswerAgentOutput) -> None:
     assert output.final_answer == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
     assert output.citations == []
@@ -175,8 +223,12 @@ def test_answer_agent_exports_internal_callable_and_error() -> None:
 def test_run_answer_agent_accepts_answer_agent_input_for_validation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider_content = json.dumps(_draft_answer_payload())
-    chat_completion = Mock(return_value=provider_content)
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
     monkeypatch.setattr(
         answer_agent_module.shopaikey_service,
         "chat_completion",
@@ -188,14 +240,18 @@ def test_run_answer_agent_accepts_answer_agent_input_for_validation(
 
     assert isinstance(output, AnswerAgentOutput)
     assert output.final_answer == _draft_answer_payload()["final_answer"]
-    chat_completion.assert_called_once()
+    assert chat_completion.call_count == 2
 
 
 def test_run_answer_agent_accepts_mapping_for_validation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider_content = json.dumps(_draft_answer_payload())
-    chat_completion = Mock(return_value=provider_content)
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
     monkeypatch.setattr(
         answer_agent_module.shopaikey_service,
         "chat_completion",
@@ -206,7 +262,370 @@ def test_run_answer_agent_accepts_mapping_for_validation(
 
     assert isinstance(output, AnswerAgentOutput)
     assert output.citations == [Citation(file_name="contract.pdf", quote=VERIFIED_QUOTE)]
+    assert output.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    assert chat_completion.call_count == 2
+
+
+def test_run_answer_agent_logs_successful_answer_and_self_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
+    log_agent_step = Mock(return_value={"id": "step-1"})
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "log_agent_step",
+        log_agent_step,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert output.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    log_agent_step.assert_called_once()
+    log_kwargs = log_agent_step.call_args.kwargs
+    assert log_kwargs["agent_run_id"] == _answer_input_payload()["agent_run_id"]
+    assert log_kwargs["step_name"] == "agent_3_answer_self_check"
+    assert log_kwargs["agent_name"] == answer_agent_module.ANSWER_AGENT_NAME
+    assert log_kwargs["status"] == "success"
+    assert log_kwargs["error_message"] is None
+    assert log_kwargs["input_payload"]["question"] == "When can I start official work?"
+    assert "verified_chunks" in log_kwargs["input_payload"]["verification"]
+    assert log_kwargs["output_payload"]["draft_answer"]["final_answer"] == (
+        _draft_answer_payload()["final_answer"]
+    )
+    assert log_kwargs["output_payload"]["self_check_result"] == (
+        READY_SELF_CHECK_REQUIRED_VALUES
+    )
+    assert log_kwargs["output_payload"]["final_answer"] == output.final_answer
+    assert log_kwargs["output_payload"]["confidence"] == output.confidence
+    assert log_kwargs["output_payload"]["errors"] == []
+
+
+def test_run_answer_agent_preserves_success_when_success_log_persistence_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
+    persistence_error = answer_agent_module.agent_log_service.AgentLogPersistenceError(
+        step_name="agent_3_answer_self_check",
+        agent_name=answer_agent_module.ANSWER_AGENT_NAME,
+        status="success",
+    )
+    log_attempt = answer_agent_module.agent_log_service.AgentStepLogAttempt(
+        persisted=False,
+        row=None,
+        persistence_error=persistence_error,
+    )
+    try_log_agent_step = Mock(return_value=log_attempt)
+    logger_warning = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+    monkeypatch.setattr(answer_agent_module.logger, "warning", logger_warning)
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert output.final_answer == _draft_answer_payload()["final_answer"]
+    assert output.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "success"
+    assert log_call["error_message"] is None
+    assert log_call["output_payload"]["final_answer"] == output.final_answer
+    logger_warning.assert_called_once_with(
+        "Agent 3 step log persistence failed for %s::%s [%s].",
+        answer_agent_module.ANSWER_AGENT_NAME,
+        "agent_3_answer_self_check",
+        "success",
+    )
+    warning_text = str(logger_warning.call_args)
+    assert _draft_answer_payload()["final_answer"] not in warning_text
+    assert VERIFIED_QUOTE not in warning_text
+    assert REJECTED_QUOTE not in warning_text
+
+
+def test_run_answer_agent_logs_failed_step_for_provider_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    def fake_chat_completion(messages, response_format=None):
+        raise answer_agent_module.shopaikey_service.ShopAIKeyServiceError(
+            "provider raw secret detail"
+        )
+
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == "provider_error"
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["agent_run_id"] == _answer_input_payload()["agent_run_id"]
+    assert log_call["step_name"] == "agent_3_answer_self_check"
+    assert log_call["agent_name"] == answer_agent_module.ANSWER_AGENT_NAME
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
+    assert log_call["input_payload"] == {
+        "agent_run_id": _answer_input_payload()["agent_run_id"],
+        "question": "When can I start official work?",
+        "verified_chunk_count": 1,
+        "rejected_chunk_count": 1,
+        "verified_chunk_ids": [VERIFIED_CHUNK_ID],
+        "rejected_chunk_ids": [REJECTED_CHUNK_ID],
+    }
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "provider_error",
+            "message": ANSWER_FAILURE_MESSAGE,
+        }
+    }
+    assert "provider raw secret detail" not in str(log_call)
+    assert VERIFIED_QUOTE not in str(log_call)
+    assert REJECTED_QUOTE not in str(log_call)
+
+
+def test_run_answer_agent_logs_failed_step_for_self_check_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_unsupported_self_check_payload()),
+        ]
+    )
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == "self_check_failed"
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "self_check_failed",
+            "message": ANSWER_FAILURE_MESSAGE,
+        }
+    }
+    assert VERIFIED_QUOTE not in str(log_call)
+    assert REJECTED_QUOTE not in str(log_call)
+
+
+def test_run_answer_agent_executes_self_check_for_grounded_draft_without_provider_self_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert output.self_check == AnswerSelfCheck(
+        uses_only_verified_chunks=True,
+        has_citation=True,
+        has_unsupported_claims=False,
+        is_ready=True,
+    )
+    assert chat_completion.call_count == 2
+
+
+def test_execute_answer_self_check_marks_reasoning_ready_when_grounded_in_verified_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(return_value=json.dumps(_ready_self_check_payload()))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    draft_output = _answer_output(
+        final_answer="Ban co the lam viec chinh thuc vao thang 8/2026."
+    )
+
+    self_check = execute_answer_self_check(draft_output, _verification_output())
+
+    assert self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
     chat_completion.assert_called_once()
+
+
+def test_execute_answer_self_check_rejects_unsupported_numeric_claim_with_valid_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(return_value=json.dumps(_unsupported_self_check_payload()))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    draft_output = _answer_output(
+        final_answer=(
+            "Ban co the lam viec chinh thuc vao thang 8/2026 "
+            "voi muc luong 1000 USD."
+        ),
+        self_check=DRAFT_SELF_CHECK_PLACEHOLDER,
+    )
+
+    with pytest.raises(AnswerEvidenceValidationError, match="has_unsupported_claims"):
+        execute_answer_self_check(draft_output, _verification_output())
+    chat_completion.assert_called_once()
+
+
+def test_execute_answer_self_check_rejects_unsupported_semantic_claim_with_valid_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(return_value=json.dumps(_unsupported_self_check_payload()))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    draft_output = _answer_output(
+        final_answer=(
+            "Ban co the lam viec chinh thuc vao thang 8/2026 va duoc lam viec tu xa."
+        ),
+        self_check=DRAFT_SELF_CHECK_PLACEHOLDER,
+    )
+
+    with pytest.raises(AnswerEvidenceValidationError, match="has_unsupported_claims"):
+        execute_answer_self_check(draft_output, _verification_output())
+    chat_completion.assert_called_once()
+
+
+def test_execute_answer_self_check_derives_uses_only_verified_chunks_from_self_check_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(return_value=json.dumps(_unverified_self_check_payload()))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    draft_output = _answer_output(
+        final_answer=(
+            "Ban co the lam viec chinh thuc vao thang 8/2026 va theo chinh sach noi bo."
+        ),
+        self_check=DRAFT_SELF_CHECK_PLACEHOLDER,
+    )
+
+    with pytest.raises(AnswerEvidenceValidationError, match="uses_only_verified_chunks"):
+        execute_answer_self_check(draft_output, _verification_output())
+    chat_completion.assert_called_once()
+
+
+def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload["final_answer"] = (
+        "Ban co the lam viec chinh thuc vao thang 9/2026."
+    )
+    provider_payload["reasoning_summary"] = (
+        "Start date plus three months gives 09/2026."
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(provider_payload),
+            json.dumps(_unsupported_self_check_payload()),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    assert chat_completion.call_count == 2
+
+
+@pytest.mark.parametrize(
+    "failed_self_check",
+    [
+        _unsupported_self_check_payload(),
+        _not_ready_self_check_payload(),
+        {
+            "uses_only_verified_chunks": True,
+            "has_citation": False,
+            "has_unsupported_claims": False,
+            "is_ready": True,
+        },
+        _unverified_self_check_payload(),
+    ],
+)
+def test_run_answer_agent_raises_self_check_failure_without_returning_ready_answer(
+    monkeypatch: pytest.MonkeyPatch,
+    failed_self_check: dict[str, bool],
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(failed_self_check),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == "self_check_failed"
+    assert chat_completion.call_count == 2
 
 
 def test_run_answer_agent_wraps_input_validation_failures_safely() -> None:
@@ -313,8 +732,12 @@ def test_build_answer_generation_messages_exclude_rejected_chunks_from_user_evid
 def test_run_answer_agent_sends_verified_evidence_only_to_provider(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider_content = json.dumps(_draft_answer_payload())
-    chat_completion = Mock(return_value=provider_content)
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
     monkeypatch.setattr(
         answer_agent_module.shopaikey_service,
         "chat_completion",
@@ -324,9 +747,9 @@ def test_run_answer_agent_sends_verified_evidence_only_to_provider(
     output = run_answer_agent(_answer_input_payload())
 
     assert isinstance(output, AnswerAgentOutput)
-    chat_completion.assert_called_once()
-    messages = chat_completion.call_args.args[0]
-    assert chat_completion.call_args.kwargs == {
+    assert chat_completion.call_count == 2
+    messages = chat_completion.call_args_list[0].args[0]
+    assert chat_completion.call_args_list[0].kwargs == {
         "response_format": answer_agent_module.ANSWER_GENERATION_RESPONSE_FORMAT
     }
     user_payload = json.loads(messages[1]["content"])

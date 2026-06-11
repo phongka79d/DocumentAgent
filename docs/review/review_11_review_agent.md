@@ -3040,3 +3040,1269 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04A)
+- Task title: Implement self-check execution
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 3. Scope; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.5 Self-Check; docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: Reviewed only the requested Batch04 task. Prior accepted Batch03 changes were treated as dependency baseline and not re-reviewed for acceptance.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/agents/answer_agent.py
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - latest appended execution report for (04A) reviewed.
+- `docs/tasks/task_11.md`: in scope - selected task entry and Batch04 progress tracker reviewed.
+- `backend/app/agents/answer_agent.py`: in scope - changed runtime self-check execution reviewed.
+- `backend/tests/test_answer_agent.py`: in scope - changed tests for self-check execution reviewed.
+- `docs/plans/Plan_11.md`: in scope - cited sections ## 3, ## 9, ## 11, ## 12, and ## 13 reviewed as needed for self-check requirements and next-task boundary.
+- `docs/plans/Master_Plan.md`: in scope - cited self-check and simple reasoning sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new `execute_answer_self_check` hook and `run_answer_agent` wiring.
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains positive tests for self-check attachment and ready grounded reasoning.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and not overwritten.
+
+## Dependency Review
+- Required dependencies: Batch03 validated draft output.
+- Dependency status: satisfied; Batch03 task checkboxes are complete in `docs/tasks/task_11.md`, and the diff starts from accepted Batch03 output validation behavior.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: No public API, LangGraph workflow, frontend code, logging work, database changes, or sibling Batch04 implementation was added.
+- Failed: Self-check execution is not a real check for unsupported claims or reasoning support; it assigns passing readiness values after the existing citation/evidence contract succeeds.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: yes
+- Evidence: `execute_answer_self_check` validates the existing evidence contract, then constructs `AnswerSelfCheck(uses_only_verified_chunks=True, has_citation=bool(output.citations), has_unsupported_claims=False, is_ready=bool(output.citations))`. The `uses_only_verified_chunks` and `has_unsupported_claims` values are fixed success values for any output that passes citation/rejected-text checks, so the new self-check does not actually confirm unsupported claims are absent or that reasoning follows from verified evidence.
+
+## Hardcoding Review
+- Hardcoding found: yes
+- Evidence: The readiness fields `uses_only_verified_chunks=True` and `has_unsupported_claims=False` are hardcoded in runtime self-check execution instead of derived from concrete self-check checks or an LLM/self-check result.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_answer_agent.py -v`
+- Reported result: Passed, 50 passed in 1.50s
+- Rerun result: Passed, 50 passed in 1.57s
+- Status: passed
+- Notes: Tests confirm the positive ready path but do not catch the fake-positive self-check behavior for unsupported answer content or unsupported reasoning.
+
+## Acceptance Review
+- Task acceptance: Ready answers have `uses_only_verified_chunks=true`, `has_citation=true`, `has_unsupported_claims=false`, and `is_ready=true`.
+- Status: partially satisfied
+- Evidence: The runtime output does attach those values for the tested happy path, but the values are not produced by a meaningful self-check for unsupported claims or reasoning support as required by the selected task source requirements.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review and left unchecked
+- Checkbox updated by reviewer: no
+- Batch status: Batch04 remains unchecked, correct for this outcome
+- Execution report entry: present and appended
+- Review report entry: appended by reviewer
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- partial
+- Mismatches: The report accurately lists changed files and the passing test command, but its acceptance claim is overstated because the implementation does not genuinely self-check unsupported claims or reasoning readiness.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `backend/app/agents/answer_agent.py`: `execute_answer_self_check` hardcodes passing `uses_only_verified_chunks` and `has_unsupported_claims` values after citation validation, so unsupported or incorrectly reasoned draft content with a valid citation can be marked ready.
+
+### Minor
+- None
+
+### Warnings
+- `backend/tests/test_answer_agent.py`: The new tests only cover positive ready paths and do not demonstrate that self-check execution can produce or reject non-ready values based on answer content. Failure policy is assigned to (04B), but (04A) still needs a real execution signal for (04B) to enforce.
+
+### Observations
+- The diff is otherwise tightly scoped to (04A) and does not include logging, public API, frontend, LangGraph, or sibling Batch04 work.
+- Reported pytest validation was rerun successfully.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/app/agents/answer_agent.py`
+- change: Replace the fixed-success self-check execution with a real deterministic or LLM-assisted self-check result. At minimum, `uses_only_verified_chunks`, `has_unsupported_claims`, and `is_ready` must be derived from concrete checks or normalized self-check output rather than unconditional passing values. The implementation must not mark a draft ready when its answer or reasoning contains unsupported content not grounded in verified evidence.
+- validation: Add or update targeted tests in `backend/tests/test_answer_agent.py` showing the happy path still returns ready values and at least one unsupported or incorrectly reasoned sufficient-evidence draft is not marked ready by self-check execution. Rerun `cd backend; pytest tests/test_answer_agent.py -v`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch04 - Self-Check, Safe Failure Handling, and Logging",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": true,
+  "fake_implementation_found": true,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "execute_answer_self_check hardcodes passing self-check values instead of deriving unsupported-claim and reasoning-readiness results from real checks."
+  ],
+  "warnings": [
+    "Positive tests pass but do not cover fake-positive self-check readiness."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04A) Repair Review
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04A)
+- Task title: Implement self-check execution
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 3. Scope; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.5 Self-Check; docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule; A2 prior repair instructions for (04A)
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A) Repair
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: Reviewed the latest `(04A) Repair` entry only, against the prior A2 rejection. Prior accepted Batch03 changes were treated as baseline dependencies.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/agents/answer_agent.py
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - latest `(04A) Repair` execution report reviewed.
+- `docs/review/review_11_review_agent.md`: in scope - prior `(04A)` rejection reviewed; current file also contains A2 review history.
+- `docs/tasks/task_11.md`: in scope - selected task entry and checkbox state reviewed.
+- `backend/app/agents/answer_agent.py`: in scope - repaired self-check implementation reviewed.
+- `backend/tests/test_answer_agent.py`: in scope - repaired tests reviewed.
+- `docs/plans/Plan_11.md`: in scope - cited sections for self-check, unsupported claims, and validation reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited self-check and simple reasoning sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains deterministic numeric/date claim self-check repair.
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains positive ready path plus unsupported numeric and incorrect simple-reasoning tests.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair report was appended after the original `(04A)` report.
+
+## Dependency Review
+- Required dependencies: Batch03 validated draft output; prior `(04A)` rejection instructions.
+- Dependency status: satisfied for review. Batch03 is marked complete, and the repair directly addresses the rejected `(04A)` area.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Repair stayed backend-only and did not add public APIs, LangGraph workflow, frontend code, logging behavior, database changes, or sibling Batch04 task work.
+- Failed: Self-check still does not satisfy the task requirement to confirm the answer has no unsupported claims. It only checks numeric/date tokens; unsupported non-numeric semantic claims are still marked ready.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: yes
+- Evidence: The repair derives `has_unsupported_claims` only from `_has_unsupported_numeric_or_date_claims`. If the answer and reasoning contain unsupported semantic content without numeric/date tokens, `visible_claim_tokens` is empty and `has_unsupported_claims` becomes `False`. `uses_only_verified_chunks` is still assigned `True` in `execute_answer_self_check` rather than derived from a full grounding/self-check result.
+
+## Hardcoding Review
+- Hardcoding found: yes
+- Evidence: `execute_answer_self_check` still sets `uses_only_verified_chunks=True` unconditionally after evidence validation, and it can set ready output for unsupported non-numeric claims because unsupported-claim detection is token-limited.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_answer_agent.py -v`
+- Reported result: Passed after repair; 52 passed in 1.61s
+- Rerun result: Passed; 52 passed in 1.53s
+- Status: passed
+- Notes: The suite covers the newly added numeric/date repair cases but does not cover unsupported non-numeric semantic claims.
+- Command/check: direct smoke check of `execute_answer_self_check` with valid citation but unsupported remote-work policy claim
+- Reported result: not reported by A1
+- Rerun result: returned `{'uses_only_verified_chunks': True, 'has_citation': True, 'has_unsupported_claims': False, 'is_ready': True}`
+- Status: failed behavior check
+- Notes: This confirms the rejected fake-ready class still exists outside numeric/date examples.
+
+## Acceptance Review
+- Task acceptance: Ready answers have `uses_only_verified_chunks=true`, `has_citation=true`, `has_unsupported_claims=false`, and `is_ready=true`; self-check confirms verified-only usage, citations, rejected-chunk avoidance, no unsupported claims, readiness, and clear evidence-supported reasoning.
+- Status: not satisfied
+- Evidence: Happy-path and numeric/date cases pass, but unsupported non-numeric claims with valid citations are still marked ready. This violates the prior repair instruction that implementation must not mark unsupported content as ready.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before repair review and left unchecked
+- Checkbox updated by reviewer: no
+- Batch status: Batch04 remains unchecked
+- Execution report entry: latest `(04A) Repair` entry present and appended
+- Review report entry: appended by reviewer
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- partial
+- Mismatches: The repair report accurately lists files and passing tests, but overstates acceptance by claiming unsupported claims are not marked ready. The implementation only detects numeric/date unsupported claims and still marks unsupported non-numeric claims ready.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `backend/app/agents/answer_agent.py`: `execute_answer_self_check` still allows unsupported non-numeric claims to be marked ready because `_has_unsupported_numeric_or_date_claims` ignores all non-numeric/non-date semantic content. A direct smoke check with an unsupported remote-work policy claim returned ready self-check values.
+- `backend/app/agents/answer_agent.py`: `uses_only_verified_chunks` remains unconditionally set to `True` after evidence validation, so it is not derived from a complete self-check result as required by the prior repair instruction.
+
+### Minor
+- None
+
+### Warnings
+- `backend/tests/test_answer_agent.py`: New tests cover the two rejected examples requested at a surface level, but they are too narrow and allow the same fake-ready behavior for unsupported semantic claims.
+
+### Observations
+- The repair remained scoped to `(04A)` files and did not implement logging or sibling Batch04 tasks.
+- The reported pytest command was rerun successfully.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/app/agents/answer_agent.py`
+- change: Replace the token-limited self-check with a self-check that can actually derive `uses_only_verified_chunks`, `has_unsupported_claims`, and `is_ready` from the full answer and reasoning content. Either implement a deterministic grounding check that rejects unsupported semantic claims, or use the existing self-check prompt/LLM-assisted path and normalize/enforce its result. Do not mark non-evidence-supported semantic claims ready just because they contain no numeric/date tokens.
+- validation: Add tests in `backend/tests/test_answer_agent.py` proving a valid-citation draft with unsupported non-numeric semantic content is not marked ready, while a grounded answer still returns ready values. Rerun `cd backend; pytest tests/test_answer_agent.py -v`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch04 - Self-Check, Safe Failure Handling, and Logging",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": true,
+  "fake_implementation_found": true,
+  "validations_failed": [
+    "direct smoke check: unsupported non-numeric semantic claim with valid citation was marked ready"
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "execute_answer_self_check only checks numeric/date unsupported claims, so unsupported non-numeric semantic claims are still marked ready.",
+    "uses_only_verified_chunks remains unconditionally true after evidence validation instead of being derived from a complete self-check result."
+  ],
+  "warnings": [
+    "Repair tests are too narrow and do not cover unsupported semantic claims."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04A) Final Repair Review
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04A)
+- Task title: Implement self-check execution
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 3. Scope; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.5 Self-Check; docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule; A2 prior final repair instructions for (04A)
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A) Final Repair
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: Reviewed only whether the latest `(04A) Final Repair` fixed the prior rejected self-check issue and stayed inside `(04A)` scope. Prior accepted Batch03 work was treated as dependency baseline.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/agents/answer_agent.py
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - latest `(04A) Final Repair` execution report reviewed.
+- `docs/review/review_11_review_agent.md`: in scope - prior `(04A)` rejection reports reviewed; final review appended.
+- `docs/tasks/task_11.md`: in scope - selected task entry and progress tracker reviewed; only `(04A)` checkboxes updated after acceptance.
+- `backend/app/agents/answer_agent.py`: in scope - final self-check implementation reviewed.
+- `backend/tests/test_answer_agent.py`: in scope - final repair tests reviewed.
+- `docs/plans/Plan_11.md`: in scope - cited sections for self-check, unsupported claims, acceptance, and failure behavior reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited self-check and simple reasoning sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains LLM-assisted `execute_answer_self_check`, self-check payload/message builders, and parser/normalizer.
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains tests for ready self-check, unsupported semantic claim rejection, unsupported numeric claim rejection, and deriving `uses_only_verified_chunks` from self-check output.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Final repair report was appended after prior `(04A)` entries.
+
+## Dependency Review
+- Required dependencies: Batch03 validated draft output; prior `(04A)` rejection instructions.
+- Dependency status: satisfied. Batch03 is complete in `docs/tasks/task_11.md`, and the repair builds on the validated draft output path.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: The final repair stays backend-only, uses the existing ShopAIKey chat helper and existing self-check prompt, normalizes into `AnswerSelfCheck`, and enforces readiness through existing deterministic enforcement. No public API, LangGraph workflow, frontend work, logging implementation, database change, or sibling Batch04 work was added.
+- Failed: None.
+- Uncertain: Live model quality is not verified here; unit tests mock provider behavior as expected for automated tests.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `execute_answer_self_check` now calls `shopaikey_service.chat_completion` with `build_answer_self_check_messages`, parses the provider JSON through `parse_and_validate_answer_self_check`, updates the draft output with the provider-derived `AnswerSelfCheck`, and calls `enforce_answer_self_check`. The previously hardcoded `has_unsupported_claims=false` and unconditional ready path were removed.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Ready fields are now derived from normalized provider self-check output and enforced, not fixed in `execute_answer_self_check`. Tests verify unsupported semantic content is rejected when the self-check returns `has_unsupported_claims=true`, and `uses_only_verified_chunks=false` is rejected.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_answer_agent.py -v`
+- Reported result: Passed after final repair; 54 passed in 1.65s
+- Rerun result: Passed; 54 passed in 1.58s
+- Status: passed
+- Notes: Targeted suite covers the final repair and existing Agent 3 behavior.
+- Command/check: direct mocked smoke check of `execute_answer_self_check` with valid citation but unsupported semantic remote-work claim and self-check result `has_unsupported_claims=true`
+- Reported result: covered by tests and final repair report
+- Rerun result: rejected with `Self-check failed: has_unsupported_claims must be False.`
+- Status: passed
+- Notes: Confirms the prior fake-ready semantic-claim issue is fixed in the enforced path.
+
+## Acceptance Review
+- Task acceptance: Ready answers have `uses_only_verified_chunks=true`, `has_citation=true`, `has_unsupported_claims=false`, and `is_ready=true`; self-check confirms verified-only usage, citations, rejected-chunk avoidance, no unsupported claims, readiness, and clear evidence-supported reasoning.
+- Status: satisfied
+- Evidence: `run_answer_agent` now performs a second self-check provider call after draft validation, and final output uses the normalized/enforced self-check result. Tests assert ready grounded output, unsupported semantic rejection, and non-verified self-check rejection.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before final repair review; checked after acceptance in both the detailed task entry and progress tracker entry for `(04A)`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked
+- Execution report entry: latest `(04A) Final Repair` entry present and appended
+- Review report entry: appended by reviewer
+- Other: Sibling `(04B)` and future task checkboxes remain unchecked; batch completion was not marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Self-check quality now depends on the configured ShopAIKey chat model following the self-check prompt. This is acceptable for `(04A)` because the task allowed LLM-assisted self-check and the implementation deterministically normalizes/enforces the result.
+
+### Observations
+- The final repair stayed scoped to `(04A)` and did not implement logging or sibling Batch04 tasks.
+- Reported pytest validation was rerun successfully.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch04 - Self-Check, Safe Failure Handling, and Logging",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Self-check quality depends on the configured ShopAIKey chat model following the self-check prompt; deterministic normalization and enforcement are present."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04B)
+- Task title: Enforce self-check failure policy
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 8. API Design; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Plan_11.md > ## 11. Required Tests; docs/plans/Plan_11.md > ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(04B)` execution report. Prior accepted uncommitted `(04A)` changes were treated as dependency baseline and not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/agents/answer_agent.py
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - latest `(04B)` execution report reviewed.
+- `docs/tasks/task_11.md`: in scope - `(04B)` task entry, dependency state, and progress tracker reviewed; `(04B)` checkbox updated after acceptance only.
+- `docs/review/review_11_review_agent.md`: in scope - existing review history inspected before EOF append.
+- `backend/app/agents/answer_agent.py`: in scope - self-check failure policy boundary reviewed.
+- `backend/tests/test_answer_agent.py`: in scope - targeted failure-policy tests reviewed.
+- `docs/plans/Plan_11.md`: in scope - cited API design, implementation steps, required tests, and failure handling sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `run_answer_agent` policy that converts failed self-check readiness validation into controlled `AnswerAgentError` with `failure_type="self_check_failed"`.
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains parametrized coverage for unsupported claims, not-ready status, missing citation self-check, and unverified-chunk self-check results.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04B)` report entry was appended.
+
+## Dependency Review
+- Required dependencies: accepted `(04A)` self-check execution.
+- Dependency status: satisfied. `(04A)` is checked complete in the detailed task entry and progress tracker, and the current implementation builds on `execute_answer_self_check` from that accepted work.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: The implementation stays backend-only, keeps Agent 3 internal, uses existing `AnswerAgentError`/`AnswerEvidenceValidationError` paths, does not add public APIs, LangGraph workflow, frontend work, database changes, logging behavior, or sibling Batch04 work.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `run_answer_agent` runs self-check after draft evidence validation, catches `AnswerEvidenceValidationError` raised by self-check readiness enforcement, and raises `_AnswerAgentFailure("self_check_failed")` instead of returning draft content. Existing self-check enforcement checks `uses_only_verified_chunks`, `has_citation`, `has_unsupported_claims`, `is_ready`, and citation consistency.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The policy is not keyed to fixture IDs or sample text. Tests vary the failed self-check booleans and assert the controlled error boundary rather than a fixed successful output.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py::test_run_answer_agent_raises_self_check_failure_without_returning_ready_answer -v`
+- Reported result: Failed first as expected, then passed with 4 passed.
+- Rerun result: Covered in full suite rerun; all four parametrized cases passed.
+- Status: passed
+- Notes: This is the selected task's targeted coverage.
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed; 58 passed in 1.57s.
+- Rerun result: Passed; 58 passed in 1.51s.
+- Status: passed
+- Notes: Rerun from `backend` confirmed the reported suite result.
+
+## Acceptance Review
+- Task acceptance: Failed self-check never returns unsupported content with `is_ready=true`.
+- Status: satisfied
+- Evidence: Failed self-check booleans now raise `AnswerAgentError` with `failure_type="self_check_failed"`; the parametrized test covers `has_unsupported_claims=true`, `is_ready=false`, `has_citation=false`, and `uses_only_verified_chunks=false` self-check outputs.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked after acceptance in both the detailed `(04B)` task entry and progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked.
+- Execution report entry: latest `(04B)` entry present and appended.
+- Review report entry: appended by reviewer.
+- Other: Sibling `(04C)`, `(04D)`, `(04E)` and future task checkboxes remain unchecked; batch completion was not marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The explicit policy chosen for self-check failure is controlled `AnswerAgentError`, not insufficient-evidence fallback, which is allowed by Plan 11.
+- Provider/self-check failure logging remains correctly out of scope for `(04B)` and is assigned to later Batch04 tasks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch04 - Self-Check, Safe Failure Handling, and Logging",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04C)
+- Task title: Add Agent 3 success-step logging
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_11.md > (04C): Add Agent 3 success-step logging; docs/plans/Plan_11.md > ## 3. Scope; docs/plans/Plan_11.md > ## 6. Required Files and Folders; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Plan_11.md > ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > ### 5.5 Agent Logs / Debug Page; docs/plans/Master_Plan.md > ## Table: agent_steps; docs/plans/Master_Plan.md > ## 18.5 Debuggability Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(04C)` execution report. Prior accepted uncommitted `(04A)` and `(04B)` Batch04 changes were treated as dependency baseline and not re-reviewed as selected work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/agents/answer_agent.py
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - latest `(04C)` execution report reviewed.
+- `docs/tasks/task_11.md`: in scope - selected task entry, dependencies, and progress tracker reviewed; only `(04C)` checkbox occurrences updated after acceptance.
+- `docs/review/review_11_review_agent.md`: in scope - existing review history inspected before EOF append.
+- `backend/app/agents/answer_agent.py`: in scope - Agent 3 success-step logging hook reviewed.
+- `backend/tests/test_answer_agent.py`: in scope - mocked success logging coverage reviewed.
+- `backend/app/services/agent_log_service.py`: in scope - existing logging service contract reviewed as dependency.
+- `docs/plans/Plan_11.md`: in scope - cited implementation, acceptance, and failure-handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited debug log and `agent_steps` table requirements reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `ANSWER_AGENT_SUCCESS_STEP_NAME = "agent_3_answer_self_check"`, imports `agent_log_service`, and calls `_log_successful_answer_self_check(...)` after final output normalization on the success path.
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `test_run_answer_agent_logs_successful_answer_and_self_check`, which asserts a single success log attempt and key payload fields.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04C)` execution report entry was appended.
+
+## Dependency Review
+- Required dependencies: accepted `(04A)` self-check execution, accepted `(04B)` self-check failure policy, and existing `agent_log_service`.
+- Dependency status: satisfied. `(04A)` and `(04B)` are checked complete in `docs/tasks/task_11.md`; `agent_log_service.log_agent_step` exists and supports `status="success"`.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: The implementation stays backend-only, keeps Agent 3 internal, reuses the existing `agent_log_service.log_agent_step` service, writes the approved `agent_steps` fields, and adds no public API, LangGraph workflow, frontend work, database schema change, or shared logging-service change.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `run_answer_agent` normalizes the final output, then calls `_log_successful_answer_self_check(answer_input, draft_output, final_output)` before returning. The helper calls `agent_log_service.log_agent_step` with `agent_run_id`, `step_name="agent_3_answer_self_check"`, `agent_name="answer_agent"`, safe JSON-mode input/output payloads, `status="success"`, and `error_message=None`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The required step name is a task-mandated constant. Payload values are derived from the normalized Agent 3 input, draft output, and final output rather than fixture-specific IDs or fixed answers.
+
+## Validations Reviewed
+- Command/check: `pytest backend/tests/test_answer_agent.py::test_run_answer_agent_logs_successful_answer_and_self_check -q`
+- Reported result: Failed first as expected before implementation, then passed with 1 passed.
+- Rerun result: Covered in the full targeted suite rerun; the success logging test passed.
+- Status: passed
+- Notes: Confirms the selected task's specific mocked logging behavior.
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed; 59 passed in 1.58s.
+- Rerun result: Passed; 59 passed in 1.92s.
+- Status: passed
+- Notes: Confirms the selected task did not regress existing Agent 3 behavior.
+
+## Acceptance Review
+- Task acceptance: Success path attempts one log insertion with safe input/output, status success, and step_name `agent_3_answer_self_check`.
+- Status: satisfied
+- Evidence: The success logging test asserts `log_agent_step.assert_called_once()`, `step_name == "agent_3_answer_self_check"`, `agent_name == answer_agent_module.ANSWER_AGENT_NAME`, `status == "success"`, `error_message is None`, input payload includes the normalized question and verification, output payload includes draft answer, self-check result, final answer, confidence, and `errors == []`.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked after acceptance in both the detailed `(04C)` task entry and progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked.
+- Execution report entry: latest `(04C)` entry present and appended.
+- Review report entry: appended by reviewer.
+- Other: Sibling `(04D)` and `(04E)` remain unchecked; future task checkboxes remain unchecked; batch completion was not marked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Failed-step logging was not prematurely implemented for `(04D)`: Agent 3 does not call `try_log_agent_step` or write `status="failed"` in `answer_agent.py`.
+- Logging-failure handling was not prematurely implemented for `(04E)`: the success path uses the strict `log_agent_step` insertion attempt, and no special Agent 3 log persistence recovery path was added.
+- Existing accepted uncommitted `(04A)` and `(04B)` changes remain in the diff and are dependency baseline, not selected `(04C)` scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch04 - Self-Check, Safe Failure Handling, and Logging",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04D)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04D)
+- Task title: Add Agent 3 failed-step logging
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 13. Failure Handling; docs/plans/Plan_11.md > ## 15. Reviewer Checklist; docs/plans/Master_Plan.md > ### 5.5 Agent Logs / Debug Page; docs/plans/Master_Plan.md > ## Table: agent_steps
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04D)
+- Reviewed task ID: (04D)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(04D)` execution report. Prior accepted uncommitted `(04A)`, `(04B)`, and `(04C)` Batch04 changes were treated as dependency baseline and not re-reviewed as selected work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/app/agents/answer_agent.py
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - latest `(04D)` execution report reviewed.
+- `docs/tasks/task_11.md`: in scope - selected task entry, dependency state, and progress tracker reviewed; only `(04D)` checkbox occurrences were updated by this review after acceptance.
+- `docs/review/review_11_review_agent.md`: in scope - existing review history inspected before EOF append.
+- `backend/app/agents/answer_agent.py`: in scope - failed-step logging paths, safe payloads, and controlled error preservation reviewed.
+- `backend/tests/test_answer_agent.py`: in scope - failed-step logging tests and related failure-path coverage reviewed.
+- `backend/app/services/agent_log_service.py`: in scope - existing `try_log_agent_step` contract reviewed as dependency.
+- `docs/plans/Plan_11.md`: in scope - cited failure handling and reviewer checklist sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited Agent Logs / Debug Page and `agent_steps` table requirements reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/agents/answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains failed-step logging through `_log_failed_answer_self_check(...)`, which calls `agent_log_service.try_log_agent_step(...)` with `status="failed"`, the Agent 3 step name, safe summarized input, and controlled error output.
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains direct failed-log assertions for provider failure and self-check failure; existing tests also exercise invalid JSON, missing citation, fabricated citation, rejected citation, and rejected quote failure behavior.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04D)` execution report entry was appended.
+
+## Dependency Review
+- Required dependencies: accepted `(04B)` self-check failure policy, accepted `(04C)` success-step logging, and existing `try_log_agent_step` logging service behavior.
+- Dependency status: satisfied. `(04B)` and `(04C)` are checked complete in `docs/tasks/task_11.md`, and `agent_log_service.try_log_agent_step` exists with non-throwing persistence-attempt semantics.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: The implementation stays backend-only, keeps Agent 3 internal, reuses the existing log service pattern, uses the approved `agent_3_answer_self_check` step name, adds no database schema, public API, LangGraph workflow, frontend work, retrieval work, or conversation memory, and preserves controlled `AnswerAgentError` behavior.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Provider failures, draft parsing/schema/citation failures, rejected-evidence failures, self-check provider/parsing/validation/readiness failures, and final output normalization failures route through `_log_failed_answer_self_check(...)` before raising the controlled `_AnswerAgentFailure`/`AnswerAgentError`. Failed logs contain safe input metadata and `{ "error": { "type": failure_type, "message": ANSWER_FAILURE_MESSAGE } }` rather than raw provider details, stack traces, or evidence quotes.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The required step name and generic failure message are task-level constants. Log payload values are derived from normalized input metadata and runtime failure type, not fixture-specific answer text or row IDs.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py::test_run_answer_agent_logs_failed_step_for_provider_failure tests/test_answer_agent.py::test_run_answer_agent_logs_failed_step_for_self_check_failure -v`
+- Reported result: Passed; executor reported both selected tests passed after implementation.
+- Rerun result: Passed; 2 passed in 1.52s.
+- Status: passed
+- Notes: Confirms provider failure logging and at least one validation/self-check failure log are directly tested, and both still raise controlled `AnswerAgentError`.
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed; 61 passed in 1.50s.
+- Rerun result: Passed; 61 passed in 1.60s.
+- Status: passed
+- Notes: Confirms the selected change did not regress existing Agent 3 answer, citation, rejected-evidence, self-check, and success-log behavior.
+
+## Acceptance Review
+- Task acceptance: Failure paths attempt failed log insertion with safe error details and still raise controlled `AnswerAgentError`.
+- Status: satisfied
+- Evidence: `run_answer_agent` logs failed attempts with `status="failed"` before re-raising controlled failures. The provider failure test asserts no raw provider detail or evidence quote leakage, a controlled `provider_error` payload, and `AnswerAgentError`. The self-check failure test asserts failed insertion with `failure_type="self_check_failed"` and `AnswerAgentError`. Code inspection confirms invalid JSON, draft validation, citation, rejected-evidence, self-check provider, self-check parsing/validation, self-check readiness, and final normalization failures share the same failed-log helper.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked after acceptance in both the detailed `(04D)` task entry and progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked because `(04E)` is still unchecked.
+- Execution report entry: latest `(04D)` entry present and appended.
+- Review report entry: appended by reviewer.
+- Other: Sibling `(04E)` remains unchecked; future task checkboxes remain unchecked; batch completion was not marked. Existing `(04A)`-`(04C)` checkbox changes were prior accepted uncommitted review state, not selected `(04D)` work.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Direct failed-log assertions were added for provider failure and self-check failure. Other controlled failure categories use the same reviewed logging helper and are exercised by existing failure tests, but do not each have separate log-payload assertions in this task.
+- No sibling `(04E)` success-log failure handling was prematurely implemented: the success path still calls strict `agent_log_service.log_agent_step(...)`; `try_log_agent_step(...)` and the safe warning helper are used only for failed-step logging so the original controlled failure remains visible.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch04 - Self-Check, Safe Failure Handling, and Logging",
+  "selected_task_id": "(04D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (04E)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04E)
+- Task title: Keep logging failures safe and visible
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`; `README.md` > `Important coordination rules`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04E)
+- Reviewed task ID: (04E)
+- Correct selection: yes
+- Notes: The latest matching `(04E)` execution report entry was reviewed. Prior accepted uncommitted `(04A)-(04D)` changes were treated as dependency/context evidence and not re-reviewed as selected work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`, `docs/reports/report_11_execute_agent.md`, `docs/review/review_11_review_agent.md`, `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - selected `(04E)` success-log path now calls `agent_log_service.try_log_agent_step` and passes the attempt to `_warn_if_agent_3_log_failed`; broader self-check/failed-log code is prior `(04A)-(04D)` dependency context.
+- `backend/tests/test_answer_agent.py`: in scope - includes the selected persistence-failure coverage proving a valid Agent 3 output is preserved and warning content is bounded.
+- `backend/app/services/agent_log_service.py`: in scope - reviewed as dependency contract only; service code is unchanged and already provides `AgentStepLogAttempt`/`AgentLogPersistenceError`.
+- `docs/reports/report_11_execute_agent.md`: in scope - contains the selected execution report and validation claims.
+- `docs/tasks/task_11.md`: in scope - selected `(04E)` checkbox updated by reviewer in the task entry and task-ID summary only; Batch04 batch checkbox left unchanged.
+- `docs/plans/Plan_11.md`: in scope - cited failure-handling and reviewer-checklist sections reviewed.
+- `README.md`: in scope - cited coordination and backend-secret rules reviewed.
+- `docs/review/review_11_review_agent.md`: in scope - this review report appended at EOF; prior review entries were pre-existing evidence.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Selected success logging uses non-fatal log-attempt behavior and safe warning visibility.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Selected mocked logging-failure test exists and was rerun successfully.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes no shared service change.
+
+## Dependency Review
+- Required dependencies: (04C), (04D)
+- Dependency status: satisfied; both are checked in the task file and their accepted uncommitted changes remain present.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Reuses `agent_log_service.try_log_agent_step` instead of changing persistence schema or fabricating a persisted row; keeps Agent 3 backend-only; does not add public APIs, database migrations, frontend work, or Batch05/Batch06 work.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_log_successful_answer_self_check` calls `try_log_agent_step`; `_warn_if_agent_3_log_failed` only logs a warning when `persisted` is false and a persistence error exists; valid Agent 3 output is returned after validated draft/self-check normalization.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Required step name constant is task/plan-aligned. No provider keys, Supabase secrets, stack traces, raw provider failures, or secret values were added. The failure warning includes only agent name, step name, and status.
+
+## Validations Reviewed
+- Command/check: `cd backend; pytest tests/test_answer_agent.py::test_run_answer_agent_preserves_success_when_success_log_persistence_fails -v`
+- Reported result: failed before implementation, then passed
+- Rerun result: passed, 1 passed
+- Status: passed
+- Notes: Confirms success-log persistence failure preserves valid output and emits safe warning content.
+- Command/check: `cd backend; pytest tests/test_answer_agent.py -v`
+- Reported result: passed, 62 passed in 1.61s
+- Rerun result: passed, 62 passed in 1.53s
+- Status: passed
+- Notes: Confirms valid Agent 3 output behavior remains controlled with existing answer-agent coverage.
+- Command/check: `cd backend; pytest tests/test_agent_log_service.py -v`
+- Reported result: not run
+- Rerun result: not run
+- Status: not required
+- Notes: Shared `agent_log_service` code did not change; reviewer verified the existing service contract was reused.
+
+## Acceptance Review
+- Task acceptance: Log persistence failures do not leak secrets or silently fabricate persisted logs.
+- Status: satisfied
+- Evidence: The selected failure path receives `AgentStepLogAttempt(persisted=False, row=None, persistence_error=...)`, logs a bounded warning, and returns the already validated answer output. The warning assertion excludes final answer text and verified/rejected quotes. No persisted-log row is synthesized.
+
+## Progress Tracking
+- Selected task checkbox: changed from unchecked to checked for `(04E)` in the task entry and task-ID summary.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 checkbox left unchecked because task-review-agent rules only allow selected task checkbox updates.
+- Execution report entry: appended and selected correctly.
+- Review report entry: appended at EOF.
+- Other: Future Batch05/Batch06 checkboxes remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The success-log persisted payload still contains expected answer/evidence debug data when persistence succeeds; `(04E)` only required safe behavior when persistence fails.
+- All Batch04 task IDs are now checked, but the Batch04 batch checkbox was intentionally left unchanged for orchestrator/A3 handling.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch04 task IDs are complete; not updated by reviewer because the task-review-agent rules restrict this review to the selected task checkbox.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch04 - Self-Check, Safe Failure Handling, and Logging",
+  "selected_task_id": "(04E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "backend/app/services/agent_log_service.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md",
+    "docs/plans/Plan_11.md",
+    "README.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

@@ -560,7 +560,7 @@ Citation validation alone does not prove that the answer is fully grounded or re
 
 ### Tasks
 
-- [ ] (04A): Implement self-check execution
+- [x] (04A): Implement self-check execution
   - Source of Truth: `docs/plans/Plan_11.md` > `## 3. Scope`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.5 Self-Check`; `docs/plans/Master_Plan.md` > `## 18.2 Simple Reasoning Rule`
   - Source Requirements:
     - Run self-check to confirm the answer uses only verified chunks.
@@ -579,7 +579,7 @@ Citation validation alone does not prove that the answer is fully grounded or re
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/app/agents/prompts.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (04B): Enforce self-check failure policy
+- [x] (04B): Enforce self-check failure policy
   - Source of Truth: `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`
   - Source Requirements:
     - `AnswerAgentError` covers self-check failure.
@@ -596,7 +596,7 @@ Citation validation alone does not prove that the answer is fully grounded or re
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (04C): Add Agent 3 success-step logging
+- [x] (04C): Add Agent 3 success-step logging
   - Source of Truth: `docs/plans/Plan_11.md` > `## 3. Scope`; `docs/plans/Plan_11.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `### 5.5 Agent Logs / Debug Page`; `docs/plans/Master_Plan.md` > `## Table: agent_steps`; `docs/plans/Master_Plan.md` > `## 18.5 Debuggability Rule`
   - Source Requirements:
     - Log Agent 3 answer and self-check outputs.
@@ -613,7 +613,7 @@ Citation validation alone does not prove that the answer is fully grounded or re
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (04D): Add Agent 3 failed-step logging
+- [x] (04D): Add Agent 3 failed-step logging
   - Source of Truth: `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `### 5.5 Agent Logs / Debug Page`; `docs/plans/Master_Plan.md` > `## Table: agent_steps`
   - Source Requirements:
     - ShopAIKey failure logs failed step and raises `AnswerAgentError`.
@@ -632,7 +632,7 @@ Citation validation alone does not prove that the answer is fully grounded or re
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`, `backend/tests/test_agent_log_service.py` only if shared service behavior changes
 
-- [ ] (04E): Keep logging failures safe and visible
+- [x] (04E): Keep logging failures safe and visible
   - Source of Truth: `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - No fake success.
@@ -1064,11 +1064,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch04
 
-- [ ] (04A): Implement self-check execution
-- [ ] (04B): Enforce self-check failure policy
-- [ ] (04C): Add Agent 3 success-step logging
-- [ ] (04D): Add Agent 3 failed-step logging
-- [ ] (04E): Keep logging failures safe and visible
+- [x] (04A): Implement self-check execution
+- [x] (04B): Enforce self-check failure policy
+- [x] (04C): Add Agent 3 success-step logging
+- [x] (04D): Add Agent 3 failed-step logging
+- [x] (04E): Keep logging failures safe and visible
 
 #### Batch05
 

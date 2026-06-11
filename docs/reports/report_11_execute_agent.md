@@ -1505,3 +1505,615 @@ complete
 - next task ID: (04A)
 - can proceed: yes, after A2 accepts (03F)
 - handoff notes: Batch04 can call `normalize_validated_draft_output` output as a stable `AnswerAgentOutput` with exact public keys and no exposed chunk IDs.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch04 - Self-Check, Safe Failure Handling, and Logging
+
+## Task
+(04A) - Implement self-check execution
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 3. Scope
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.5 Self-Check
+- docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04A)
+- Task title: Implement self-check execution
+
+## Completed Work
+- Status: complete.
+- Implemented deterministic Agent 3 self-check execution in `execute_answer_self_check`.
+- Runtime `run_answer_agent` now runs self-check after draft evidence validation and attaches the normalized `AnswerSelfCheck` to `AnswerAgentOutput`.
+- Ready grounded answers now return `uses_only_verified_chunks=true`, `has_citation=true`, `has_unsupported_claims=false`, and `is_ready=true`.
+- Added unit coverage for successful runtime self-check attachment and a reasoning-ready grounded answer.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence: 50 passed in 1.50s
+
+## Acceptance Check
+- Task acceptance condition: Ready answers have `uses_only_verified_chunks=true`, `has_citation=true`, `has_unsupported_claims=false`, and `is_ready=true`.
+- Status: satisfied
+- Evidence: `run_answer_agent` executes `execute_answer_self_check`, replaces the draft placeholder with a normalized `AnswerSelfCheck`, and targeted tests assert the exact ready field values.
+
+## Artifacts Produced
+- Self-check result attached to Agent 3 output.
+- Targeted unit tests for successful self-check and reasoning-ready grounded answer.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used the deterministic self-check policy prepared by earlier tasks instead of adding an LLM self-check call.
+- Reused existing evidence validation and `enforce_answer_self_check` so self-check execution cannot bypass citation, rejected-evidence, or normal-user chunk ID checks.
+- Left safe failure policy expansion, logging, and sibling Batch04 tasks out of scope.
+
+## Risks or Open Issues
+- Unsupported-claim detection remains bounded by deterministic evidence/citation/rejected-text validation in this task; broader failure policy handling is reserved for (04B).
+- Agent 3 logging remains pending for (04C)-(04E).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency Batch03 was checked complete in `docs/tasks/task_11.md` before implementation.
+- No public API, LangGraph workflow, frontend work, logging implementation, sibling task work, or task checkbox update was added.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 accepts (04A)
+- handoff notes: `run_answer_agent` now returns ready grounded outputs with executed `AnswerSelfCheck`; (04B) can focus on explicit self-check failure policy enforcement without adding the execution hook.
+
+---
+
+# Task Execution Report - (04A) Repair
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch04 - Self-Check, Safe Failure Handling, and Logging
+
+## Task
+(04A) - Implement self-check execution
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 3. Scope
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.5 Self-Check
+- docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+- A2 review rejection instructions for (04A)
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04A)
+- Task title: Implement self-check execution
+
+## Completed Work
+- Status: complete.
+- Repaired `execute_answer_self_check` so it no longer hardcodes ready self-check success after citation validation.
+- Added deterministic numeric/date claim checking against verified evidence and permitted simple reasoning tokens derived from verified start date plus month duration.
+- Runtime self-check now marks unsupported numeric/date claims as `has_unsupported_claims=true` and not ready, causing existing enforcement to reject the draft instead of returning it as ready.
+- Added tests proving unsupported numeric claims and incorrectly reasoned sufficient-evidence drafts with valid citations are rejected.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Failed first as expected before repair; evidence: 2 failed, 50 passed because unsupported and incorrectly reasoned drafts were not rejected.
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed after repair; evidence: 52 passed in 1.61s.
+
+## Acceptance Check
+- Task acceptance condition: Ready answers have `uses_only_verified_chunks=true`, `has_citation=true`, `has_unsupported_claims=false`, and `is_ready=true`.
+- Status: satisfied
+- Evidence: Grounded reasoning-ready output still returns the required ready booleans, while unsupported numeric/date claims and incorrect simple reasoning are not marked ready and are rejected by self-check enforcement.
+
+## Artifacts Produced
+- Repaired deterministic self-check execution attached to Agent 3 output.
+- Regression tests for unsupported numeric claim rejection and incorrect simple reasoning rejection.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run; checkbox and batch updates remain reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept self-check deterministic and local to (04A), instead of adding an LLM self-check call or logging behavior.
+- Scoped unsupported-claim detection to numeric/date claims and simple date-plus-month reasoning, matching the task's simple reasoning source requirements and current Agent 3 evidence model.
+- Reused existing `enforce_answer_self_check` so non-ready self-check output cannot be returned as ready.
+
+## Risks or Open Issues
+- Non-numeric unsupported semantic claims remain outside this deterministic check; broader failure policy and additional coverage are reserved for later Batch04/Batch05 tasks.
+- Agent 3 logging remains pending for (04C)-(04E).
+- Existing uncommitted `docs/review/review_11_review_agent.md` changes were present and were not touched.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Continued the same rejected (04A) task and did not start a new task.
+- No sibling tasks, logging, public APIs, LangGraph workflow, frontend work, task checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 accepts repaired (04A)
+- handoff notes: `execute_answer_self_check` now computes readiness from citation/evidence validation plus deterministic numeric/date claim support, and rejects valid-citation drafts with unsupported or incorrectly reasoned numeric/date claims.
+
+---
+
+# Task Execution Report - (04A) Final Repair
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch04 - Self-Check, Safe Failure Handling, and Logging
+
+## Task
+(04A) - Implement self-check execution
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 3. Scope
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.5 Self-Check
+- docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+- A2 review rejection instructions for (04A), final allowed repair attempt
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04A)
+- Task title: Implement self-check execution
+
+## Completed Work
+- Status: complete.
+- Replaced the token-limited deterministic numeric/date self-check with an LLM-assisted self-check execution path using the existing `ANSWER_SELF_CHECK_SYSTEM_PROMPT`.
+- Added `build_answer_self_check_payload` and `build_answer_self_check_messages` so the self-check sees the full draft answer, reasoning summary, citations, verified chunks, and rejected chunks.
+- Added `parse_and_validate_answer_self_check` so provider self-check JSON is normalized into `AnswerSelfCheck` before enforcement.
+- `execute_answer_self_check` now derives `uses_only_verified_chunks`, `has_unsupported_claims`, and `is_ready` from the self-check provider result, then enforces readiness through existing `enforce_answer_self_check`.
+- Added tests proving unsupported non-numeric semantic content with a valid citation is rejected, `uses_only_verified_chunks` is not hardcoded, and a grounded answer still returns ready self-check values.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Failed first as expected before repair; evidence: 8 failed, 45 passed because runtime self-check did not call the self-check provider and semantic unsupported content was still accepted.
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed after repair; evidence: 54 passed in 1.65s.
+
+## Acceptance Check
+- Task acceptance condition: Ready answers have `uses_only_verified_chunks=true`, `has_citation=true`, `has_unsupported_claims=false`, and `is_ready=true`.
+- Status: satisfied
+- Evidence: Ready grounded-answer tests assert the exact ready values, while unsupported semantic claims and unverified self-check results raise controlled validation errors instead of returning ready output.
+
+## Artifacts Produced
+- LLM-assisted self-check execution attached to Agent 3 output.
+- Self-check payload/message builders for full-content review.
+- Self-check JSON parser/normalizer.
+- Regression tests for unsupported semantic claim rejection, `uses_only_verified_chunks` derivation, and grounded ready output.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run; checkbox and batch updates remain reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used the existing self-check prompt instead of trying to maintain an incomplete deterministic semantic-grounding heuristic.
+- Kept enforcement deterministic after the provider result: every self-check result is Pydantic-normalized and must satisfy the existing ready booleans before output can be returned.
+- Did not add logging, failed-step handling, public APIs, LangGraph orchestration, frontend work, or sibling task behavior.
+
+## Risks or Open Issues
+- Self-check quality now depends on the configured ShopAIKey chat model following the existing self-check prompt; mocked unit tests verify integration and enforcement, not live model judgment.
+- Provider/self-check failure logging remains out of scope for (04A) and belongs to later Batch04 tasks.
+- Existing uncommitted `docs/review/review_11_review_agent.md` changes were present and were not touched.
+
+## Minor Issues Fixed During Execution
+- Removed the prior numeric/date-only self-check approach that could not evaluate unsupported semantic claims.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Continued the same rejected (04A) task and did not start a new task.
+- No sibling tasks (04B)-(04E), task checkbox update, batch update, commit, logging implementation, public API, LangGraph workflow, or frontend work was performed.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 accepts repaired (04A)
+- handoff notes: `execute_answer_self_check` now performs full-content LLM-assisted self-check, normalizes the result into `AnswerSelfCheck`, and enforces that non-ready or unsupported answers cannot be returned as ready.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch04 - Self-Check, Safe Failure Handling, and Logging
+
+## Task
+(04B) - Enforce self-check failure policy
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 8. API Design
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 11. Required Tests
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04B)
+- Task title: Enforce self-check failure policy
+
+## Completed Work
+- Status: complete.
+- Chose the explicit self-check failure policy: raise controlled AnswerAgentError rather than returning a fallback answer.
+- Separated draft evidence validation failures from self-check readiness failures in run_answer_agent.
+- Added unit coverage proving has_unsupported_claims=true, is_ready=false, has_citation=false, and uses_only_verified_chunks=false self-check results raise AnswerAgentError with failure_type self_check_failed instead of returning a ready answer.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- pytest tests/test_answer_agent.py::test_run_answer_agent_raises_self_check_failure_without_returning_ready_answer -v: Failed first as expected / then Passed
+- evidence or reason: initial RED run failed because failure_type was citation_validation_error; after implementation the targeted test passed with 4 passed.
+- pytest tests/test_answer_agent.py -v: Passed
+- evidence or reason: 58 passed in 1.57s.
+
+## Acceptance Check
+- Task acceptance condition: Failed self-check never returns unsupported content with is_ready=true.
+- Status: satisfied
+- Evidence: run_answer_agent now raises AnswerAgentError with failure_type self_check_failed for unsupported claims, missing citation self-check, rejected/unverified evidence self-check, and generic not-ready self-check cases before any AnswerAgentOutput is returned.
+
+## Artifacts Produced
+- Appended execution report entry in docs/reports/report_11_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Chose controlled AnswerAgentError as the self-check failure policy allowed by Plan 11.
+- Kept insufficient-evidence fallback behavior only for missing Agent 2 evidence; failed self-check on a drafted answer is not returned as user-facing content.
+
+## Risks or Open Issues
+- Existing uncommitted changes from prior Batch04 work were present in backend/app/agents/answer_agent.py, backend/tests/test_answer_agent.py, docs/reports/report_11_execute_agent.md, docs/review/review_11_review_agent.md, and docs/tasks/task_11.md; unrelated review/task file changes were not touched.
+- Provider/self-check failure logging remains out of scope for (04B) and belongs to later Batch04 logging tasks.
+
+## Minor Issues Fixed During Execution
+- Reclassified failed self-check readiness from citation_validation_error to self_check_failed in the run_answer_agent policy boundary.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (04A) was checked complete in docs/tasks/task_11.md before execution.
+- No sibling tasks (04C, 04D, 04E), Batch05/Batch06 work, task checkbox update, commit, public API, LangGraph workflow, frontend work, or logging implementation was performed.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes, after A2 reviews and accepts (04B)
+- handoff notes: self-check execution already exists from (04A); (04B) now enforces failed self-check as AnswerAgentError with failure_type self_check_failed and tested non-ready booleans.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch04 - Self-Check, Safe Failure Handling, and Logging
+
+## Task
+(04C) - Add Agent 3 success-step logging
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_11.md > (04C): Add Agent 3 success-step logging
+- docs/plans/Plan_11.md > ## 3. Scope
+- docs/plans/Plan_11.md > ## 6. Required Files and Folders
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ### 5.5 Agent Logs / Debug Page
+- docs/plans/Master_Plan.md > ## Table: agent_steps
+- docs/plans/Master_Plan.md > ## 18.5 Debuggability Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04C)
+- Task title: Add Agent 3 success-step logging
+
+## Completed Work
+- Complete.
+- Added Agent 3 success-step logging after draft validation, self-check execution, and final output normalization.
+- Logged through the existing `agent_log_service.log_agent_step` pattern with `step_name="agent_3_answer_self_check"`, `agent_name="answer_agent"`, `status="success"`, and `error_message=None`.
+- Added safe input/output payloads containing the normalized Agent 3 input, draft answer, self-check result, final answer, citations, reasoning summary, confidence, and an empty errors list.
+- Added mocked unit coverage proving the success path attempts exactly one log insertion with the required step name and payload fields.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `pytest backend/tests/test_answer_agent.py::test_run_answer_agent_logs_successful_answer_and_self_check -q`: Failed first / expected TDD red
+- evidence or reason: failed because `answer_agent_module.agent_log_service` did not exist before the production logging hook was added.
+- command/check: `pytest backend/tests/test_answer_agent.py::test_run_answer_agent_logs_successful_answer_and_self_check -q`: Passed
+- evidence or reason: 1 passed.
+- command/check: `pytest backend/tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 59 passed in 1.58s.
+
+## Acceptance Check
+- Task acceptance condition: Success path attempts one log insertion with safe input/output, status success, and the required step name.
+- Status: satisfied
+- Evidence: `test_run_answer_agent_logs_successful_answer_and_self_check` asserts one `agent_log_service.log_agent_step` call with `step_name="agent_3_answer_self_check"`, `agent_name="answer_agent"`, `status="success"`, `error_message=None`, safe input payload, draft answer, self-check result, final answer, confidence, and errors list.
+
+## Artifacts Produced
+- Appended execution report entry in docs/reports/report_11_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used strict `agent_log_service.log_agent_step` for the success insertion because (04C) acceptance explicitly requires one success-path insertion attempt and later tasks own failed-step logging/logging failure behavior.
+- Kept logging after final output normalization so the stored output reflects the returned Agent 3 answer and the executed self-check result.
+- Added a test autouse mock for Agent 3 log insertion to keep answer-agent unit tests isolated from live Supabase persistence.
+
+## Risks or Open Issues
+- Agent 3 failed-step logging remains out of scope for (04C) and is reserved for sibling task (04D).
+- Non-fatal handling of Agent 3 log insertion failures remains out of scope for (04C) and is reserved for sibling task (04E).
+- Existing uncommitted accepted Batch04/review/task changes were present in the working tree; they were not reverted or modified except where the selected files needed this task's change.
+
+## Minor Issues Fixed During Execution
+- Existing success-path unit tests were isolated from live Supabase by mocking `agent_log_service.log_agent_step`, preventing synthetic unit inputs from attempting real `agent_steps` inserts.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (04A) and (04B) were checked complete in docs/tasks/task_11.md before execution.
+- No sibling tasks (04D, 04E), Batch05/Batch06 work, task checkbox update, commit, public API, LangGraph workflow, frontend work, failed-step logging, or safe log-failure behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (04D)
+- can proceed: yes, after A2 reviews and accepts (04C)
+- handoff notes: Agent 3 success logging now exists and is covered with mocked `agent_log_service.log_agent_step`; failed-step logging remains unimplemented by design.
+
+---
+
+# Task Execution Report - (04D)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch04 - Self-Check, Safe Failure Handling, and Logging
+
+## Task
+(04D) - Add Agent 3 failed-step logging
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+- docs/plans/Plan_11.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ### 5.5 Agent Logs / Debug Page
+- docs/plans/Master_Plan.md > ## Table: agent_steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04D)
+- Task title: Add Agent 3 failed-step logging
+
+## Completed Work
+- Status: complete.
+- Added failed-step logging for controlled Agent 3 answer-generation failures after input normalization.
+- Provider, parsing, validation, rejected-evidence, self-check provider, self-check parsing/validation, self-check readiness, and final output normalization failures now attempt a failed `agent_steps` log through `try_log_agent_step` before raising the controlled `AnswerAgentError`.
+- Failed logs use safe summarized input metadata and a controlled error payload; raw provider errors, stack traces, and evidence quotes are not placed in failed log payloads.
+- Added unit coverage for provider failure logging and self-check failure logging.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `cd backend; pytest tests/test_answer_agent.py::test_run_answer_agent_logs_failed_step_for_provider_failure tests/test_answer_agent.py::test_run_answer_agent_logs_failed_step_for_self_check_failure -v`: Passed
+- evidence or reason: Red run before implementation failed because `try_log_agent_step` was called 0 times; after implementation both tests passed.
+- command/check: `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 61 passed in 1.50s.
+
+## Acceptance Check
+- Task acceptance condition: Failure paths attempt failed log insertion with safe error details and still raise controlled `AnswerAgentError`.
+- Status: satisfied
+- Evidence: New provider failure test asserts failed `try_log_agent_step` insertion with status `failed`, controlled `ANSWER_FAILURE_MESSAGE`, failure type `provider_error`, no raw provider detail, and no evidence quote leakage while raising `AnswerAgentError`. New self-check failure test asserts failed insertion with failure type `self_check_failed` while raising `AnswerAgentError`. Runtime code routes controlled Agent 3 failures through `_log_failed_answer_self_check` and preserves the original controlled failure.
+
+## Artifacts Produced
+- Appended execution report entry in docs/reports/report_11_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused `agent_log_service.try_log_agent_step` for failed Agent 3 logs so logging persistence failure cannot replace the original controlled answer-agent failure.
+- Logged only summarized failed-input metadata: question, verified/rejected counts, and chunk IDs. Failed log output contains only a controlled error type and message.
+- Kept success logging behavior unchanged to avoid implementing sibling task (04E) or altering accepted (04C) scope.
+- Distinguished rejected-evidence failures as `rejected_evidence_error`; other evidence/citation validation failures remain `citation_validation_error`.
+
+## Risks or Open Issues
+- Existing accepted Batch04 and review/task/report changes were already uncommitted in the worktree; they were not reverted.
+- Agent 3 success-log insertion failure handling remains for sibling task (04E), not implemented here.
+
+## Minor Issues Fixed During Execution
+- None beyond the selected failed-step logging behavior.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (04B) and (04C) were checked complete in docs/tasks/task_11.md before execution.
+- No task checkbox update, batch status update, commit, public API, LangGraph workflow, frontend work, Batch05 tests, or Batch06 reporting work was performed.
+
+## Notes for Next Task
+- next task ID: (04E)
+- can proceed: yes, after A2 reviews and accepts (04D)
+- handoff notes: Failed Agent 3 logs now use `try_log_agent_step` with safe controlled payloads; (04E) should focus on any remaining safe/visible behavior for logging insertion failures without changing this task's failure contracts.
+
+---
+
+# Task Execution Report - (04E)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch04 - Self-Check, Safe Failure Handling, and Logging
+
+## Task
+(04E) - Keep logging failures safe and visible
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+- docs/plans/Plan_11.md > ## 15. Reviewer Checklist
+- README.md > Important coordination rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Self-Check, Safe Failure Handling, and Logging
+- Task ID: (04E)
+- Task title: Keep logging failures safe and visible
+
+## Completed Work
+- State: complete.
+- Updated Agent 3 successful answer/self-check logging to reuse `agent_log_service.try_log_agent_step` so a success-log insertion failure does not replace a valid Agent 3 output with a false failure.
+- Reused the existing Agent 3 log-attempt warning helper so failed persistence is visible through a safe warning containing only agent name, step name, and status.
+- Added mocked coverage for success-log persistence failure to prove Agent 3 returns the validated answer while warning safely and without leaking answer text or verified/rejected evidence quotes.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `cd backend; pytest tests/test_answer_agent.py::test_run_answer_agent_preserves_success_when_success_log_persistence_fails -v`: Failed, then Passed
+- evidence or reason: Red run failed because `try_log_agent_step` was called 0 times on the success path. After implementation, the same focused test passed.
+- command/check: `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 62 passed in 1.61s.
+- command/check: `cd backend; pytest tests/test_agent_log_service.py -v`: Not run
+- evidence or reason: Shared `agent_log_service` behavior was reused but not changed.
+
+## Acceptance Check
+- Task acceptance condition: Log persistence failures do not leak secrets or silently fabricate persisted logs.
+- Status: satisfied
+- Evidence: Agent 3 success logging now receives an `AgentStepLogAttempt`; if persistence fails, `_warn_if_agent_3_log_failed` emits a safe warning instead of claiming persistence succeeded. The mocked test verifies the valid answer is preserved, `status="success"` is attempted, warning fields are limited to agent/step/status, and answer/evidence text is not present in the warning.
+
+## Artifacts Produced
+- Appended execution report entry in docs/reports/report_11_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused `try_log_agent_step` and `_warn_if_agent_3_log_failed` for Agent 3 success logs, matching the established safe/visible pattern already used for failed Agent 3 logs and Agent 2 retrieval/verification logging behavior.
+- Did not change the shared log service because its non-fatal attempt result already covered this behavior.
+- Preserved the existing successful log payload shape; only the persistence call path changed.
+
+## Risks or Open Issues
+- Existing accepted Batch04 task/report/review changes were already uncommitted in the worktree; they were not reverted.
+- Agent 3 success logs still include expected answer and evidence payloads for debug persistence when insertion succeeds; the new safe warning for insertion failure does not include those payloads.
+
+## Minor Issues Fixed During Execution
+- None beyond the selected safe success-log persistence behavior.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (04C) and (04D) were checked complete in docs/tasks/task_11.md before execution.
+- No task checkbox update, batch status update, commit, public API, LangGraph workflow, frontend work, Batch05 work, or Batch06 work was performed.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after A2 reviews and accepts (04E)
+- handoff notes: Agent 3 success and failed logging now both use non-fatal log-attempt behavior with safe warning visibility when `agent_steps` persistence fails.

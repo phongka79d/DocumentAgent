@@ -7,7 +7,10 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from app.agents.prompts import ANSWER_GENERATION_SYSTEM_PROMPT
+from app.agents.prompts import (
+    ANSWER_GENERATION_SYSTEM_PROMPT,
+    ANSWER_SELF_CHECK_SYSTEM_PROMPT,
+)
 from app.agents.schemas import (
     AnswerAgentInput,
     AnswerAgentOutput,
@@ -17,12 +20,13 @@ from app.agents.schemas import (
     VerificationAgentOutput,
     VerifiedChunk,
 )
-from app.services import shopaikey_service
+from app.services import agent_log_service, shopaikey_service
 
 
 logger = logging.getLogger(__name__)
 
 ANSWER_AGENT_NAME = "answer_agent"
+ANSWER_AGENT_SUCCESS_STEP_NAME = "agent_3_answer_self_check"
 ANSWER_FAILURE_MESSAGE = "Answer generation failed. Please try again later."
 INSUFFICIENT_EVIDENCE_ANSWER = (
     "T\u00e0i li\u1ec7u hi\u1ec7n t\u1ea1i ch\u01b0a cung c\u1ea5p "
@@ -81,6 +85,7 @@ ANSWER_OUTPUT_PUBLIC_KEYS = (
 
 _CHUNK_ID_LABEL_PATTERN = re.compile(r"\bchunk[\s_-]*id\b", re.IGNORECASE)
 ANSWER_GENERATION_RESPONSE_FORMAT = {"type": "json_object"}
+ANSWER_SELF_CHECK_RESPONSE_FORMAT = {"type": "json_object"}
 
 
 def format_citation(citation: Citation) -> str:
@@ -140,6 +145,27 @@ def enforce_answer_self_check(
     return self_check
 
 
+def execute_answer_self_check(
+    output: AnswerAgentOutput,
+    verification: VerificationAgentOutput,
+) -> AnswerSelfCheck:
+    """Run Agent 3 self-check and normalize the provider result into the schema."""
+    validate_answer_evidence_contract(output, verification)
+    try:
+        provider_content = shopaikey_service.chat_completion(
+            build_answer_self_check_messages(output, verification),
+            response_format=ANSWER_SELF_CHECK_RESPONSE_FORMAT,
+        )
+    except shopaikey_service.ShopAIKeyServiceError as exc:
+        raise _AnswerAgentFailure("self_check_provider_error") from exc
+
+    executed_self_check = parse_and_validate_answer_self_check(provider_content)
+    checked_output = output.model_copy(
+        update={"self_check": executed_self_check},
+    )
+    return enforce_answer_self_check(checked_output, verification)
+
+
 def normalize_answer_agent_input(
     input_data: AnswerAgentInput | Mapping[str, Any],
 ) -> AnswerAgentInput:
@@ -178,6 +204,21 @@ def parse_and_validate_draft_answer(provider_content: str) -> AnswerAgentOutput:
         raise _AnswerAgentFailure("citation_validation_error") from exc
 
     return draft_output
+
+
+def parse_and_validate_answer_self_check(provider_content: str) -> AnswerSelfCheck:
+    """Parse provider JSON and validate the self-check shape."""
+    try:
+        self_check_payload = json.loads(provider_content)
+    except json.JSONDecodeError as exc:
+        logger.warning("Answer agent self-check response contained invalid JSON.")
+        raise _AnswerAgentFailure("invalid_self_check_json_response") from exc
+
+    try:
+        return normalize_answer_self_check(self_check_payload)
+    except ValidationError as exc:
+        logger.warning("Answer agent self-check response failed schema validation.")
+        raise _AnswerAgentFailure("self_check_validation_error") from exc
 
 
 def validate_draft_citation_quotes_against_verified_evidence(
@@ -249,6 +290,59 @@ def build_answer_generation_messages(
     ]
 
 
+def build_answer_self_check_payload(
+    output: AnswerAgentOutput,
+    verification: VerificationAgentOutput,
+) -> dict[str, Any]:
+    """Build the self-check payload with full draft content and evidence context."""
+    return {
+        "draft_answer": {
+            "final_answer": output.final_answer,
+            "citations": [
+                citation.model_dump(mode="json") for citation in output.citations
+            ],
+            "reasoning_summary": output.reasoning_summary,
+            "confidence": output.confidence,
+        },
+        "verified_chunks": [
+            {
+                "file_name": chunk.file_name,
+                "quote": chunk.quote,
+                "page_number": chunk.page_number,
+                "verification_reason": chunk.verification_reason,
+                "supports_simple_reasoning": chunk.supports_simple_reasoning,
+            }
+            for chunk in verification.verified_chunks
+        ],
+        "rejected_chunks": [
+            {
+                "file_name": chunk.file_name,
+                "quote": chunk.quote,
+                "rejection_reason": chunk.rejection_reason,
+            }
+            for chunk in verification.rejected_chunks
+        ],
+    }
+
+
+def build_answer_self_check_messages(
+    output: AnswerAgentOutput,
+    verification: VerificationAgentOutput,
+) -> list[dict[str, str]]:
+    """Build ShopAIKey messages for full-content answer self-check."""
+    payload = build_answer_self_check_payload(output, verification)
+    return [
+        {
+            "role": "system",
+            "content": ANSWER_SELF_CHECK_SYSTEM_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        },
+    ]
+
+
 def build_answer_evidence_lookup(
     verification: VerificationAgentOutput,
 ) -> AnswerEvidenceLookup:
@@ -287,17 +381,19 @@ def run_answer_agent(
     if _has_insufficient_evidence(answer_input.verification):
         return _build_insufficient_evidence_output()
 
-    messages = build_answer_generation_messages(answer_input)
     try:
+        messages = build_answer_generation_messages(answer_input)
         provider_content = shopaikey_service.chat_completion(
             messages,
             response_format=ANSWER_GENERATION_RESPONSE_FORMAT,
         )
     except shopaikey_service.ShopAIKeyServiceError as exc:
-        raise _AnswerAgentFailure("provider_error") from exc
+        failure = _AnswerAgentFailure("provider_error")
+        _log_failed_answer_self_check(answer_input, failure.failure_type)
+        raise failure from exc
 
-    draft_output = parse_and_validate_draft_answer(provider_content)
     try:
+        draft_output = parse_and_validate_draft_answer(provider_content)
         validate_draft_citation_quotes_against_verified_evidence(
             draft_output,
             answer_input.verification,
@@ -306,11 +402,142 @@ def run_answer_agent(
             draft_output,
             answer_input.verification,
         )
+    except _AnswerAgentFailure as exc:
+        _log_failed_answer_self_check(answer_input, exc.failure_type)
+        raise
     except AnswerEvidenceValidationError as exc:
         logger.warning("Answer agent draft failed evidence validation.")
-        raise _AnswerAgentFailure("citation_validation_error") from exc
+        failure = _AnswerAgentFailure(_evidence_validation_failure_type(exc))
+        _log_failed_answer_self_check(answer_input, failure.failure_type)
+        raise failure from exc
 
-    return normalize_validated_draft_output(draft_output)
+    try:
+        self_check = execute_answer_self_check(
+            draft_output,
+            answer_input.verification,
+        )
+    except _AnswerAgentFailure as exc:
+        _log_failed_answer_self_check(answer_input, exc.failure_type)
+        raise
+    except AnswerEvidenceValidationError as exc:
+        logger.warning("Answer agent self-check failed readiness validation.")
+        failure = _AnswerAgentFailure("self_check_failed")
+        _log_failed_answer_self_check(answer_input, failure.failure_type)
+        raise failure from exc
+
+    try:
+        checked_output = draft_output.model_copy(update={"self_check": self_check})
+        final_output = normalize_validated_draft_output(checked_output)
+    except _AnswerAgentFailure as exc:
+        _log_failed_answer_self_check(answer_input, exc.failure_type)
+        raise
+    _log_successful_answer_self_check(answer_input, draft_output, final_output)
+    return final_output
+
+
+def _log_successful_answer_self_check(
+    answer_input: AnswerAgentInput,
+    draft_output: AnswerAgentOutput,
+    final_output: AnswerAgentOutput,
+) -> None:
+    log_attempt = agent_log_service.try_log_agent_step(
+        agent_run_id=str(answer_input.agent_run_id),
+        step_name=ANSWER_AGENT_SUCCESS_STEP_NAME,
+        agent_name=ANSWER_AGENT_NAME,
+        input_payload=answer_input.model_dump(mode="json"),
+        output_payload={
+            "draft_answer": {
+                "final_answer": draft_output.final_answer,
+                "citations": [
+                    citation.model_dump(mode="json")
+                    for citation in draft_output.citations
+                ],
+                "reasoning_summary": draft_output.reasoning_summary,
+                "confidence": draft_output.confidence,
+            },
+            "self_check_result": final_output.self_check.model_dump(mode="json"),
+            "final_answer": final_output.final_answer,
+            "citations": [
+                citation.model_dump(mode="json") for citation in final_output.citations
+            ],
+            "reasoning_summary": final_output.reasoning_summary,
+            "confidence": final_output.confidence,
+            "errors": [],
+        },
+        status="success",
+        error_message=None,
+    )
+    _warn_if_agent_3_log_failed(log_attempt)
+
+
+def _safe_failed_answer_input(answer_input: AnswerAgentInput) -> dict[str, Any]:
+    return {
+        "agent_run_id": str(answer_input.agent_run_id),
+        "question": answer_input.question,
+        "verified_chunk_count": len(answer_input.verification.verified_chunks),
+        "rejected_chunk_count": len(answer_input.verification.rejected_chunks),
+        "verified_chunk_ids": [
+            str(chunk.chunk_id) for chunk in answer_input.verification.verified_chunks
+        ],
+        "rejected_chunk_ids": [
+            str(chunk.chunk_id) for chunk in answer_input.verification.rejected_chunks
+        ],
+    }
+
+
+def _safe_failed_answer_output(failure_type: str) -> dict[str, Any]:
+    return {
+        "error": {
+            "type": failure_type,
+            "message": ANSWER_FAILURE_MESSAGE,
+        }
+    }
+
+
+def _log_failed_answer_self_check(
+    answer_input: AnswerAgentInput,
+    failure_type: str,
+) -> None:
+    try:
+        log_attempt = agent_log_service.try_log_agent_step(
+            agent_run_id=str(answer_input.agent_run_id),
+            step_name=ANSWER_AGENT_SUCCESS_STEP_NAME,
+            agent_name=ANSWER_AGENT_NAME,
+            input_payload=_safe_failed_answer_input(answer_input),
+            output_payload=_safe_failed_answer_output(failure_type),
+            status="failed",
+            error_message=ANSWER_FAILURE_MESSAGE,
+        )
+        _warn_if_agent_3_log_failed(log_attempt)
+    except Exception:
+        logger.exception(
+            "Failed to record Agent 3 failed-step log for %s.",
+            answer_input.agent_run_id,
+        )
+
+
+def _warn_if_agent_3_log_failed(
+    log_attempt: agent_log_service.AgentStepLogAttempt | None,
+) -> None:
+    if (
+        log_attempt is None
+        or log_attempt.persisted
+        or log_attempt.persistence_error is None
+    ):
+        return
+
+    logger.warning(
+        "Agent 3 step log persistence failed for %s::%s [%s].",
+        log_attempt.persistence_error.agent_name,
+        log_attempt.persistence_error.step_name,
+        log_attempt.persistence_error.status,
+    )
+
+
+def _evidence_validation_failure_type(exc: AnswerEvidenceValidationError) -> str:
+    if "rejected evidence" in str(exc):
+        return "rejected_evidence_error"
+    return "citation_validation_error"
 
 
 def _has_insufficient_evidence(verification: VerificationAgentOutput) -> bool:
@@ -403,8 +630,10 @@ def _evidence_citation_pairs(
 
 __all__ = [
     "ANSWER_AGENT_NAME",
+    "ANSWER_AGENT_SUCCESS_STEP_NAME",
     "ANSWER_FAILURE_MESSAGE",
     "ANSWER_GENERATION_RESPONSE_FORMAT",
+    "ANSWER_SELF_CHECK_RESPONSE_FORMAT",
     "ANSWER_OUTPUT_PUBLIC_KEYS",
     "AnswerEvidenceLookup",
     "AnswerAgentError",
@@ -414,13 +643,17 @@ __all__ = [
     "READY_SELF_CHECK_REQUIRED_VALUES",
     "build_answer_generation_messages",
     "build_answer_generation_payload",
+    "build_answer_self_check_messages",
+    "build_answer_self_check_payload",
     "build_answer_evidence_lookup",
     "enforce_answer_self_check",
+    "execute_answer_self_check",
     "format_citation",
     "normalize_answer_self_check",
     "normalize_answer_agent_input",
     "normalize_validated_draft_output",
     "parse_and_validate_draft_answer",
+    "parse_and_validate_answer_self_check",
     "run_answer_agent",
     "validate_draft_answer_against_evidence",
     "validate_draft_citation_quotes_against_verified_evidence",
