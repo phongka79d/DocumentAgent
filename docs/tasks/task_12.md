@@ -125,7 +125,7 @@ The workflow must have stable request/response schemas, graph state shape, depen
 
 ### Tasks
 
-- [ ] (01A): Confirm LangGraph dependency and backend import boundary
+- [x] (01A): Confirm LangGraph dependency and backend import boundary
   - Source of Truth: `docs/plans/Plan_12.md` > `## 3. Scope`; `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## Phase 9: LangGraph Orchestration`
   - Source Requirements:
     - Create LangGraph workflow in `backend/app/agents/graph.py`.
@@ -141,7 +141,7 @@ The workflow must have stable request/response schemas, graph state shape, depen
   - Blocked Condition: None unless package installation or dependency resolution fails locally; report the exact dependency issue safely.
   - Files: `backend/requirements.txt`, `backend/app/agents/graph.py`
 
-- [ ] (01B): Add chat API request and response schemas
+- [x] (01B): Add chat API request and response schemas
   - Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Master_Plan.md` > `## 13.4 Ask Question`
   - Source Requirements:
     - `backend/app/schemas/chat.py` contains chat request and answer response schemas.
@@ -157,7 +157,7 @@ The workflow must have stable request/response schemas, graph state shape, depen
   - Blocked Condition: None.
   - Files: `backend/app/schemas/chat.py`, `backend/tests/test_chat_api.py`
 
-- [ ] (01C): Add agent run evidence and logs response schemas
+- [x] (01C): Add agent run evidence and logs response schemas
   - Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Master_Plan.md` > `## 13.5 Get Evidence`; `docs/plans/Master_Plan.md` > `## 13.6 Get Agent Logs`
   - Source Requirements:
     - `backend/app/schemas/agent_runs.py` contains evidence and logs response schemas.
@@ -173,7 +173,7 @@ The workflow must have stable request/response schemas, graph state shape, depen
   - Blocked Condition: None.
   - Files: `backend/app/schemas/agent_runs.py`, `backend/tests/test_agent_runs_api.py`
 
-- [ ] (01D): Define workflow state schema and graph callable contract
+- [x] (01D): Define workflow state schema and graph callable contract
   - Source of Truth: `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 9. Question Answering Workflow`
   - Source Requirements:
     - LangGraph state includes `agent_run_id`, `session_id`, `question`, `document_ids`, `retrieval`, `verification`, `answer`, and `error`.
@@ -189,7 +189,7 @@ The workflow must have stable request/response schemas, graph state shape, depen
   - Blocked Condition: None.
   - Files: `backend/app/agents/graph.py`, `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (01E): Confirm out-of-scope and backend-only boundaries before implementation
+- [x] (01E): Confirm out-of-scope and backend-only boundaries before implementation
   - Source of Truth: `docs/plans/Plan_12.md` > `## 4. Out of Scope`; `docs/plans/Plan_12.md` > `## 10. Configuration and Environment Variables`; `README.md` > `Important coordination rules`; `README.md` > `## Known Gaps or Unclear Areas`
   - Source Requirements:
     - Do not build frontend chat UI.
@@ -1182,11 +1182,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch01
 
-- [ ] (01A): Confirm LangGraph dependency and backend import boundary
-- [ ] (01B): Add chat API request and response schemas
-- [ ] (01C): Add agent run evidence and logs response schemas
-- [ ] (01D): Define workflow state schema and graph callable contract
-- [ ] (01E): Confirm out-of-scope and backend-only boundaries before implementation
+- [x] (01A): Confirm LangGraph dependency and backend import boundary
+- [x] (01B): Add chat API request and response schemas
+- [x] (01C): Add agent run evidence and logs response schemas
+- [x] (01D): Define workflow state schema and graph callable contract
+- [x] (01E): Confirm out-of-scope and backend-only boundaries before implementation
 
 #### Batch02
 
