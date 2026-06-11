@@ -26,6 +26,7 @@ from app.agents.answer_agent import (
     normalize_answer_agent_input,
     normalize_answer_self_check,
     normalize_validated_draft_output,
+    parse_and_validate_answer_self_check,
     parse_and_validate_draft_answer,
     run_answer_agent,
     validate_answer_evidence_contract,
@@ -203,6 +204,10 @@ def _mock_answer_agent_log_service(monkeypatch: pytest.MonkeyPatch) -> Mock:
 
 
 def _assert_insufficient_evidence_output(output: AnswerAgentOutput) -> None:
+    assert (
+        answer_agent_module.INSUFFICIENT_EVIDENCE_ANSWER
+        == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
+    )
     assert output.final_answer == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
     assert output.citations == []
     assert output.reasoning_summary == "Insufficient verified evidence."
@@ -452,6 +457,209 @@ def test_run_answer_agent_logs_failed_step_for_self_check_failure(
     }
     assert VERIFIED_QUOTE not in str(log_call)
     assert REJECTED_QUOTE not in str(log_call)
+
+
+@pytest.mark.parametrize(
+    ("provider_content", "expected_failure_type"),
+    [
+        ("not-json", "invalid_json_response"),
+        (
+            json.dumps(_draft_answer_payload(confidence=1.5)),
+            "draft_validation_error",
+        ),
+        (
+            json.dumps(_draft_answer_payload() | {"citations": []}),
+            "citation_validation_error",
+        ),
+    ],
+)
+def test_run_answer_agent_logs_failed_step_for_invalid_draft_response(
+    monkeypatch: pytest.MonkeyPatch,
+    provider_content: str,
+    expected_failure_type: str,
+) -> None:
+    chat_completion = Mock(return_value=provider_content)
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == expected_failure_type
+    chat_completion.assert_called_once()
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": expected_failure_type,
+            "message": ANSWER_FAILURE_MESSAGE,
+        }
+    }
+    assert "final_answer" not in log_call["output_payload"]
+    assert "is_ready" not in json.dumps(log_call["output_payload"])
+    assert provider_content not in str(log_call)
+
+
+@pytest.mark.parametrize(
+    ("self_check_content", "expected_failure_type"),
+    [
+        ("not-json", "invalid_self_check_json_response"),
+        (
+            json.dumps(
+                {
+                    "uses_only_verified_chunks": True,
+                    "has_citation": True,
+                    "has_unsupported_claims": False,
+                }
+            ),
+            "self_check_validation_error",
+        ),
+    ],
+)
+def test_run_answer_agent_logs_failed_step_for_invalid_self_check_response(
+    monkeypatch: pytest.MonkeyPatch,
+    self_check_content: str,
+    expected_failure_type: str,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            self_check_content,
+        ]
+    )
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == expected_failure_type
+    assert chat_completion.call_count == 2
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": expected_failure_type,
+            "message": ANSWER_FAILURE_MESSAGE,
+        }
+    }
+    assert "final_answer" not in log_call["output_payload"]
+    assert "is_ready" not in json.dumps(log_call["output_payload"])
+
+
+def test_run_answer_agent_preserves_provider_failure_when_failure_log_insert_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=answer_agent_module.shopaikey_service.ShopAIKeyServiceError(
+            "provider raw secret detail"
+        )
+    )
+    persistence_error = answer_agent_module.agent_log_service.AgentLogPersistenceError(
+        step_name="agent_3_answer_self_check",
+        agent_name=answer_agent_module.ANSWER_AGENT_NAME,
+        status="failed",
+        error_message=ANSWER_FAILURE_MESSAGE,
+    )
+    log_attempt = answer_agent_module.agent_log_service.AgentStepLogAttempt(
+        persisted=False,
+        row=None,
+        persistence_error=persistence_error,
+    )
+    try_log_agent_step = Mock(return_value=log_attempt)
+    logger_warning = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+    monkeypatch.setattr(answer_agent_module.logger, "warning", logger_warning)
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == "provider_error"
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
+    logger_warning.assert_called_once_with(
+        "Agent 3 step log persistence failed for %s::%s [%s].",
+        answer_agent_module.ANSWER_AGENT_NAME,
+        "agent_3_answer_self_check",
+        "failed",
+    )
+    warning_text = str(logger_warning.call_args)
+    assert "provider raw secret detail" not in warning_text
+    assert VERIFIED_QUOTE not in warning_text
+    assert REJECTED_QUOTE not in warning_text
+
+
+def test_run_answer_agent_preserves_provider_failure_when_failure_log_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=answer_agent_module.shopaikey_service.ShopAIKeyServiceError(
+            "provider raw secret detail"
+        )
+    )
+    try_log_agent_step = Mock(side_effect=RuntimeError("database unavailable"))
+    logger_exception = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+    monkeypatch.setattr(answer_agent_module.logger, "exception", logger_exception)
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == "provider_error"
+    try_log_agent_step.assert_called_once()
+    logger_exception.assert_called_once()
+    assert logger_exception.call_args.args[0] == (
+        "Failed to record Agent 3 failed-step log for %s."
+    )
+    assert str(logger_exception.call_args.args[1]) == _answer_input_payload()[
+        "agent_run_id"
+    ]
+    exception_text = str(logger_exception.call_args)
+    assert "provider raw secret detail" not in exception_text
+    assert VERIFIED_QUOTE not in exception_text
+    assert REJECTED_QUOTE not in exception_text
 
 
 def test_run_answer_agent_executes_self_check_for_grounded_draft_without_provider_self_check(
@@ -768,6 +976,105 @@ def test_run_answer_agent_sends_verified_evidence_only_to_provider(
     assert REJECTED_CHUNK_ID not in messages[1]["content"]
 
 
+def test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    start_date_chunk_id = "55555555-5555-5555-5555-555555555555"
+    duration_chunk_id = "66666666-6666-6666-6666-666666666666"
+    start_date_quote = "The employee starts probation on 01/06/2026."
+    duration_quote = "The probation period lasts 2 months."
+    payload = _answer_input_payload()
+    payload["question"] = "Which month can I start official work?"
+    payload["verification"] = _verification_output(
+        verified_chunks=[
+            {
+                "chunk_id": start_date_chunk_id,
+                "document_id": DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": start_date_quote,
+                "page_number": 1,
+                "verification_reason": "Provides the probation start date.",
+                "supports_simple_reasoning": True,
+            },
+            {
+                "chunk_id": duration_chunk_id,
+                "document_id": DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": duration_quote,
+                "page_number": 1,
+                "verification_reason": "Provides the probation duration.",
+                "supports_simple_reasoning": True,
+            },
+        ],
+    ).model_dump(mode="json")
+    provider_payload = {
+        "final_answer": "You can be considered for official work in August 2026.",
+        "citations": [
+            {"file_name": "contract.pdf", "quote": start_date_quote},
+            {"file_name": "contract.pdf", "quote": duration_quote},
+        ],
+        "reasoning_summary": (
+            "The verified start date is 01/06/2026 and probation lasts 2 months, "
+            "so the official work month is August 2026."
+        ),
+        "confidence": 0.82,
+    }
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(provider_payload),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(payload)
+
+    assert output.final_answer == provider_payload["final_answer"]
+    assert output.citations == [
+        Citation(file_name="contract.pdf", quote=start_date_quote),
+        Citation(file_name="contract.pdf", quote=duration_quote),
+    ]
+    assert output.reasoning_summary == provider_payload["reasoning_summary"]
+    assert output.confidence == 0.82
+    assert output.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+
+    public_output_json = json.dumps(output.model_dump(mode="json"))
+    assert "August 2026" in public_output_json
+    assert start_date_chunk_id not in public_output_json
+    assert duration_chunk_id not in public_output_json
+    assert VERIFIED_CHUNK_ID not in public_output_json
+    assert "chunk_id" not in public_output_json
+    assert "document_id" not in public_output_json
+
+    answer_generation_messages = chat_completion.call_args_list[0].args[0]
+    answer_generation_payload = json.loads(answer_generation_messages[1]["content"])
+    assert answer_generation_payload["verified_chunks"] == [
+        {
+            "file_name": "contract.pdf",
+            "quote": start_date_quote,
+            "page_number": 1,
+            "verification_reason": "Provides the probation start date.",
+            "supports_simple_reasoning": True,
+        },
+        {
+            "file_name": "contract.pdf",
+            "quote": duration_quote,
+            "page_number": 1,
+            "verification_reason": "Provides the probation duration.",
+            "supports_simple_reasoning": True,
+        },
+    ]
+    assert "rejected_chunks" not in answer_generation_payload
+    assert start_date_chunk_id not in answer_generation_messages[1]["content"]
+    assert duration_chunk_id not in answer_generation_messages[1]["content"]
+    assert REJECTED_QUOTE not in answer_generation_messages[1]["content"]
+    assert chat_completion.call_count == 2
+
+
 def test_parse_and_validate_draft_answer_rejects_invalid_json_safely() -> None:
     with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
         parse_and_validate_draft_answer("not-json")
@@ -800,6 +1107,28 @@ def test_parse_and_validate_draft_answer_rejects_empty_citations_safely() -> Non
 def test_parse_and_validate_draft_answer_rejects_invalid_confidence_safely() -> None:
     with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
         parse_and_validate_draft_answer(json.dumps(_draft_answer_payload(confidence=1.5)))
+
+
+def test_parse_and_validate_answer_self_check_rejects_invalid_json_safely() -> None:
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        parse_and_validate_answer_self_check("not-json")
+
+    assert exc_info.value.failure_type == "invalid_self_check_json_response"
+
+
+def test_parse_and_validate_answer_self_check_rejects_schema_invalid_payload_safely() -> None:
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        parse_and_validate_answer_self_check(
+            json.dumps(
+                {
+                    "uses_only_verified_chunks": True,
+                    "has_citation": True,
+                    "has_unsupported_claims": False,
+                }
+            )
+        )
+
+    assert exc_info.value.failure_type == "self_check_validation_error"
 
 
 def test_parse_and_validate_draft_answer_accepts_valid_draft_without_self_check() -> None:
@@ -870,6 +1199,24 @@ def test_run_answer_agent_rejects_sufficient_evidence_draft_without_citations(
     chat_completion.assert_called_once()
 
 
+def test_run_answer_agent_rejects_sufficient_evidence_draft_missing_citations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload.pop("citations")
+    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    chat_completion.assert_called_once()
+
+
 def test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -893,6 +1240,30 @@ def test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence(
     chat_completion.assert_called_once()
 
 
+def test_run_answer_agent_accepts_verified_citation_and_renders_required_format(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert output.citations == [Citation(file_name="contract.pdf", quote=VERIFIED_QUOTE)]
+    assert [format_citation(citation) for citation in output.citations] == [
+        f'contract.pdf: "{VERIFIED_QUOTE}"'
+    ]
+    assert chat_completion.call_count == 2
+
+
 def test_run_answer_agent_rejects_draft_citation_from_rejected_chunk(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -914,6 +1285,69 @@ def test_run_answer_agent_rejects_draft_citation_from_rejected_chunk(
         run_answer_agent(_answer_input_payload())
 
     chat_completion.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("payload_update", "expected_failure_type"),
+    [
+        (
+            {
+                "citations": [
+                    {
+                        "file_name": "draft.pdf",
+                        "quote": REJECTED_QUOTE,
+                    }
+                ],
+            },
+            "citation_validation_error",
+        ),
+        (
+            {
+                "final_answer": (
+                    "Ban co the lam viec chinh thuc vao thang 8/2026. "
+                    f"{REJECTED_QUOTE}"
+                ),
+            },
+            "rejected_evidence_error",
+        ),
+    ],
+)
+def test_run_answer_agent_rejected_chunk_usage_fails_closed_without_ready_output(
+    monkeypatch: pytest.MonkeyPatch,
+    payload_update: dict[str, object],
+    expected_failure_type: str,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload.update(payload_update)
+    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == expected_failure_type
+    chat_completion.assert_called_once()
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": expected_failure_type,
+            "message": ANSWER_FAILURE_MESSAGE,
+        }
+    }
+    assert "is_ready" not in json.dumps(log_call["output_payload"])
 
 
 def test_run_answer_agent_rejects_draft_copying_rejected_quote_in_final_answer(
@@ -956,6 +1390,46 @@ def test_run_answer_agent_rejects_draft_copying_rejected_quote_in_reasoning_summ
         run_answer_agent(_answer_input_payload())
 
     chat_completion.assert_called_once()
+
+
+def test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload()),
+            json.dumps(_unsupported_self_check_payload()),
+        ]
+    )
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
+        run_answer_agent(_answer_input_payload())
+
+    assert exc_info.value.failure_type == "self_check_failed"
+    assert chat_completion.call_count == 2
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "failed"
+    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
+    assert log_call["output_payload"] == {
+        "error": {
+            "type": "self_check_failed",
+            "message": ANSWER_FAILURE_MESSAGE,
+        }
+    }
+    assert "final_answer" not in log_call["output_payload"]
+    assert "is_ready" not in json.dumps(log_call["output_payload"])
 
 
 def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information(

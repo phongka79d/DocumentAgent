@@ -4306,3 +4306,1003 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05A)
+- Task title: Add grounded answer and simple reasoning tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 1. Goal; docs/plans/Plan_11.md > ## 11. Required Tests; docs/plans/Plan_11.md > ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The latest matching report entry is for Batch05 (05A). Review was limited to this task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_answer_agent.py`: in scope - adds one mocked grounded answer/simple reasoning success-path test for Agent 3.
+- `docs/reports/report_11_execute_agent.md`: in scope - appends the (05A) execution report.
+- `docs/tasks/task_11.md`: in scope - reviewer updated only (05A) checkboxes after acceptance.
+- `docs/plans/Plan_11.md`: in scope - cited goal, required tests, acceptance criteria, and reviewer checklist sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited simple reasoning example reviewed.
+- `docs/review/review_11_review_agent.md`: in scope - review report appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new (05A) test only; no runtime changes were introduced.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended (05A) execution report.
+
+## Dependency Review
+- Required dependencies: Batch03 and Batch04 completed behavior for Agent 3 runtime, citation validation, self-check, and logging.
+- Dependency status: satisfied for this test-only review; existing runtime tests passed and the new test exercises already implemented behavior.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Test-only scope; mocked ShopAIKey responses; Agent 2 verification fixtures used; no public API, frontend, LangGraph, retrieval, database, or runtime behavior changes.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes, as automated test coverage for existing Agent 3 behavior.
+- Stub or fake logic found: no
+- Evidence: `test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified_chunks` calls `run_answer_agent` with Agent 2 verification data and mocked ShopAIKey chat responses, then asserts the validated output and provider payload.
+
+## Hardcoding Review
+- Hardcoding found: no production hardcoding found.
+- Evidence: Fixed dates, quotes, IDs, and expected answer text are confined to test fixtures for the required scenario. Runtime files were not changed.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v` from `backend`
+- Reported result: passed, 63 tests
+- Rerun result: passed, 63 passed in 1.73s
+- Status: satisfied
+- Notes: This matches the required validation for (05A).
+
+## Acceptance Review
+- Task acceptance: Tests fail without verified-only citations and ready self-check output.
+- Status: satisfied
+- Evidence: The new test asserts final answer content with August 2026, two file-name/quote citations, confidence, reasoning summary, ready self-check values, verified-only prompt payload with start date and probation duration evidence, and no normal-user chunk IDs or document IDs.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch05 task list and Batch05 progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked; sibling and future tasks remain unchecked.
+- Execution report entry: appended and accurate for (05A).
+- Review report entry: appended at EOF.
+- Other: No commit was made.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The (05A) change is clearly distinguishable from previously accepted Batch04 work: current implementation diff is limited to the test file, execution report, and reviewer checkbox update.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A) in Batch05 is complete and sibling Batch05 tasks remain unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05B)
+- Task title: Add insufficient-evidence tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 7. Data Model / Schema Changes; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Plan_11.md > ## 11. Required Tests; docs/plans/Plan_11.md > ## 13. Failure Handling; docs/plans/Master_Plan.md > ## 18.4 Missing Information Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: The latest matching report entry is for Batch05 (05B). Review was limited to this task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_answer_agent.py`: in scope - (05B) strengthens the shared insufficient-evidence assertion and existing tests cover both required insufficient-evidence cases; the grounded simple-reasoning test in the same diff is accepted uncommitted (05A) work.
+- `docs/reports/report_11_execute_agent.md`: in scope - contains appended (05B) execution report; also contains accepted uncommitted (05A) report entry.
+- `docs/tasks/task_11.md`: in scope - reviewer updated only (05B) checkboxes; existing (05A) checkbox changes were already accepted and left intact.
+- `docs/review/review_11_review_agent.md`: in scope - existing accepted (05A) review entry was already present; this (05B) review is appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited data model, implementation, required tests, and failure-handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited missing-information rule reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information`, `test_run_answer_agent_returns_insufficient_evidence_without_provider_for_empty_verified_chunks`, and `_assert_insufficient_evidence_output` now pins the runtime `INSUFFICIENT_EVIDENCE_ANSWER` constant to the expected exact text.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended (05B) execution report and accurately states no task checkbox was updated by the executor.
+
+## Dependency Review
+- Required dependencies: Batch02 insufficient-evidence runtime behavior and prior Agent 3 callable/schema work.
+- Dependency status: satisfied for this test review; runtime `run_answer_agent` path returns the insufficient-evidence output before provider calls when `missing_information` is true or no verified chunks exist.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Test-only scope; ShopAIKey is mocked; no public API, frontend, LangGraph, retrieval, database, provider configuration, or runtime behavior changes were introduced for (05B).
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes, as automated test coverage for existing Agent 3 insufficient-evidence behavior.
+- Stub or fake logic found: no
+- Evidence: Both insufficient-evidence tests call `run_answer_agent` with controlled Agent 2 verification payloads and assert the deterministic safe refusal output. The mocked ShopAIKey callable is configured to fail if called and is asserted not called.
+
+## Hardcoding Review
+- Hardcoding found: no production hardcoding found.
+- Evidence: Exact refusal text is asserted in tests as required by Plan 11. Runtime files were not changed for (05B).
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v` from `backend`
+- Reported result: passed, 63 tests
+- Rerun result: passed, 63 passed in 1.57s
+- Status: satisfied
+- Notes: Rerun includes the two required insufficient-evidence tests and the accepted uncommitted (05A) grounded-answer test.
+
+## Acceptance Review
+- Task acceptance: Tests prove insufficient evidence is handled without provider calls or invented answers.
+- Status: satisfied
+- Evidence: `missing_information=True` and `verified_chunks=[]` are both covered. The shared assertion verifies exact insufficient-evidence text, empty citations, `reasoning_summary == "Insufficient verified evidence."`, `confidence == 0.0`, and a non-ready self-check. Each test asserts `chat_completion.assert_not_called()`, proving no ShopAIKey answer is requested and no forced/invented answer is returned.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch05 task list and Batch05 progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked; sibling and future Batch05 tasks remain unchecked.
+- Execution report entry: appended and accurate for (05B).
+- Review report entry: appended at EOF.
+- Other: No commit was made.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The current git diff includes accepted uncommitted (05A) changes: the grounded simple-reasoning test and the (05A) report/review/task checkbox updates. Those were not treated as new (05B) work.
+- (05B) reused existing insufficient-evidence test functions rather than adding duplicate tests; the added exact-text runtime-constant assertion makes the existing coverage satisfy the task's exact-text requirement.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A) and (05B) in Batch05 are complete and sibling Batch05 tasks remain unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05C)
+- Task title: Add citation enforcement tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 3. Scope; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Plan_11.md > ## 11. Required Tests; docs/plans/Plan_11.md > ## 13. Failure Handling; docs/plans/Master_Plan.md > ## 18.3 Citation Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05C)
+- Reviewed task ID: (05C)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch05 (05C). Review was limited to this task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_answer_agent.py`: in scope - contains the new (05C) omitted-citations provider test and accepted citation rendering provider test; existing accepted uncommitted (05A) and (05B) test edits remain present.
+- `docs/reports/report_11_execute_agent.md`: in scope - contains appended (05C) execution report; existing accepted uncommitted (05A) and (05B) report entries remain present.
+- `docs/tasks/task_11.md`: in scope - reviewer updated only the selected (05C) checkboxes; existing accepted (05A) and (05B) checkbox changes were left intact.
+- `docs/review/review_11_review_agent.md`: in scope - existing accepted (05A) and (05B) reviews were already present; this (05C) review is appended at EOF.
+- `backend/app/agents/answer_agent.py`: in scope for behavior verification - citation formatting and evidence validation helpers reviewed; no current diff for this task.
+- `docs/plans/Plan_11.md`: in scope - cited scope, implementation, required tests, and failure-handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited citation rule reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains mocked provider tests for omitted citations, empty citations, fabricated citation quote, rejected citation evidence, and accepted citation rendering.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended (05C) execution report and accurately states the executor did not update task checkboxes.
+
+## Dependency Review
+- Required dependencies: Batch03 citation enforcement runtime behavior.
+- Dependency status: satisfied; runtime validation exists for required citation presence, verified quote/file-name membership, rejected-evidence exclusion, and display formatting.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Test-only scope; ShopAIKey provider behavior is mocked; invalid provider payloads assert controlled `AnswerAgentError` failures; accepted provider payload asserts normal `file_name: "quoted text"` rendering. No public API, frontend, LangGraph workflow, retrieval, database, configuration, or runtime implementation changes were introduced for (05C).
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes, as automated test coverage for existing Agent 3 citation enforcement behavior.
+- Stub or fake logic found: no
+- Evidence: The (05C) tests call `run_answer_agent` with mocked `shopaikey_service.chat_completion` payloads and assert either controlled `AnswerAgentError` failures or validated output with formatted citations.
+
+## Hardcoding Review
+- Hardcoding found: no production hardcoding found.
+- Evidence: Fixed citation strings and mocked provider payloads are confined to tests for the required citation scenarios. No runtime files were changed for (05C).
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v` from `backend`
+- Reported result: passed, 65 tests
+- Rerun result: passed, 65 passed in 1.66s
+- Status: satisfied
+- Notes: The rerun includes `test_run_answer_agent_rejects_sufficient_evidence_draft_missing_citations`, `test_run_answer_agent_rejects_sufficient_evidence_draft_without_citations`, `test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence`, and `test_run_answer_agent_accepts_verified_citation_and_renders_required_format`.
+
+## Acceptance Review
+- Task acceptance: Tests fail if missing or fabricated citations are accepted.
+- Status: satisfied
+- Evidence: Missing/omitted `citations` is covered by popping the field from a mocked provider payload and expecting `AnswerAgentError`. Empty `citations` is covered by a mocked provider payload with `citations=[]` and expecting `AnswerAgentError`. Fabricated/not-in-verified evidence is covered by a mocked provider payload with a fabricated quote and expecting `AnswerAgentError`. Accepted citation rendering is covered by a mocked provider success path asserting `format_citation` returns `contract.pdf: "The probation period starts on 01/06/2026 and lasts 2 months."`.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch05 task list and Batch05 progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked; sibling and future Batch05 tasks remain unchecked.
+- Execution report entry: appended and accurate for (05C).
+- Review report entry: appended at EOF.
+- Other: No commit was made.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The current git diff includes accepted uncommitted (05A) and (05B) changes: the grounded-answer test, insufficient-evidence assertion, prior report entries, prior review entries, and prior checkbox updates. Those were not treated as new (05C) work.
+- The (05C) task is test-only and correctly reuses existing citation enforcement runtime behavior rather than changing implementation code.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A), (05B), and (05C) in Batch05 are complete; sibling Batch05 tasks remain unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md",
+    "backend/app/agents/answer_agent.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05D)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05D)
+- Task title: Add rejected chunk exclusion and unsupported claim tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 4. Out of Scope; docs/plans/Plan_11.md > ## 9. Implementation Steps; docs/plans/Plan_11.md > ## 11. Required Tests; docs/plans/Plan_11.md > ## 13. Failure Handling; docs/plans/Master_Plan.md > ## 18.1 Grounding Rule
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05D)
+- Reviewed task ID: (05D)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch05 (05D). Review was limited to this task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_answer_agent.py`: in scope - contains the new (05D) rejected chunk fail-closed test and unsupported self-check claim fail-closed test; accepted uncommitted (05A), (05B), and (05C) tests remain present and were not treated as new (05D) work.
+- `backend/app/agents/answer_agent.py`: in scope for behavior verification - reviewed `run_answer_agent`, failed-step logging, rejected-evidence failure typing, and self-check failure handling; no current runtime diff for (05D).
+- `docs/reports/report_11_execute_agent.md`: in scope - contains appended (05D) execution report; accepted uncommitted (05A), (05B), and (05C) report entries remain present.
+- `docs/tasks/task_11.md`: in scope - reviewer updated only the selected (05D) checkboxes after acceptance; existing accepted (05A), (05B), and (05C) checkbox changes were left intact.
+- `docs/review/review_11_review_agent.md`: in scope - existing accepted (05A), (05B), and (05C) reviews were already present; this (05D) review is appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited out-of-scope, implementation, required tests, and failure-handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited grounding rule reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `test_run_answer_agent_rejected_chunk_usage_fails_closed_without_ready_output` and `test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_output`, covering rejected citation/copy attempts and unsupported self-check claims.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains appended (05D) execution report and accurately states the executor did not update task checkboxes.
+
+## Dependency Review
+- Required dependencies: Batch03 citation/rejected-evidence enforcement and Batch04 self-check failure policy plus safe failed-step logging.
+- Dependency status: satisfied; the tests exercise existing `run_answer_agent` behavior for rejected evidence validation, self-check failure handling, and failed log payloads.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Test-only scope; ShopAIKey and agent log persistence are mocked; unsafe sufficient-evidence outputs raise `AnswerAgentError`; failed logs contain controlled error payloads only. No public API, frontend, LangGraph workflow, retrieval, database, configuration, or runtime implementation changes were introduced for (05D).
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes, as automated test coverage for existing Agent 3 rejected-evidence and unsupported-claim safeguards.
+- Stub or fake logic found: no
+- Evidence: The (05D) tests call `run_answer_agent` with mocked provider/self-check outputs and assert controlled `AnswerAgentError` failures plus failed log payloads that omit ready/final-answer fields.
+
+## Hardcoding Review
+- Hardcoding found: no production hardcoding found.
+- Evidence: Fixed rejected quote text, expected failure types, and mocked payloads are confined to tests for the required safety scenarios. Runtime files were not changed for (05D).
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v` from `backend`
+- Reported result: passed, 68 tests in 1.58s
+- Rerun result: passed, 68 passed in 1.53s
+- Status: satisfied
+- Notes: The rerun includes both (05D) tests: rejected chunk usage fail-closed coverage and unsupported self-check claim fail-closed coverage.
+
+## Acceptance Review
+- Task acceptance: Tests prove rejected chunks and unsupported claims cannot produce ready output.
+- Status: satisfied
+- Evidence: The rejected-chunk test covers both a citation using the rejected quote and a final answer copying the rejected quote, expecting controlled failure types, failed logging, and no `is_ready` in the log output. The unsupported-claims test returns `has_unsupported_claims=true` from the self-check mock, expects `failure_type="self_check_failed"`, verifies only a failed log payload is written, and asserts neither `final_answer` nor `is_ready` is present in the failed output payload.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch05 task list and Batch05 progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked; sibling/future (05E) and (05F) remain unchecked.
+- Execution report entry: appended and accurate for (05D).
+- Review report entry: appended at EOF.
+- Other: No commit was made.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The current git diff includes accepted uncommitted (05A), (05B), and (05C) changes: prior Batch05 tests, prior report entries, prior review entries, and prior checkbox updates. Those were distinguished from the new (05D) work.
+- The (05D) task correctly reuses existing Agent 3 enforcement and logging behavior rather than modifying runtime code.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A), (05B), (05C), and (05D) in Batch05 are complete; (05E) and (05F) remain unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_answer_agent.py",
+    "backend/app/agents/answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md",
+    "docs/plans/Plan_11.md",
+    "docs/plans/Master_Plan.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (05E)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05E)
+- Task title: Add provider, parsing, and logging failure tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_11.md > ## 8. API Design; docs/plans/Plan_11.md > ## 11. Required Tests; docs/plans/Plan_11.md > ## 13. Failure Handling; docs/plans/Plan_11.md > ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05E)
+- Reviewed task ID: (05E)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch05 (05E). Review was limited to this task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - backend/tests/test_answer_agent.py
+  - docs/reports/report_11_execute_agent.md
+  - docs/review/review_11_review_agent.md
+  - docs/tasks/task_11.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_answer_agent.py`: in scope - contains the (05E) invalid draft JSON/schema/citation tests, invalid self-check JSON/schema tests, failure-log insertion/raise tests, and direct self-check parser tests; accepted uncommitted (05A)-(05D) test edits remain present and were distinguished from this task.
+- `backend/app/agents/answer_agent.py`: in scope for behavior verification - reviewed parser, provider-call, failed-step logging, safe failed payload, log-persistence warning, and controlled `AnswerAgentError` behavior; no runtime diff for (05E).
+- `docs/reports/report_11_execute_agent.md`: in scope - contains appended (05E) execution report and earlier accepted report entries.
+- `docs/tasks/task_11.md`: in scope - reviewer updated only the selected (05E) checkboxes after acceptance; (05F), Batch05, and Batch06 remain unchecked.
+- `docs/review/review_11_review_agent.md`: in scope - existing (05A)-(05D) reviews were already present; this (05E) review is appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited API design, required tests, failure handling, and reviewer checklist sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_answer_agent.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the requested provider/parsing/logging failure coverage without changing runtime code.
+- file from execution report: docs/reports/report_11_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the appended (05E) execution report and accurately states the executor did not update task checkboxes.
+
+## Dependency Review
+- Required dependencies: Batch04 self-check, safe failure handling, and logging behavior; prior accepted Batch05 tasks (05A)-(05D) for adjacent required coverage.
+- Dependency status: satisfied; Batch04 tasks are checked complete, and (05A)-(05D) are accepted and checked. Existing runtime behavior supports the new tests.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Test-only scope; provider, self-check, and logging dependencies are mocked; controlled failures assert `AnswerAgentError` rather than fake success; failed logs use sanitized output payloads. No public API, frontend, LangGraph workflow, retrieval, database schema, configuration, or shared log service implementation changes were introduced for (05E).
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes, as automated test coverage over existing Agent 3 provider/parsing/logging behavior.
+- Stub or fake logic found: no
+- Evidence: The tests call `run_answer_agent`, `parse_and_validate_draft_answer`, and `parse_and_validate_answer_self_check` with mocked provider/log-service behavior and assert real exceptions, failure types, failed log payloads, and omission of ready/final-answer success fields.
+
+## Hardcoding Review
+- Hardcoding found: no production hardcoding found.
+- Evidence: Fixed provider payload strings, failure types, and expected safe messages are confined to tests and match required controlled failure contracts. Runtime files were not changed for (05E).
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v` from `backend`
+- Reported result: passed, 77 tests in 1.67s
+- Rerun result: passed, 77 passed in 1.51s
+- Status: satisfied
+- Notes: The rerun includes the (05E) invalid draft response, invalid self-check response, failure-log insertion failure, failure-log exception, and direct self-check parser tests. `pytest tests/test_agent_log_service.py -v` was not run because shared log service code/tests were not changed.
+
+## Acceptance Review
+- Task acceptance: Tests prove failures are safe, logged when possible, and not falsely reported as success.
+- Status: satisfied
+- Evidence: Invalid draft JSON, draft schema-invalid confidence, empty citations, invalid self-check JSON, and self-check schema-invalid payloads raise `AnswerAgentError` and log `status="failed"` payloads without `final_answer` or ready output. Failure-log persistence failures preserve the original provider failure and log only sanitized warning/exception context. Direct parser tests cover invalid self-check JSON and schema-invalid self-check payloads.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch05 task list and Batch05 progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked because (05F) is still unchecked; Batch06 remains unchecked.
+- Execution report entry: appended and accurate for (05E).
+- Review report entry: appended at EOF.
+- Other: No commit was made.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The current git diff includes accepted uncommitted (05A), (05B), (05C), and (05D) changes in the same test, report, review, and task files. Those were treated as prior accepted work, not as new (05E) scope.
+- The task correctly uses mocked provider and log-service behavior, avoiding live ShopAIKey or Supabase dependencies for automated tests.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, (05F) remains unchecked, so Batch05 is not complete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_answer_agent.py",
+    "backend/app/agents/answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md",
+    "docs/plans/Plan_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05F)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05F)
+- Task title: Run required targeted automated validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`; `README.md` > `## Testing and Validation`; `README.md` > `Important coordination rules`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05F)
+- Reviewed task ID: (05F)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is `# Task Execution Report - (05F)` and matches the user-requested Batch05 validation task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/tests/test_answer_agent.py`
+  - `docs/reports/report_11_execute_agent.md`
+  - `docs/review/review_11_review_agent.md`
+  - `docs/tasks/task_11.md`
+- untracked files: None
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - contains the appended `(05F)` execution report with validation-only work and reported test evidence.
+- `docs/tasks/task_11.md`: in scope - contains the `(05F)` task requirements and progress tracker; reviewer updated only the selected `(05F)` checkbox in the detailed Batch05 list and progress tracker.
+- `backend/tests/test_answer_agent.py`: in scope - target validation file; current modifications are prior accepted `(05A)` through `(05E)` Batch05 test work, not new `(05F)` implementation.
+- `docs/plans/Plan_11.md`: in scope - cited source sections reviewed for required tests, acceptance criteria, and reviewer checklist.
+- `README.md`: in scope - cited testing and coordination sections reviewed.
+- `docs/review/review_11_review_agent.md`: in scope - existing prior review reports inspected at EOF before appending this review.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(05F)` is validation-only, so the execution report is the only executor-created/modified file for this selected task. The dirty test file belongs to prior accepted Batch05 tasks and was the intended validation target.
+
+## Dependency Review
+- Required dependencies: `(05A)`, `(05B)`, `(05C)`, `(05D)`, and `(05E)` accepted/checked before `(05F)` validation.
+- Dependency status: satisfied for reviewing `(05F)`; task file shows `(05A)` through `(05E)` checked in both Batch05 locations.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: No production code, public API, frontend, LangGraph workflow, retrieval, schema, ShopAIKey service, or agent log service changes were introduced by `(05F)`.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes, for a validation-only task.
+- Stub or fake logic found: no.
+- Evidence: Required pytest command was rerun by reviewer from `backend/` and collected/passed 77 tests.
+
+## Hardcoding Review
+- Hardcoding found: no for selected `(05F)` work.
+- Evidence: `(05F)` did not add runtime or test logic; it only recorded targeted validation evidence.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed; pytest collected 77 tests and all 77 passed in 1.58s.
+- Rerun result: Passed; pytest collected 77 tests and all 77 passed in 1.54s.
+- Status: satisfied.
+- Notes: Related targeted tests for shared schema, ShopAIKey, or agent log service were not required because those files were not changed for `(05F)`; current dirty test changes are prior accepted Batch05 work in `backend/tests/test_answer_agent.py`.
+
+## Acceptance Review
+- Task acceptance: Required targeted validation was run, actually passed, and no fake success or hidden failure was found.
+- Status: satisfied
+- Evidence: Reviewer rerun produced `77 passed in 1.54s`; execution report claim is consistent with repository state and task requirements.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked by reviewer after acceptance in the detailed Batch05 task list and Batch05 progress tracker.
+- Checkbox updated by reviewer: yes.
+- Batch status: not updated; Batch05 remains unchecked as instructed pending A3 batch scope audit/orchestrator handling.
+- Execution report entry: present and appended.
+- Review report entry: appended at EOF after inspecting the existing tail.
+- Other: Sibling and future task checkboxes were not changed by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Existing uncommitted Batch05 test changes from `(05A)` through `(05E)` remain in `backend/tests/test_answer_agent.py`; they are prior accepted work and were distinguished from `(05F)` validation-only scope.
+- `docs/review/review_11_review_agent.md` was already dirty from prior review reports before this append.
+
+## Decision
+- Accept selected task? yes.
+- Repair required? no.
+- Can next task proceed? yes, to the required A3 batch scope audit/orchestrator handoff before Batch06 advancement.
+- Should batch be marked complete? no, only A3/orchestrator should handle the batch-level gate after this accepted review.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch05 - Required Automated Tests",
+  "selected_task_id": "(05F)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

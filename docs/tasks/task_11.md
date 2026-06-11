@@ -709,7 +709,7 @@ Plan 11 is safety-critical: a final answer must never be returned as ready unles
 
 ### Tasks
 
-- [ ] (05A): Add grounded answer and simple reasoning tests
+- [x] (05A): Add grounded answer and simple reasoning tests
   - Source of Truth: `docs/plans/Plan_11.md` > `## 1. Goal`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 18.2 Simple Reasoning Rule`
   - Source Requirements:
     - Verified chunks include start date and probation duration -> answer may infer August 2026.
@@ -726,7 +726,7 @@ Plan 11 is safety-critical: a final answer must never be returned as ready unles
   - Blocked Condition: None.
   - Files: `backend/tests/test_answer_agent.py`
 
-- [ ] (05B): Add insufficient-evidence tests
+- [x] (05B): Add insufficient-evidence tests
   - Source of Truth: `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 18.4 Missing Information Rule`
   - Source Requirements:
     - `missing_information=true` -> insufficient-evidence answer.
@@ -743,7 +743,7 @@ Plan 11 is safety-critical: a final answer must never be returned as ready unles
   - Blocked Condition: None.
   - Files: `backend/tests/test_answer_agent.py`
 
-- [ ] (05C): Add citation enforcement tests
+- [x] (05C): Add citation enforcement tests
   - Source of Truth: `docs/plans/Plan_11.md` > `## 3. Scope`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 18.3 Citation Rule`
   - Source Requirements:
     - Missing citation fails validation.
@@ -760,7 +760,7 @@ Plan 11 is safety-critical: a final answer must never be returned as ready unles
   - Blocked Condition: None.
   - Files: `backend/tests/test_answer_agent.py`
 
-- [ ] (05D): Add rejected chunk exclusion and unsupported claim tests
+- [x] (05D): Add rejected chunk exclusion and unsupported claim tests
   - Source of Truth: `docs/plans/Plan_11.md` > `## 4. Out of Scope`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`
   - Source Requirements:
     - Do not use rejected chunks.
@@ -777,7 +777,7 @@ Plan 11 is safety-critical: a final answer must never be returned as ready unles
   - Blocked Condition: None.
   - Files: `backend/tests/test_answer_agent.py`
 
-- [ ] (05E): Add provider, parsing, and logging failure tests
+- [x] (05E): Add provider, parsing, and logging failure tests
   - Source of Truth: `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - ShopAIKey failure logs failed step and raises `AnswerAgentError`.
@@ -795,7 +795,7 @@ Plan 11 is safety-critical: a final answer must never be returned as ready unles
   - Blocked Condition: None.
   - Files: `backend/tests/test_answer_agent.py`, `backend/tests/test_agent_log_service.py` if changed
 
-- [ ] (05F): Run required targeted automated validation
+- [x] (05F): Run required targeted automated validation
   - Source of Truth: `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`; `README.md` > `## Testing and Validation`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - Run `cd backend` then `pytest tests/test_answer_agent.py -v`.
@@ -1072,12 +1072,12 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch05
 
-- [ ] (05A): Add grounded answer and simple reasoning tests
-- [ ] (05B): Add insufficient-evidence tests
-- [ ] (05C): Add citation enforcement tests
-- [ ] (05D): Add rejected chunk exclusion and unsupported claim tests
-- [ ] (05E): Add provider, parsing, and logging failure tests
-- [ ] (05F): Run required targeted automated validation
+- [x] (05A): Add grounded answer and simple reasoning tests
+- [x] (05B): Add insufficient-evidence tests
+- [x] (05C): Add citation enforcement tests
+- [x] (05D): Add rejected chunk exclusion and unsupported claim tests
+- [x] (05E): Add provider, parsing, and logging failure tests
+- [x] (05F): Run required targeted automated validation
 
 #### Batch06
 

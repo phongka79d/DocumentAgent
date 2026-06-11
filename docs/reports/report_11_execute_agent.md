@@ -2117,3 +2117,501 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after A2 reviews and accepts (04E)
 - handoff notes: Agent 3 success and failed logging now both use non-fatal log-attempt behavior with safe warning visibility when `agent_steps` persistence fails.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05A) - Add grounded answer and simple reasoning tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 1. Goal
+- docs/plans/Plan_11.md > ## 11. Required Tests
+- docs/plans/Plan_11.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 18.2 Simple Reasoning Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05A)
+- Task title: Add grounded answer and simple reasoning tests
+
+## Completed Work
+- Status: complete.
+- Added a mocked Agent 3 success-path test where Agent 2 verified chunks provide a probation start date and a two-month duration, allowing Agent 3 to infer August 2026.
+- The test asserts final answer content, two file-name/quote citations, confidence, reasoning summary, ready self-check output, verified-only provider payload, and no normal-user chunk IDs or document IDs in public output.
+
+## Files Created or Modified
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 63 passed in 1.65s.
+
+## Acceptance Check
+- Task acceptance condition: Tests fail without verified-only citations and ready self-check output.
+- Status: satisfied
+- Evidence: The new test depends on validated citations matching the verified chunks, ready self-check values, grounded August 2026 reasoning from start date plus duration, and public output without internal chunk IDs. The required targeted test suite passed.
+
+## Artifacts Produced
+- Automated coverage for normal Agent 3 grounded success behavior in `backend/tests/test_answer_agent.py`.
+- Appended execution report entry in `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept changes limited to the selected test file and reused existing helper fixtures, mocked ShopAIKey responses, citation schemas, and ready self-check constants.
+- Used two verified chunks to make the allowed simple reasoning explicit: 01/06/2026 plus 2 months -> August 2026.
+- Did not modify runtime Agent 3 behavior because existing implementation satisfied the new test.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch03 and Batch04 were checked complete in `docs/tasks/task_11.md` before execution.
+- No task checkbox update, batch status update, commit, public API, LangGraph workflow, frontend work, sibling Batch05 task, or Batch06 work was performed.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes, after A2 reviews and accepts (05A)
+- handoff notes: Grounded Agent 3 success behavior now has explicit coverage for clear start-date plus probation-duration reasoning, citations, confidence, ready self-check, and no normal-user chunk IDs.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05B) - Add insufficient-evidence tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 11. Required Tests
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > ## 18.4 Missing Information Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05B)
+- Task title: Add insufficient-evidence tests
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Verified the existing deterministic insufficient-evidence tests cover both required cases: `missing_information=true` and empty `verified_chunks`.
+- Strengthened the shared insufficient-evidence assertion to pin the runtime `INSUFFICIENT_EVIDENCE_ANSWER` constant to the exact expected answer text before checking returned output.
+- Confirmed both insufficient-evidence tests assert the exact answer text, empty citations, insufficient-evidence reasoning summary, zero confidence, non-ready self-check, and that ShopAIKey `chat_completion` is not called.
+
+## Files Created or Modified
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 63 passed in 1.61s. Included `test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information` and `test_run_answer_agent_returns_insufficient_evidence_without_provider_for_empty_verified_chunks`.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove insufficient evidence is handled without provider calls or invented answers.
+- Status: satisfied
+- Evidence: The two insufficient-evidence tests mock ShopAIKey with an assertion failure side effect, call `run_answer_agent`, assert `chat_completion.assert_not_called()`, and verify the exact insufficient-evidence output shape instead of a forced answer.
+
+## Artifacts Produced
+- Automated coverage for safe insufficient-evidence refusal behavior in `backend/tests/test_answer_agent.py`.
+- Appended execution report entry in `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused the existing two dedicated insufficient-evidence tests rather than adding duplicate cases.
+- Added one focused assertion to the shared helper so the exact source-of-truth refusal text is pinned directly to the runtime constant and returned output.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch02 and prior Agent 3 implementation tasks were already checked complete in `docs/tasks/task_11.md` before execution.
+- Preserved existing uncommitted `(05A)` changes and did not revert edits made by others.
+- No task checkbox update, batch status update, commit, public API, LangGraph workflow, frontend work, sibling Batch05 task, or Batch06 work was performed.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes, after A2 reviews and accepts (05B)
+- handoff notes: Insufficient-evidence behavior is covered for both `missing_information=true` and empty `verified_chunks`, with exact refusal text and no ShopAIKey provider call assertions.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+`docs/tasks/task_11.md`
+
+## Report File
+`docs/reports/report_11_execute_agent.md`
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05C) - Add citation enforcement tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 3. Scope`
+- `docs/plans/Plan_11.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_11.md` > `## 11. Required Tests`
+- `docs/plans/Plan_11.md` > `## 13. Failure Handling`
+- `docs/plans/Master_Plan.md` > `## 18.3 Citation Rule`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05C)
+- Task title: Add citation enforcement tests
+
+## Completed Work
+- Status: complete.
+- Added a mocked provider test proving a sufficient-evidence draft with the `citations` field omitted fails safely.
+- Added a mocked provider success test proving accepted citations render in the required `file_name: "quoted text"` display form.
+- Confirmed existing citation enforcement coverage also covers empty citation lists, fabricated quote text, citation quote validation against verified evidence, rejected citation evidence, and direct citation contract failures.
+
+## Files Created or Modified
+- `backend/tests/test_answer_agent.py`
+- `docs/reports/report_11_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 65 passed in 4.02s. Included `test_run_answer_agent_rejects_sufficient_evidence_draft_missing_citations`, `test_run_answer_agent_rejects_sufficient_evidence_draft_without_citations`, `test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence`, and `test_run_answer_agent_accepts_verified_citation_and_renders_required_format`.
+
+## Acceptance Check
+- Task acceptance condition: Tests fail if missing or fabricated citations are accepted.
+- Status: satisfied
+- Evidence: Missing `citations`, empty `citations`, and fabricated citation quote payloads raise `AnswerAgentError`; valid verified citations are accepted and rendered as `contract.pdf: "The probation period starts on 01/06/2026 and lasts 2 months."`.
+
+## Artifacts Produced
+- Automated citation safety coverage in `backend/tests/test_answer_agent.py`.
+- Appended execution report entry in `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Added focused tests around the existing `run_answer_agent` mocked provider path and `format_citation` helper instead of changing runtime citation behavior.
+- Preserved existing accepted uncommitted `(05A)` and `(05B)` test changes.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency Batch03 was already checked complete in `docs/tasks/task_11.md` before execution.
+- No task checkbox update, batch status update, commit, public API, LangGraph workflow, frontend work, sibling Batch05 task, or Batch06 work was performed.
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes, after A2 reviews and accepts (05C)
+- handoff notes: Citation enforcement coverage now includes missing citation fields, empty citation lists, fabricated citation quote text, verified evidence quote matching, and accepted rendering in `file_name: "quoted text"` form.
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+`docs/tasks/task_11.md`
+
+## Report File
+`docs/reports/report_11_execute_agent.md`
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05D) - Add rejected chunk exclusion and unsupported claim tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 4. Out of Scope`
+- `docs/plans/Plan_11.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_11.md` > `## 11. Required Tests`
+- `docs/plans/Plan_11.md` > `## 13. Failure Handling`
+- `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05D)
+- Task title: Add rejected chunk exclusion and unsupported claim tests
+
+## Completed Work
+- State: complete.
+- Added explicit mocked-provider coverage proving rejected chunk usage fails closed and cannot produce ready output.
+- Added explicit mocked self-check coverage proving `has_unsupported_claims=true` raises the Batch04 safe failure policy and does not return or log a ready final answer.
+- Preserved existing accepted uncommitted Batch05 `(05A)`, `(05B)`, and `(05C)` changes.
+
+## Files Created or Modified
+- `backend/tests/test_answer_agent.py`
+- `docs/reports/report_11_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 68 passed in 1.58s. New coverage includes `test_run_answer_agent_rejected_chunk_usage_fails_closed_without_ready_output` and `test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_output`.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove rejected chunks and unsupported claims cannot produce ready output.
+- Status: satisfied
+- Evidence: Rejected citation/copy attempts raise `AnswerAgentError`, log failed output only, and do not include `is_ready`; unsupported self-check results raise `AnswerAgentError` with `failure_type="self_check_failed"`, log failed output only, and do not include `final_answer` or `is_ready`.
+
+## Artifacts Produced
+- Automated rejected-evidence and unsupported-claim safety coverage in `backend/tests/test_answer_agent.py`.
+- Appended execution report entry in `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Asserted the existing Batch04 safe failure policy: sufficient-evidence rejected/unsupported failures fail closed with `AnswerAgentError` and a failed log payload, rather than returning unsupported content as ready.
+- Kept runtime code unchanged because existing enforcement already blocks rejected chunks and unsupported claims.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- Initial test expectation assumed rejected citations used the rejected-evidence failure type; validation showed the current implementation classifies that specific path as `citation_validation_error` while still failing closed. The test was corrected to assert the existing safe policy.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch03 and Batch04 were marked complete in `docs/tasks/task_11.md` before execution.
+- No task checkbox update, batch status update, commit, public API, LangGraph workflow, frontend work, sibling Batch05 task, or Batch06 work was performed.
+
+## Notes for Next Task
+- next task ID: (05E)
+- can proceed: yes, after A2 reviews and accepts (05D)
+- handoff notes: Rejected-evidence and unsupported-claim tests now assert fail-closed behavior, failed logging, and no ready final output for unsafe model/self-check results.
+
+---
+
+# Task Execution Report - (05E)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05E) - Add provider, parsing, and logging failure tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 8. API Design`
+- `docs/plans/Plan_11.md` > `## 11. Required Tests`
+- `docs/plans/Plan_11.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05E)
+- Task title: Add provider, parsing, and logging failure tests
+
+## Completed Work
+- Complete.
+- Added Agent 3 provider/parsing/logging failure coverage for invalid draft JSON, draft schema-invalid payloads, missing/empty draft citations, invalid self-check JSON, self-check schema-invalid payloads, failed-step logging, and failure-log insertion failure behavior.
+- Added direct parser coverage for invalid self-check JSON and schema-invalid self-check payloads.
+- Verified controlled failures raise `AnswerAgentError`, log failed steps when possible, avoid raw provider/error detail leakage in log assertions, and do not falsely report ready output.
+
+## Files Created or Modified
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: Final run collected 77 tests and passed with `77 passed in 1.67s`.
+- `cd backend; pytest tests/test_answer_agent.py -v`: Failed during interim development
+- evidence or reason: First run had a collection error from an unsupported helper argument in new test data; corrected before final validation.
+- `cd backend; pytest tests/test_answer_agent.py -v`: Failed during interim development
+- evidence or reason: Second run had one assertion mismatch for UUID vs string logger argument; corrected before final validation.
+- `cd backend; pytest tests/test_agent_log_service.py -v`: Not run
+- evidence or reason: Shared log service code was not changed.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove failures are safe, logged when possible, and not falsely reported as success.
+- Status: satisfied
+- Evidence: New tests assert invalid provider draft responses and invalid self-check responses raise `AnswerAgentError`, emit failed-step payloads with `status="failed"`, omit ready/final-answer success output, and preserve the original provider failure even when failed-step logging cannot persist.
+
+## Artifacts Produced
+- Automated provider, parsing, and logging failure coverage in `backend/tests/test_answer_agent.py`.
+- Appended execution report entry in `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept changes test-only because the current Agent 3 implementation already exposes explicit success/failure logging and safe failure handling for the requested scenarios.
+- Covered both direct parser behavior and full `run_answer_agent` behavior so parsing failures are proven to become logged controlled failures at the Agent 3 boundary.
+
+## Risks or Open Issues
+- Existing accepted Batch05 changes are in the same test file; this execution preserved them and did not attempt to separate or revert prior uncommitted work.
+
+## Minor Issues Fixed During Execution
+- Fixed new test data construction after an interim collection error.
+- Fixed a new assertion to match the actual logger argument type while still asserting the same agent run id.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency Batch04 is checked complete in `docs/tasks/task_11.md`.
+- No task checkbox update, batch status update, commit, shared log service edit, sibling task work, or Batch06 work was performed.
+
+## Notes for Next Task
+- next task ID: (05F)
+- can proceed: yes, after A2 reviews and accepts (05E)
+- handoff notes: Provider/parsing/logging failure coverage now includes invalid draft responses, invalid self-check responses, failed-step logging, and log insertion failure behavior.
+
+---
+
+# Task Execution Report - (05F)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch05 - Required Automated Tests
+
+## Task
+(05F) - Run required targeted automated validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 11. Required Tests`
+- `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`
+- `README.md` > `## Testing and Validation`
+- `README.md` > `Important coordination rules`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Required Automated Tests
+- Task ID: (05F)
+- Task title: Run required targeted automated validation
+
+## Completed Work
+- Status: complete.
+- Ran the required targeted automated validation for Agent 3 answer-agent coverage.
+- Confirmed no additional related targeted test files were dirty before validation; only `backend/tests/test_answer_agent.py` was part of the accepted Batch05 test changes.
+- Did not implement sibling tasks, update task checkboxes, update batch status, or commit.
+
+## Files Created or Modified
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: pytest collected 77 tests from `tests/test_answer_agent.py`; all 77 passed in 1.58s.
+- related targeted tests for shared schema, ShopAIKey, or agent log service: Not run
+- evidence or reason: No shared schema, ShopAIKey service test, or agent log service test file was changed for this task; existing dirty backend test scope was `backend/tests/test_answer_agent.py`.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass, or failures are documented with remaining in-scope work.
+- Status: satisfied
+- Evidence: Required command completed successfully with `77 passed`; no failures or blocked dependency issues occurred.
+
+## Artifacts Produced
+- Test result evidence for Plan 11 targeted automated validation.
+- Appended execution report entry in `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- None; this task was validation-only.
+
+## Risks or Open Issues
+- Existing accepted Batch05 uncommitted changes remain in the workspace and were preserved.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (05A), (05B), (05C), (05D), and (05E) were checked complete in `docs/tasks/task_11.md` before validation.
+- No fake success: pytest was actually run and passed.
+
+## Notes for Next Task
+- next task ID: (06A), after A2 reviews and accepts (05F) and the orchestrator advances the batch.
+- can proceed: yes
+- handoff notes: Batch05 targeted validation has passed with `pytest tests/test_answer_agent.py -v` from `backend/`.
