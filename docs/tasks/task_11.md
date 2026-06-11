@@ -400,7 +400,7 @@ Agent 3's model output is not trustworthy until it is parsed, schema-validated, 
 
 ### Tasks
 
-- [ ] (03A): Call ShopAIKey for sufficient-evidence answer drafting
+- [x] (03A): Call ShopAIKey for sufficient-evidence answer drafting
   - Source of Truth: `docs/plans/Plan_11.md` > `## 5. Dependencies`; `docs/plans/Plan_11.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `README.md` > `### ShopAIKey`
   - Source Requirements:
     - ShopAIKey chat completion helper must exist.
@@ -416,7 +416,7 @@ Agent 3's model output is not trustworthy until it is parsed, schema-validated, 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live provider validation when real backend credentials are missing.
   - Files: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (03B): Parse and validate draft answer JSON
+- [x] (03B): Parse and validate draft answer JSON
   - Source of Truth: `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Require JSON output matching `AnswerAgentOutput` without final self-check or with draft self-check that will be revalidated.
@@ -433,7 +433,7 @@ Agent 3's model output is not trustworthy until it is parsed, schema-validated, 
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/app/agents/schemas.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (03C): Enforce citation presence and format
+- [x] (03C): Enforce citation presence and format
   - Source of Truth: `docs/plans/Plan_11.md` > `## 3. Scope`; `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.3 Citation Style`; `docs/plans/Master_Plan.md` > `## 18.3 Citation Rule`
   - Source Requirements:
     - Implement citation format `file_name: "quoted text"`.
@@ -450,7 +450,7 @@ Agent 3's model output is not trustworthy until it is parsed, schema-validated, 
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/app/agents/schemas.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (03D): Validate citation quotes against verified evidence
+- [x] (03D): Validate citation quotes against verified evidence
   - Source of Truth: `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`
   - Source Requirements:
     - Every citation quote must come from a verified chunk quote.
@@ -466,7 +466,7 @@ Agent 3's model output is not trustworthy until it is parsed, schema-validated, 
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (03E): Reject rejected chunk usage in citations and answer content
+- [x] (03E): Reject rejected chunk usage in citations and answer content
   - Source of Truth: `docs/plans/Plan_11.md` > `## 3. Scope`; `docs/plans/Plan_11.md` > `## 4. Out of Scope`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`
   - Source Requirements:
     - Never use rejected chunks.
@@ -483,7 +483,7 @@ Agent 3's model output is not trustworthy until it is parsed, schema-validated, 
   - Blocked Condition: None.
   - Files: `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`
 
-- [ ] (03F): Preserve final output shape after draft validation
+- [x] (03F): Preserve final output shape after draft validation
   - Source of Truth: `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Output contains `final_answer`, `citations`, `reasoning_summary`, `confidence`, and `self_check`.
@@ -1031,7 +1031,7 @@ Optional future tracks are outside the mandatory dependency chain.
 
 - [x] Batch01 - Answer Contracts, Prompts, and Backend-Only Configuration
 - [x] Batch02 - Answer Agent Callable and Insufficient-Evidence Path
-- [ ] Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- [x] Batch03 - LLM Draft Answer Parsing and Citation Enforcement
 - [ ] Batch04 - Self-Check, Safe Failure Handling, and Logging
 - [ ] Batch05 - Required Automated Tests
 - [ ] Batch06 - Manual Validation, Reporting, and Scope Review
@@ -1055,12 +1055,12 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch03
 
-- [ ] (03A): Call ShopAIKey for sufficient-evidence answer drafting
-- [ ] (03B): Parse and validate draft answer JSON
-- [ ] (03C): Enforce citation presence and format
-- [ ] (03D): Validate citation quotes against verified evidence
-- [ ] (03E): Reject rejected chunk usage in citations and answer content
-- [ ] (03F): Preserve final output shape after draft validation
+- [x] (03A): Call ShopAIKey for sufficient-evidence answer drafting
+- [x] (03B): Parse and validate draft answer JSON
+- [x] (03C): Enforce citation presence and format
+- [x] (03D): Validate citation quotes against verified evidence
+- [x] (03E): Reject rejected chunk usage in citations and answer content
+- [x] (03F): Preserve final output shape after draft validation
 
 #### Batch04
 

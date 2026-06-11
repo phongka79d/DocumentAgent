@@ -12,9 +12,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import app.agents.answer_agent as answer_agent_module
 from app.agents.answer_agent import (
     ANSWER_FAILURE_MESSAGE,
+    ANSWER_OUTPUT_PUBLIC_KEYS,
     AnswerAgentError,
     AnswerEvidenceValidationError,
     READY_SELF_CHECK_REQUIRED_VALUES,
+    DRAFT_SELF_CHECK_PLACEHOLDER,
     build_answer_generation_messages,
     build_answer_generation_payload,
     build_answer_evidence_lookup,
@@ -22,6 +24,8 @@ from app.agents.answer_agent import (
     format_citation,
     normalize_answer_agent_input,
     normalize_answer_self_check,
+    normalize_validated_draft_output,
+    parse_and_validate_draft_answer,
     run_answer_agent,
     validate_answer_evidence_contract,
 )
@@ -129,6 +133,27 @@ def _answer_input_payload() -> dict[str, object]:
     }
 
 
+def _draft_answer_payload(
+    *,
+    self_check: dict[str, bool] | None = None,
+    confidence: float = 0.82,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "final_answer": "Ban co the lam viec chinh thuc vao thang 8/2026.",
+        "citations": [
+            {
+                "file_name": "contract.pdf",
+                "quote": VERIFIED_QUOTE,
+            }
+        ],
+        "reasoning_summary": "Start date plus two months gives 08/2026.",
+        "confidence": confidence,
+    }
+    if self_check is not None:
+        payload["self_check"] = self_check
+    return payload
+
+
 def _assert_insufficient_evidence_output(output: AnswerAgentOutput) -> None:
     assert output.final_answer == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
     assert output.citations == []
@@ -147,16 +172,41 @@ def test_answer_agent_exports_internal_callable_and_error() -> None:
     assert ExportedAnswerAgentError is AnswerAgentError
 
 
-def test_run_answer_agent_accepts_answer_agent_input_for_validation() -> None:
+def test_run_answer_agent_accepts_answer_agent_input_for_validation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_content = json.dumps(_draft_answer_payload())
+    chat_completion = Mock(return_value=provider_content)
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
     input_model = AnswerAgentInput.model_validate(_answer_input_payload())
 
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
-        run_answer_agent(input_model)
+    output = run_answer_agent(input_model)
+
+    assert isinstance(output, AnswerAgentOutput)
+    assert output.final_answer == _draft_answer_payload()["final_answer"]
+    chat_completion.assert_called_once()
 
 
-def test_run_answer_agent_accepts_mapping_for_validation() -> None:
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
-        run_answer_agent(_answer_input_payload())
+def test_run_answer_agent_accepts_mapping_for_validation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_content = json.dumps(_draft_answer_payload())
+    chat_completion = Mock(return_value=provider_content)
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert isinstance(output, AnswerAgentOutput)
+    assert output.citations == [Citation(file_name="contract.pdf", quote=VERIFIED_QUOTE)]
+    chat_completion.assert_called_once()
 
 
 def test_run_answer_agent_wraps_input_validation_failures_safely() -> None:
@@ -263,16 +313,17 @@ def test_build_answer_generation_messages_exclude_rejected_chunks_from_user_evid
 def test_run_answer_agent_sends_verified_evidence_only_to_provider(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    chat_completion = Mock(return_value='{"final_answer":"draft"}')
+    provider_content = json.dumps(_draft_answer_payload())
+    chat_completion = Mock(return_value=provider_content)
     monkeypatch.setattr(
         answer_agent_module.shopaikey_service,
         "chat_completion",
         chat_completion,
     )
 
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
-        run_answer_agent(_answer_input_payload())
+    output = run_answer_agent(_answer_input_payload())
 
+    assert isinstance(output, AnswerAgentOutput)
     chat_completion.assert_called_once()
     messages = chat_completion.call_args.args[0]
     assert chat_completion.call_args.kwargs == {
@@ -292,6 +343,196 @@ def test_run_answer_agent_sends_verified_evidence_only_to_provider(
     assert "rejected_chunks" not in user_payload
     assert REJECTED_QUOTE not in messages[1]["content"]
     assert REJECTED_CHUNK_ID not in messages[1]["content"]
+
+
+def test_parse_and_validate_draft_answer_rejects_invalid_json_safely() -> None:
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        parse_and_validate_draft_answer("not-json")
+
+
+def test_parse_and_validate_draft_answer_rejects_missing_required_fields_safely() -> None:
+    payload = _draft_answer_payload()
+    payload.pop("final_answer")
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        parse_and_validate_draft_answer(json.dumps(payload))
+
+
+def test_parse_and_validate_draft_answer_rejects_missing_citations_safely() -> None:
+    payload = _draft_answer_payload()
+    payload.pop("citations")
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        parse_and_validate_draft_answer(json.dumps(payload))
+
+
+def test_parse_and_validate_draft_answer_rejects_empty_citations_safely() -> None:
+    payload = _draft_answer_payload()
+    payload["citations"] = []
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        parse_and_validate_draft_answer(json.dumps(payload))
+
+
+def test_parse_and_validate_draft_answer_rejects_invalid_confidence_safely() -> None:
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        parse_and_validate_draft_answer(json.dumps(_draft_answer_payload(confidence=1.5)))
+
+
+def test_parse_and_validate_draft_answer_accepts_valid_draft_without_self_check() -> None:
+    output = parse_and_validate_draft_answer(json.dumps(_draft_answer_payload()))
+
+    assert output == AnswerAgentOutput.model_validate(
+        _draft_answer_payload(self_check=DRAFT_SELF_CHECK_PLACEHOLDER)
+    )
+
+
+def test_parse_and_validate_draft_answer_accepts_valid_draft_with_self_check() -> None:
+    self_check = {
+        "uses_only_verified_chunks": True,
+        "has_citation": True,
+        "has_unsupported_claims": False,
+        "is_ready": True,
+    }
+
+    output = parse_and_validate_draft_answer(
+        json.dumps(_draft_answer_payload(self_check=self_check))
+    )
+
+    assert output.self_check == AnswerSelfCheck.model_validate(self_check)
+
+
+def test_parse_and_validate_draft_answer_preserves_valid_citation_shape() -> None:
+    output = parse_and_validate_draft_answer(json.dumps(_draft_answer_payload()))
+
+    assert output.citations == [Citation(file_name="contract.pdf", quote=VERIFIED_QUOTE)]
+    assert format_citation(output.citations[0]) == f'contract.pdf: "{VERIFIED_QUOTE}"'
+
+
+def test_normalize_validated_draft_output_preserves_exact_public_output_shape() -> None:
+    output = parse_and_validate_draft_answer(json.dumps(_draft_answer_payload()))
+    validate_answer_evidence_contract(output, _verification_output())
+
+    normalized = normalize_validated_draft_output(output)
+    normalized_payload = normalized.model_dump(mode="json")
+
+    assert isinstance(normalized, AnswerAgentOutput)
+    assert tuple(normalized_payload.keys()) == ANSWER_OUTPUT_PUBLIC_KEYS
+    assert tuple(normalized_payload["citations"][0].keys()) == ("file_name", "quote")
+    assert tuple(normalized_payload["self_check"].keys()) == (
+        "uses_only_verified_chunks",
+        "has_citation",
+        "has_unsupported_claims",
+        "is_ready",
+    )
+    assert "chunk_id" not in json.dumps(normalized_payload)
+    json.dumps(normalized_payload)
+
+
+def test_run_answer_agent_rejects_sufficient_evidence_draft_without_citations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload["citations"] = []
+    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    chat_completion.assert_called_once()
+
+
+def test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload["citations"] = [
+        {
+            "file_name": "contract.pdf",
+            "quote": "The probation term is similar but this quote was fabricated.",
+        }
+    ]
+    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    chat_completion.assert_called_once()
+
+
+def test_run_answer_agent_rejects_draft_citation_from_rejected_chunk(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload["citations"] = [
+        {
+            "file_name": "draft.pdf",
+            "quote": REJECTED_QUOTE,
+        }
+    ]
+    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    chat_completion.assert_called_once()
+
+
+def test_run_answer_agent_rejects_draft_copying_rejected_quote_in_final_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload["final_answer"] = (
+        "Ban co the lam viec chinh thuc vao thang 8/2026. "
+        f"{REJECTED_QUOTE}"
+    )
+    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    chat_completion.assert_called_once()
+
+
+def test_run_answer_agent_rejects_draft_copying_rejected_quote_in_reasoning_summary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider_payload = _draft_answer_payload()
+    provider_payload["reasoning_summary"] = (
+        "This reasoning copied rejected evidence: "
+        f"{REJECTED_QUOTE}"
+    )
+    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
+        run_answer_agent(_answer_input_payload())
+
+    chat_completion.assert_called_once()
 
 
 def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information(

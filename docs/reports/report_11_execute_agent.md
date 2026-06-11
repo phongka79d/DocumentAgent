@@ -896,3 +896,612 @@ complete
 - next task ID: (03A)
 - can proceed: yes, after A2 accepts (02D)
 - handoff notes: Agent 3 can now build verified-only provider messages and call ShopAIKey for sufficient evidence. Batch03 can parse and validate the provider draft without adding rejected chunks to the answer-generation evidence payload.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+
+## Task
+(03A) - Call ShopAIKey for sufficient-evidence answer drafting
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 5. Dependencies
+- docs/plans/Plan_11.md > ## 6. Required Files and Folders
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- README.md > ### ShopAIKey
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03A)
+- Task title: Call ShopAIKey for sufficient-evidence answer drafting
+
+## Completed Work
+- Task is complete.
+- Wired the sufficient-evidence branch of `run_answer_agent` to return the raw content string from `shopaikey_service.chat_completion` after sending the existing answer-generation prompt and verified-only evidence payload.
+- Preserved deterministic insufficient-evidence behavior without provider calls.
+- Kept draft JSON parsing, Pydantic validation, citation enforcement expansion, self-check execution, step logging, public APIs, LangGraph, frontend chat, retrieval expansion, and conversation memory out of scope.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 34 tests passed in 50.83s, including the mocked sufficient-evidence ShopAIKey call test.
+
+## Acceptance Check
+- Task acceptance condition: Sufficient evidence triggers one mocked chat completion call with backend-configured model behavior hidden in the service.
+- Status: satisfied
+- Evidence: `test_run_answer_agent_sends_verified_evidence_only_to_provider` mocks `shopaikey_service.chat_completion`, verifies exactly one call, verifies the response format argument, verifies only question plus verified chunks are sent, and now asserts the provider content string is returned.
+
+## Artifacts Produced
+- Raw mocked ShopAIKey draft content string is returned for valid sufficient evidence.
+- Execution report appended to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This is an orchestrated single-task run; checkbox and batch updates are left to A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Returned the provider content string directly from `run_answer_agent` for the sufficient-evidence branch to satisfy (03A) without adding draft JSON parsing or validation that belongs to sibling tasks.
+- Continued using `ANSWER_GENERATION_RESPONSE_FORMAT = {"type": "json_object"}` with the existing ShopAIKey chat helper so model selection remains encapsulated in `shopaikey_service`.
+
+## Risks or Open Issues
+- Provider draft parsing and final `AnswerAgentOutput` validation remain intentionally incomplete for later Batch03 tasks.
+- Live provider validation was not run because this task requires mocked unit validation and real ShopAIKey credentials are only a user action for live manual validation.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch02 and (01C) were marked complete in `docs/tasks/task_11.md`.
+- No public APIs, LangGraph, frontend chat, retrieval expansion, conversation memory, Agent 3 self-check execution, Agent 3 step logging, or sibling Batch03 tasks were implemented.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 accepts (03A)
+- handoff notes: `run_answer_agent` now returns the raw ShopAIKey draft content string for sufficient evidence; (03B) can parse and validate that JSON content into the answer schema.
+
+---
+
+# Task Execution Report - (03A) Repair
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+
+## Task
+(03A) - Call ShopAIKey for sufficient-evidence answer drafting
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 5. Dependencies
+- docs/plans/Plan_11.md > ## 6. Required Files and Folders
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- README.md > ### ShopAIKey
+- A2 review repair instructions for rejected (03A)
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03A)
+- Task title: Call ShopAIKey for sufficient-evidence answer drafting
+
+## Completed Work
+- Repair is complete.
+- Updated sufficient-evidence `run_answer_agent` tests that still expected the old placeholder error to mock `answer_agent_module.shopaikey_service.chat_completion`.
+- Updated `test_run_answer_agent_accepts_answer_agent_input_for_validation` and `test_run_answer_agent_accepts_mapping_for_validation` to assert the (03A) raw draft content boundary instead of making a live provider call or expecting the old not-implemented failure.
+- Did not add draft JSON parsing, Pydantic validation, citation enforcement expansion, self-check execution, step logging, public APIs, LangGraph, frontend chat, retrieval expansion, or conversation memory.
+
+## Files Created or Modified
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 34 tests passed in 1.87s, and the sufficient-evidence `run_answer_agent` tests now complete with mocked `chat_completion` and no live provider access.
+
+## Acceptance Check
+- Task acceptance condition: Sufficient evidence triggers one mocked chat completion call with backend-configured model behavior hidden in the service.
+- Status: satisfied
+- Evidence: Every sufficient-evidence `run_answer_agent` test now monkeypatches `answer_agent_module.shopaikey_service.chat_completion`; tests assert returned raw provider content or no provider call for insufficient evidence.
+
+## Artifacts Produced
+- Repaired mocked unit-test coverage for the raw ShopAIKey draft boundary.
+- Repair execution report appended to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This is an orchestrated repair for the same task; checkbox and batch updates remain reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Chose raw draft assertions for the two validation-acceptance tests because (03A) explicitly returns the provider content string and must not parse or validate draft JSON.
+- Kept provider error wrapping tests unchanged because A2 requested only the sufficient-evidence `run_answer_agent` tests that could reach live provider access.
+
+## Risks or Open Issues
+- Provider draft parsing and final `AnswerAgentOutput` validation remain intentionally incomplete for later Batch03 tasks.
+- `docs/review/review_11_review_agent.md` is modified in the working tree but was not touched by this repair.
+
+## Minor Issues Fixed During Execution
+- Prevented two sufficient-evidence tests from attempting live ShopAIKey access after (03A) changed the runtime boundary to return raw provider content.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Repair stayed within A2's requested target file and (03A) scope.
+- No task checkbox was updated and no sibling tasks (03B)-(03F) were implemented.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 accepts repaired (03A)
+- handoff notes: Sufficient-evidence Agent 3 tests now consistently mock ShopAIKey and assert the raw draft content boundary, so (03B) can safely add JSON parsing and validation next.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+
+## Task
+(03B) - Parse and validate draft answer JSON
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 8. API Design
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03B)
+- Task title: Parse and validate draft answer JSON
+
+## Completed Work
+- Task is complete.
+- Added `parse_and_validate_draft_answer` for provider response content.
+- Invalid JSON responses now raise controlled `AnswerAgentError` with the safe public message.
+- Malformed or schema-invalid payloads now raise controlled `AnswerAgentError` through Pydantic validation.
+- Draft payloads missing `self_check` are normalized with a conservative draft placeholder that Batch04 can overwrite during final self-check.
+- `run_answer_agent` now returns a Pydantic-validated `AnswerAgentOutput` for sufficient-evidence provider responses.
+- Did not implement sibling citation enforcement tasks (03C)-(03F), rejected evidence enforcement expansion, self-check execution, logging, public APIs, LangGraph, frontend chat, retrieval expansion, or conversation memory.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Failed before implementation as expected
+- evidence or reason: import failed because `DRAFT_SELF_CHECK_PLACEHOLDER` and `parse_and_validate_draft_answer` did not exist yet.
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 39 tests passed in 1.96s, including invalid JSON, missing required fields, invalid confidence, valid draft without self-check, and valid draft with self-check.
+
+## Acceptance Check
+- Task acceptance condition: Invalid JSON and schema-invalid payloads fail controlled validation; valid payloads continue to citation checks.
+- Status: satisfied
+- Evidence: Parser tests cover invalid JSON, missing `final_answer`, out-of-range `confidence`, and valid draft payloads. `run_answer_agent` now parses provider content into `AnswerAgentOutput`, leaving citation and evidence enforcement to the existing/future citation validation path.
+
+## Artifacts Produced
+- Pydantic-validated draft answer parser.
+- Draft self-check placeholder for provider output that omits `self_check`.
+- Unit test coverage for parser success and failure paths.
+- Execution report appended to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This is an orchestrated run; checkbox and batch updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used strict `json.loads` and `AnswerAgentOutput.model_validate` so malformed JSON, missing fields, extra fields, and bounded-confidence violations are rejected by controlled validation.
+- Used a fail-closed draft self-check placeholder when the model omits `self_check`; it is not ready and is intended to be overwritten by Batch04 self-check logic.
+
+## Risks or Open Issues
+- Citation presence, quote membership, rejected evidence usage, final output preservation, self-check execution, and logging remain intentionally incomplete for sibling/later tasks.
+- Existing uncommitted edits in `docs/tasks/task_11.md` and `docs/review/review_11_review_agent.md` were present before this task and were not modified for (03B).
+
+## Minor Issues Fixed During Execution
+- Updated sufficient-evidence `run_answer_agent` tests from the prior raw-provider-string boundary to the new validated draft object boundary required by (03B).
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (03A) and Batch01 schemas were present in the working tree.
+- No task checkbox was updated and no sibling tasks (03C)-(03F) were implemented.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes, after A2 accepts (03B)
+- handoff notes: `run_answer_agent` now returns validated draft `AnswerAgentOutput`; next task can enforce citation presence/format on that object.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+
+## Task
+(03C) - Enforce citation presence and format
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 3. Scope
+- docs/plans/Plan_11.md > ## 7. Data Model / Schema Changes
+- docs/plans/Plan_11.md > ## 11. Required Tests
+- docs/plans/Master_Plan.md > # 12. Agent 3: Answer Generation and Self-Check Agent > ## 12.3 Citation Style
+- docs/plans/Master_Plan.md > ## 18.3 Citation Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03C)
+- Task title: Enforce citation presence and format
+
+## Completed Work
+- Task is complete.
+- Added draft citation presence enforcement after provider JSON parsing and Pydantic answer validation.
+- Draft answers with missing `citations` fail schema validation through controlled `AnswerAgentError`.
+- Draft answers with empty `citations` now fail controlled citation validation through `AnswerAgentError`.
+- Valid draft citations remain structured as `Citation(file_name, quote)` and can be rendered with `format_citation` as `file_name: "quoted text"`.
+- `run_answer_agent` now rejects sufficient-evidence provider drafts that omit citations while preserving the existing insufficient-evidence output with an empty citation list.
+- Did not implement sibling tasks (03D)-(03F): quote membership validation, rejected chunk usage enforcement expansion, or final output preservation work beyond this citation presence/format requirement.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 43 tests passed in 1.68s, including missing citation, empty citation, valid citation shape, and sufficient-evidence draft-without-citations rejection tests.
+
+## Acceptance Check
+- Task acceptance condition: Missing or empty citations fail for sufficient-evidence answers; valid citations preserve file names and exact quotes.
+- Status: satisfied
+- Evidence: `test_parse_and_validate_draft_answer_rejects_missing_citations_safely`, `test_parse_and_validate_draft_answer_rejects_empty_citations_safely`, `test_run_answer_agent_rejects_sufficient_evidence_draft_without_citations`, and `test_parse_and_validate_draft_answer_preserves_valid_citation_shape` cover the required behavior.
+
+## Artifacts Produced
+- Controlled draft citation presence validation in `parse_and_validate_draft_answer`.
+- Unit test coverage for missing citations, empty citations, and normal-user citation rendering format.
+- Execution report appended to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: This is an orchestrated run; checkbox and batch updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept citation presence validation in the sufficient-evidence draft parsing path instead of the global `AnswerAgentOutput` schema because the deterministic insufficient-evidence output must truthfully return an empty citation list.
+- Reused the existing `Citation` schema and `format_citation` helper for file-name plus quote format instead of adding a duplicate renderer.
+- Raised the existing safe `AnswerAgentError` public message for citation validation failures to match current controlled failure handling.
+
+## Risks or Open Issues
+- Citation quote membership against verified evidence remains intentionally incomplete for (03D).
+- Rejected chunk citation/content rejection remains intentionally incomplete for (03E).
+- Final output preservation after all Batch03 validation remains for (03F).
+- Self-check execution and logging remain later Batch04 scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (03B) and (01B) were complete in `docs/tasks/task_11.md` before execution.
+- Existing uncommitted Batch03 changes were preserved; no task checkbox was updated and no sibling task was intentionally implemented.
+
+## Notes for Next Task
+- next task ID: (03D)
+- can proceed: yes, after A2 accepts (03C)
+- handoff notes: Provider drafts now must include at least one structured citation before returning from `run_answer_agent`; next task can compare citation quotes against verified evidence.
+
+---
+
+# Task Execution Report - (03D)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+
+## Task
+(03D) - Validate citation quotes against verified evidence
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 11. Required Tests
+- docs/plans/Plan_11.md > ## 13. Failure Handling
+- docs/plans/Master_Plan.md > ## 18.1 Grounding Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03D)
+- Task title: Validate citation quotes against verified evidence
+
+## Completed Work
+- Task is complete.
+- Added runtime validation for sufficient-evidence draft citations so every citation quote must exactly match a quote from Agent 2 verified chunks.
+- Draft citation quotes not present in verified evidence now raise controlled `AnswerAgentError` and are not returned from `run_answer_agent`.
+- Kept rejected chunk citation/content enforcement broader than verified quote membership out of this task's implementation scope for sibling task (03E).
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py::test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence -v`: Failed before implementation as expected
+- evidence or reason: test failed with `Failed: DID NOT RAISE <class 'app.agents.answer_agent.AnswerAgentError'>`, proving fabricated draft citation quotes were returned before the fix.
+- `cd backend; pytest tests/test_answer_agent.py::test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence -v`: Passed
+- evidence or reason: 1 test passed after adding verified quote membership enforcement.
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 44 tests passed in 2.00s.
+- `cd backend; python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`: Passed
+- evidence or reason: command exited 0 with no output.
+
+## Acceptance Check
+- Task acceptance condition: Draft answers citing quotes not found in verified evidence fail validation and are not returned.
+- Status: satisfied
+- Evidence: `test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence` mocks a sufficient-evidence provider draft containing a fabricated but similar citation quote and asserts `run_answer_agent` raises the controlled `AnswerAgentError`.
+
+## Artifacts Produced
+- `validate_draft_citation_quotes_against_verified_evidence` helper.
+- Unit test coverage for LLM citation quote not present in verified evidence.
+- Execution report appended to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used exact verified quote membership because the task requires deterministic validation and must not accept semantically similar fabricated quote text.
+- Converted quote membership failures to the existing safe public `AnswerAgentError` message to match current controlled failure handling.
+- Avoided calling the broader full evidence contract from `run_answer_agent` because rejected chunk citation/content enforcement is explicitly reserved for (03E).
+
+## Risks or Open Issues
+- Rejected chunk citation/content rejection remains intentionally incomplete for (03E).
+- Final output preservation after all Batch03 validation remains for (03F).
+- Self-check execution and logging remain later Batch04 scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (03C) and Batch02 evidence lookup were complete before execution.
+- Existing uncommitted Batch03 changes were preserved; no task checkbox was updated and no sibling task was intentionally implemented.
+
+## Notes for Next Task
+- next task ID: (03E)
+- can proceed: yes, after A2 accepts (03D)
+- handoff notes: `run_answer_agent` now rejects provider drafts whose citation quote text is absent from Agent 2 verified chunk quotes; next task can enforce rejected chunk usage checks without changing this exact verified quote membership rule.
+
+---
+
+# Task Execution Report - (03E)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+
+## Task
+(03E) - Reject rejected chunk usage in citations and answer content
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_11.md > ## 3. Scope
+- docs/plans/Plan_11.md > ## 4. Out of Scope
+- docs/plans/Plan_11.md > ## 9. Implementation Steps
+- docs/plans/Plan_11.md > ## 11. Required Tests
+- docs/plans/Master_Plan.md > ## 18.1 Grounding Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03E)
+- Task title: Reject rejected chunk usage in citations and answer content
+
+## Completed Work
+- Status: complete.
+- Reused the existing Agent 2 evidence lookup and full answer evidence contract to validate draft answers before `run_answer_agent` returns output.
+- Added `validate_draft_answer_against_evidence` so draft citations, citation file/quote pairs, rejected citations, rejected quote reuse in `final_answer`, and rejected quote reuse in `reasoning_summary` are rejected safely.
+- Converted rejected-evidence draft failures into the existing controlled `AnswerAgentError` public failure path.
+- Added unit coverage for LLM drafts that cite rejected chunks or copy rejected quote text into normal answer output.
+
+## Files Created or Modified
+- backend/app/agents/answer_agent.py
+- backend/tests/test_answer_agent.py
+- docs/reports/report_11_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 47 tests collected, 47 passed.
+
+## Acceptance Check
+- Task acceptance condition: Draft answers using rejected quote text are blocked.
+- Status: satisfied
+- Evidence: `test_run_answer_agent_rejects_draft_citation_from_rejected_chunk`, `test_run_answer_agent_rejects_draft_copying_rejected_quote_in_final_answer`, and `test_run_answer_agent_rejects_draft_copying_rejected_quote_in_reasoning_summary` all assert controlled `AnswerAgentError` failures for mocked LLM drafts using rejected evidence.
+
+## Artifacts Produced
+- `validate_draft_answer_against_evidence` helper.
+- Unit tests for rejected citation and rejected quote reuse in draft answer content.
+- Execution report appended to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Reused `validate_answer_evidence_contract` for draft output because it already enforces rejected citation exclusion and visible rejected quote exclusion without adding Batch04 self-check behavior.
+- Kept the failure policy as controlled `AnswerAgentError` instead of returning unsupported draft output.
+- Did not add logging, self-check execution, unsupported-claim checks, LangGraph orchestration, public APIs, frontend behavior, or task checkbox updates.
+
+## Risks or Open Issues
+- Final output shape preservation remains for (03F).
+- Batch04 self-check execution, failure policy enforcement, and logging remain out of scope for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (03D) was checked in `docs/tasks/task_11.md`; Batch02 evidence lookup exists and is reused.
+- Existing uncommitted edits were preserved; no sibling task was intentionally implemented.
+
+## Notes for Next Task
+- next task ID: (03F)
+- can proceed: yes, after A2 accepts (03E)
+- handoff notes: `run_answer_agent` now fails safely when the provider draft cites rejected evidence or copies rejected quote text into `final_answer` or `reasoning_summary`; (03F) can preserve output shape after the completed Batch03 validation path.
+---
+
+# Task Execution Report - (03F)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+
+## Task
+(03F) - Preserve final output shape after draft validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`
+- `docs/plans/Plan_11.md` > `## 8. API Design`
+- `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03F)
+- Task title: Preserve final output shape after draft validation
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added an explicit public output key contract for Agent 3 draft/final output shape.
+- Added `normalize_validated_draft_output` to revalidate evidence-checked drafts through `AnswerAgentOutput`, serialize with JSON mode, assert the exact public top-level keys, and return a Pydantic model for later self-check/final output work.
+- Wired `run_answer_agent` to return the normalized validated draft output after citation and evidence checks.
+- Added a unit test asserting exact expected output keys, exact citation/self-check nested keys, JSON serializability, Pydantic validity, and absence of `chunk_id` in the normalized public payload.
+
+## Files Created or Modified
+- `backend/app/agents/answer_agent.py`
+- `backend/tests/test_answer_agent.py`
+- `docs/reports/report_11_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 48 tests collected, 48 passed.
+
+## Acceptance Check
+- Task acceptance condition: Valid draft answers remain JSON-serializable and Pydantic-valid after evidence checks.
+- Status: satisfied
+- Evidence: `test_normalize_validated_draft_output_preserves_exact_public_output_shape` validates the evidence-checked draft, normalizes it, asserts `AnswerAgentOutput`, checks exact keys `final_answer`, `citations`, `reasoning_summary`, `confidence`, and `self_check`, confirms citation keys are only `file_name` and `quote`, confirms self-check keys are exact, confirms no `chunk_id`, and runs JSON serialization.
+
+## Artifacts Produced
+- `ANSWER_OUTPUT_PUBLIC_KEYS` contract.
+- `normalize_validated_draft_output` helper.
+- Exact output-key regression test.
+- Execution report appended to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept normalization inside the Agent 3 answer module so Batch04 can consume a stable `AnswerAgentOutput` model without adding self-check execution in this task.
+- Used Pydantic validation plus JSON-mode serialization to keep the output public, serializable, and free of internal chunk/document fields.
+- Did not add public APIs, logging, LangGraph orchestration, Batch04 self-check execution, or unsupported-claim policy behavior.
+
+## Risks or Open Issues
+- Batch04 self-check execution, safe failure handling, and logging remain out of scope and still pending.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (03B), (03C), (03D), and (03E) were checked as complete in `docs/tasks/task_11.md` before implementation.
+- Existing uncommitted edits were preserved; no task checkbox, sibling task, future batch, or unrelated file was updated.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes, after A2 accepts (03F)
+- handoff notes: Batch04 can call `normalize_validated_draft_output` output as a stable `AnswerAgentOutput` with exact public keys and no exposed chunk IDs.

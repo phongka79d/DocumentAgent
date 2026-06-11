@@ -65,6 +65,19 @@ READY_SELF_CHECK_REQUIRED_VALUES = {
     "has_unsupported_claims": False,
     "is_ready": True,
 }
+DRAFT_SELF_CHECK_PLACEHOLDER = {
+    "uses_only_verified_chunks": False,
+    "has_citation": False,
+    "has_unsupported_claims": True,
+    "is_ready": False,
+}
+ANSWER_OUTPUT_PUBLIC_KEYS = (
+    "final_answer",
+    "citations",
+    "reasoning_summary",
+    "confidence",
+    "self_check",
+)
 
 _CHUNK_ID_LABEL_PATTERN = re.compile(r"\bchunk[\s_-]*id\b", re.IGNORECASE)
 ANSWER_GENERATION_RESPONSE_FORMAT = {"type": "json_object"}
@@ -136,6 +149,68 @@ def normalize_answer_agent_input(
     except ValidationError as exc:
         logger.warning("Answer agent input failed schema validation.")
         raise _AnswerAgentFailure("input_validation_error") from exc
+
+
+def parse_and_validate_draft_answer(provider_content: str) -> AnswerAgentOutput:
+    """Parse provider JSON and validate the draft answer shape."""
+    try:
+        draft_payload = json.loads(provider_content)
+    except json.JSONDecodeError as exc:
+        logger.warning("Answer agent provider response contained invalid JSON.")
+        raise _AnswerAgentFailure("invalid_json_response") from exc
+
+    if isinstance(draft_payload, dict) and "self_check" not in draft_payload:
+        draft_payload = {
+            **draft_payload,
+            "self_check": DRAFT_SELF_CHECK_PLACEHOLDER,
+        }
+
+    try:
+        draft_output = AnswerAgentOutput.model_validate(draft_payload)
+    except ValidationError as exc:
+        logger.warning("Answer agent draft response failed schema validation.")
+        raise _AnswerAgentFailure("draft_validation_error") from exc
+
+    try:
+        _validate_citation_presence(draft_output.citations)
+    except AnswerEvidenceValidationError as exc:
+        logger.warning("Answer agent draft response omitted required citations.")
+        raise _AnswerAgentFailure("citation_validation_error") from exc
+
+    return draft_output
+
+
+def validate_draft_citation_quotes_against_verified_evidence(
+    output: AnswerAgentOutput,
+    verification: VerificationAgentOutput,
+) -> None:
+    """Validate that every draft citation quote exactly matches verified evidence."""
+    evidence_lookup = build_answer_evidence_lookup(verification)
+    for citation in output.citations:
+        if citation.quote not in evidence_lookup.verified_quotes:
+            raise AnswerEvidenceValidationError(
+                f"Citation quote is not present in verified evidence: "
+                f"{format_citation(citation)}"
+            )
+
+
+def validate_draft_answer_against_evidence(
+    output: AnswerAgentOutput,
+    verification: VerificationAgentOutput,
+) -> None:
+    """Validate draft citations and visible text before returning an answer."""
+    validate_answer_evidence_contract(output, verification)
+
+
+def normalize_validated_draft_output(
+    output: AnswerAgentOutput | Mapping[str, Any],
+) -> AnswerAgentOutput:
+    """Keep validated drafts in the public Agent 3 output shape."""
+    validated_output = AnswerAgentOutput.model_validate(output)
+    public_payload = validated_output.model_dump(mode="json")
+    if tuple(public_payload.keys()) != ANSWER_OUTPUT_PUBLIC_KEYS:
+        raise _AnswerAgentFailure("draft_output_shape_error")
+    return AnswerAgentOutput.model_validate(public_payload)
 
 
 def build_answer_generation_payload(
@@ -214,14 +289,28 @@ def run_answer_agent(
 
     messages = build_answer_generation_messages(answer_input)
     try:
-        shopaikey_service.chat_completion(
+        provider_content = shopaikey_service.chat_completion(
             messages,
             response_format=ANSWER_GENERATION_RESPONSE_FORMAT,
         )
     except shopaikey_service.ShopAIKeyServiceError as exc:
         raise _AnswerAgentFailure("provider_error") from exc
 
-    raise _AnswerAgentFailure("answer_generation_not_implemented")
+    draft_output = parse_and_validate_draft_answer(provider_content)
+    try:
+        validate_draft_citation_quotes_against_verified_evidence(
+            draft_output,
+            answer_input.verification,
+        )
+        validate_draft_answer_against_evidence(
+            draft_output,
+            answer_input.verification,
+        )
+    except AnswerEvidenceValidationError as exc:
+        logger.warning("Answer agent draft failed evidence validation.")
+        raise _AnswerAgentFailure("citation_validation_error") from exc
+
+    return normalize_validated_draft_output(draft_output)
 
 
 def _has_insufficient_evidence(verification: VerificationAgentOutput) -> bool:
@@ -316,9 +405,11 @@ __all__ = [
     "ANSWER_AGENT_NAME",
     "ANSWER_FAILURE_MESSAGE",
     "ANSWER_GENERATION_RESPONSE_FORMAT",
+    "ANSWER_OUTPUT_PUBLIC_KEYS",
     "AnswerEvidenceLookup",
     "AnswerAgentError",
     "AnswerEvidenceValidationError",
+    "DRAFT_SELF_CHECK_PLACEHOLDER",
     "INSUFFICIENT_EVIDENCE_ANSWER",
     "READY_SELF_CHECK_REQUIRED_VALUES",
     "build_answer_generation_messages",
@@ -328,6 +419,10 @@ __all__ = [
     "format_citation",
     "normalize_answer_self_check",
     "normalize_answer_agent_input",
+    "normalize_validated_draft_output",
+    "parse_and_validate_draft_answer",
     "run_answer_agent",
+    "validate_draft_answer_against_evidence",
+    "validate_draft_citation_quotes_against_verified_evidence",
     "validate_answer_evidence_contract",
 ]

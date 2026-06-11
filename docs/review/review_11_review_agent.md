@@ -1799,3 +1799,1244 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03A)
+- Task title: Call ShopAIKey for sufficient-evidence answer drafting
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 5. Dependencies`; `docs/plans/Plan_11.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `README.md` > `### ShopAIKey`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The latest matching execution report is for the requested single task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`; `backend/tests/test_answer_agent.py`; `docs/reports/report_11_execute_agent.md`
+- untracked files: none at review start
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - sufficient-evidence branch now calls `shopaikey_service.chat_completion` with answer-generation messages and JSON response format, returning raw provider content.
+- `backend/tests/test_answer_agent.py`: in scope - contains the mocked 03A provider-call test, but also leaves sufficient-evidence `run_answer_agent` validation tests unmocked.
+- `docs/reports/report_11_execute_agent.md`: in scope - execution report entry appended for (03A).
+- `docs/tasks/task_11.md`: in scope - selected task remains unchecked; Batch03 remains incomplete.
+- `docs/plans/Plan_11.md`: in scope - cited source sections reviewed.
+- `backend/app/services/shopaikey_service.py`: supporting evidence - provider helper owns model/settings and HTTP call behavior.
+- `backend/app/core/config.py`: supporting evidence - backend-only ShopAIKey chat settings reviewed.
+- `README.md`: supporting evidence - ShopAIKey backend-only/model configuration section reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime change is scoped to sufficient-evidence provider drafting.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Mocked 03A test exists, but surrounding tests are now unsafe because they can hit the provider path without a mock.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report was appended.
+
+## Dependency Review
+- Required dependencies: Batch02, (01C), existing `shopaikey_service.chat_completion` helper.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Provider model behavior remains hidden in `shopaikey_service`; no provider model is passed from `answer_agent.py`; answer-generation prompt and verified-only payload are reused; no public API, LangGraph, frontend chat, retrieval expansion, conversation memory, self-check execution, or Agent 3 logging was added.
+- Failed: Unit validation does not reliably keep provider access mocked; at least one sufficient-evidence test still reaches the real provider path and timed out in review.
+- Uncertain: Full suite could not be completed in review because it timed out before producing pytest output.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: `run_answer_agent` normalizes input, preserves deterministic insufficient-evidence behavior, builds answer-generation messages from verified chunks, calls `shopaikey_service.chat_completion`, passes `ANSWER_GENERATION_RESPONSE_FORMAT`, and returns the raw content string. The raw-content boundary is appropriate for (03A); JSON parsing/validation belongs to (03B) and later sibling tasks.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No model name, API key, base URL, fixture answer, or provider settings were hardcoded in production code. The JSON response format constant is task-aligned and optional through the existing helper.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py::test_run_answer_agent_sends_verified_evidence_only_to_provider -vv -s`
+- Reported result: included in reported `34 tests passed`
+- Rerun result: passed, 1 passed in 1.72s
+- Status: passed
+- Notes: This test verifies exactly one mocked `shopaikey_service.chat_completion` call, verified-only user payload, answer-generation prompt path, response format argument, and raw provider content return.
+- Command/check: `pytest tests/test_answer_agent.py::test_run_answer_agent_accepts_answer_agent_input_for_validation -vv -s` with `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, and `SHOPAIKEY_CHAT_MODEL` forced empty
+- Reported result: included in reported `34 tests passed`
+- Rerun result: timed out after 34 seconds
+- Status: failed
+- Notes: The test does not mock `shopaikey_service.chat_completion`; after (03A), sufficient-evidence input reaches the provider path, so the test can require live/provider configuration instead of staying unit-only.
+- Command/check: `pytest tests/test_answer_agent.py -v` with `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, and `SHOPAIKEY_CHAT_MODEL` forced empty
+- Reported result: `34 tests passed in 50.83s`
+- Rerun result: timed out after 124 seconds before usable pytest output
+- Status: failed
+- Notes: Full targeted validation was not reproducible during review, consistent with the unmocked provider-path test issue.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: not reported for (03A)
+- Rerun result: passed
+- Status: passed
+- Notes: Syntax check completed with exit code 0.
+
+## Acceptance Review
+- Task acceptance: Sufficient evidence should trigger one mocked chat completion call with backend-configured model behavior hidden in the service.
+- Status: partially satisfied
+- Evidence: The dedicated mocked provider-call test passes and production code keeps model selection inside `shopaikey_service`. Acceptance is not fully satisfied because the test module still contains unmocked sufficient-evidence calls that can require live provider access, violating the selected task's explicit test boundary.
+
+## Progress Tracking
+- Selected task checkbox: unchecked at review time
+- Checkbox updated by reviewer: no
+- Batch status: Batch03 remains incomplete and was not marked complete
+- Execution report entry: appended for (03A)
+- Review report entry: appended by reviewer
+- Other: No sibling Batch03 checkboxes were updated.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report says mocked unit validation passed and no live provider validation was required, but reviewer validation found unmocked sufficient-evidence tests that can enter the live provider path and caused timeout. The report does not disclose this validation fragility.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `backend/tests/test_answer_agent.py`: Sufficient-evidence `run_answer_agent` tests still call the provider path without mocking `shopaikey_service.chat_completion`. Reviewer rerun of `test_run_answer_agent_accepts_answer_agent_input_for_validation` timed out, and the full targeted suite also timed out. This violates (03A)'s explicit requirement to keep unit tests mocked and not require live provider access.
+
+### Minor
+- None
+
+### Warnings
+- `run_answer_agent` now returns `AnswerAgentOutput | str` until (03B) parses and validates the raw draft. This is acceptable for the (03A) raw draft boundary but should be tightened by the next accepted parsing task.
+
+### Observations
+- Verified-only provider payload excludes rejected chunks, rejected quotes, rejected chunk IDs, document IDs, and rejection reasons.
+- Provider model behavior remains hidden in `shopaikey_service`; no model name is hardcoded in `answer_agent.py`.
+- No sibling tasks (03B)-(03F), public APIs, LangGraph, frontend chat, retrieval expansion, conversation memory, self-check execution, or Agent 3 logging were implemented.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/tests/test_answer_agent.py`
+- change: Mock `answer_agent_module.shopaikey_service.chat_completion` in every test that exercises sufficient-evidence `run_answer_agent`, including `test_run_answer_agent_accepts_answer_agent_input_for_validation` and `test_run_answer_agent_accepts_mapping_for_validation`. Update expectations to match the (03A) raw draft boundary or use an explicit mocked `ShopAIKeyServiceError` when testing safe error wrapping. Do not let any unit test depend on missing local credentials, real `.env` values, network timeouts, or live provider behavior.
+- validation: Run `cd backend` then `pytest tests/test_answer_agent.py -v` and confirm the suite completes without live provider access; rerun the dedicated mocked provider-call test and verify exactly one mocked `chat_completion` call.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch03 - LLM Draft Answer Parsing and Citation Enforcement",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "pytest tests/test_answer_agent.py -v timed out after 124 seconds",
+    "pytest tests/test_answer_agent.py::test_run_answer_agent_accepts_answer_agent_input_for_validation -vv -s timed out after 34 seconds"
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "Unit tests still allow sufficient-evidence run_answer_agent paths to reach live ShopAIKey behavior without mocks."
+  ],
+  "warnings": [
+    "run_answer_agent temporarily returns raw provider content as str for (03A), which must be parsed and validated in later Batch03 tasks."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03A) Repair
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03A)
+- Task title: Call ShopAIKey for sufficient-evidence answer drafting
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 5. Dependencies`; `docs/plans/Plan_11.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `README.md` > `### ShopAIKey`; prior A2 repair instructions for (03A)
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A) repair
+- Correct selection: yes
+- Notes: The latest matching report entry is `# Task Execution Report - (03A) Repair` and directly addresses the prior A2 rejection.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`; `backend/tests/test_answer_agent.py`; `docs/reports/report_11_execute_agent.md`; `docs/review/review_11_review_agent.md`; `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - sufficient-evidence runtime remains the accepted (03A) raw provider-content boundary through `shopaikey_service.chat_completion` with answer-generation messages and JSON response format.
+- `backend/tests/test_answer_agent.py`: in scope - repaired sufficient-evidence `run_answer_agent` tests now monkeypatch `shopaikey_service.chat_completion` and assert raw draft content.
+- `docs/reports/report_11_execute_agent.md`: in scope - repair execution report appended and accurately describes the repaired tests and validation.
+- `docs/review/review_11_review_agent.md`: in scope - prior rejection reviewed; this repair review appended.
+- `docs/tasks/task_11.md`: in scope - only (03A) checkboxes updated after acceptance; Batch03 and sibling tasks remain unchecked.
+- `docs/plans/Plan_11.md`: in scope - cited dependency/file/implementation-step sections reviewed as needed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair target matches A2 instructions; no remaining unmocked sufficient-evidence `run_answer_agent` test paths found.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest repair report is appended and accurate.
+
+## Dependency Review
+- Required dependencies: Batch02, (01C), existing `shopaikey_service.chat_completion`, prior A2 repair instructions.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Sufficient evidence calls the existing backend ShopAIKey helper; model/provider selection remains hidden in `shopaikey_service`; tests are mocked and no live provider access is required; verified-only payload/messages and answer-generation prompt are preserved; optional OpenAI-compatible JSON response format is passed.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `run_answer_agent` returns raw mocked provider content for sufficient evidence after calling `shopaikey_service.chat_completion`; insufficient-evidence paths still avoid provider calls. Repair changed tests only, making all sufficient-evidence `run_answer_agent` tests use mocked `chat_completion`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code does not hardcode provider model, API key, base URL, or live response. Test draft strings are local mock return values only.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v` with `SHOPAIKEY_API_KEY`, `SHOPAIKEY_BASE_URL`, and `SHOPAIKEY_CHAT_MODEL` forced empty
+- Reported result: 34 passed in 1.87s
+- Rerun result: 34 passed in 2.05s
+- Status: passed
+- Notes: Confirms no live provider access is required for the targeted suite.
+- Command/check: `pytest tests/test_answer_agent.py::test_run_answer_agent_accepts_answer_agent_input_for_validation tests/test_answer_agent.py::test_run_answer_agent_accepts_mapping_for_validation tests/test_answer_agent.py::test_run_answer_agent_sends_verified_evidence_only_to_provider -vv -s` with ShopAIKey env vars forced empty
+- Reported result: covered by full suite
+- Rerun result: 3 passed in 1.96s
+- Status: passed
+- Notes: Confirms the prior rejected tests now mock `chat_completion`; the dedicated provider-call test still verifies one mocked call and raw draft return.
+
+## Acceptance Review
+- Task acceptance: Sufficient evidence triggers one mocked chat completion call with backend-configured model behavior hidden in the service.
+- Status: satisfied
+- Evidence: The repaired tests mock `answer_agent_module.shopaikey_service.chat_completion`; the dedicated provider-call test verifies one call, JSON response format, answer-generation messages, verified-only payload, and raw provider content return. Full targeted tests complete with provider env vars empty.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and Progress Tracker for `(03A)`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked/incomplete
+- Execution report entry: latest repair report appended
+- Review report entry: appended by reviewer
+- Other: No sibling or future task checkboxes were updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Raw draft parsing, Pydantic validation, citation enforcement expansion, self-check execution, and Agent 3 logging remain correctly deferred to sibling/future tasks.
+- The previous A2 rejection root cause is repaired.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch03 - LLM Draft Answer Parsing and Citation Enforcement",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03B)
+- Task title: Parse and validate draft answer JSON
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest matching execution report is the appended `# Task Execution Report - (03B)` entry and matches the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`; `backend/tests/test_answer_agent.py`; `docs/reports/report_11_execute_agent.md`; `docs/review/review_11_review_agent.md`; `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - adds `parse_and_validate_draft_answer`, fail-closed draft self-check placeholder, and sufficient-evidence parsing into `AnswerAgentOutput`.
+- `backend/tests/test_answer_agent.py`: in scope - adds parser tests for invalid JSON, schema-invalid payloads, invalid confidence, valid payload without self-check, valid payload with self-check, and updated sufficient-evidence output expectations.
+- `docs/reports/report_11_execute_agent.md`: in scope - latest execution report for (03B) was appended and reviewed.
+- `docs/tasks/task_11.md`: in scope - selected (03B) task and progress tracker checkboxes were updated after acceptance only; Batch03 and sibling tasks remain unchecked.
+- `docs/review/review_11_review_agent.md`: in scope - prior (03A) review history inspected; this (03B) review appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited API design, implementation steps, and failure handling sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime change is limited to draft JSON parsing and schema validation after the existing provider call.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover the required parser acceptance and failure cases.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes the implemented work.
+
+## Dependency Review
+- Required dependencies: (03A), Batch01 schemas.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none found; (03A) is accepted in the task file and review history, and `AnswerAgentOutput`/`AnswerSelfCheck` schemas are available.
+
+## Architecture Alignment
+- Passed: `run_answer_agent` remains an internal backend callable; no public API, LangGraph workflow, frontend chat, retrieval expansion, conversation memory, logging behavior, or self-check execution was added; provider output is parsed as JSON and Pydantic-validated; invalid JSON and schema errors raise controlled `AnswerAgentError`.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `parse_and_validate_draft_answer` uses `json.loads`, normalizes missing `self_check` with `DRAFT_SELF_CHECK_PLACEHOLDER`, validates through `AnswerAgentOutput.model_validate`, and converts JSON/schema failures into `_AnswerAgentFailure`. `run_answer_agent` now returns the validated `AnswerAgentOutput` for sufficient-evidence provider responses.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The only new constant is a task-aligned fail-closed self-check placeholder. No provider credentials, model names, document IDs, expected production answers, or live configuration values were hardcoded in production code.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: 39 tests passed in 1.96s
+- Rerun result: 39 tests passed in 2.04s
+- Status: passed
+- Notes: Confirms parser success/failure coverage and sufficient-evidence `run_answer_agent` tests remain mocked.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: not separately reported for (03B)
+- Rerun result: passed
+- Status: passed
+- Notes: Syntax check completed with exit code 0.
+
+## Acceptance Review
+- Task acceptance: Invalid JSON and schema-invalid payloads fail controlled validation; valid payloads continue to citation checks.
+- Status: satisfied
+- Evidence: Tests assert invalid JSON, missing required `final_answer`, invalid confidence, valid draft without `self_check`, valid draft with `self_check`, and sufficient-evidence provider content parsed into `AnswerAgentOutput`. Citation and evidence enforcement remain correctly assigned to later Batch03 tasks.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and Progress Tracker for `(03B)`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked/incomplete
+- Execution report entry: latest (03B) execution report appended
+- Review report entry: appended by reviewer
+- Other: No sibling or future task checkboxes were updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The draft self-check placeholder is intentionally not ready, which is appropriate because Batch04 owns final self-check execution and readiness enforcement.
+- Missing citation presence, verified quote membership, rejected evidence exclusion, final output preservation, self-check execution, and logging remain deferred to later tasks and were not implemented early.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch03 - LLM Draft Answer Parsing and Citation Enforcement",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03C)
+- Task title: Enforce citation presence and format
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 3. Scope`; `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.3 Citation Style`; `docs/plans/Master_Plan.md` > `## 18.3 Citation Rule`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest matching execution report is the appended `# Task Execution Report - (03C)` entry and matches the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`; `backend/tests/test_answer_agent.py`; `docs/reports/report_11_execute_agent.md`; `docs/review/review_11_review_agent.md`; `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - validates non-empty citations in `parse_and_validate_draft_answer` after provider JSON parsing and Pydantic validation; preserves existing citation renderer.
+- `backend/tests/test_answer_agent.py`: in scope - adds tests for missing citations, empty citations, valid citation shape, and sufficient-evidence draft rejection without citations.
+- `backend/app/agents/schemas.py`: in scope - existing `Citation` schema requires and normalizes `file_name` and `quote`, forbids extra/internal fields, and supports the selected task's structured citation format.
+- `docs/reports/report_11_execute_agent.md`: in scope - latest execution report for (03C) was appended and reviewed.
+- `docs/tasks/task_11.md`: in scope - selected (03C) task and progress tracker checkboxes were updated after acceptance only; Batch03 and sibling tasks remain incomplete.
+- `docs/review/review_11_review_agent.md`: in scope - prior review history inspected; this (03C) review appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited scope, schema, required-test, and failure-handling context reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited citation style and citation rule sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime change enforces citation presence for sufficient-evidence provider drafts without changing insufficient-evidence empty-citation output.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover missing/empty citation failure and valid citation preservation/rendering.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes the implemented work.
+
+## Dependency Review
+- Required dependencies: (03B), (01B).
+- Dependency status: satisfied.
+- Missing or invalid dependency: none found; (03B) is accepted in the task file and review history, and existing citation schema/format helpers from (01B) are available.
+
+## Architecture Alignment
+- Passed: Citation presence is enforced in the sufficient-evidence draft parsing path; deterministic insufficient-evidence output may still return an empty citation list; citations remain structured as `Citation(file_name, quote)` and render as `file_name: "quoted text"`; no public API, LangGraph workflow, frontend chat, retrieval expansion, conversation memory, self-check execution, logging behavior, verified quote membership, or rejected-evidence expansion was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `parse_and_validate_draft_answer` parses JSON, normalizes missing draft `self_check`, validates `AnswerAgentOutput`, then calls `_validate_citation_presence`; citation validation failures are converted to controlled `AnswerAgentError`. `run_answer_agent` returns this validated draft for sufficient-evidence responses.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code does not hardcode provider credentials, document IDs, expected production answers, file names, fixture quotes, or model settings. Test fixture strings are local mocked evidence only.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: 43 tests passed in 1.68s
+- Rerun result: 43 tests passed in 1.94s
+- Status: passed
+- Notes: Confirms missing citation, empty citation, valid citation shape, and sufficient-evidence draft-without-citations rejection coverage.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: not separately reported for (03C)
+- Rerun result: passed
+- Status: passed
+- Notes: Syntax check completed with exit code 0.
+
+## Acceptance Review
+- Task acceptance: Missing or empty citations fail for sufficient-evidence answers; valid citations preserve file names and exact quotes.
+- Status: satisfied
+- Evidence: `test_parse_and_validate_draft_answer_rejects_missing_citations_safely`, `test_parse_and_validate_draft_answer_rejects_empty_citations_safely`, `test_run_answer_agent_rejects_sufficient_evidence_draft_without_citations`, and `test_parse_and_validate_draft_answer_preserves_valid_citation_shape` cover the required behavior. `format_citation` still renders `contract.pdf: "quoted text"` and the `Citation` schema rejects empty and extra/internal fields.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and Progress Tracker for `(03C)`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked/incomplete
+- Execution report entry: latest (03C) execution report appended
+- Review report entry: appended by reviewer
+- Other: No sibling or future task checkboxes were updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Citation quote membership against verified evidence remains correctly deferred to (03D).
+- Rejected chunk citation/content rejection remains correctly deferred to (03E).
+- Final output preservation, self-check execution, and logging remain later scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch03 - LLM Draft Answer Parsing and Citation Enforcement",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "backend/app/agents/schemas.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03D)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03D)
+- Task title: Validate citation quotes against verified evidence
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03D)
+- Reviewed task ID: (03D)
+- Correct selection: yes
+- Notes: The latest matching execution report is the appended `# Task Execution Report - (03D)` entry and matches the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`; `backend/tests/test_answer_agent.py`; `docs/reports/report_11_execute_agent.md`; `docs/review/review_11_review_agent.md`; `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - adds `validate_draft_citation_quotes_against_verified_evidence` and calls it after draft parsing in `run_answer_agent`.
+- `backend/tests/test_answer_agent.py`: in scope - adds the provider-boundary test rejecting a fabricated citation quote not present in verified evidence.
+- `docs/reports/report_11_execute_agent.md`: in scope - latest execution report for (03D) was appended and reviewed.
+- `docs/tasks/task_11.md`: in scope - selected (03D) task and progress tracker checkboxes were updated after acceptance only; Batch03 and sibling tasks remain incomplete.
+- `docs/review/review_11_review_agent.md`: in scope - prior review history inspected; this (03D) review appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited implementation, required-test, and failure-handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited grounding rule reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime change is limited to exact verified quote membership validation for draft citations.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Test covers a fabricated citation quote returned from the mocked provider and verifies controlled failure.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes the implemented work.
+
+## Dependency Review
+- Required dependencies: (03C), Batch02 evidence lookup.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none found; (03C) is accepted in the task file and review history, and `build_answer_evidence_lookup` is available for verified quote lookup.
+
+## Architecture Alignment
+- Passed: The check is deterministic, backend-only, and runs after provider JSON parsing/Pydantic validation but before returning a sufficient-evidence draft. It uses Agent 2 verified chunk quote text as the authority and raises the existing controlled `AnswerAgentError` path on failure. No public API, LangGraph workflow, frontend chat, extra retrieval, conversation memory, self-check execution, logging behavior, or rejected-evidence enforcement expansion was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `validate_draft_citation_quotes_against_verified_evidence` builds an evidence lookup from `VerificationAgentOutput` and rejects every citation whose `quote` is absent from `verified_quotes`. `run_answer_agent` invokes this validator and converts `AnswerEvidenceValidationError` into the safe public answer-agent failure.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code does not hardcode provider credentials, model names, document IDs, expected production answers, fixture quotes, or sample files. Test fixture strings are limited to mocked evidence and fabricated provider output.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py::test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence -v`
+- Reported result: failed before implementation, then 1 test passed after implementation
+- Rerun result: 1 passed in 1.94s
+- Status: passed
+- Notes: Confirms the selected-task acceptance behavior at the `run_answer_agent` provider boundary.
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: 44 tests passed in 2.00s
+- Rerun result: 44 passed in 1.99s
+- Status: passed
+- Notes: Confirms existing answer-agent behavior remains passing with the new quote membership check.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: passed with exit code 0 and no output
+- Rerun result: passed with exit code 0 and no output
+- Status: passed
+- Notes: Syntax check completed successfully.
+
+## Acceptance Review
+- Task acceptance: Draft answers citing quotes not found in verified evidence fail validation and are not returned.
+- Status: satisfied
+- Evidence: `test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence` mocks a sufficient-evidence provider response containing a fabricated quote and asserts `run_answer_agent` raises controlled `AnswerAgentError`. The production path rejects citations whose quote text is absent from Agent 2 verified chunks.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and Progress Tracker for `(03D)`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked/incomplete because (03E) and (03F) remain unchecked
+- Execution report entry: latest (03D) execution report appended
+- Review report entry: appended by reviewer
+- Other: No sibling or future task checkboxes were updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The implementation intentionally validates citation quote membership only; rejected chunk citation/content enforcement remains correctly deferred to (03E).
+- Exact quote membership is consistent with the task requirement to reject semantically similar fabricated quote text.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch03 - LLM Draft Answer Parsing and Citation Enforcement",
+  "selected_task_id": "(03D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03E)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03E)
+- Task title: Reject rejected chunk usage in citations and answer content
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 3. Scope`; `docs/plans/Plan_11.md` > `## 4. Out of Scope`; `docs/plans/Plan_11.md` > `## 9. Implementation Steps`; `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03E)
+- Reviewed task ID: (03E)
+- Correct selection: yes
+- Notes: The latest matching execution report is the appended `# Task Execution Report - (03E)` entry and matches the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`; `backend/tests/test_answer_agent.py`; `docs/reports/report_11_execute_agent.md`; `docs/review/review_11_review_agent.md`; `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - adds `validate_draft_answer_against_evidence` and calls the full evidence contract before returning a sufficient-evidence draft.
+- `backend/tests/test_answer_agent.py`: in scope - adds mocked provider tests rejecting a rejected citation, rejected quote text in `final_answer`, and rejected quote text in `reasoning_summary`.
+- `docs/reports/report_11_execute_agent.md`: in scope - latest execution report for (03E) was appended and reviewed.
+- `docs/tasks/task_11.md`: in scope - selected (03E) task and progress tracker checkboxes were updated after acceptance only; Batch03 and (03F) remain incomplete.
+- `docs/review/review_11_review_agent.md`: in scope - prior review history inspected; this (03E) review appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited scope, out-of-scope, implementation, required-test, acceptance, and failure-handling sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited grounding rule reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime path now validates rejected-evidence exclusion after draft parsing and verified quote membership.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover rejected citation and exact rejected quote reuse in visible answer fields.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes the implemented work.
+
+## Dependency Review
+- Required dependencies: (03D), Batch02 evidence lookup.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none found; (03D) is accepted in the task file and review history, and `build_answer_evidence_lookup` is available.
+
+## Architecture Alignment
+- Passed: Rejected-evidence checks are deterministic, backend-only, use Agent 2 verification output as authority, and run before `run_answer_agent` returns the draft answer. The provider prompt still excludes rejected chunks, failures use the existing controlled `AnswerAgentError` path, and nuanced unsupported-claim/self-check behavior remains deferred to Batch04.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `validate_draft_answer_against_evidence` delegates to `validate_answer_evidence_contract`; that contract rejects rejected citation pairs or rejected quote citations, rejects non-verified citation file/quote pairs, rejects internal chunk IDs, and rejects exact rejected quote reuse in `final_answer` and `reasoning_summary`. `run_answer_agent` invokes this validation before returning output.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production code does not hardcode provider credentials, model names, production document IDs, expected production answers, filenames, fixture quotes, or dataset order. Test fixture strings are local mocked evidence for behavior coverage.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: 47 tests collected, 47 passed
+- Rerun result: 47 passed in 1.75s
+- Status: passed
+- Notes: Confirms rejected citation, rejected quote in `final_answer`, rejected quote in `reasoning_summary`, and existing answer-agent behavior.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: not reported for (03E)
+- Rerun result: passed with exit code 0 and no output
+- Status: passed
+- Notes: Syntax check completed successfully.
+
+## Acceptance Review
+- Task acceptance: Draft answers using rejected quote text are blocked.
+- Status: satisfied
+- Evidence: `test_run_answer_agent_rejects_draft_citation_from_rejected_chunk`, `test_run_answer_agent_rejects_draft_copying_rejected_quote_in_final_answer`, and `test_run_answer_agent_rejects_draft_copying_rejected_quote_in_reasoning_summary` assert controlled `AnswerAgentError` failures for mocked LLM drafts using rejected evidence. Production validation blocks these before returning output.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and Progress Tracker for `(03E)`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked/incomplete because (03F) remains unchecked
+- Execution report entry: latest (03E) execution report appended
+- Review report entry: appended by reviewer
+- Other: Prior accepted uncommitted checkboxes for (03A)-(03D) were preserved; no sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected task is distinct from prior accepted uncommitted Batch03 changes for (03A)-(03D).
+- Final output shape preservation remains correctly deferred to (03F).
+- Batch04 self-check execution, unsupported-claim policy, and logging remain later scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch03 - LLM Draft Answer Parsing and Citation Enforcement",
+  "selected_task_id": "(03E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md",
+    "docs/plans/Plan_11.md",
+    "docs/plans/Master_Plan.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03F)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - LLM Draft Answer Parsing and Citation Enforcement
+- Task ID: (03F)
+- Task title: Preserve final output shape after draft validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_11.md` > `## 8. API Design`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03F)
+- Reviewed task ID: (03F)
+- Correct selection: yes
+- Notes: The latest matching execution report is the appended `# Task Execution Report - (03F)` entry and matches the requested task ID.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/answer_agent.py`; `backend/tests/test_answer_agent.py`; `docs/reports/report_11_execute_agent.md`; `docs/review/review_11_review_agent.md`; `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - adds `ANSWER_OUTPUT_PUBLIC_KEYS`, `normalize_validated_draft_output`, and returns normalized validated draft output after Batch03 evidence checks.
+- `backend/tests/test_answer_agent.py`: in scope - adds exact public output shape regression coverage for top-level keys, citation keys, self-check keys, JSON serialization, Pydantic validity, and no exposed `chunk_id`.
+- `docs/reports/report_11_execute_agent.md`: in scope - latest execution report for (03F) was appended and reviewed.
+- `docs/tasks/task_11.md`: in scope - prior accepted Batch03 checkboxes were preserved; selected (03F) checkbox was updated after acceptance only; Batch03 batch checkbox remains unchecked.
+- `docs/review/review_11_review_agent.md`: in scope - prior review history inspected; this (03F) review appended at EOF.
+- `docs/plans/Plan_11.md`: in scope - cited schema, API, and acceptance sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime now normalizes the evidence-checked draft back through `AnswerAgentOutput` and asserts the exact public key order before returning.
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Test covers exact output keys, nested citation and self-check keys, JSON serializability, Pydantic validity, and no `chunk_id` leakage.
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report was appended and accurately describes the implemented (03F) work.
+
+## Dependency Review
+- Required dependencies: (03B), (03C), (03D), and (03E).
+- Dependency status: satisfied.
+- Missing or invalid dependency: none found; the task file and review history show prior accepted Batch03 dependencies, and their uncommitted implementation is present in the working tree.
+
+## Architecture Alignment
+- Passed: The change remains backend-only, preserves the internal `run_answer_agent(input) -> AnswerAgentOutput` contract, uses the existing Pydantic schema as the output authority, keeps citation objects limited to `file_name` and `quote`, and does not expose chunk IDs in the normal public payload. No public API, LangGraph workflow, frontend chat, logging behavior, self-check execution, extra retrieval, conversation memory, or database schema changes were added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `normalize_validated_draft_output` validates an `AnswerAgentOutput` or mapping, serializes it with `model_dump(mode="json")`, rejects unexpected top-level public key shape, and returns a revalidated `AnswerAgentOutput`. `run_answer_agent` calls this normalizer only after draft parsing, verified citation quote validation, and full evidence validation.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production constants define the approved public output field names only. No provider credentials, model names, document IDs, production answers, fixture strings, or dataset order are hardcoded in runtime logic.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v`
+- Reported result: 48 tests collected, 48 passed
+- Rerun result: 48 passed in 3.34s
+- Status: passed
+- Notes: Includes `test_normalize_validated_draft_output_preserves_exact_public_output_shape` and existing Batch03 citation/evidence validations.
+- Command/check: `python -m py_compile app/agents/answer_agent.py tests/test_answer_agent.py`
+- Reported result: not reported for (03F)
+- Rerun result: passed with exit code 0 and no output
+- Status: passed
+- Notes: Syntax check completed successfully.
+
+## Acceptance Review
+- Task acceptance: Valid draft answers remain JSON-serializable and Pydantic-valid after evidence checks.
+- Status: satisfied
+- Evidence: The normalizer returns `AnswerAgentOutput`; the regression test asserts exact top-level keys `final_answer`, `citations`, `reasoning_summary`, `confidence`, and `self_check`, exact nested citation and self-check key sets, JSON serialization, and absence of `chunk_id` in the normalized public payload.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and Progress Tracker for `(03F)`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked; batch completion was not marked by this review per hard rule.
+- Execution report entry: latest (03F) execution report appended
+- Review report entry: appended by reviewer
+- Other: Prior accepted uncommitted checkboxes for (03A)-(03E) were preserved; no sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected task is distinct from prior accepted uncommitted Batch03 changes for (03A)-(03E).
+- Batch04 self-check execution, safe failure handling, and logging remain later scope.
+- Although all Batch03 task IDs are now checked after accepting (03F), the Batch03 batch checkbox was intentionally not updated because this review was limited to one task ID.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, per current hard rule and orchestrator/A3 batch handling
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch03 - LLM Draft Answer Parsing and Citation Enforcement",
+  "selected_task_id": "(03F)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md",
+    "docs/plans/Plan_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
