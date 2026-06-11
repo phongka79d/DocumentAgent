@@ -2615,3 +2615,371 @@ complete
 - next task ID: (06A), after A2 reviews and accepts (05F) and the orchestrator advances the batch.
 - can proceed: yes
 - handoff notes: Batch05 targeted validation has passed with `pytest tests/test_answer_agent.py -v` from `backend/`.
+
+---
+
+# Task Execution Report - (06A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch06 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(06A) - Run manual Agent 2 output into Agent 3 when setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 11. Required Tests`
+- `docs/plans/Plan_11.md` > `## 14. Agent Report Requirement`
+- `README.md` > `## Configuration`
+- `README.md` > `## Known Gaps or Unclear Areas`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06A)
+- Task title: Run manual Agent 2 output into Agent 3 when setup is available
+
+## Completed Work
+- User requested live validation after the initial `(06A)` blocked-by-user report.
+- Checked `backend/.env` for required variable names without printing secret values. Required ShopAIKey and Supabase variable names were present.
+- Created real Supabase `agent_runs` smoke-test rows with synthetic, non-private Agent 2 verification evidence.
+- First live `run_answer_agent` attempt reached ShopAIKey but failed with a provider JSON-mode compatibility error reported as HTTP `429`: `Response input messages must contain the word 'json' in some form to use 'response_format' of type 'json_object'.`
+- Verified Agent 3 logged that first failed attempt to Supabase `agent_steps` with `status=failed`, `error_type=provider_error`, and the safe public error message `Answer generation failed. Please try again later.`
+- Fixed the request payloads to include `response_instruction: "Return only valid JSON."` in both answer-generation and self-check user JSON payloads while preserving verified-only answer evidence.
+- Added regression tests proving answer-generation and self-check user messages contain `json` while remaining parseable JSON.
+- Reran the live `run_answer_agent` smoke test successfully through ShopAIKey and Supabase logging.
+- Live grounded answer example: `Bạn có thể bắt đầu làm việc chính thức vào tháng 08/2026.` with citations `contract.pdf: "The employee starts probation on 01/06/2026."` and `contract.pdf: "The probation period lasts 2 months."`.
+- Confirmed the live public output did not contain `chunk_id`, `document_id`, or the synthetic chunk UUID values.
+- Verified Agent 3 logged the successful `agent_3_answer_self_check` row in Supabase `agent_steps` with `status=success`, `final_answer`, and `self_check_result`.
+- Confirmed the insufficient-evidence callable path using a live `agent_run_id`; it returned the safe Vietnamese insufficient-evidence answer with no citations and `is_ready=false`.
+- Recorded safe examples:
+  - Grounded live answer example: `Bạn có thể bắt đầu làm việc chính thức vào tháng 08/2026.` with citations `contract.pdf: "The employee starts probation on 01/06/2026."` and `contract.pdf: "The probation period lasts 2 months."`.
+  - Insufficient-evidence example: `Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.` with no citations, confidence `0.0`, and `is_ready=false`.
+
+## Files Created or Modified
+- `backend/app/agents/answer_agent.py`
+- `backend/tests/test_answer_agent.py`
+- `docs/reports/report_11_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: final run collected 78 tests from `tests/test_answer_agent.py`; all 78 passed in 1.71s.
+- command/check: Regression red test before fix: Failed as expected
+- evidence or reason: answer-generation and self-check user payloads were parseable JSON but did not contain the word `json`, reproducing the provider compatibility failure.
+- command/check: Focused regression test after fix: Passed
+- evidence or reason: `test_build_answer_generation_messages_exclude_rejected_chunks_from_user_evidence` and `test_build_answer_self_check_messages_include_json_instruction_for_json_mode` passed.
+- command/check: First live Agent 2 output -> Agent 3 direct callable smoke check with synthetic non-private verification evidence: Failed safely
+- evidence or reason: created `agent_run_id=9325a1ea-ec82-4692-b93a-e849b614248c`; ShopAIKey returned the JSON-mode compatibility error; Agent 3 raised controlled `AnswerAgentError` with safe message.
+- command/check: Live `agent_steps` failed-log verification: Passed
+- evidence or reason: Supabase contained `agent_steps.id=a49c5d8f-0b4d-43ad-8142-f799d7eb5ee9`, `step_name=agent_3_answer_self_check`, `agent_name=answer_agent`, `status=failed`, `error_type=provider_error`, and safe error message `Answer generation failed. Please try again later.`
+- command/check: Live Agent 2 output -> Agent 3 direct callable smoke check after JSON-mode fix: Passed
+- evidence or reason: created `agent_run_id=a25c23ee-3c04-4ac2-9d80-e12080dae346`; Agent 3 returned `Bạn có thể bắt đầu làm việc chính thức vào tháng 08/2026.`, cited only verified quotes, reported ready self-check, and public output contained no chunk IDs.
+- command/check: Live `agent_steps` success-log verification: Passed
+- evidence or reason: Supabase contained `agent_steps.id=97de90f6-e6b4-4788-9fe0-dff5f027f5c0`, `step_name=agent_3_answer_self_check`, `agent_name=answer_agent`, `status=success`, `final_answer`, and `self_check_result`.
+- command/check: Live insufficient-evidence callable path: Passed
+- evidence or reason: returned `Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.`, zero citations, and self-check values `uses_only_verified_chunks=true`, `has_citation=false`, `has_unsupported_claims=false`, `is_ready=false`.
+- command/check: Citation/no-normal-user-chunk-ID mocked evidence: Passed
+- evidence or reason: `test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified_chunks` asserts citations use `contract.pdf` plus verified quotes and asserts public output excludes `chunk_id`, `document_id`, and known chunk UUID values.
+- command/check: Insufficient-evidence mocked evidence: Passed
+- evidence or reason: tests for `missing_information=true` and empty `verified_chunks` assert the insufficient-evidence answer is returned without calling ShopAIKey.
+
+## Acceptance Check
+- Task acceptance condition: Agent 3 returns a grounded answer with file-name/quote citations and no normal-user chunk IDs, or manual validation is explicitly blocked with a safe setup reason.
+- Status: satisfied
+- Evidence: Live provider validation passed after fixing the JSON-mode request payload. Agent 3 returned a grounded answer with `file_name: "quoted text"` citations, public output exposed no chunk IDs, and Supabase `agent_steps` logged the successful answer/self-check output. The initial provider compatibility failure was also safely logged and did not return fake success.
+
+## Artifacts Produced
+- Live failed-provider validation record for the initial JSON-mode compatibility failure.
+- Supabase failed smoke `agent_run_id=9325a1ea-ec82-4692-b93a-e849b614248c`.
+- Supabase failed `agent_steps.id=a49c5d8f-0b4d-43ad-8142-f799d7eb5ee9`.
+- Live successful grounded validation record after the JSON-mode fix.
+- Supabase successful smoke `agent_run_id=a25c23ee-3c04-4ac2-9d80-e12080dae346`.
+- Supabase success `agent_steps.id=97de90f6-e6b4-4788-9fe0-dff5f027f5c0`.
+- Grounded live answer example and insufficient-evidence example in this report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used synthetic, non-private Agent 2 verification evidence for the user-requested live smoke test because no real sample Agent 2 output was provided.
+- Created a real Supabase `agent_runs` smoke row only after the user explicitly requested live testing.
+- Fixed the provider compatibility issue at the request payload boundary instead of weakening `response_format`.
+- Did not fabricate a live provider response; recorded both the initial provider error and the successful retry.
+
+## Risks or Open Issues
+- A real user-provided Agent 2 verification payload is still unavailable; the live attempt used synthetic, non-private verification evidence.
+
+## Minor Issues Fixed During Execution
+- Fixed ShopAIKey JSON-mode compatibility by ensuring answer-generation and self-check user payloads include the word `JSON`.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency Batch05 was complete in `docs/tasks/task_11.md` and prior committed context; the required targeted test command was rerun and passed.
+- Runtime change was limited to the Agent 3 request payload needed for live `(06A)` validation. Sibling tasks `(06B)` and `(06C)` were not executed.
+
+## Notes for Next Task
+- next task ID: (06B), after A2 reviews and accepts the updated live-validation evidence for (06A) and the orchestrator advances the batch.
+- can proceed: requires A2 decision
+- handoff notes: Report creation can state that live ShopAIKey grounded answer generation succeeded after the JSON-mode request payload fix, using synthetic non-private Agent 2 verification evidence.
+
+---
+
+# Task Execution Report - (06B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch06 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(06B) - Create execution report with grounded and insufficient-evidence examples
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06B)
+- Task title: Create execution report with grounded and insufficient-evidence examples
+
+## Completed Work
+- Status: complete.
+- Appended this Plan 11 execution report section using the existing report pattern.
+- Reported files created, files modified, commands run, test results, known issues, intentionally not implemented out-of-scope work, one grounded answer example, and one insufficient-evidence example.
+- Did not perform the sibling `(06C)` scope/secret/architecture review; that remains a separate task.
+- Did not claim blocked or unavailable validation as completed. The report states that the live manual check used synthetic non-private Agent 2 verification evidence because no real user-provided Agent 2 payload was available.
+
+## Files Created or Modified
+- `docs/reports/report_11_execute_agent.md`
+
+## Plan 11 Files Created
+- `backend/app/agents/answer_agent.py`
+- `backend/tests/test_answer_agent.py`
+
+## Plan 11 Files Modified
+- `backend/app/agents/__init__.py`
+- `backend/app/agents/prompts.py`
+- `backend/app/agents/schemas.py`
+- `backend/app/core/config.py`
+- `backend/app/services/agent_log_service.py`
+- `backend/app/services/shopaikey_service.py`
+- `backend/tests/test_answer_agent.py`
+- `docs/reports/report_11_execute_agent.md`
+
+## Commands Run
+- `Get-Content -Path docs/tasks/task_11.md`
+- `Get-Content -Path docs/plans/Plan_11.md`
+- `Get-Content -Path docs/reports/report_11_execute_agent.md -Tail 80`
+- `git status --short`
+- `Select-String -Path docs/reports/report_11_execute_agent.md -Pattern '^# Task Execution Report|^## Task$|^## Status$|^## Tests or Validations Run$|^## Files Created or Modified$|^## Risks or Open Issues$|^## Notes for Next Task$' -Context 0,8`
+- `Select-String -Path backend/tests/test_answer_agent.py -Pattern 'grounded|insufficient|chunk_id|json' | Select-Object -First 30`
+- Appended this report section to `docs/reports/report_11_execute_agent.md`.
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: Latest recorded Batch06 `(06A)` run collected 78 tests from `tests/test_answer_agent.py`; all 78 passed in 1.71s.
+- command/check: Live Agent 2 output -> Agent 3 direct callable smoke check with synthetic non-private verification evidence: Passed after JSON-mode request payload fix
+- evidence or reason: Latest recorded `(06A)` evidence says Agent 3 returned a grounded answer with `file_name: "quoted text"` citations, public output contained no chunk IDs, and Supabase logged a successful `agent_3_answer_self_check` row.
+- command/check: Initial live Agent 2 output -> Agent 3 direct callable smoke check: Failed safely before fix
+- evidence or reason: Latest recorded `(06A)` evidence says ShopAIKey returned a JSON-mode compatibility error, Agent 3 raised controlled `AnswerAgentError`, and Supabase logged the failed step with a safe public error message.
+- command/check: Live insufficient-evidence callable path: Passed
+- evidence or reason: Latest recorded `(06A)` evidence says Agent 3 returned the safe insufficient-evidence answer with no citations, confidence `0.0`, and `is_ready=false`.
+- command/check: Report-content validation for `(06B)`: Passed
+- evidence or reason: This report section includes all required Plan 11 report items and safe synthetic examples. Final readback is recorded below in this task's handoff validation.
+
+## Reported Test Results
+- `backend/tests/test_answer_agent.py`: latest recorded targeted validation passed with 78 tests.
+- Grounded answer behavior: covered by mocked automated tests and latest recorded live synthetic smoke check.
+- Insufficient-evidence behavior: covered by mocked automated tests and latest recorded live callable path.
+- Citation enforcement: covered by automated tests for missing citations, non-verified quote citations, and rendered `file_name: "quoted text"` citations.
+- Rejected chunk exclusion and unsupported-claim handling: covered by automated tests that fail closed without ready output.
+- Provider, parsing, validation, and logging failures: covered by automated tests and the recorded live provider compatibility failure path.
+
+## Known Issues
+- A real user-provided Agent 2 verification payload is still unavailable; the latest live manual validation used synthetic, non-private verification evidence.
+- The initial live ShopAIKey validation failed on JSON-mode compatibility before the request payload fix; this was fixed and retested successfully in `(06A)`.
+- Full `(06C)` scope, secret, and architecture review has not been executed in this task.
+
+## Intentionally Not Implemented Out-of-Scope Work
+- LangGraph orchestration was not implemented.
+- `/api/chat/ask` was not implemented.
+- Frontend chat was not implemented.
+- Public evidence APIs were not implemented.
+- Public agent log APIs were not implemented.
+- Additional retrieval, rejected-evidence retrieval, Qdrant expansion, and rerank changes were not implemented.
+- Conversation memory was not implemented.
+- New database schema changes were not implemented.
+- Real provider keys, Supabase projects, Qdrant collections, real documents, and real agent runs beyond the explicitly recorded smoke rows were not created by this report task.
+
+## Grounded Answer Example
+- Question: `Khi nào nhân viên có thể bắt đầu làm việc chính thức?`
+- Answer: `Bạn có thể bắt đầu làm việc chính thức vào tháng 08/2026.`
+- Citations:
+  - `contract.pdf: "The employee starts probation on 01/06/2026."`
+  - `contract.pdf: "The probation period lasts 2 months."`
+- Evidence safety: synthetic non-private example from the recorded `(06A)` smoke check. The public answer does not expose `chunk_id`, `document_id`, or internal UUID values.
+
+## Insufficient-Evidence Example
+- Question: `Chính sách nghỉ phép năm là gì?`
+- Answer: `Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.`
+- Citations: none
+- Confidence: `0.0`
+- Self-check: `uses_only_verified_chunks=true`, `has_citation=false`, `has_unsupported_claims=false`, `is_ready=false`
+- Evidence safety: synthetic safe example; no private raw document content included.
+
+## Acceptance Check
+- Task acceptance condition: Report includes all Plan 11 required sections and does not claim blocked live validation as completed.
+- Status: satisfied
+- Evidence: The report includes files created, files modified, commands run, test results, known issues, intentionally not implemented out-of-scope work, one grounded answer example, and one insufficient-evidence example. The live validation limitation is stated as synthetic evidence only, not real user document validation.
+
+## Artifacts Produced
+- Updated `docs/reports/report_11_execute_agent.md` with the `(06B)` Plan 11 execution report section.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used safe synthetic examples already recorded by `(06A)` instead of adding private raw document content.
+- Reported `(06C)` scope/secret/architecture review as not executed rather than folding that sibling task into `(06B)`.
+
+## Risks or Open Issues
+- Full scope, secret, and architecture review remains for `(06C)`.
+- Live validation with a real user-provided Agent 2 payload remains unavailable; current live evidence is synthetic and non-private.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies Batch05 and `(06A)` were checked complete in `docs/tasks/task_11.md` before writing this report.
+- No task checkbox or batch status was updated because this is an orchestrated run.
+
+## Notes for Next Task
+- next task ID: (06C)
+- can proceed: yes, after A2 reviews and accepts `(06B)`
+- handoff notes: `(06C)` should perform the separate scope, secret, and architecture review. This `(06B)` report intentionally records that review as pending and does not claim it was completed.
+
+---
+
+# Task Execution Report - (06C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Report File
+docs/reports/report_11_execute_agent.md
+
+## Batch
+Batch06 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(06C) - Complete scope, secret, and architecture review
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_11.md` > `## 4. Out of Scope`
+- `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`
+- `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`
+- `README.md` > `Important coordination rules`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06C)
+- Task title: Complete scope, secret, and architecture review
+
+## Completed Work
+- Status: complete.
+- Reviewed the current uncommitted Plan 11 diff for scope, secret, architecture, citation, chunk-ID, and self-check boundaries.
+- Confirmed changed runtime/test files remain scoped to Agent 3 answer-generation JSON-mode compatibility and answer-agent tests.
+- Confirmed no API route, frontend screen, LangGraph workflow, extra retrieval implementation, conversation memory, database schema change, or committed raw secret was added in the current diff.
+- Confirmed current targeted tests were actually run during this task.
+- Did not update the `(06C)` task checkbox or Batch06 status because this is an orchestrated A1 run.
+
+## Files Created or Modified
+- `docs/reports/report_11_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `git status --short`: Passed
+- evidence or reason: Current uncommitted files are `backend/app/agents/answer_agent.py`, `backend/tests/test_answer_agent.py`, `docs/reports/report_11_execute_agent.md`, `docs/review/review_11_review_agent.md`, and `docs/tasks/task_11.md`.
+- command/check: `git diff --stat`: Passed
+- evidence or reason: Diff is limited to answer agent/test changes and Plan 11 reporting/review/task-tracker files; no API, frontend, migration, retrieval, LangGraph, or conversation-memory files appear in the changed-file list.
+- command/check: `git diff -- backend/app/agents/answer_agent.py backend/tests/test_answer_agent.py docs/tasks/task_11.md`: Passed
+- evidence or reason: Runtime diff only adds `response_instruction: "Return only valid JSON."` to answer-generation and self-check provider payloads; test diff adds JSON-instruction coverage. Task-file diff only shows prior accepted `(06A)` and `(06B)` checkbox updates, while `(06C)` remains unchecked.
+- command/check: `cd backend; pytest tests/test_answer_agent.py -v`: Passed
+- evidence or reason: 78 tests collected, 78 passed in 1.68s.
+- command/check: `git diff --name-status`: Passed
+- evidence or reason: Changed files are `M backend/app/agents/answer_agent.py`, `M backend/tests/test_answer_agent.py`, `M docs/reports/report_11_execute_agent.md`, `M docs/review/review_11_review_agent.md`, and `M docs/tasks/task_11.md`; no new files or route/frontend/workflow files were added.
+- command/check: `git diff -- backend/app/main.py backend/app/api frontend/src backend/app/agents/graph.py backend/app/services/retrieval_service.py backend/app/services/hybrid_retrieval_service.py backend/app/services/graph_retrieval_service.py backend/app/db/migrations`: Passed
+- evidence or reason: No diff output; no API route, frontend screen, LangGraph graph file, retrieval service, hybrid/graph retrieval service, or migration change is present.
+- command/check: `rg -n -i "(api[_-]?key|secret|token|password|service_role|SHOPAIKEY|SUPABASE|QDRANT)" backend/app/agents/answer_agent.py backend/tests/test_answer_agent.py docs/reports/report_11_execute_agent.md docs/tasks/task_11.md docs/review/review_11_review_agent.md`: Passed
+- evidence or reason: Matches are documented variable names, placeholder references, task/report/review text, and safe test strings; no raw committed secret value was identified.
+- command/check: `git diff --unified=0 | Select-String -Pattern '^\+.*sk-[A-Za-z0-9]{20,}','^\+.*eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+','^\+.*(SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY)\s*=\s*\S+' -CaseSensitive`: Passed
+- evidence or reason: No matches were returned for common raw key/JWT/new env-assignment patterns in added diff lines.
+- command/check: `rg -n "chunk_id|document_id|format_for_display|self_check|has_unsupported_claims|is_ready|AnswerAgentError|insufficient" backend/app/agents/answer_agent.py backend/tests/test_answer_agent.py`: Passed
+- evidence or reason: Evidence shows public output normalization and tests reject internal `chunk_id`/`document_id` leakage, enforce file-name/quote citations, require self-check readiness, reject unsupported claims, and return safe insufficient-evidence output.
+
+## Acceptance Check
+- Task acceptance condition: Scope review confirms Plan 11 boundaries or documents exact deviations requiring fixes before reviewer handoff.
+- Status: satisfied
+- Evidence: Plan 11 out-of-scope boundaries were checked against changed files and targeted searches. No out-of-scope route, frontend, LangGraph, retrieval, conversation-memory, schema/migration, or secret change was found. Plan 11 acceptance behavior is covered by the current passing `tests/test_answer_agent.py` suite and prior accepted Batch06 report evidence.
+
+## Artifacts Produced
+- Appended reviewer-ready `(06C)` scope, secret, and architecture boundary confirmation to `docs/reports/report_11_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after `ACCEPTED` review. User explicitly instructed not to mark Batch06 complete.
+
+## Key Implementation Decisions
+- Treated existing uncommitted changes as accepted prior-task work and reviewed them without reverting or rewriting them.
+- Used diff-based validation for out-of-scope work because `(06C)` is a review/reporting task and no runtime implementation was required.
+
+## Risks or Open Issues
+- Live validation with a real user-provided Agent 2 payload remains unavailable as previously reported; current live/smoke evidence used approved synthetic non-private verification evidence.
+- No `(06C)` deviations requiring fixes were found.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified for `(06C)`.
+- Dependencies Batch05 and `(06B)` were checked complete in `docs/tasks/task_11.md` before this review.
+- `(06C)` checkbox and Batch06 status were intentionally left unchecked for A2 review.
+- Initial secret-scan attempts had PowerShell quoting/regex issues; corrected validation was rerun with PowerShell `Select-String` and passed with no matches.
+
+## Notes for Next Task
+- next task ID: None in Batch06 after `(06C)`.
+- can proceed: yes, to A2 review of `(06C)`.
+- handoff notes: A2 should verify this report section, rerun or inspect the cited scope/secret/out-of-scope checks as needed, and only then update the `(06C)` checkbox if accepted.

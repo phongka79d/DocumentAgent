@@ -5306,3 +5306,940 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06A)
+- Task title: Run manual Agent 2 output into Agent 3 when setup is available
+- Task status reported by executor: blocked / `BLOCKED_BY_USER_ACTION` for live manual validation
+- Source of Truth: `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 14. Agent Report Requirement`; `README.md` > `## Configuration`; `README.md` > `## Known Gaps or Unclear Areas`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: The last execution report entry is for `(06A)` and matches the requested Batch06 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_11_execute_agent.md`; after accepted review, `docs/tasks/task_11.md` was also updated for only `(06A)` checkboxes
+- untracked files: none observed before review append
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - contains the appended `(06A)` execution report with blocked live validation, mocked examples, and test evidence
+- `docs/tasks/task_11.md`: in scope - selected task explicitly allows `BLOCKED_BY_USER_ACTION`; reviewer updated only `(06A)` checkboxes after acceptance
+- `docs/plans/Plan_11.md`: in scope - cited sections require targeted pytest, manual check when possible, and report examples
+- `README.md`: in scope - cited configuration and known-gaps sections support backend `.env` handling and note full orchestration remains planned
+- `backend/tests/test_answer_agent.py`: in scope - cited mocked tests verify grounded citation/no chunk-ID behavior and insufficient-evidence behavior
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: No runtime code files were changed, matching the task expectation for a manual/reporting validation step.
+
+## Dependency Review
+- Required dependencies: Batch05 passing tests; sample Agent 2 output, valid `agent_run_id`, and live backend/provider setup only if live validation is attempted
+- Dependency status: Batch05 is checked complete and Batch05 was committed as `54c48b6`; targeted Agent 3 tests pass locally
+- Missing or invalid dependency: live manual validation lacks user-provided valid `agent_run_id` and sample Agent 2 output; this is an allowed `BLOCKED_BY_USER_ACTION` condition for this task
+
+## Architecture Alignment
+- Passed: No runtime code, public API, frontend, LangGraph, retrieval, database schema, or provider behavior was changed. Blocked live validation was documented instead of fabricated.
+- Failed: None.
+- Uncertain: Live provider/Supabase/agent_steps behavior remains unverified until user supplies live inputs.
+
+## Implementation Reality
+- Real implementation: yes for reviewable task artifact; no runtime implementation was required or changed
+- Stub or fake logic found: no
+- Evidence: Execution report states no runtime code changed; git diff confirms only report content existed before review acceptance; mocked tests were rerun and passed.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The report includes safe mocked examples from tests and does not add runtime logic or hardcoded production answers.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`
+- Reported result: passed, 77 tests
+- Rerun result: passed, 77 tests in 1.75s
+- Status: passed
+- Notes: Rerun confirms the mocked Agent 3 behavior evidence relied on while live validation is blocked.
+
+- Command/check: Live Agent 2 output -> Agent 3 direct callable smoke check
+- Reported result: blocked
+- Rerun result: not rerun because no user-provided valid `agent_run_id` or sample Agent 2 output was available
+- Status: blocked by allowed user action
+- Notes: The task explicitly permits documented `BLOCKED_BY_USER_ACTION` when live setup/input is missing.
+
+- Command/check: Cited mocked grounded/no chunk-ID evidence
+- Reported result: passed
+- Rerun result: included in `pytest tests/test_answer_agent.py -v` pass
+- Status: passed
+- Notes: `test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified_chunks` verifies file-name/quote citations and no public chunk/document IDs.
+
+- Command/check: Cited mocked insufficient-evidence evidence
+- Reported result: passed
+- Rerun result: included in `pytest tests/test_answer_agent.py -v` pass
+- Status: passed
+- Notes: Tests cover `missing_information=true` and empty verified chunks without calling ShopAIKey.
+
+## Acceptance Review
+- Task acceptance: Agent 3 returns a grounded answer with file-name/quote citations and no normal-user chunk IDs, or manual validation is explicitly blocked with a safe setup reason.
+- Status: satisfied
+- Evidence: The execution report documents `BLOCKED_BY_USER_ACTION` due to missing valid `agent_run_id` and sample Agent 2 output, includes grounded and insufficient-evidence mocked examples, and the targeted test suite passes.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked by reviewer in detailed Batch06 task list and progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because `(06B)` and `(06C)` are not complete
+- Execution report entry: appended and accurate
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live Agent 2 -> Agent 3 provider/Supabase/log validation remains unverified until the user provides a valid `agent_run_id` and sample Agent 2 output.
+
+### Observations
+- The allowed blocked-live-validation status is documented clearly enough for `(06B)` to proceed with report creation without claiming live provider/Supabase validation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch06 - Manual Validation, Reporting, and Scope Review",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_11_execute_agent.md",
+    "docs/tasks/task_11.md",
+    "docs/review/review_11_review_agent.md",
+    "backend/tests/test_answer_agent.py",
+    "docs/plans/Plan_11.md",
+    "README.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Agent 2 output -> Agent 3 direct callable smoke check blocked by missing user-provided valid agent_run_id and sample Agent 2 output"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live provider/Supabase/log validation remains unverified until user supplies live inputs"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06A)
+- Task title: Run manual Agent 2 output into Agent 3 when setup is available
+- Task status reported by executor: blocked_by_provider_rate_limit
+- Source of Truth: `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 14. Agent Report Requirement`; `README.md` > `## Configuration`; `README.md` > `## Known Gaps or Unclear Areas`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: The latest matching `(06A)` execution report is the updated live-validation attempt appended after Batch05, with status `blocked_by_provider_rate_limit`.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_11_execute_agent.md`; `docs/review/review_11_review_agent.md`; `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - updated `(06A)` evidence records live ShopAIKey `429`, failed Supabase `agent_steps` logging, insufficient-evidence callable behavior, and mocked test examples.
+- `docs/tasks/task_11.md`: in scope - `(06A)` is already checked from the prior review and remains accurate because the task accepts a safe blocked manual-validation reason.
+- `docs/plans/Plan_11.md`: in scope - cited sections require targeted tests, manual check, honest report examples, and no fake success.
+- `README.md`: in scope - cited sections confirm backend `.env`/secret handling, targeted Plan 11 pytest command, and live provider validation guidance.
+- `backend/tests/test_answer_agent.py`: in scope - rerun as targeted validation evidence; no file edit reviewed in this re-review.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The only executor-reported modified file is the execution report, which is expected for this manual validation/reporting task. Runtime code was not changed.
+
+## Dependency Review
+- Required dependencies: Batch05 passing tests; live ShopAIKey and Supabase settings when live validation is attempted; sample Agent 2 output if real-document live validation is required.
+- Dependency status: Batch05 is complete; required targeted tests pass; backend `.env` variable names were reportedly present; live Supabase write/log verification was performed.
+- Missing or invalid dependency: live ShopAIKey provider capacity/quota is unavailable because the live request returned HTTP `429 Too Many Requests`; no user-provided real Agent 2 payload was supplied, so the live attempt used synthetic non-private evidence.
+
+## Architecture Alignment
+- Passed: No runtime code, public API route, frontend, LangGraph workflow, retrieval expansion, database schema, or secret exposure was added. The provider `429` was treated as a controlled failure and logged safely.
+- Failed: None.
+- Uncertain: Live grounded answer success remains unverified until ShopAIKey rate limiting/quota is resolved and a retry succeeds.
+
+## Implementation Reality
+- Real implementation: yes for the reviewed validation/report artifact; no runtime implementation change was required.
+- Stub or fake logic found: no
+- Evidence: The report records the actual provider `429` instead of fabricating a live grounded answer; the failed `agent_steps` row and insufficient-evidence callable result are documented.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production code changed. The examples are documented as safe mocked-test examples, not live provider output.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`
+- Reported result: passed, 77 tests in 1.75s
+- Rerun result: passed, 77 tests in 1.71s
+- Status: passed
+- Notes: Confirms mocked grounded citation/no chunk-ID behavior and insufficient-evidence behavior remain valid.
+
+- Command/check: Live Agent 2 output -> Agent 3 direct callable smoke check with synthetic non-private verification evidence
+- Reported result: blocked by provider rate limit
+- Rerun result: not rerun
+- Status: blocked by provider `429`
+- Notes: The live attempt created `agent_run_id=9325a1ea-ec82-4692-b93a-e849b614248c`, but ShopAIKey returned HTTP `429 Too Many Requests`, so no live grounded final answer was produced.
+
+- Command/check: Live `agent_steps` failed-log verification
+- Reported result: passed
+- Rerun result: not rerun
+- Status: accepted as report evidence
+- Notes: Reported Supabase row `agent_steps.id=a49c5d8f-0b4d-43ad-8142-f799d7eb5ee9` had `status=failed`, `error_type=provider_error`, and safe message `Answer generation failed. Please try again later.`
+
+- Command/check: Live insufficient-evidence callable path
+- Reported result: passed
+- Rerun result: not rerun
+- Status: accepted as report evidence
+- Notes: The same live `agent_run_id` returned the safe Vietnamese insufficient-evidence answer, zero citations, and non-ready self-check.
+
+## Acceptance Review
+- Task acceptance: Agent 3 returns a grounded answer with file-name/quote citations and no normal-user chunk IDs, or manual validation is explicitly blocked with a safe setup reason.
+- Status: satisfied
+- Evidence: Live grounded answer generation was explicitly blocked by ShopAIKey HTTP `429`, the failed provider path logged safely, no fake live success was claimed, the insufficient-evidence callable path returned the safe non-ready answer, and targeted mocked tests passed.
+
+## Progress Tracking
+- Selected task checkbox: already checked before this re-review and remains accurate.
+- Checkbox updated by reviewer: no
+- Batch status: Batch06 remains unchecked because `(06B)` and `(06C)` are incomplete.
+- Execution report entry: appended and accurate for updated `(06A)` evidence.
+- Review report entry: appended at EOF.
+- Other: No unrelated checkbox was updated during this re-review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None for the updated `(06A)` evidence. The earlier prior review entry is superseded by this re-review because the user later requested live validation and the executor added new live-attempt evidence.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live grounded Agent 3 answer generation remains unverified because ShopAIKey returned HTTP `429 Too Many Requests`.
+- The live attempt used synthetic non-private Agent 2 verification evidence, not a real user-provided Agent 2 payload.
+
+### Observations
+- The provider `429` does not block Batch06 from proceeding to `(06B)` under the current task file because `(06B)` requires the report to state blocked live validation honestly rather than claim live grounded answer success.
+- Exact user action if live grounded validation is required before final Batch06 completion: resolve the ShopAIKey rate limit/quota or wait for the rate-limit window to reset, then request a retry with a real or approved synthetic Agent 2 verification payload.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch06 - Manual Validation, Reporting, and Scope Review",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md",
+    "backend/tests/test_answer_agent.py",
+    "docs/plans/Plan_11.md",
+    "README.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live grounded Agent 3 answer generation blocked by ShopAIKey HTTP 429 Too Many Requests"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live grounded answer remains unverified until ShopAIKey rate limit/quota is resolved and retried",
+    "Live attempt used synthetic non-private Agent 2 verification evidence rather than a real user-provided Agent 2 payload"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06A)
+- Task title: Run manual Agent 2 output into Agent 3 when setup is available
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 11. Required Tests`; `docs/plans/Plan_11.md` > `## 14. Agent Report Requirement`; `README.md` > `## Configuration`; `README.md` > `## Known Gaps or Unclear Areas`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: Reviewed the updated live-validation (06A) entry appended after the earlier Batch05 report. Scope was limited to the updated manual validation evidence and the narrow provider JSON-mode compatibility fix.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/agents/answer_agent.py`
+  - `backend/tests/test_answer_agent.py`
+  - `docs/reports/report_11_execute_agent.md`
+  - `docs/review/review_11_review_agent.md`
+  - `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope - reviewed the two-field payload fix adding `response_instruction: "Return only valid JSON."` to answer-generation and self-check payloads.
+- `backend/tests/test_answer_agent.py`: in scope - reviewed regression coverage proving user message content contains `json` while remaining parseable JSON and preserving verified-only answer evidence.
+- `docs/reports/report_11_execute_agent.md`: in scope - reviewed the latest (06A) execution evidence, live failure, fix, retry, Supabase logging IDs, examples, and validation results.
+- `docs/tasks/task_11.md`: in scope - verified only (06A) is checked in Batch06 task list and progress tracker; (06B), (06C), and Batch06 remain unchecked.
+- `docs/review/review_11_review_agent.md`: in scope - inspected the current EOF before appending this re-review report.
+- `docs/plans/Plan_11.md`: in scope - read cited Required Tests, Acceptance Criteria, Agent Report Requirement, Reviewer Checklist, and Out of Scope sections.
+- `README.md`: in scope - read cited Configuration, Testing and Validation, Important coordination rules, and Known Gaps sections.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/agents/answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Runtime change is the narrow ShopAIKey JSON-mode compatibility fix needed for live (06A) validation.
+
+- file from execution report: `backend/tests/test_answer_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Added focused regression assertions for answer-generation and self-check JSON-mode message compatibility.
+
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest report includes grounded and insufficient-evidence examples, live failed and successful log IDs, and validation outcomes.
+
+## Dependency Review
+- Required dependencies: Batch05 passing tests; Agent 3 callable, prompts, validation, self-check, and logging from prior accepted batches; live setup only if live validation is attempted.
+- Dependency status: satisfied
+- Missing or invalid dependency: No blocking dependency found. A real user-provided Agent 2 payload remains unavailable, but the executor disclosed using synthetic non-private Agent 2-shaped verification evidence for the user-requested live smoke test.
+
+## Architecture Alignment
+- Passed: The fix preserves backend-only Agent 3 behavior, keeps `response_format` JSON mode, adds only a provider-compatible JSON instruction, keeps answer-generation evidence verified-only, does not expose chunk IDs in tested public output, and adds no public API, LangGraph workflow, frontend, extra retrieval, database schema, or conversation memory.
+- Failed: None.
+- Uncertain: Live Supabase and ShopAIKey rows were not independently re-created during this review to avoid extra external writes/provider calls; the execution report provides concrete IDs and local regression tests were rerun.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `build_answer_generation_payload()` and `build_answer_self_check_payload()` now include a real JSON-mode instruction inside the actual user JSON payload sent by `build_*_messages()`. Tests parse the message content as JSON and assert the provider-inspected content includes `json`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The added instruction is provider compatibility text, not an expected answer, row ID, filename dependency, sample-specific quote, or fixture-only runtime branch. No secrets were found in the changed diff by focused scan.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_answer_agent.py -v`
+- Reported result: Passed, 78 tests collected and passed.
+- Rerun result: Passed, 78 passed in 1.77s.
+- Status: passed
+- Notes: Rerun confirms the new JSON-mode regression tests and existing Agent 3 behavior pass locally.
+
+- Command/check: Regression red test before fix
+- Reported result: Failed as expected before the fix.
+- Rerun result: not rerun; pre-fix state is no longer present in the worktree.
+- Status: reviewed
+- Notes: Diff and tests match the reported failure mode: provider-inspected user message content previously lacked the word `json`.
+
+- Command/check: Live Agent 2-shaped output -> Agent 3 direct callable smoke retry after JSON-mode fix
+- Reported result: Passed with `agent_run_id=a25c23ee-3c04-4ac2-9d80-e12080dae346`; final answer `B?n có th? b?t d?u làm vi?c chính th?c vào tháng 08/2026.`; citations in `contract.pdf: "quoted text"` form; no public chunk IDs; success log `agent_steps.id=97de90f6-e6b4-4788-9fe0-dff5f027f5c0`.
+- Rerun result: not rerun during review to avoid additional live provider/database side effects.
+- Status: reviewed
+- Notes: Execution report gives concrete live artifacts and the compatibility fix is covered by local regression tests.
+
+- Command/check: Live insufficient-evidence callable path
+- Reported result: Passed with safe Vietnamese insufficient-evidence answer, no citations, confidence `0.0`, and `is_ready=false`.
+- Rerun result: not rerun during review.
+- Status: reviewed
+- Notes: Existing mocked tests for missing information and empty verified chunks also passed in the targeted suite.
+
+## Acceptance Review
+- Task acceptance: Agent 3 returns a grounded answer with file-name/quote citations and no normal-user chunk IDs, or manual validation is explicitly blocked with a safe setup reason.
+- Status: satisfied
+- Evidence: Updated (06A) report records a successful live retry after the JSON-mode fix, including the final answer, citation form, no chunk-ID exposure, and Supabase success log evidence. The report also records the safe initial provider failure and insufficient-evidence example.
+
+## Progress Tracking
+- Selected task checkbox: checked for (06A) in both the Batch06 task list and Progress Tracker.
+- Checkbox updated by reviewer: no; it was already checked before this re-review, and this review verified only (06A) is checked while (06B), (06C), and Batch06 remain unchecked.
+- Batch status: Batch06 remains unchecked.
+- Execution report entry: appended and reviewed.
+- Review report entry: appended by this review.
+- Other: No sibling or future task was marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None that affect acceptance. The report transparently discloses that live validation used synthetic non-private Agent 2-shaped verification evidence rather than a real user-provided Agent 2 payload.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live validation used synthetic, non-private Agent 2-shaped verification evidence instead of a real user-provided Agent 2 output. This is disclosed in the report and does not block (06A) acceptance because the user requested live validation and no real sample payload was provided.
+
+### Observations
+- The provider compatibility fix is appropriately narrow: two payload fields plus focused tests.
+- The successful live retry and insufficient-evidence example satisfy the manual-check evidence expected for (06A), while full report creation remains assigned to (06B).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (06A) is complete; (06B) and (06C) remain unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch06 - Manual Validation, Reporting, and Scope Review",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live validation used synthetic non-private Agent 2-shaped verification evidence rather than a real user-provided Agent 2 payload"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06B)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06B)
+- Task title: Create execution report with grounded and insufficient-evidence examples
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06B)
+- Reviewed task ID: (06B)
+- Correct selection: yes
+- Notes: The requested `(06B)` entry is the latest task execution report entry and was reviewed in isolation from prior accepted `(06A)` runtime/test changes.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/agents/answer_agent.py`
+  - `backend/tests/test_answer_agent.py`
+  - `docs/reports/report_11_execute_agent.md`
+  - `docs/review/review_11_review_agent.md`
+  - `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_11_execute_agent.md`: in scope - reviewed the appended `(06B)` report section and required report content.
+- `docs/tasks/task_11.md`: in scope - reviewed selected task requirements and updated only `(06B)` after acceptance; `(06C)` and Batch06 remain unchecked.
+- `docs/plans/Plan_11.md`: in scope - reviewed cited `## 14. Agent Report Requirement` and `## 15. Reviewer Checklist`.
+- `backend/app/agents/answer_agent.py`: in scope as prior accepted `(06A)` change - reviewed diff to distinguish from `(06B)` report-only work.
+- `backend/tests/test_answer_agent.py`: in scope as prior accepted `(06A)` change - reviewed diff and reran targeted tests.
+- `docs/review/review_11_review_agent.md`: in scope - inspected EOF before appending this review report.
+- `backend/app/agents/__init__.py`: in scope as reported Plan 11 file - existence verified.
+- `backend/app/agents/prompts.py`: in scope as reported Plan 11 file - existence verified.
+- `backend/app/agents/schemas.py`: in scope as reported Plan 11 file - existence verified.
+- `backend/app/core/config.py`: in scope as reported Plan 11 file - existence verified.
+- `backend/app/services/agent_log_service.py`: in scope as reported Plan 11 file - existence verified.
+- `backend/app/services/shopaikey_service.py`: in scope as reported Plan 11 file - existence verified.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: This is the only file `(06B)` reports as directly created or modified for the selected task.
+
+- file from execution report: Plan 11 created/modified file lists
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The report lists Plan 11 artifact inventory separately from selected-task file changes; the listed files exist. Runtime/test diffs are prior accepted `(06A)` changes, not new `(06B)` implementation work.
+
+## Dependency Review
+- Required dependencies: Batch05 and `(06A)`.
+- Dependency status: satisfied
+- Missing or invalid dependency: None. `(06A)` is accepted in the existing review history and checked in `docs/tasks/task_11.md`; Batch05 is already checked.
+
+## Architecture Alignment
+- Passed: `(06B)` is report-only, follows the existing execution report pattern, uses safe synthetic examples, and explicitly leaves `(06C)` scope/secret/architecture review pending.
+- Failed: None.
+- Uncertain: The live provider/database artifacts from `(06A)` were not rerun to avoid extra external side effects; the local targeted suite was rerun.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The execution report section is physically appended, includes the required Plan 11 report sections, and records limitations rather than claiming unavailable real user document validation.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The grounded and insufficient-evidence examples are disclosed as safe synthetic examples from `(06A)`. No hardcoded secret values or fake runtime branches were introduced by `(06B)`.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_answer_agent.py -v` from `backend/`
+- Reported result: Passed; latest recorded `(06A)` run reported 78 tests passed in 1.71s.
+- Rerun result: Passed; 78 passed in 1.79s.
+- Status: passed
+- Notes: Rerun validates the targeted Agent 3 suite currently passes after prior accepted `(06A)` changes.
+
+- Command/check: Report-content validation for `(06B)`
+- Reported result: Passed.
+- Rerun result: Passed by inspection.
+- Status: passed
+- Notes: The `(06B)` report includes files created, files modified, commands run, test results, known issues, intentionally not implemented out-of-scope work, one grounded answer example, and one insufficient-evidence example.
+
+## Acceptance Review
+- Task acceptance: Report includes all Plan 11 required sections and does not claim blocked live validation as completed.
+- Status: satisfied
+- Evidence: The report states synthetic non-private evidence was used because no real user-provided Agent 2 payload was available, includes grounded and insufficient-evidence examples, and marks `(06C)` review as pending rather than completed.
+
+## Progress Tracking
+- Selected task checkbox: checked for `(06B)` in both the Batch06 task list and Progress Tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked.
+- Execution report entry: appended and reviewed.
+- Review report entry: appended by this review.
+- Other: `(06C)` remains unchecked; no batch completion or sibling/future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None. The report accurately distinguishes selected `(06B)` report creation from prior `(06A)` live-validation/runtime changes.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live validation still uses synthetic, non-private Agent 2-shaped evidence rather than a real user-provided Agent 2 payload; the report discloses this and it does not block `(06B)` acceptance.
+
+### Observations
+- `(06C)` remains required for the separate scope, secret, and architecture review.
+- Existing uncommitted runtime/test diffs belong to accepted `(06A)` and were not treated as new `(06B)` work.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(06C)` remains unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch06 - Manual Validation, Reporting, and Scope Review",
+  "selected_task_id": "(06B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live validation used synthetic non-private Agent 2-shaped verification evidence rather than a real user-provided Agent 2 payload"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (06C)
+
+## Source Task File
+docs/tasks/task_11.md
+
+## Execution Report Reviewed
+docs/reports/report_11_execute_agent.md
+
+## Review Report File
+docs/review/review_11_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Manual Validation, Reporting, and Scope Review
+- Task ID: (06C)
+- Task title: Complete scope, secret, and architecture review
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_11.md` > `## 4. Out of Scope`; `docs/plans/Plan_11.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_11.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 18.1 Grounding Rule`; `README.md` > `Important coordination rules`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06C)
+- Reviewed task ID: (06C)
+- Correct selection: yes
+- Notes: The requested `(06C)` entry is the latest execution report entry and was reviewed separately from prior accepted uncommitted `(06A)` and `(06B)` changes.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/agents/answer_agent.py`
+  - `backend/tests/test_answer_agent.py`
+  - `docs/reports/report_11_execute_agent.md`
+  - `docs/review/review_11_review_agent.md`
+  - `docs/tasks/task_11.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/agents/answer_agent.py`: in scope as prior accepted `(06A)` change - reviewed current diff; only JSON-mode response instruction fields were added to Agent 3 payloads.
+- `backend/tests/test_answer_agent.py`: in scope as prior accepted `(06A)` change - reviewed current diff and reran targeted tests covering citations, chunk-ID hiding, insufficient evidence, and self-check failures.
+- `docs/reports/report_11_execute_agent.md`: in scope - reviewed the appended `(06C)` scope, secret, and architecture confirmation.
+- `docs/review/review_11_review_agent.md`: in scope - inspected EOF before appending this review report; existing uncommitted review entries are prior A2 work.
+- `docs/tasks/task_11.md`: in scope - reviewed dependencies and updated `(06C)` plus Batch06 status after acceptance.
+- `docs/plans/Plan_11.md`: in scope - reviewed cited Out of Scope, Acceptance Criteria, and Reviewer Checklist sections.
+- `docs/plans/Master_Plan.md`: in scope - reviewed cited `## 18.1 Grounding Rule`.
+- `README.md`: in scope - reviewed cited Important coordination rules.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_11_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(06C)` is a review/reporting task; the report section is physically appended and contains the scope boundary findings.
+
+## Dependency Review
+- Required dependencies: Batch05 and `(06B)`.
+- Dependency status: satisfied
+- Missing or invalid dependency: None. Batch05, `(06A)`, and `(06B)` were checked before `(06C)` review; targeted tests pass.
+
+## Architecture Alignment
+- Passed: Current diff has no API route, frontend screen, LangGraph workflow, retrieval service change, migration, database schema change, conversation memory, or public evidence/log API addition. Agent 3 remains backend-only and grounded in verified chunks.
+- Failed: None.
+- Uncertain: Live provider/database rows from `(06A)` were not recreated during this review to avoid extra external side effects; local tests and report evidence were reviewed.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `(06C)` produced a real appended scope review report. Runtime/test code remains the narrow prior accepted JSON-mode compatibility change, and tests exercise actual answer-agent behavior rather than fixed success values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Focused secret-name scan found expected variable names/placeholders and safe test strings only. Added diff-line scan found no `sk-...`, JWT, or raw `SUPABASE_SERVICE_ROLE_KEY`/`QDRANT_API_KEY`/`SHOPAIKEY_API_KEY` assignments.
+
+## Validations Reviewed
+- Command/check: `git status --short`
+- Reported result: Passed.
+- Rerun result: Passed; changed files match the report and prior accepted review/task-tracker files.
+- Status: passed
+- Notes: No untracked files.
+
+- Command/check: `git diff --stat` and `git diff`
+- Reported result: Passed.
+- Rerun result: Passed by inspection.
+- Status: passed
+- Notes: Diff is limited to prior accepted Agent 3 JSON-mode runtime/test changes and Plan 11 report/review/task tracker files.
+
+- Command/check: targeted out-of-scope diff search for API, frontend, LangGraph, retrieval, and migrations
+- Reported result: Passed.
+- Rerun result: Passed; no diff output for `backend/app/main.py`, `backend/app/api`, `frontend/src`, graph/retrieval services, or migrations.
+- Status: passed
+- Notes: Confirms no out-of-scope route/workflow/frontend/retrieval/schema work in the current diff.
+
+- Command/check: secret-name scan and added-line raw secret pattern scan
+- Reported result: Passed.
+- Rerun result: Passed.
+- Status: passed
+- Notes: Matches are documented names/placeholders/test strings only; no raw committed secret value identified.
+
+- Command/check: `pytest tests/test_answer_agent.py -v` from `backend/`
+- Reported result: Passed; 78 tests passed in 1.68s.
+- Rerun result: Passed; 78 passed in 1.60s.
+- Status: passed
+- Notes: Covers grounded answers, citations, no public chunk IDs, insufficient evidence, rejected chunks, unsupported claims, provider/parsing failures, and self-check failure behavior.
+
+## Acceptance Review
+- Task acceptance: Scope review confirms Plan 11 boundaries or documents exact deviations requiring fixes before reviewer handoff.
+- Status: satisfied
+- Evidence: Reviewed source-of-truth sections, git diff, changed files, out-of-scope search, secret scans, and targeted tests. No Plan 11 scope deviation requiring repair was found.
+
+## Progress Tracking
+- Selected task checkbox: checked for `(06C)` in both the detailed Batch06 task list and Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 checked because all Batch06 task IDs are now checked.
+- Execution report entry: appended and reviewed.
+- Review report entry: appended by this review.
+- Other: No commit performed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None affecting acceptance. The report correctly distinguishes prior accepted uncommitted runtime/test changes from `(06C)` review work.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live validation still used synthetic, non-private Agent 2-shaped evidence rather than a real user-provided Agent 2 payload; this was already disclosed in prior accepted `(06A)`/`(06B)` evidence and does not block `(06C)` scope review.
+
+### Observations
+- Batch06 is now fully checked after `(06C)` acceptance.
+- The current out-of-scope and secret scans support the executor's boundary confirmation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, no remaining Batch06 task; ready for the orchestrator/A3 batch-scope step.
+- Should batch be marked complete? yes, all Batch06 task IDs are checked after this acceptance.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_11.md",
+  "execution_report_reviewed": "docs/reports/report_11_execute_agent.md",
+  "review_report_file": "docs/review/review_11_review_agent.md",
+  "selected_batch": "Batch06 - Manual Validation, Reporting, and Scope Review",
+  "selected_task_id": "(06C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/answer_agent.py",
+    "backend/tests/test_answer_agent.py",
+    "docs/reports/report_11_execute_agent.md",
+    "docs/review/review_11_review_agent.md",
+    "docs/tasks/task_11.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live validation used synthetic non-private Agent 2-shaped verification evidence rather than a real user-provided Agent 2 payload"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

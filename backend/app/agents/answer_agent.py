@@ -259,6 +259,7 @@ def build_answer_generation_payload(
 ) -> dict[str, Any]:
     """Build the compact provider payload from verified evidence only."""
     return {
+        "response_instruction": "Return only valid JSON.",
         "question": answer_input.question,
         "verified_chunks": [
             {
@@ -296,6 +297,7 @@ def build_answer_self_check_payload(
 ) -> dict[str, Any]:
     """Build the self-check payload with full draft content and evidence context."""
     return {
+        "response_instruction": "Return only valid JSON.",
         "draft_answer": {
             "final_answer": output.final_answer,
             "citations": [

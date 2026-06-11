@@ -19,6 +19,7 @@ from app.agents.answer_agent import (
     DRAFT_SELF_CHECK_PLACEHOLDER,
     build_answer_generation_messages,
     build_answer_generation_payload,
+    build_answer_self_check_messages,
     build_answer_evidence_lookup,
     enforce_answer_self_check,
     execute_answer_self_check,
@@ -900,6 +901,7 @@ def test_build_answer_generation_payload_contains_question_and_verified_evidence
     payload = build_answer_generation_payload(answer_input)
 
     assert payload == {
+        "response_instruction": "Return only valid JSON.",
         "question": "When can I start official work?",
         "verified_chunks": [
             {
@@ -930,11 +932,24 @@ def test_build_answer_generation_messages_exclude_rejected_chunks_from_user_evid
     assert messages[1]["role"] == "user"
 
     provider_payload = json.loads(messages[1]["content"])
+    assert "json" in messages[1]["content"].lower()
     assert provider_payload["question"] == "When can I start official work?"
     assert provider_payload["verified_chunks"][0]["quote"] == VERIFIED_QUOTE
     assert "rejected_chunks" not in provider_payload
     assert REJECTED_QUOTE not in messages[1]["content"]
     assert REJECTED_CHUNK_ID not in messages[1]["content"]
+
+
+def test_build_answer_self_check_messages_include_json_instruction_for_json_mode() -> None:
+    messages = build_answer_self_check_messages(_answer_output(), _verification_output())
+
+    assert messages[1]["role"] == "user"
+    provider_payload = json.loads(messages[1]["content"])
+    assert "json" in messages[1]["content"].lower()
+    assert provider_payload["draft_answer"]["final_answer"] == (
+        "Ban co the lam viec chinh thuc vao thang 8/2026."
+    )
+    assert provider_payload["verified_chunks"][0]["quote"] == VERIFIED_QUOTE
 
 
 def test_run_answer_agent_sends_verified_evidence_only_to_provider(
