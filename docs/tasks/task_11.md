@@ -983,47 +983,47 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ## Global Verification Checklist
 
-- [ ] `docs/plans/Plan_11.md` remained the scope authority.
-- [ ] No database schema changes were added.
-- [ ] `backend/app/agents/schemas.py` defines Agent 3 input, citation, self-check, and output schemas.
-- [ ] Agent 3 output contains `final_answer`, `citations`, `reasoning_summary`, `confidence`, and `self_check`.
-- [ ] `confidence` is validated between `0.0` and `1.0`.
-- [ ] Citation objects contain `file_name` and `quote`.
-- [ ] Citation output can be rendered as `file_name: "quoted text"`.
-- [ ] `backend/app/agents/prompts.py` contains Agent 3 answer-generation rules.
-- [ ] Answer prompt uses verified chunks only.
-- [ ] Answer prompt forbids rejected chunks.
-- [ ] Answer prompt forbids outside knowledge.
-- [ ] Answer prompt requires citations.
-- [ ] Answer prompt answers in Vietnamese by default.
-- [ ] Answer prompt allows simple reasoning only when evidence is clear.
-- [ ] Self-check prompt or deterministic rule checks verified-only evidence, citations, rejected evidence, unsupported claims, reasoning support, and readiness.
-- [ ] `backend/app/agents/answer_agent.py` exposes `run_answer_agent`.
-- [ ] `AnswerAgentError` handles provider, parse, validation, citation, rejected-evidence, and self-check failures.
-- [ ] `missing_information=true` returns the insufficient-evidence answer without calling ShopAIKey.
-- [ ] Empty `verified_chunks` returns the insufficient-evidence answer without calling ShopAIKey.
-- [ ] Sufficient evidence calls ShopAIKey chat completion through backend service code.
-- [ ] LLM JSON output is parsed and Pydantic-validated.
-- [ ] Missing citations fail validation.
-- [ ] Citation quotes not found in verified evidence fail validation.
-- [ ] Rejected chunks are not cited or copied into normal answer output.
-- [ ] Normal user output does not expose chunk IDs.
-- [ ] Self-check runs before a ready final answer is returned.
-- [ ] Self-check failure does not return unsupported content as ready.
-- [ ] Agent 3 logs successful answer/self-check steps to `agent_steps` with step name `agent_3_answer_self_check`.
-- [ ] Agent 3 logs failed answer/self-check steps when possible.
-- [ ] ShopAIKey failures log failed step and raise `AnswerAgentError`.
-- [ ] Invalid JSON responses are rejected.
-- [ ] No new public API route was added.
-- [ ] LangGraph workflow was not implemented.
-- [ ] Frontend chat was not implemented.
-- [ ] Additional retrieval was not implemented.
-- [ ] Conversation memory was not added.
-- [ ] Backend-only secrets and provider settings stayed out of frontend code.
-- [ ] `cd backend` then `pytest tests/test_answer_agent.py -v` was run and reported.
-- [ ] Manual Agent 2 -> Agent 3 smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
-- [ ] Execution report includes files created, files modified, commands run, test results, known issues, out-of-scope work, one grounded answer example, and one insufficient-evidence example.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `docs/plans/Plan_11.md` remained the scope authority.
+- [x] No database schema changes were added.
+- [x] `backend/app/agents/schemas.py` defines Agent 3 input, citation, self-check, and output schemas.
+- [x] Agent 3 output contains `final_answer`, `citations`, `reasoning_summary`, `confidence`, and `self_check`.
+- [x] `confidence` is validated between `0.0` and `1.0`.
+- [x] Citation objects contain `file_name` and `quote`.
+- [x] Citation output can be rendered as `file_name: "quoted text"`.
+- [x] `backend/app/agents/prompts.py` contains Agent 3 answer-generation rules.
+- [x] Answer prompt uses verified chunks only.
+- [x] Answer prompt forbids rejected chunks.
+- [x] Answer prompt forbids outside knowledge.
+- [x] Answer prompt requires citations.
+- [x] Answer prompt answers in Vietnamese by default.
+- [x] Answer prompt allows simple reasoning only when evidence is clear.
+- [x] Self-check prompt or deterministic rule checks verified-only evidence, citations, rejected evidence, unsupported claims, reasoning support, and readiness.
+- [x] `backend/app/agents/answer_agent.py` exposes `run_answer_agent`.
+- [x] `AnswerAgentError` handles provider, parse, validation, citation, rejected-evidence, and self-check failures.
+- [x] `missing_information=true` returns the insufficient-evidence answer without calling ShopAIKey.
+- [x] Empty `verified_chunks` returns the insufficient-evidence answer without calling ShopAIKey.
+- [x] Sufficient evidence calls ShopAIKey chat completion through backend service code.
+- [x] LLM JSON output is parsed and Pydantic-validated.
+- [x] Missing citations fail validation.
+- [x] Citation quotes not found in verified evidence fail validation.
+- [x] Rejected chunks are not cited or copied into normal answer output.
+- [x] Normal user output does not expose chunk IDs.
+- [x] Self-check runs before a ready final answer is returned.
+- [x] Self-check failure does not return unsupported content as ready.
+- [x] Agent 3 logs successful answer/self-check steps to `agent_steps` with step name `agent_3_answer_self_check`.
+- [x] Agent 3 logs failed answer/self-check steps when possible.
+- [x] ShopAIKey failures log failed step and raise `AnswerAgentError`.
+- [x] Invalid JSON responses are rejected.
+- [x] No new public API route was added.
+- [x] LangGraph workflow was not implemented.
+- [x] Frontend chat was not implemented.
+- [x] Additional retrieval was not implemented.
+- [x] Conversation memory was not added.
+- [x] Backend-only secrets and provider settings stayed out of frontend code.
+- [x] `cd backend` then `pytest tests/test_answer_agent.py -v` was run and reported.
+- [x] Manual Agent 2 -> Agent 3 smoke check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
+- [x] Execution report includes files created, files modified, commands run, test results, known issues, out-of-scope work, one grounded answer example, and one insufficient-evidence example.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
