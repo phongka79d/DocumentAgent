@@ -1,11 +1,36 @@
-from fastapi import APIRouter, HTTPException, status
+from collections.abc import Callable
+from typing import Any, Coroutine
+
+from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 
 from app.agents.graph import run_qa_workflow
 from app.schemas.chat import ChatAskRequest, ChatAskResponse
 from app.services import agent_run_service, chat_service
 
 
-router = APIRouter()
+class ChatValidationRoute(APIRoute):
+    def get_route_handler(
+        self,
+    ) -> Callable[[Request], Coroutine[Any, Any, Response]]:
+        route_handler = super().get_route_handler()
+
+        async def validation_as_bad_request(request: Request) -> Response:
+            try:
+                return await route_handler(request)
+            except RequestValidationError as exc:
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={"detail": jsonable_encoder(exc.errors())},
+                )
+
+        return validation_as_bad_request
+
+
+router = APIRouter(route_class=ChatValidationRoute)
 
 
 @router.post(
@@ -41,6 +66,7 @@ def ask_question(request: ChatAskRequest) -> ChatAskResponse:
     except (
         chat_service.ChatSessionNotFoundError,
         chat_service.SelectedDocumentNotFoundError,
+        agent_run_service.AgentRunSessionNotFoundError,
     ) as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

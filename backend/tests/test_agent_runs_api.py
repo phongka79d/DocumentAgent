@@ -167,7 +167,15 @@ def test_agent_run_log_step_response_rejects_unknown_status() -> None:
 def test_agent_run_service_creates_running_run_with_string_document_ids(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    get_chat_session = Mock(
+        return_value={"id": "44444444-4444-4444-4444-444444444444"}
+    )
     create_agent_run = Mock(return_value={"id": str(AGENT_RUN_ID), "status": "running"})
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "get_chat_session",
+        get_chat_session,
+    )
     monkeypatch.setattr(
         agent_run_service.supabase_service,
         "create_agent_run",
@@ -181,11 +189,39 @@ def test_agent_run_service_creates_running_run_with_string_document_ids(
     )
 
     assert result == {"id": str(AGENT_RUN_ID), "status": "running"}
+    get_chat_session.assert_called_once_with(
+        "44444444-4444-4444-4444-444444444444"
+    )
     create_agent_run.assert_called_once_with(
         session_id="44444444-4444-4444-4444-444444444444",
         question="When does probation start?",
         selected_document_ids=[str(DOCUMENT_ID)],
     )
+
+
+def test_agent_run_service_rejects_not_owned_session_before_run_insert(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "get_chat_session",
+        Mock(return_value=None),
+    )
+    create_agent_run = Mock()
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "create_agent_run",
+        create_agent_run,
+    )
+
+    with pytest.raises(agent_run_service.AgentRunSessionNotFoundError):
+        agent_run_service.create_running_agent_run(
+            session_id=UUID("44444444-4444-4444-4444-444444444444"),
+            question="When does probation start?",
+            document_ids=[DOCUMENT_ID],
+        )
+
+    create_agent_run.assert_not_called()
 
 
 def test_agent_run_service_marks_success_and_failure_safely(
@@ -351,14 +387,68 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
 def test_agent_run_service_raises_controlled_errors_for_lookup_failures(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    list_steps = Mock()
     monkeypatch.setattr(
         agent_run_service.supabase_service,
         "get_agent_run",
         Mock(return_value=None),
     )
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "list_agent_steps_for_run",
+        list_steps,
+    )
 
     with pytest.raises(agent_run_service.AgentRunNotFoundError):
         agent_run_service.get_agent_run_logs(AGENT_RUN_ID)
+
+    list_steps.assert_not_called()
+
+
+def test_agent_run_service_evidence_lookup_failure_is_not_found(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    list_steps = Mock()
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "get_agent_run",
+        Mock(return_value=None),
+    )
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "list_agent_steps_for_run",
+        list_steps,
+    )
+
+    with pytest.raises(agent_run_service.AgentRunNotFoundError):
+        agent_run_service.get_agent_run_evidence(AGENT_RUN_ID)
+
+    list_steps.assert_not_called()
+
+
+def test_agent_run_service_wraps_evidence_query_failure_with_safe_public_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "get_agent_run",
+        Mock(return_value={"id": str(AGENT_RUN_ID)}),
+    )
+    monkeypatch.setattr(
+        agent_run_service.supabase_service,
+        "list_agent_steps_for_run",
+        Mock(side_effect=RuntimeError("raw supabase service role key leaked")),
+    )
+
+    with pytest.raises(agent_run_service.AgentRunDependencyError) as exc_info:
+        agent_run_service.get_agent_run_evidence(AGENT_RUN_ID)
+
+    assert (
+        exc_info.value.public_message
+        == "Agent run evidence is temporarily unavailable."
+    )
+    assert str(exc_info.value) == "Agent run evidence is temporarily unavailable."
+    assert "service role key" not in str(exc_info.value).lower()
 
 
 def test_agent_run_service_wraps_log_query_failure_with_safe_public_message(
@@ -434,11 +524,17 @@ def test_agent_run_service_wraps_persistence_dependency_failures(
     )
 
 
-def _agent_runs_client():
+def _agent_runs_client(*, raise_server_exceptions: bool = True):
     agent_runs_api = import_module("app.api.agent_runs")
     application = FastAPI()
     application.include_router(agent_runs_api.router, prefix="/api/agent-runs")
-    return TestClient(application), agent_runs_api
+    return (
+        TestClient(
+            application,
+            raise_server_exceptions=raise_server_exceptions,
+        ),
+        agent_runs_api,
+    )
 
 
 def test_agent_run_routes_are_registered_in_production_application(
@@ -552,6 +648,25 @@ def test_agent_run_evidence_route_maps_controlled_failures_to_safe_500(
     assert response.json() == {"detail": service_error.public_message}
 
 
+def test_agent_run_evidence_route_maps_unexpected_lookup_failure_to_safe_500(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, agent_runs_api = _agent_runs_client(raise_server_exceptions=False)
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_evidence",
+        Mock(side_effect=RuntimeError("raw supabase service role key leaked")),
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/evidence")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": agent_run_service.SAFE_AGENT_RUN_EVIDENCE_MESSAGE
+    }
+    assert "service role key" not in response.text.lower()
+
+
 def test_agent_run_logs_route_returns_ordered_json_safe_steps(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -637,3 +752,23 @@ def test_agent_run_logs_route_maps_controlled_failures_to_safe_500(
 
     assert response.status_code == 500
     assert response.json() == {"detail": service_error.public_message}
+
+
+def test_agent_run_logs_route_maps_unexpected_lookup_failure_to_safe_500(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, agent_runs_api = _agent_runs_client(raise_server_exceptions=False)
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_logs",
+        Mock(side_effect=RuntimeError("raw qdrant provider stack trace")),
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/logs")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": agent_run_service.SAFE_AGENT_RUN_LOGS_MESSAGE
+    }
+    assert "qdrant" not in response.text.lower()
+    assert "stack trace" not in response.text.lower()

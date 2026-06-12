@@ -27,6 +27,11 @@ def get_agent_run_evidence(agent_run_id: UUID) -> AgentRunEvidenceResponse:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=exc.public_message,
         ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=agent_run_service.SAFE_AGENT_RUN_EVIDENCE_MESSAGE,
+        ) from exc
 
 
 @router.get(
@@ -46,6 +51,11 @@ def get_agent_run_logs(agent_run_id: UUID) -> AgentRunLogsResponse:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=exc.public_message,
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=agent_run_service.SAFE_AGENT_RUN_LOGS_MESSAGE,
         ) from exc
 
 

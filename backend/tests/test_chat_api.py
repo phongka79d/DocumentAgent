@@ -85,6 +85,16 @@ def test_chat_ask_request_rejects_missing_document_ids() -> None:
         )
 
 
+def test_chat_ask_request_rejects_empty_document_ids() -> None:
+    with pytest.raises(ValidationError):
+        ChatAskRequest.model_validate(
+            {
+                "question": "Which contract clause sets probation?",
+                "document_ids": [],
+            }
+        )
+
+
 def test_chat_ask_request_rejects_invalid_document_uuid() -> None:
     with pytest.raises(ValidationError):
         ChatAskRequest.model_validate(
@@ -220,6 +230,46 @@ def test_prepare_chat_persistence_rejects_empty_question_before_writes(
 
     assert exc_info.value.public_message == "Question must be non-empty."
     assert str(exc_info.value) == "Question must be non-empty."
+    list_owned_documents.assert_not_called()
+    create_chat_session.assert_not_called()
+    get_chat_session.assert_not_called()
+    create_agent_run.assert_not_called()
+    insert_chat_message.assert_not_called()
+
+
+def test_prepare_chat_persistence_rejects_empty_document_ids_before_writes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    list_owned_documents = Mock()
+    create_chat_session = Mock()
+    get_chat_session = Mock()
+    create_agent_run = Mock()
+    insert_chat_message = Mock()
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "list_owned_document_metadata_by_ids",
+        list_owned_documents,
+    )
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "create_chat_session",
+        create_chat_session,
+    )
+    monkeypatch.setattr(chat_service.supabase_service, "get_chat_session", get_chat_session)
+    monkeypatch.setattr(chat_service.supabase_service, "create_agent_run", create_agent_run)
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "insert_chat_message",
+        insert_chat_message,
+    )
+
+    with pytest.raises(chat_service.ChatValidationError) as exc_info:
+        chat_service.prepare_chat_persistence(
+            question="What is covered?",
+            document_ids=[],
+        )
+
+    assert exc_info.value.public_message == "Select at least one document."
     list_owned_documents.assert_not_called()
     create_chat_session.assert_not_called()
     get_chat_session.assert_not_called()
@@ -416,8 +466,14 @@ def test_prepare_chat_persistence_uses_existing_owned_session(
 def test_persist_assistant_message_stores_safe_run_metadata(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    get_chat_session = Mock(return_value={"id": str(SESSION_ID)})
     insert_chat_message = Mock(
         return_value={"id": "assistant-message-id", "role": "assistant"}
+    )
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "get_chat_session",
+        get_chat_session,
     )
     monkeypatch.setattr(
         chat_service.supabase_service,
@@ -433,12 +489,39 @@ def test_persist_assistant_message_stores_safe_run_metadata(
     )
 
     assert result == {"id": "assistant-message-id", "role": "assistant"}
+    get_chat_session.assert_called_once_with(str(SESSION_ID))
     insert_chat_message.assert_called_once_with(
         session_id=str(SESSION_ID),
         role="assistant",
         content="Employees may work remotely two days per week.",
         metadata={"agent_run_id": str(AGENT_RUN_ID), "confidence": 0.82},
     )
+
+
+def test_persist_assistant_message_rejects_not_owned_session_before_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "get_chat_session",
+        Mock(return_value=None),
+    )
+    insert_chat_message = Mock()
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "insert_chat_message",
+        insert_chat_message,
+    )
+
+    with pytest.raises(chat_service.ChatSessionNotFoundError):
+        chat_service.persist_assistant_message(
+            session_id=SESSION_ID,
+            agent_run_id=AGENT_RUN_ID,
+            answer="This must not be stored.",
+            confidence=0.1,
+        )
+
+    insert_chat_message.assert_not_called()
 
 
 def _chat_client():
@@ -539,6 +622,162 @@ def test_chat_ask_route_runs_workflow_and_persists_assistant_message(
         answer="Employees may work remotely two days per week.",
         confidence=0.82,
     )
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"document_ids": [str(DOCUMENT_ID)]},
+        {"question": "", "document_ids": [str(DOCUMENT_ID)]},
+        {"question": "   ", "document_ids": [str(DOCUMENT_ID)]},
+        {"question": "What is covered?"},
+        {"question": "What is covered?", "document_ids": []},
+        {"question": "What is covered?", "document_ids": ["not-a-uuid"]},
+    ],
+)
+def test_chat_ask_route_returns_400_for_invalid_request_without_starting_workflow(
+    monkeypatch: pytest.MonkeyPatch,
+    payload: dict[str, object],
+) -> None:
+    client, chat_api = _chat_client()
+    prepare_chat = Mock()
+    run_workflow = Mock()
+    persist_assistant = Mock()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        prepare_chat,
+    )
+    monkeypatch.setattr(chat_api, "run_qa_workflow", run_workflow)
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "persist_assistant_message",
+        persist_assistant,
+    )
+
+    response = client.post("/api/chat/ask", json=payload)
+
+    assert response.status_code == 400
+    prepare_chat.assert_not_called()
+    run_workflow.assert_not_called()
+    persist_assistant.assert_not_called()
+
+
+def test_chat_ask_route_rejects_unknown_document_without_starting_workflow(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, chat_api = _chat_client()
+    run_workflow = Mock()
+    persist_assistant = Mock()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        Mock(side_effect=chat_service.SelectedDocumentNotFoundError()),
+    )
+    monkeypatch.setattr(chat_api, "run_qa_workflow", run_workflow)
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "persist_assistant_message",
+        persist_assistant,
+    )
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "question": "What is covered?",
+            "document_ids": [str(UNKNOWN_DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Selected document not found."}
+    run_workflow.assert_not_called()
+    persist_assistant.assert_not_called()
+
+
+def test_chat_ask_route_returns_404_when_run_session_is_not_owned(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, chat_api = _chat_client()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        Mock(
+            return_value=chat_service.ChatPersistenceContext(
+                session={"id": str(SESSION_ID)},
+                user_message={"id": "user-message-id"},
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        chat_api,
+        "run_qa_workflow",
+        Mock(side_effect=agent_run_service.AgentRunSessionNotFoundError()),
+    )
+    persist_assistant = Mock()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "persist_assistant_message",
+        persist_assistant,
+    )
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "question": "What is covered?",
+            "document_ids": [str(DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Chat session not found."}
+    persist_assistant.assert_not_called()
+
+
+def test_chat_ask_route_returns_500_for_workflow_failure_without_assistant_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, chat_api = _chat_client()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        Mock(
+            return_value=chat_service.ChatPersistenceContext(
+                session={"id": str(SESSION_ID)},
+                user_message={"id": "user-message-id"},
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        chat_api,
+        "run_qa_workflow",
+        Mock(
+            side_effect=agent_run_service.AgentRunWorkflowError(
+                RuntimeError("raw provider secret")
+            )
+        ),
+    )
+    persist_assistant = Mock()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "persist_assistant_message",
+        persist_assistant,
+    )
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "question": "What is covered?",
+            "document_ids": [str(DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": agent_run_service.SAFE_AGENT_RUN_FAILURE_MESSAGE
+    }
+    assert "provider secret" not in response.text.lower()
+    persist_assistant.assert_not_called()
 
 
 @pytest.mark.parametrize(

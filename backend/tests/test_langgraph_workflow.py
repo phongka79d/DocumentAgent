@@ -343,14 +343,40 @@ def test_run_qa_workflow_marks_success_for_insufficient_evidence(monkeypatch):
     mark_failed.assert_not_called()
 
 
-def test_run_qa_workflow_marks_created_run_failed_on_graph_error(monkeypatch):
+@pytest.mark.parametrize(
+    "failing_agent",
+    ["agent_1", "agent_2", "agent_3"],
+)
+def test_run_qa_workflow_marks_created_run_failed_on_agent_error(
+    monkeypatch,
+    failing_agent,
+):
     agent_run_id = UUID("00000000-0000-0000-0000-000000000030")
     document_id = UUID("00000000-0000-0000-0000-000000000031")
     create_run = Mock(return_value={"id": str(agent_run_id), "status": "running"})
     mark_success = Mock()
     mark_failed = Mock(return_value={"id": str(agent_run_id), "status": "failed"})
+    retrieval = RetrievalAgentOutput(question="What is covered?", candidates=[])
+    verification = VerificationAgentOutput(
+        verified_chunks=[],
+        rejected_chunks=[],
+        missing_information=True,
+        confidence=0.0,
+    )
 
     def fail_retrieval(input_data):
+        raise RuntimeError("raw provider secret")
+
+    def fake_retrieval(input_data):
+        return retrieval
+
+    def fail_verification(input_data):
+        raise RuntimeError("raw provider secret")
+
+    def fake_verification(input_data):
+        return verification
+
+    def fail_answer(input_data):
         raise RuntimeError("raw provider secret")
 
     monkeypatch.setattr(
@@ -368,7 +394,21 @@ def test_run_qa_workflow_marks_created_run_failed_on_graph_error(monkeypatch):
         "mark_agent_run_failed",
         mark_failed,
     )
-    monkeypatch.setattr(graph, "run_retrieval_agent", fail_retrieval)
+    monkeypatch.setattr(
+        graph,
+        "run_retrieval_agent",
+        fail_retrieval if failing_agent == "agent_1" else fake_retrieval,
+    )
+    monkeypatch.setattr(
+        graph,
+        "run_verification_agent",
+        fail_verification if failing_agent == "agent_2" else fake_verification,
+    )
+    monkeypatch.setattr(
+        graph,
+        "run_answer_agent",
+        fail_answer if failing_agent == "agent_3" else Mock(),
+    )
 
     with pytest.raises(agent_run_service.AgentRunWorkflowError) as exc_info:
         graph.run_qa_workflow("What is covered?", [document_id])

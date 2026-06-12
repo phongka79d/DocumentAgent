@@ -2145,3 +2145,457 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after review acceptance of (04E)
 - handoff notes: Verify the production router registration and exact paths before beginning Batch05 validation behavior.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch05 - Failure Handling and Single-User Safety
+
+## Task
+(05A) - Enforce chat request validation and selected-document errors
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 8. API Design
+- docs/plans/Plan_12.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Failure Handling and Single-User Safety
+- Task ID: (05A)
+- Task title: Enforce chat request validation and selected-document errors
+
+## Completed Work
+- Status: complete.
+- Added route-scoped request validation mapping so invalid `/api/chat/ask` bodies return HTTP 400 instead of FastAPI's default HTTP 422.
+- Required at least one selected document in the chat request schema.
+- Added defensive service validation that rejects an empty selected-document list before document ownership lookup, session creation, message persistence, agent run creation, or workflow execution.
+- Preserved controlled HTTP 404 handling for unknown or not-owned selected documents before workflow execution.
+- Added tests for empty or omitted questions, empty or omitted document selections, invalid UUIDs, unknown documents, and no persistence/workflow invocation on invalid requests.
+- Preserved prior Batch04 success and controlled-error route behavior.
+- Did not implement the broader (05B) ownership audit, update checkboxes, or commit.
+
+## Files Created or Modified
+- backend/app/api/chat.py
+- backend/app/schemas/chat.py
+- backend/app/services/chat_service.py
+- backend/tests/test_chat_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_chat_api.py::test_chat_ask_request_rejects_empty_document_ids tests/test_chat_api.py::test_prepare_chat_persistence_rejects_empty_document_ids_before_writes tests/test_chat_api.py::test_chat_ask_route_returns_400_for_invalid_request_without_starting_workflow -v`: Failed as expected with six failures because empty document selections were accepted and request validation returned HTTP 422.
+- TDD green check, focused validation tests including unknown-document workflow prevention: Passed with 7 passed.
+- Required validation, `cd backend; pytest tests/test_chat_api.py -v`: Passed with 35 passed in 1.69s.
+- `cd backend; python -m py_compile app/api/chat.py app/services/chat_service.py app/schemas/chat.py tests/test_chat_api.py`: Passed; exit code 0.
+- `git diff --check -- backend/app/api/chat.py backend/app/services/chat_service.py backend/app/schemas/chat.py backend/tests/test_chat_api.py`: Passed; no whitespace errors. Git reported only existing line-ending conversion warnings.
+
+## Acceptance Check
+- Task acceptance condition: Invalid requests return controlled errors and do not invoke agents.
+- Status: satisfied
+- Evidence: Route tests verify HTTP 400 for missing, empty, whitespace-only, empty-selection, and invalid-UUID requests while asserting persistence, workflow, and assistant-message mocks are not called. Unknown selected documents return HTTP 404 and do not invoke the workflow. Service tests confirm no ownership/session/message/run write path is called for empty selections.
+
+## Artifacts Produced
+- Router-scoped HTTP 400 request-validation behavior for `/api/chat/ask`.
+- Explicit non-empty `document_ids` schema and service validation.
+- Regression coverage for pre-workflow validation and controlled selected-document errors.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit.
+
+## Key Implementation Decisions
+- Used a custom `APIRoute` only for the chat router so Plan 12's HTTP 400 contract does not change validation behavior for unrelated APIs.
+- Kept schema and service validation aligned: the schema handles public API inputs while the service independently protects direct callers.
+- Retained the existing controlled HTTP 404 mapping for missing or not-owned selected documents.
+
+## Risks or Open Issues
+- None identified within task (05A) scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Batch04 dependencies are committed and the worktree was clean before execution.
+- Changes are limited to request validation, selected-document preflight behavior, focused tests, and this report.
+- Broader ownership scoping remains reserved for (05B).
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes, after review acceptance of (05A)
+- handoff notes: Audit single-user scoping without changing the validated request/error behavior established here.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch05 - Failure Handling and Single-User Safety
+
+## Task
+(05B) - Enforce session, document, run, message, and step scoping by `SINGLE_USER_ID`
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 8. API Design
+- docs/plans/Plan_12.md > ## 10. Configuration and Environment Variables
+- docs/plans/Plan_12.md > ## 15. Reviewer Checklist
+- README.md > Important coordination rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Failure Handling and Single-User Safety
+- Task ID: (05B)
+- Task title: Enforce session, document, run, message, and step scoping by `SINGLE_USER_ID`
+
+## Completed Work
+- Status: complete.
+- Audited Supabase helpers for selected documents, chat sessions, chat messages, agent runs, and agent steps.
+- Confirmed selected-document lookup, session lookup, message rows, run lookup/update, and step preflight use the configured `SINGLE_USER_ID`.
+- Added an independent owned-session check before assistant message persistence so a raw or not-owned session ID cannot receive a message.
+- Added an independent owned-session check before agent run creation so a raw or not-owned session ID cannot create a run.
+- Added a controlled run-session not-found error and mapped it to HTTP 404 on the chat endpoint.
+- Confirmed step reads establish owned-run access before querying `agent_steps`; added regression evidence that an unowned run never reaches the step query.
+- Added tests proving not-owned session, document, and run data is rejected or not returned.
+- Preserved accepted uncommitted (05A) request-validation changes.
+- Did not implement (05C), (05D), or (05E).
+
+## Files Created or Modified
+- backend/app/api/chat.py
+- backend/app/services/chat_service.py
+- backend/app/services/agent_run_service.py
+- backend/tests/test_chat_api.py
+- backend/tests/test_agent_runs_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_chat_api.py -q`: Failed as expected with 3 failures because assistant writes did not check session ownership and the run-session error did not exist.
+- TDD red check, `cd backend; pytest tests/test_agent_runs_api.py -q`: Failed as expected with 2 failures because run creation did not check session ownership.
+- Focused green check, `cd backend; pytest tests/test_chat_api.py -q`: Passed with 37 passed.
+- Focused green check, `cd backend; pytest tests/test_agent_runs_api.py -q`: Passed with 25 passed.
+- Supabase ownership helper check, `cd backend; pytest tests/test_supabase_service.py -q`: Passed with 55 passed.
+- Required combined validation, `cd backend; pytest tests/test_chat_api.py tests/test_agent_runs_api.py tests/test_supabase_service.py -v`: Passed with 117 passed in 1.85s.
+- Syntax check, `cd backend; python -m py_compile app/api/chat.py app/services/chat_service.py app/services/agent_run_service.py tests/test_chat_api.py tests/test_agent_runs_api.py tests/test_supabase_service.py`: Passed; exit code 0.
+- `git diff --check`: Passed; no whitespace errors. Git reported only existing line-ending conversion warnings.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove not-owned session/document/run data is not accepted or returned.
+- Status: satisfied
+- Evidence: Chat service tests reject unknown/not-owned selected documents before writes, reject unknown/not-owned sessions before user and assistant message writes, and API tests return HTTP 404. Agent run tests reject run creation for a not-owned session. Supabase and service tests prove run lookups use `SINGLE_USER_ID` and unowned runs do not query or return agent steps.
+
+## Artifacts Produced
+- Owned-session guard for assistant message persistence.
+- Owned-session guard and controlled not-found error for agent run creation.
+- Regression tests for not-owned session, document, run, message, and step access.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit.
+
+## Key Implementation Decisions
+- Kept ownership enforcement at service boundaries in addition to existing Supabase filters so direct callers cannot bypass chat preflight with raw session IDs.
+- Reused the configured-user `get_chat_session` helper for ownership checks rather than accepting caller-provided user IDs.
+- Retained the existing run-first step lookup design; raw `agent_run_id` alone remains insufficient to query steps.
+
+## Risks or Open Issues
+- None identified within task (05B) scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Batch02 and Batch04 dependencies are complete.
+- Accepted uncommitted (05A) changes were preserved.
+- No task checkbox or batch status was updated.
+- No commit was created.
+- No (05C)-(05E) failure, lookup-error, or leakage behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes, after review acceptance of (05B)
+- handoff notes: Failure-status handling can proceed without weakening the ownership checks added here.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch05 - Failure Handling and Single-User Safety
+
+## Task
+(05C) - Mark agent failures as failed runs with safe errors
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 9. Implementation Steps
+- docs/plans/Plan_12.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_12.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Failure Handling and Single-User Safety
+- Task ID: (05C)
+- Task title: Mark agent failures as failed runs with safe errors
+
+## Completed Work
+- Status: complete.
+- Verified the existing workflow lifecycle already creates an agent run before graph invocation, marks the created run as failed when any graph node raises, stores only the safe failure summary through `mark_agent_run_failed`, and raises `AgentRunWorkflowError` for API mapping.
+- Expanded workflow regression coverage so mocked Agent 1, Agent 2, and Agent 3 failures all assert `mark_agent_run_failed` is called for the created run, `mark_agent_run_success` is not called, and raw provider details are not exposed through the controlled workflow exception.
+- Added chat API regression coverage proving a workflow failure after chat persistence returns HTTP 500 with the safe public failure message and does not persist an assistant message.
+- Preserved existing per-agent failed step logging behavior by leaving the agent callables unchanged; the graph continues to call each agent directly and only marks the parent run failed after the callable raises.
+- Did not implement (05D) evidence/log lookup failure handling or (05E) secret scan behavior.
+
+## Files Created or Modified
+- backend/tests/test_langgraph_workflow.py
+- backend/tests/test_chat_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- Focused 05C validation, `cd backend; pytest tests/test_langgraph_workflow.py::test_run_qa_workflow_marks_created_run_failed_on_agent_error tests/test_chat_api.py::test_chat_ask_route_returns_500_for_workflow_failure_without_assistant_write -v`: Passed with 4 passed in 2.02s. The new tests passed immediately because the existing workflow lifecycle already handled all three agent-node failures safely.
+- Required validation, `cd backend; pytest tests/test_langgraph_workflow.py tests/test_chat_api.py -v`: Passed with 46 passed in 1.69s.
+- Diff hygiene, `git diff --check -- backend/tests/test_langgraph_workflow.py backend/tests/test_chat_api.py`: Passed with no whitespace errors. Git reported only existing line-ending conversion warnings.
+
+## Acceptance Check
+- Task acceptance condition: Mocked Agent 1/2/3 failures all result in failed agent run status and safe API failure response.
+- Status: satisfied
+- Evidence: The parametrized workflow test covers Agent 1, Agent 2, and Agent 3 failures and asserts failed-run marking for the created run with safe `AgentRunWorkflowError` output. The chat API test covers workflow failure after chat preflight and asserts HTTP 500, safe public detail, no leaked raw provider string, and no assistant-message write.
+
+## Artifacts Produced
+- Regression test coverage for Agent 1, Agent 2, and Agent 3 workflow failure handling.
+- Regression test coverage for safe `/api/chat/ask` HTTP 500 workflow failure response.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit.
+
+## Key Implementation Decisions
+- Kept runtime code unchanged because the existing `run_qa_workflow` exception boundary already marks created runs failed for any agent-node exception and wraps the failure safely.
+- Preserved per-agent failed-step logging by not wrapping or replacing individual agent callables; agent-provided failed-step logs still happen inside the callable before the graph-level failed-run update.
+
+## Risks or Open Issues
+- None identified within task (05C) scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependencies through Batch03 are complete in the task tracker, and accepted uncommitted (05A)/(05B) changes were preserved.
+- Scope was limited to (05C) tests and this execution report.
+- No evidence/log lookup failure handling, secret scanning, frontend, auth, streaming, multi-user, document deletion, schema migration, checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes, after review acceptance of (05C)
+- handoff notes: Evidence/log lookup failure handling remains untouched and should be handled separately in (05D).
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch05 - Failure Handling and Single-User Safety
+
+## Task
+(05D) - Handle evidence and logs lookup failures safely
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_12.md` > `## Mandatory Batch05 - Failure Handling and Single-User Safety` > `(05D)`
+- `docs/plans/Plan_12.md` > `## 8. API Design`
+- `docs/plans/Plan_12.md` > `## 13. Failure Handling`
+- `docs/plans/Master_Plan.md` > `## 18.5 Debuggability Rule`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Failure Handling and Single-User Safety
+- Task ID: (05D)
+- Task title: Handle evidence and logs lookup failures safely
+
+## Completed Work
+- Task (05D) is complete.
+- Added safe API fallback mapping for unexpected evidence and logs lookup failures so public responses remain HTTP 500 JSON with endpoint-specific safe messages.
+- Preserved existing 404 mapping for missing owned agent runs and controlled 500 mapping for service dependency/query failures.
+- Added tests proving evidence/log not-found behavior stays distinct from query/dependency failure behavior and that raw Supabase/provider/Qdrant-style error text does not appear in public responses.
+
+## Files Created or Modified
+- backend/app/api/agent_runs.py
+- backend/tests/test_agent_runs_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- Red validation, `cd backend; pytest tests/test_agent_runs_api.py -v`: Failed as expected with 2 failed and 25 passed because unexpected evidence/log route exceptions returned FastAPI plain `Internal Server Error` instead of safe JSON details.
+- Required validation, `cd backend; pytest tests/test_agent_runs_api.py -v`: Passed with 29 passed in 1.78s.
+
+## Acceptance Check
+- Task acceptance condition: Missing agent run returns 404 for `SINGLE_USER_ID`.
+- Status: satisfied
+- Evidence: Existing route tests assert `AgentRunNotFoundError` maps to HTTP 404 for evidence and logs; service tests assert missing owned runs do not query steps.
+- Task acceptance condition: Agent step log query failure returns HTTP 500 with safe public message.
+- Status: satisfied
+- Evidence: Log query failures are wrapped as `AgentRunDependencyError` with `Agent run logs are temporarily unavailable.` and API tests assert HTTP 500 safe detail.
+- Task acceptance condition: Developers can inspect run steps without leaking internals.
+- Status: satisfied
+- Evidence: Successful logs endpoint still returns ordered JSON-safe step payloads; new unexpected-failure tests assert raw provider/stack text is not returned.
+- Task acceptance condition: Distinguish not-found from dependency/query failure.
+- Status: satisfied
+- Evidence: Not-found tests assert 404, while dependency/unexpected query failure tests assert 500 with safe endpoint-specific messages.
+
+## Artifacts Produced
+- Regression tests for evidence lookup not-found and query-failure behavior.
+- Regression tests for evidence/log API fallback safety when unexpected lookup exceptions occur.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit.
+
+## Key Implementation Decisions
+- Kept service-layer controlled errors as the primary mapping path and added route-level fallback only for unexpected lookup exceptions that escape the service boundary.
+- Used endpoint-specific safe messages for fallback errors: evidence returns `Agent run evidence is temporarily unavailable.` and logs returns `Agent run logs are temporarily unavailable.`
+
+## Risks or Open Issues
+- None identified within task (05D) scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependencies through Batch04 and accepted Batch05 (05A)-(05C) changes were present and preserved.
+- Scope was limited to (05D) route error mapping, agent-runs API tests, and this report entry.
+- No (05E) secret scan, frontend, auth, streaming, multi-user, document deletion, schema migration, checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (05E)
+- can proceed: yes, after review acceptance of (05D)
+- handoff notes: Secret/private implementation leakage review remains for (05E); do not treat these targeted safe-message tests as a full secret scan.
+
+---
+
+# Task Execution Report - (05E)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch05 - Failure Handling and Single-User Safety
+
+## Task
+(05E) - Prevent secret and private implementation leakage
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_12.md` > `## Mandatory Batch05 - Failure Handling and Single-User Safety` > `(05E)`
+- `docs/plans/Plan_12.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+- `docs/plans/Master_Plan.md` > `# 15. Environment Variables`
+- `README.md` > `Important coordination rules`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Failure Handling and Single-User Safety
+- Task ID: (05E)
+- Task title: Prevent secret and private implementation leakage
+
+## Completed Work
+- Task (05E) is complete.
+- Reviewed the current git diff for accepted Batch05 code and tests.
+- Ran focused scans for hardcoded secret-like values, backend-only variable names in frontend files, raw `.env` reads outside the existing settings pattern, and frontend exposure of Supabase service role, Qdrant, ShopAIKey, or `SINGLE_USER_ID` configuration.
+- No runtime code changes were needed because no actual in-scope leakage issue was found.
+
+## Files Created or Modified
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- `git status --short; git diff --stat; git diff --name-only`: Passed; reviewed current changed-file set before scanning.
+- `git diff -- backend/app/api/agent_runs.py backend/app/api/chat.py backend/app/schemas/chat.py backend/app/services/agent_run_service.py backend/app/services/chat_service.py backend/tests/test_agent_runs_api.py backend/tests/test_chat_api.py backend/tests/test_langgraph_workflow.py`: Passed; no hardcoded real secrets, provider keys, service-role values, raw environment access, or frontend exposure found in the Batch05 code/test diff.
+- `git diff -U0 -- backend/app/api/agent_runs.py backend/app/api/chat.py backend/app/schemas/chat.py backend/app/services/agent_run_service.py backend/app/services/chat_service.py backend/tests/test_agent_runs_api.py backend/tests/test_chat_api.py backend/tests/test_langgraph_workflow.py | rg -n -i "^(\+[^+].*)(service[_ -]?role|supabase.*key|shopaikey|api[_-]?key|provider[_-]?key|secret|token|password|authorization|bearer|SINGLE_USER_ID|os\.getenv|os\.environ|dotenv|VITE_|NEXT_PUBLIC|REACT_APP|import\.meta\.env|process\.env)"`: Passed; matches were synthetic test exception strings such as `raw provider secret` / `raw supabase service role key leaked` and assertions proving those strings are not returned publicly, not real credentials or configuration exposure.
+- `rg -n -i "(service[_ -]?role|supabase.*key|shopaikey|api[_-]?key|provider[_-]?key|secret|token|password|authorization|bearer|SINGLE_USER_ID|os\.getenv|os\.environ|dotenv|VITE_|NEXT_PUBLIC|REACT_APP|import\.meta\.env|process\.env)" frontend backend/app/api backend/app/services/chat_service.py backend/app/services/agent_run_service.py backend/app/schemas/chat.py backend/tests/test_chat_api.py backend/tests/test_agent_runs_api.py backend/tests/test_langgraph_workflow.py`: Passed; frontend result was limited to allowed `VITE_API_BASE_URL`; backend/test hits were expected safe-message and synthetic leak-regression test terms.
+- `rg -n -i "(sk-[A-Za-z0-9_-]{10,}|eyJ[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|-----BEGIN (RSA |EC |OPENSSH |PRIVATE )?KEY-----|supabase[a-z0-9_-]{10,}|service_role[a-z0-9_-]{10,})" backend/app backend/tests frontend docs -g '!frontend/package-lock.json'`: Passed for Batch05 scope; no real key-shaped literals found in Batch05 runtime diff, with older documented/test placeholder hits outside this task scope not indicating a new 05E leak.
+- `rg -n "(os\.getenv|os\.environ|getenv\(|load_dotenv|dotenv_values|SettingsConfigDict|env_file)" backend/app`: Passed; direct backend environment loading remains centralized in `backend/app/core/config.py` through Pydantic settings.
+- `git diff --name-only -- frontend; git diff -- frontend`: Passed; no frontend files are changed in the current diff.
+- `rg -n "SUPABASE_SERVICE_ROLE_KEY|QDRANT_API_KEY|SHOPAIKEY_API_KEY|SINGLE_USER_ID|SUPABASE_URL|SHOPAIKEY|QDRANT" frontend -g '!package-lock.json'`: Passed; no backend-only variable names found in frontend source.
+- `git diff --check`: Passed; no whitespace errors reported.
+
+## Acceptance Check
+- Task acceptance condition: No new hardcoded secrets or frontend secret references exist.
+- Status: satisfied
+- Evidence: Current Batch05 diff contains no real key-shaped literals, no raw `.env` reads, no changed frontend files, and no backend-only secret/config variable names in frontend source. Synthetic test strings are deliberately used to assert sanitization and are not credential values.
+
+## Artifacts Produced
+- Secret-boundary review result in this execution report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit.
+
+## Key Implementation Decisions
+- Treated synthetic test strings that contain words like `secret`, `service role key`, and `provider` as safe negative-test fixtures because the tests assert those strings are not exposed in public errors.
+- Did not run broader Batch06 automated tests because no runtime code was changed for (05E); this task required focused scans and git diff review.
+
+## Risks or Open Issues
+- Existing repository docs and older tests contain backend secret variable names and placeholder/fake secret terms by design; these are not new Batch05 leakage findings.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependencies through Batch04 and accepted Batch05 (05A)-(05D) changes were present and preserved.
+- Scope was limited to reviewing current Batch05 code/tests, focused scans, and appending this report.
+- No future Batch06/07 work, frontend chat UI, streaming, auth/JWT, multi-user support, document deletion, database migration, checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes, after review acceptance of (05E)
+- handoff notes: Batch06 can add required automated LangGraph workflow success-order tests; preserve the safe-error and single-user ownership behavior established in Batch05.

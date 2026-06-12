@@ -8,7 +8,7 @@ class ChatAskRequest(BaseModel):
 
     session_id: UUID | None = None
     question: str = Field(min_length=1)
-    document_ids: list[UUID]
+    document_ids: list[UUID] = Field(min_length=1)
 
     @field_validator("question")
     @classmethod

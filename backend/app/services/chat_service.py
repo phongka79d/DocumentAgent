@@ -68,6 +68,9 @@ def _validate_selected_document_ownership(
     document_ids: Sequence[UUID | str],
 ) -> list[str]:
     selected_document_ids = _stringify_uuid_list(document_ids)
+    if not selected_document_ids:
+        raise ChatValidationError("Select at least one document.")
+
     try:
         owned_documents = supabase_service.list_owned_document_metadata_by_ids(
             selected_document_ids
@@ -111,6 +114,11 @@ def _get_or_create_owned_session(
         except Exception as exc:
             raise ChatDependencyError() from exc
 
+
+    return _get_owned_session(session_id)
+
+
+def _get_owned_session(session_id: UUID | str) -> dict[str, Any]:
     try:
         session = supabase_service.get_chat_session(str(session_id))
     except Exception as exc:
@@ -159,9 +167,10 @@ def persist_assistant_message(
     answer: str,
     confidence: float,
 ) -> dict[str, Any]:
+    owned_session = _get_owned_session(session_id)
     try:
         return supabase_service.insert_chat_message(
-            session_id=str(session_id),
+            session_id=_session_id_from_row(owned_session),
             role="assistant",
             content=answer,
             metadata={

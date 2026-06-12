@@ -38,6 +38,13 @@ class AgentRunNotFoundError(AgentRunServiceError, LookupError):
         super().__init__("Agent run not found.")
 
 
+class AgentRunSessionNotFoundError(AgentRunServiceError, LookupError):
+    """Raised when a run session is not owned by the configured user."""
+
+    def __init__(self) -> None:
+        super().__init__("Chat session not found.")
+
+
 class AgentRunStepNotFoundError(AgentRunServiceError, LookupError):
     """Raised when the required persisted agent step is missing."""
 
@@ -92,12 +99,19 @@ def create_running_agent_run(
     question: str,
     document_ids: Sequence[UUID | str],
 ) -> dict[str, Any]:
+    resolved_session_id = None if session_id is None else str(session_id)
     try:
+        if resolved_session_id is not None:
+            session = supabase_service.get_chat_session(resolved_session_id)
+            if session is None:
+                raise AgentRunSessionNotFoundError()
         return supabase_service.create_agent_run(
-            session_id=None if session_id is None else str(session_id),
+            session_id=resolved_session_id,
             question=question,
             selected_document_ids=_stringify_uuid_list(document_ids),
         )
+    except AgentRunSessionNotFoundError:
+        raise
     except Exception as exc:
         raise _dependency_failure(exc) from exc
 
@@ -229,6 +243,7 @@ __all__ = [
     "SAFE_AGENT_RUN_PERSISTENCE_MESSAGE",
     "AgentRunDependencyError",
     "AgentRunNotFoundError",
+    "AgentRunSessionNotFoundError",
     "AgentRunServiceError",
     "AgentRunStepDataError",
     "AgentRunStepNotFoundError",

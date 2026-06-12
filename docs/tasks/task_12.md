@@ -697,7 +697,7 @@ The full workflow crosses agents, persistence, and API routes. Failure behavior 
 
 ### Tasks
 
-- [ ] (05A): Enforce chat request validation and selected-document errors
+- [x] (05A): Enforce chat request validation and selected-document errors
   - Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Empty question returns HTTP 400.
@@ -714,7 +714,7 @@ The full workflow crosses agents, persistence, and API routes. Failure behavior 
   - Blocked Condition: None.
   - Files: `backend/app/api/chat.py`, `backend/app/services/chat_service.py`, `backend/tests/test_chat_api.py`
 
-- [ ] (05B): Enforce session, document, run, message, and step scoping by `SINGLE_USER_ID`
+- [x] (05B): Enforce session, document, run, message, and step scoping by `SINGLE_USER_ID`
   - Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - All selected documents must belong to `SINGLE_USER_ID`.
@@ -730,7 +730,7 @@ The full workflow crosses agents, persistence, and API routes. Failure behavior 
   - Blocked Condition: None.
   - Files: `backend/app/services/supabase_service.py`, `backend/app/services/chat_service.py`, `backend/app/services/agent_run_service.py`, backend tests
 
-- [ ] (05C): Mark agent failures as failed runs with safe errors
+- [x] (05C): Mark agent failures as failed runs with safe errors
   - Source of Truth: `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Agent 1 failure marks run failed.
@@ -748,7 +748,7 @@ The full workflow crosses agents, persistence, and API routes. Failure behavior 
   - Blocked Condition: None.
   - Files: `backend/app/agents/graph.py`, `backend/app/api/chat.py`, backend tests
 
-- [ ] (05D): Handle evidence and logs lookup failures safely
+- [x] (05D): Handle evidence and logs lookup failures safely
   - Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `## 18.5 Debuggability Rule`
   - Source Requirements:
     - Missing agent run returns 404 for `SINGLE_USER_ID`.
@@ -764,7 +764,7 @@ The full workflow crosses agents, persistence, and API routes. Failure behavior 
   - Blocked Condition: None.
   - Files: `backend/app/api/agent_runs.py`, `backend/app/services/agent_run_service.py`, `backend/tests/test_agent_runs_api.py`
 
-- [ ] (05E): Prevent secret and private implementation leakage
+- [x] (05E): Prevent secret and private implementation leakage
   - Source of Truth: `docs/plans/Plan_12.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - No hardcoded secrets.
@@ -1170,10 +1170,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ### Batches
 
-- [ ] Batch01 - Workflow Contracts, Dependencies, and API Schemas
-- [ ] Batch02 - Chat and Agent Run Persistence Services
-- [ ] Batch03 - LangGraph Workflow Orchestration
-- [ ] Batch04 - Public Chat, Evidence, and Logs APIs
+- [x] Batch01 - Workflow Contracts, Dependencies, and API Schemas
+- [x] Batch02 - Chat and Agent Run Persistence Services
+- [x] Batch03 - LangGraph Workflow Orchestration
+- [x] Batch04 - Public Chat, Evidence, and Logs APIs
 - [ ] Batch05 - Failure Handling and Single-User Safety
 - [ ] Batch06 - Required Automated Tests
 - [ ] Batch07 - Manual Validation, Reporting, and Scope Review
@@ -1216,11 +1216,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch05
 
-- [ ] (05A): Enforce chat request validation and selected-document errors
-- [ ] (05B): Enforce session, document, run, message, and step scoping by `SINGLE_USER_ID`
-- [ ] (05C): Mark agent failures as failed runs with safe errors
-- [ ] (05D): Handle evidence and logs lookup failures safely
-- [ ] (05E): Prevent secret and private implementation leakage
+- [x] (05A): Enforce chat request validation and selected-document errors
+- [x] (05B): Enforce session, document, run, message, and step scoping by `SINGLE_USER_ID`
+- [x] (05C): Mark agent failures as failed runs with safe errors
+- [x] (05D): Handle evidence and logs lookup failures safely
+- [x] (05E): Prevent secret and private implementation leakage
 
 #### Batch06
 
