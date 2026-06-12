@@ -1113,58 +1113,58 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ## Global Verification Checklist
 
-- [ ] `docs/plans/Plan_12.md` remained the scope authority.
-- [ ] No database schema changes or migrations were added.
-- [ ] LangGraph dependency is present only if needed.
-- [ ] `backend/app/agents/graph.py` exists.
-- [ ] Workflow state includes `agent_run_id`, `session_id`, `question`, `document_ids`, `retrieval`, `verification`, `answer`, and `error`.
-- [ ] `run_qa_workflow(question, document_ids, session_id=None)` exists.
-- [ ] Workflow order is Agent 1, then Agent 2, then Agent 3.
-- [ ] Agent 3 self-check remains part of the logical workflow path.
-- [ ] Final answers come from Agent 3 output.
-- [ ] Agent 2 missing information returns safe Agent 3 insufficient-evidence output.
-- [ ] `agent_runs` row is created with status `running` before graph invocation.
-- [ ] Successful workflow updates `agent_runs.status` to `success`.
-- [ ] Successful workflow stores final answer and confidence on `agent_runs`.
-- [ ] Failed Agent 1 workflow updates `agent_runs.status` to `failed`.
-- [ ] Failed Agent 2 workflow updates `agent_runs.status` to `failed`.
-- [ ] Failed Agent 3 workflow updates `agent_runs.status` to `failed`.
-- [ ] User question is stored in `chat_messages`.
-- [ ] Assistant answer is stored in `chat_messages`.
-- [ ] Omitted `session_id` creates a chat session.
-- [ ] Unknown `session_id` for `SINGLE_USER_ID` returns 404.
-- [ ] Empty question returns 400.
-- [ ] `document_ids` are UUID-validated.
-- [ ] Selected documents are validated before workflow execution.
-- [ ] Selected document queries are scoped by `SINGLE_USER_ID`.
-- [ ] Run queries are scoped by `SINGLE_USER_ID`.
-- [ ] Session queries are scoped by `SINGLE_USER_ID`.
-- [ ] Message writes use `SINGLE_USER_ID`.
-- [ ] Step lookup is tied to an owned agent run.
-- [ ] `backend/app/api/chat.py` exposes `POST /api/chat/ask`.
-- [ ] Chat router is mounted in `backend/app/main.py`.
-- [ ] Chat response includes `answer`, `confidence`, `citations`, and `agent_run_id`.
-- [ ] `backend/app/api/agent_runs.py` exposes evidence and logs endpoints.
-- [ ] Agent run router is mounted in `backend/app/main.py`.
-- [ ] Evidence endpoint returns `verified_chunks` and `rejected_chunks`.
-- [ ] Evidence endpoint reads Agent 2 output from `agent_steps`.
-- [ ] Evidence endpoint does not use unverified Agent 1 candidates as verified evidence.
-- [ ] Logs endpoint returns `agent_run_id` and ordered `steps`.
-- [ ] Logs endpoint orders steps by `created_at`.
-- [ ] Agent step log query failure returns 500 with a safe public message.
-- [ ] Public API errors do not expose raw provider, Supabase, Qdrant, stack trace, or secret values.
-- [ ] No frontend chat UI was implemented.
-- [ ] No streaming response behavior was implemented.
-- [ ] No authentication/JWT or multi-user support was implemented.
-- [ ] No document deletion was implemented.
-- [ ] No conversation memory beyond storing messages was implemented.
-- [ ] Backend-only secrets and provider settings stayed out of frontend code.
-- [ ] `cd backend` then `pytest tests/test_langgraph_workflow.py -v` was run and reported.
-- [ ] `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v` was run and reported.
-- [ ] Manual `/api/chat/ask` check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
-- [ ] Manual evidence/log endpoint checks were completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
-- [ ] Execution report includes files created, files modified, commands run, test results, known issues, out-of-scope work, one successful chat response shape, and one verified logs response shape.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `docs/plans/Plan_12.md` remained the scope authority.
+- [x] No database schema changes or migrations were added.
+- [x] LangGraph dependency is present only if needed.
+- [x] `backend/app/agents/graph.py` exists.
+- [x] Workflow state includes `agent_run_id`, `session_id`, `question`, `document_ids`, `retrieval`, `verification`, `answer`, and `error`.
+- [x] `run_qa_workflow(question, document_ids, session_id=None)` exists.
+- [x] Workflow order is Agent 1, then Agent 2, then Agent 3.
+- [x] Agent 3 self-check remains part of the logical workflow path.
+- [x] Final answers come from Agent 3 output.
+- [x] Agent 2 missing information returns safe Agent 3 insufficient-evidence output.
+- [x] `agent_runs` row is created with status `running` before graph invocation.
+- [x] Successful workflow updates `agent_runs.status` to `success`.
+- [x] Successful workflow stores final answer and confidence on `agent_runs`.
+- [x] Failed Agent 1 workflow updates `agent_runs.status` to `failed`.
+- [x] Failed Agent 2 workflow updates `agent_runs.status` to `failed`.
+- [x] Failed Agent 3 workflow updates `agent_runs.status` to `failed`.
+- [x] User question is stored in `chat_messages`.
+- [x] Assistant answer is stored in `chat_messages`.
+- [x] Omitted `session_id` creates a chat session.
+- [x] Unknown `session_id` for `SINGLE_USER_ID` returns 404.
+- [x] Empty question returns 400.
+- [x] `document_ids` are UUID-validated.
+- [x] Selected documents are validated before workflow execution.
+- [x] Selected document queries are scoped by `SINGLE_USER_ID`.
+- [x] Run queries are scoped by `SINGLE_USER_ID`.
+- [x] Session queries are scoped by `SINGLE_USER_ID`.
+- [x] Message writes use `SINGLE_USER_ID`.
+- [x] Step lookup is tied to an owned agent run.
+- [x] `backend/app/api/chat.py` exposes `POST /api/chat/ask`.
+- [x] Chat router is mounted in `backend/app/main.py`.
+- [x] Chat response includes `answer`, `confidence`, `citations`, and `agent_run_id`.
+- [x] `backend/app/api/agent_runs.py` exposes evidence and logs endpoints.
+- [x] Agent run router is mounted in `backend/app/main.py`.
+- [x] Evidence endpoint returns `verified_chunks` and `rejected_chunks`.
+- [x] Evidence endpoint reads Agent 2 output from `agent_steps`.
+- [x] Evidence endpoint does not use unverified Agent 1 candidates as verified evidence.
+- [x] Logs endpoint returns `agent_run_id` and ordered `steps`.
+- [x] Logs endpoint orders steps by `created_at`.
+- [x] Agent step log query failure returns 500 with a safe public message.
+- [x] Public API errors do not expose raw provider, Supabase, Qdrant, stack trace, or secret values.
+- [x] No frontend chat UI was implemented.
+- [x] No streaming response behavior was implemented.
+- [x] No authentication/JWT or multi-user support was implemented.
+- [x] No document deletion was implemented.
+- [x] No conversation memory beyond storing messages was implemented.
+- [x] Backend-only secrets and provider settings stayed out of frontend code.
+- [x] `cd backend` then `pytest tests/test_langgraph_workflow.py -v` was run and reported.
+- [x] `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v` was run and reported.
+- [x] Manual `/api/chat/ask` check was completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
+- [x] Manual evidence/log endpoint checks were completed or marked `BLOCKED_BY_USER_ACTION` with a safe reason.
+- [x] Execution report includes files created, files modified, commands run, test results, known issues, out-of-scope work, one successful chat response shape, and one verified logs response shape.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
@@ -1174,9 +1174,9 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] Batch02 - Chat and Agent Run Persistence Services
 - [x] Batch03 - LangGraph Workflow Orchestration
 - [x] Batch04 - Public Chat, Evidence, and Logs APIs
-- [ ] Batch05 - Failure Handling and Single-User Safety
-- [ ] Batch06 - Required Automated Tests
-- [ ] Batch07 - Manual Validation, Reporting, and Scope Review
+- [x] Batch05 - Failure Handling and Single-User Safety
+- [x] Batch06 - Required Automated Tests
+- [x] Batch07 - Manual Validation, Reporting, and Scope Review
 
 ### Task IDs
 
