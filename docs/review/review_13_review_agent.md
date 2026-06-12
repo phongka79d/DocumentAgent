@@ -715,3 +715,748 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Reusable Upload and Document Display Components
+- Task ID: (02A)
+- Task title: Create the reusable status badge
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_13.md > (02A); docs/plans/Plan_13.md > ## 3. Scope, ## 6. Required Files and Folders, ## 9. Implementation Steps; docs/plans/Master_Plan.md > ## 5. Core Features > ### 5.2 Document List Page
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: The last execution report entry is for (02A), matching the requested Batch02 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_13_execute_agent.md; docs/tasks/task_13.md; frontend/src/styles.css; frontend/src/components/StatusBadge.tsx (untracked)
+- untracked files: frontend/src/components/StatusBadge.tsx
+
+## Files Reviewed
+- `frontend/src/components/StatusBadge.tsx`: in scope - new reusable typed status badge component for (02A).
+- `frontend/src/styles.css`: in scope - focused status badge styling only.
+- `frontend/src/types/documents.ts`: in scope dependency evidence - provides the required `DocumentStatus` union from (01B).
+- `frontend/package.json`: in scope validation context - confirms build script exists and no frontend test script is configured.
+- `docs/reports/report_13_execute_agent.md`: in scope - latest execution report reviewed.
+- `docs/tasks/task_13.md`: in scope - task definition and selected 02A checkbox updated by reviewer after acceptance.
+- `docs/plans/Plan_13.md`: in scope source evidence - status display and required component requirements checked.
+- `docs/plans/Master_Plan.md`: in scope source evidence - document list status values checked.
+
+## Reported Files Cross-Check
+- file from execution report: frontend/src/components/StatusBadge.tsx
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Component maps all four approved statuses to predictable labels and semantic classes.
+
+- file from execution report: frontend/src/styles.css
+- present in git/repo: yes
+- matches task scope: yes
+- notes: CSS additions are limited to `.status-badge*` selectors.
+
+- file from execution report: docs/reports/report_13_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The report was appended with the (02A) execution entry.
+
+## Dependency Review
+- Required dependencies: (01B)
+- Dependency status: satisfied; `frontend/src/types/documents.ts` exists and defines `DocumentStatus` as `uploaded | processing | ready | failed`.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Presentation-only reusable component; uses existing TypeScript type contract; preserves plain CSS; no backend, routing, upload UI, document card, provider, secret, or indexing behavior added.
+- Failed: None.
+- Uncertain: Browser-level visual inspection is deferred until the component is mounted by later tasks; this does not block (02A).
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `StatusBadge` renders accessible text, a visible label, an indicator, and status-specific classes; `satisfies Record<DocumentStatus, ...>` enforces complete status coverage at compile time.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The fixed labels/classes are the required display mapping for the approved four-value status union, not fixture or dataset overfitting.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` completed and Vite built 29 modules successfully.
+- Status: passed
+- Notes: This is the required practical validation for the unmounted reusable component.
+
+- Command/check: conditional component test
+- Reported result: Not run; no frontend test script/test runner configured.
+- Rerun result: Confirmed `frontend/package.json` has no `test` script.
+- Status: not applicable
+- Notes: Absence of optional test infrastructure was reported honestly.
+
+- Command/check: targeted scope/forbidden scan
+- Reported result: No sibling or out-of-scope behavior added.
+- Rerun result: Passed; scan found only prior report text and 02A handoff mentions, not out-of-scope frontend implementation.
+- Status: passed
+- Notes: No provider calls, internal index calls, chat/evidence/log/auth/deletion/marketing UI, DocumentCard, UploadBox, or page implementation was added by this task.
+
+## Acceptance Review
+- Task acceptance: All four status values render predictable labels and visually distinct states.
+- Status: satisfied
+- Evidence: `STATUS_BADGE_CONTENT` covers `uploaded`, `processing`, `ready`, and `failed`; each maps to a stable label and a distinct `.status-badge--*` class. Styles include color, border/background distinctions, visible text, and an indicator so status is not color-only.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in both the detailed (02A) task block and the Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked.
+- Execution report entry: present and appended.
+- Review report entry: appended to docs/review/review_13_review_agent.md.
+- Other: Sibling tasks (02B), (02C), and (02D) remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Browser visual validation remains limited until a later task mounts the component, which is expected for this isolated reusable component task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (02A) is complete in Batch02.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch02 - Reusable Upload and Document Display Components",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/styles.css",
+    "frontend/src/components/StatusBadge.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02B)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Reusable Upload and Document Display Components
+- Task ID: (02B)
+- Task title: Create the reusable document card or row
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_13.md > (02B); docs/plans/Plan_13.md > ## 6. Required Files and Folders, ## 9. Implementation Steps, ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > ## 5. Core Features > ### 5.2 Document List Page
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02B)
+- Reviewed task ID: (02B)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for the requested Batch02 task (02B). Prior accepted uncommitted (02A) changes were treated as dependency evidence, not as part of the selected implementation scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_13_execute_agent.md; docs/review/review_13_review_agent.md; docs/tasks/task_13.md; frontend/src/styles.css; frontend/src/components/DocumentCard.tsx (untracked); frontend/src/components/StatusBadge.tsx (untracked)
+- untracked files: frontend/src/components/DocumentCard.tsx; frontend/src/components/StatusBadge.tsx
+
+## Files Reviewed
+- `frontend/src/components/DocumentCard.tsx`: in scope - new reusable typed document card for (02B).
+- `frontend/src/components/StatusBadge.tsx`: in scope dependency evidence - prior accepted (02A) status component reused by `DocumentCard`.
+- `frontend/src/types/documents.ts`: in scope dependency evidence - provides `DocumentListItem` and `DocumentStatus` from (01B).
+- `frontend/src/styles.css`: in scope - includes prior accepted status badge styles and new focused document card styles.
+- `frontend/package.json`: in scope validation context - confirms build script exists and no test script is configured.
+- `docs/reports/report_13_execute_agent.md`: in scope - execution report reviewed for selected (02B) entry.
+- `docs/tasks/task_13.md`: in scope - selected task definition and (02B) checkbox updated by reviewer after acceptance.
+- `docs/plans/Plan_13.md`: in scope source evidence - required component, fields, implementation step, and acceptance requirements checked.
+- `docs/plans/Master_Plan.md`: in scope source evidence - document list field expectations checked.
+
+## Reported Files Cross-Check
+- file from execution report: frontend/src/components/DocumentCard.tsx
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Component accepts one typed `DocumentListItem`, renders required metadata, and reuses `StatusBadge`.
+
+- file from execution report: frontend/src/styles.css
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Document card styles are focused on metadata layout, long text wrapping, processing-error distinction, and mobile stacking. Existing status badge styles are prior accepted (02A) work.
+
+- file from execution report: docs/reports/report_13_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The (02B) execution report entry is appended after the prior (02A) entry.
+
+## Dependency Review
+- Required dependencies: (01B), (02A)
+- Dependency status: satisfied; `frontend/src/types/documents.ts` defines `DocumentListItem`, and prior (02A) review accepted `StatusBadge` with its task checkboxes already checked.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Presentation-only reusable component; uses the existing frontend type contract; reuses the accepted status badge; preserves plain CSS; no backend, API, route, upload behavior, provider, secret, internal indexing, chat, evidence, logs, auth, deletion, detail page, or marketing UI added.
+- Failed: None.
+- Uncertain: Browser-level visual inspection is limited until a later task mounts the component in a page; the task allowed manual inspection for this unmounted reusable component.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `DocumentCard` renders an article with file name, file type, formatted upload time, status badge, chunk count, and conditional processing-error text. It includes safe handling for invalid timestamps and empty/whitespace-only `error_message` values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed labels such as `Type`, `Uploaded`, `Chunks`, and `Processing error` are UI labels required by the component contract, not fixture-specific or dataset-specific values.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` completed and Vite built 29 modules successfully.
+- Status: passed
+- Notes: This verifies the TypeScript component integration against the current frontend build.
+
+- Command/check: conditional component test
+- Reported result: Not run; no frontend test script/test runner configured.
+- Rerun result: Confirmed `frontend/package.json` has no `test` script.
+- Status: not applicable
+- Notes: Absence of optional test infrastructure was reported honestly.
+
+- Command/check: targeted forbidden-scope scan over `frontend/src/components` and `frontend/src/styles.css`
+- Reported result: No out-of-scope behavior added.
+- Rerun result: Passed; no matches for provider names, internal index route, upload/list pages, UploadBox, chat/evidence/log/auth/deletion/marketing terms in changed implementation files.
+- Status: passed
+- Notes: Scope remained limited to reusable display components and styles.
+
+## Acceptance Review
+- Task acceptance: Every required field is visible; failed-document error text is distinguishable from general page errors; long labels do not break the layout.
+- Status: satisfied
+- Evidence: `DocumentCard` renders `file_name`, `file_type`, `created_at` through a `<time>` element with formatted text, `StatusBadge`, `chunk_count`, and `error_message` only when non-empty. `.document-card__processing-error` uses distinct styling, and the CSS uses `min-width: 0`, grid/flex layout, `overflow-wrap: anywhere`, and a mobile media query at `max-width: 560px`.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in both the detailed (02B) task block and the Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked.
+- Execution report entry: present and appended.
+- Review report entry: appended to docs/review/review_13_review_agent.md.
+- Other: Sibling tasks (02C) and (02D) remain unchecked; future batches remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Browser visual validation remains limited until a later page task mounts the component, which is expected for this isolated reusable component task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (02A) and (02B) are complete in Batch02; (02C) and (02D) remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch02 - Reusable Upload and Document Display Components",
+  "selected_task_id": "(02B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/styles.css",
+    "frontend/src/components/DocumentCard.tsx",
+    "frontend/src/components/StatusBadge.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Reusable Upload and Document Display Components
+- Task ID: (02C)
+- Task title: Create the reusable file input and optional dropzone
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_13.md > (02C); docs/plans/Plan_13.md > ## 6. Required Files and Folders, ## 8. API Design, ## 9. Implementation Steps; docs/plans/Master_Plan.md > # 14. Frontend Page Plan > ## 14.1 Upload Document Page
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C)
+- Correct selection: yes
+- Notes: The latest execution report entry is for the requested Batch02 task (02C). Prior accepted uncommitted (02A)/(02B) changes were treated as existing dependency/sibling evidence and not as the selected implementation scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_13_execute_agent.md; docs/review/review_13_review_agent.md; docs/tasks/task_13.md; frontend/src/styles.css; frontend/src/components/DocumentCard.tsx (untracked); frontend/src/components/StatusBadge.tsx (untracked); frontend/src/components/UploadBox.tsx (untracked)
+- untracked files: frontend/src/components/DocumentCard.tsx; frontend/src/components/StatusBadge.tsx; frontend/src/components/UploadBox.tsx
+
+## Files Reviewed
+- `frontend/src/components/UploadBox.tsx`: in scope - new reusable native file input/dropzone component for (02C).
+- `frontend/src/styles.css`: in scope - contains prior accepted status/card styles plus focused upload box styles for (02C).
+- `frontend/src/components/StatusBadge.tsx`: prior accepted (02A) sibling evidence - not part of selected (02C) scope.
+- `frontend/src/components/DocumentCard.tsx`: prior accepted (02B) sibling evidence - not part of selected (02C) scope.
+- `frontend/src/types/documents.ts`: dependency evidence for Batch01 typed document contracts; no (02C) change required.
+- `frontend/package.json`: validation context - build script exists and no test script is configured.
+- `docs/reports/report_13_execute_agent.md`: in scope - selected execution report entry reviewed.
+- `docs/tasks/task_13.md`: in scope - selected (02C) task definition and checkbox updated by reviewer after acceptance.
+- `docs/plans/Plan_13.md`: in scope source evidence - required UploadBox, accepted formats, file-input/dropzone, and validation boundaries checked.
+- `docs/plans/Master_Plan.md`: in scope source evidence - upload page drag/drop and file-type validation expectations checked.
+
+## Reported Files Cross-Check
+- file from execution report: frontend/src/components/UploadBox.tsx
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Component provides a typed native file input, approved accept list, disabled-state support, selected-file feedback, extension guard, and optional drag/drop behavior.
+
+- file from execution report: frontend/src/styles.css
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Upload box styles are focused on dropzone, focus/drag/disabled states, native file input button, selected-file feedback, and validation-error display. Existing status/card styles belong to prior accepted (02A)/(02B).
+
+- file from execution report: docs/reports/report_13_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The (02C) execution report entry is appended after the prior (02A)/(02B) entries.
+
+## Dependency Review
+- Required dependencies: (01B)
+- Dependency status: satisfied; `frontend/src/types/documents.ts` exists with the approved document type contracts, and Batch01 is checked complete in `docs/tasks/task_13.md`.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Reusable component is frontend-only, typed, uses existing plain CSS, preserves the native file input as the accessible baseline, and adds drag/drop as progressive enhancement. It adds no pages, routes, API calls, upload submission lifecycle, backend changes, provider calls, private keys, internal indexing calls, chat/evidence/log/auth/deletion UI, detail page, or marketing UI.
+- Failed: None.
+- Uncertain: Browser-level file picker verification is deferred until the component is mounted by a later page task; source-level keyboard/file-selection review and build are sufficient for this unmounted component task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `UploadBox` renders a visible `<input type="file">`, applies `accept` for `.pdf`, `.docx`, `.txt`, `.csv` plus common MIME hints, calls a typed `onFileSelect(file)` only after accepted-extension checks, tracks selected-file feedback, blocks select/drop while disabled, and implements drag-over/drop handlers on the label/dropzone.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The fixed extension list and supported-types error message are required by Plan 13 and Master Plan supported-format requirements, not fixture-specific or dataset-specific values. No backend URL, document ID, sample filename, provider, or secret value is hardcoded.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` completed and Vite built 29 modules successfully.
+- Status: passed
+- Notes: This verifies TypeScript and production build integration for the new component.
+
+- Command/check: manual keyboard/file-selection check by source inspection
+- Reported result: Passed by source-level inspection
+- Rerun result: Passed by review inspection; visible native input remains in the DOM, has `disabled` wired, is associated with the dropzone label, and drag/drop does not replace keyboard access.
+- Status: passed
+- Notes: Full browser picker interaction remains a later mounted-page/manual validation item.
+
+- Command/check: targeted scope/forbidden scan over `frontend/src/components` and `frontend/src/styles.css`
+- Reported result: No out-of-scope behavior added.
+- Rerun result: Passed; no matches for provider names, internal index route, page components, chat/evidence/log/auth/deletion/marketing terms, shared `fileValidation` utility, zero-byte validation, or empty-file validation in changed implementation files.
+- Status: passed
+- Notes: This specifically confirms (02C)'s validation behavior remains within component accept/filter scope and does not complete (02D)'s reusable validation helper or empty-file rules.
+
+## Acceptance Review
+- Task acceptance: User can select an approved file with the native control; disabled state prevents changes during upload; optional drop behavior does not replace keyboard access.
+- Status: satisfied
+- Evidence: Native `<input type="file">` is rendered with approved accept values; `selectFile` accepts `.pdf`, `.docx`, `.txt`, and `.csv` case-insensitively before calling `onFileSelect`; unsupported extensions show a clear supported-types message and do not call the callback; `disabled` is applied to the input and gates select/drop handlers; drag/drop is implemented around the label/dropzone without removing the keyboard-accessible input.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in both the detailed (02C) task block and the Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 remains unchecked.
+- Execution report entry: present and appended.
+- Review report entry: appended to docs/review/review_13_review_agent.md.
+- Other: (02D) remains unchecked; sibling/future task checkboxes and future batches were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Component-level extension checking is intentionally private to `UploadBox`; (02D)'s reusable validation result and zero-byte rejection remain incomplete and correctly unchecked.
+- Browser-level file picker and drag/drop checks are limited until a later task mounts the component in a page, which is expected for this selected reusable component task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, (02D) remains incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch02 - Reusable Upload and Document Display Components",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/styles.css",
+    "frontend/src/components/DocumentCard.tsx",
+    "frontend/src/components/StatusBadge.tsx",
+    "frontend/src/components/UploadBox.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02D)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Reusable Upload and Document Display Components
+- Task ID: (02D)
+- Task title: Implement supported-file and empty-file validation
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_13.md > (02D) task block; docs/plans/Plan_13.md > ## 8. API Design; docs/plans/Plan_13.md > ## 9. Implementation Steps; docs/plans/Plan_13.md > ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02D)
+- Reviewed task ID: (02D)
+- Correct selection: yes
+- Notes: The latest matching report entry is for (02D). Prior accepted uncommitted Batch02 entries (02A), (02B), and (02C) were present and treated as dependency/background evidence, not as the selected review scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_13_execute_agent.md; docs/review/review_13_review_agent.md; docs/tasks/task_13.md; frontend/src/styles.css
+- untracked files: frontend/src/components/; frontend/src/utils/
+
+## Files Reviewed
+- `frontend/src/utils/fileValidation.ts`: in scope - new reusable supported-extension and empty-file validation helper for (02D).
+- `frontend/src/components/UploadBox.tsx`: in scope - consumes the reusable validation helper before calling `onFileSelect`.
+- `docs/reports/report_13_execute_agent.md`: in scope - appended execution report for (02D), with earlier accepted Batch02 reports also present.
+- `docs/tasks/task_13.md`: in scope - selected (02D) checkbox and Batch02 completion updated by reviewer after acceptance.
+- `frontend/src/components/StatusBadge.tsx`: in scope for prior accepted (02A), not changed for selected (02D) review except as dependency/background evidence.
+- `frontend/src/components/DocumentCard.tsx`: in scope for prior accepted (02B), not changed for selected (02D) review except as dependency/background evidence.
+- `frontend/src/styles.css`: in scope for prior accepted (02A)/(02B)/(02C), not substantively part of selected (02D) implementation.
+- `docs/review/review_13_review_agent.md`: in scope - existing review history plus this appended review report.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/utils/fileValidation.ts`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements deterministic helper and exports reusable constants.
+- file from execution report: `frontend/src/components/UploadBox.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses `validateSelectedFile` and returns before `onFileSelect` for invalid files.
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report is appended and includes the selected task.
+
+## Dependency Review
+- Required dependencies: (02C) Create the reusable file input and optional dropzone.
+- Dependency status: satisfied; (02C) is checked complete in both task locations and has an accepted review entry.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Validation is frontend-only, reusable, deterministic, and keeps API calls out of the component. Supported extensions match Plan 13: PDF, DOCX, TXT, CSV. Empty files are rejected only when `size === 0`, preserving the browser-size caveat.
+- Failed: None.
+- Uncertain: Browser-level picker/drop behavior remains deferred until a later mounted page/manual validation task, as expected.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `validateSelectedFile` returns discriminated valid/invalid results, `UploadBox.selectFile` calls it, invalid files set a message and return before `onFileSelect(file)`, and no API request behavior was added.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The fixed extension list and user-facing supported-types message are required by Plan 13. No fixture filenames, expected answers, provider calls, or internal route overfitting were found.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` completed and Vite built 29 modules with exit code 0.
+- Status: passed
+- Notes: Fresh reviewer run.
+- Command/check: direct helper smoke check via Node with `--experimental-strip-types`
+- Reported result: Passed
+- Rerun result: Passed; `ok.pdf` and `upper.CSV` returned valid, `bad.exe` returned `unsupported-type`, and `empty.txt` returned `empty-file`.
+- Status: passed
+- Notes: Confirms case-insensitive support, unsupported rejection, and zero-byte rejection.
+- Command/check: forbidden provider/internal route search in `frontend/src`
+- Reported result: Not directly reported for whole source tree in (02D)
+- Rerun result: Passed; search found only validation helper and UploadBox references, no Supabase, Qdrant, ShopAIKey, or `/index` matches.
+- Status: passed
+- Notes: Confirms scope and frontend/backend boundary for selected files.
+- Command/check: task progress check
+- Reported result: (02D) unchecked before review
+- Rerun result: Passed before update, then reviewer updated both (02D) checkboxes and Batch02 completion.
+- Status: passed
+- Notes: Future task (03A) remains unchecked.
+
+## Acceptance Review
+- Task acceptance: Supported non-empty files pass; unsupported extensions and zero-byte files fail before any API request.
+- Status: satisfied
+- Evidence: The helper validates `.pdf`, `.docx`, `.txt`, and `.csv` case-insensitively, rejects unsupported extensions, rejects `size === 0`, and `UploadBox` does not call `onFileSelect` for invalid results. Since this component does not perform API requests, gating `onFileSelect` is the correct pre-request boundary for this task.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in both the detailed (02D) task block and the Task IDs progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch02 marked complete by reviewer because (02A), (02B), (02C), and (02D) are all accepted and checked; future Batch03+ tasks remain unchecked.
+- Execution report entry: present and appended.
+- Review report entry: appended to docs/review/review_13_review_agent.md.
+- Other: No future task checkboxes were updated.
+
+## Report Accuracy
+- Partial
+- Mismatches: The (02D) execution report handoff names nonexistent next task `(02E)`. This is a non-blocking report-accuracy warning because implementation, selected task progress, and dependency readiness are unaffected; the actual next task is `(03A)`.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- The execution report's next-task handoff incorrectly names `(02E)`, which does not exist in `docs/tasks/task_13.md`; next work should proceed to `(03A)` after this accepted Batch02 completion.
+
+### Observations
+- Existing uncommitted accepted changes for (02A), (02B), and (02C) remain in the working tree and were not reverted.
+- Browser-level unsupported-file and empty-file checks remain for later page/manual validation tasks, which is consistent with the current unmounted reusable component scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to (03A), not `(02E)`
+- Should batch be marked complete? yes, all Batch02 task IDs are complete and accepted
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch02 - Reusable Upload and Document Display Components",
+  "selected_task_id": "(02D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/styles.css",
+    "frontend/src/components/DocumentCard.tsx",
+    "frontend/src/components/StatusBadge.tsx",
+    "frontend/src/components/UploadBox.tsx",
+    "frontend/src/utils/fileValidation.ts"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Execution report handoff names nonexistent next task (02E); actual next task is (03A)."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

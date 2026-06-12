@@ -7,7 +7,7 @@ Document QA Agent is a single-user document question-answering project. The plan
 This repository is a mixed workspace:
 
 - `backend/` contains the FastAPI API, service layer, Supabase persistence/storage integration, ShopAIKey embedding integration, Qdrant vector indexing, schemas, migrations, and tests.
-- `frontend/` contains a Vite React TypeScript shell with an Axios API client, typed document API contracts, and React Router available for planned routing.
+- `frontend/` contains a Vite React TypeScript shell with an Axios API client, typed document API contracts, reusable upload/document display components, a shared file validation helper, and React Router available for planned routing.
 - `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
 
 The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, Plan 8 hybrid retrieval configuration, schemas, deterministic scoring utilities, graph candidate lookup, hybrid candidate merge/scoring/final ranking service behavior, guarded rerank placeholder behavior, safe hybrid failure handling, optional hybrid mode routing on the existing retrieval search API, the Plan 9 Batch01 backend agent package with shared Agent 1 input/candidate/output Pydantic schemas, the Plan 9 Batch02 agent step logging service, the Plan 9 Batch03 Agent 1 retrieval callable with hybrid retrieval delegation, validated output conversion, success logging, and controlled failure logging, the Plan 10 Batch01 Agent 2 verification schemas, reusable verification prompt, confidence bounds, and backend-only ShopAIKey chat configuration checks, the Plan 10 Batch02 backend-only Agent 2 verification callable with deterministic empty-candidate handling, compact ShopAIKey verification requests, strict JSON parsing, and Pydantic output validation, the Plan 10 Batch03 Agent 2 deterministic evidence safety checks for candidate membership, quote fidelity, duplicate filtering, contradiction/missing-information adjustment, and final output shape validation, the Plan 10 Batch04 Agent 2 success/failure step logging with safe log-insertion failure visibility, the Plan 11 Batch01 Agent 3 answer contracts with answer output schemas, citation/evidence validation helpers, answer-generation and self-check prompt contracts, deterministic self-check readiness enforcement, and confirmed backend-only ShopAIKey chat configuration boundaries, the Plan 11 Batch02 Agent 3 internal answer callable with controlled errors, deterministic insufficient-evidence output, Agent 2 verification input normalization, verified/rejected evidence lookup, and verified-only ShopAIKey answer-generation payload construction for sufficient evidence, the Plan 11 Batch03 Agent 3 sufficient-evidence draft path with mocked ShopAIKey chat calls, strict JSON/Pydantic draft parsing, citation presence and file-name/quote format enforcement, verified quote membership checks, rejected-evidence rejection, and public output-shape normalization, the Plan 11 Batch04 Agent 3 runtime self-check execution, controlled self-check failure policy, success/failed `agent_steps` logging, and safe log-insertion failure visibility, the Plan 12 Batch01 LangGraph workflow dependency, internal QA workflow state/callable contract, chat ask schemas, and agent-run evidence/log response schemas, the Plan 12 Batch02 service-layer persistence for chat sessions, chat messages, agent run lifecycle, selected document ownership validation, evidence/log lookup, and controlled public error messages, the Plan 12 Batch03 internal LangGraph orchestration that runs Agent 1 -> Agent 2 -> Agent 3, creates and updates an `agent_runs` lifecycle row, returns Agent 3 answer fields, and preserves safe insufficient-evidence behavior, the Plan 12 Batch04 public chat, evidence, and logs APIs with production router registration and chat-message persistence around ask requests, the Plan 12 Batch05 failure-handling and single-user-safety hardening for chat validation, selected-document errors, owned session/run/message/step access, failed-run lifecycle behavior, evidence/log safe errors, and secret-boundary confirmation, and the Plan 12 Batch06 required automated tests for LangGraph workflow success/failure order, insufficient-evidence behavior, chat API behavior, evidence/log API behavior, and targeted validation runs. Public graph APIs and production frontend screens are still incomplete or planned.
@@ -56,9 +56,11 @@ Do not treat `docs/plans/Master_Plan.md` as proof that a feature exists in code.
 ├── frontend/
 │   ├── src/
 │   │   ├── api/client.ts # Axios client using VITE_API_BASE_URL
+│   │   ├── components/   # Reusable upload, document card, and status badge components
+│   │   ├── utils/        # Shared frontend file validation helpers
 │   │   ├── App.tsx      # Placeholder app shell
 │   │   ├── main.tsx     # React entrypoint
-│   │   └── styles.css   # Basic shell styling
+│   │   └── styles.css   # Shell and reusable document component styling
 │   ├── package.json
 │   └── vite.config.ts
 ├── .gitignore
@@ -216,7 +218,7 @@ The current architecture is layered:
 - Vector layer: `qdrant_service.py` manages collection setup, vector upsert, and vector search helpers.
 - Provider layer: `shopaikey_service.py` calls the embedding and chat completion endpoints.
 - Schema layer: `backend/app/schemas/` defines Pydantic request/response and internal contracts, including graph extraction and graph build contracts.
-- Frontend layer: `frontend/src/` is currently a minimal React shell with an Axios client plus typed document upload/list/detail API helpers.
+- Frontend layer: `frontend/src/` is currently a minimal React shell with an Axios client, typed document upload/list/detail API helpers, reusable upload/document display components, and shared file validation.
 
 The planned architecture in `docs/plans/Master_Plan.md` also includes public graph APIs and richer frontend pages. The backend now implements the LangGraph agent workflow, chat sessions/messages, agent runs/steps, and public chat, evidence, and logs APIs.
 
@@ -233,9 +235,11 @@ Evidence:
 - `frontend/src/api/client.ts` creates an Axios client with `baseURL: import.meta.env.VITE_API_BASE_URL`.
 - `frontend/src/api/documents.ts` exposes typed `uploadDocument`, `listDocuments`, and `getDocument` helpers through the backend `/api/documents` routes, along with safe document API error and upload progress contracts.
 - `frontend/src/types/documents.ts` defines shared frontend response types for document status, upload, list, and detail responses.
-- `frontend/src/styles.css` contains only basic shell styling.
+- `frontend/src/components/StatusBadge.tsx`, `frontend/src/components/DocumentCard.tsx`, and `frontend/src/components/UploadBox.tsx` provide reusable document status, document metadata, and file selection UI components.
+- `frontend/src/utils/fileValidation.ts` accepts PDF, DOCX, TXT, and CSV files case-insensitively and rejects unsupported or zero-byte files before upload callers receive the file.
+- `frontend/src/styles.css` contains shell styling plus reusable status badge, document card, and upload box styles.
 
-There are no implemented upload, document list, chat, evidence viewer, or agent log screens yet.
+There are no implemented upload, document list, chat, evidence viewer, or agent log screens yet. The reusable document components are available for later page wiring but are not mounted in routes.
 
 ## Backend
 
@@ -420,6 +424,16 @@ Upload progress is normalized so callers can distinguish computable percentages 
 
 React Router is installed for planned navigation, but routing is not wired into `App.tsx` yet.
 
+### Frontend Reusable Document Components
+
+`frontend/src/components/StatusBadge.tsx` renders the approved `uploaded`, `processing`, `ready`, and `failed` document statuses with visible text and distinct styling.
+
+`frontend/src/components/DocumentCard.tsx` renders document list metadata, including file name, type, upload time, status, chunk count, and failed-processing error text when present.
+
+`frontend/src/components/UploadBox.tsx` provides a reusable native file input with optional drag-and-drop behavior. It uses `frontend/src/utils/fileValidation.ts` to accept PDF, DOCX, TXT, and CSV files case-insensitively and reject unsupported or zero-byte files before handing the file to callers.
+
+These components are not mounted in routed pages yet; upload and document list pages remain planned for later Plan 13 batches.
+
 ### Production Frontend Build
 
 From `frontend/`:
@@ -555,5 +569,5 @@ Validation before claiming completion:
 - Agent 1, Agent 2, and Agent 3 runtime callables, validation, evidence safety, self-check behavior, and step logging are implemented. `backend/app/agents/graph.py` executes Agent 1 -> Agent 2 -> Agent 3, owns the `agent_runs` lifecycle, returns Agent 3 answer fields, marks created runs failed on Agent 1/2/3 failures, and preserves the insufficient-evidence path. `POST /api/chat/ask` now provides route-level error mapping, pre-workflow request and selected-document validation, owned-session protections, and user/assistant message persistence around that workflow.
 - `backend/app/schemas/chat.py` and `backend/app/schemas/agent_runs.py` define the mounted chat, evidence, and logs API contracts. `backend/app/api/chat.py` and `backend/app/api/agent_runs.py` expose those contracts through the production application.
 - The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
-- The frontend is currently a placeholder shell, not a working upload/chat UI. Typed document API helpers and response contracts exist, and React Router is installed, but upload/list pages and route wiring are still planned.
+- The frontend is currently a placeholder shell, not a working upload/chat UI. Typed document API helpers, response contracts, reusable upload/document display components, and shared file validation exist, and React Router is installed, but upload/list pages and route wiring are still planned.
 - No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.

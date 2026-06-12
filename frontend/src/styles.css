@@ -40,3 +40,253 @@ select {
   color: #667085;
   font-size: 1rem;
 }
+
+.status-badge {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+
+.status-badge__indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.status-badge__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-badge--uploaded {
+  border-color: #a7c7ff;
+  color: #1d4f91;
+  background: #eaf2ff;
+}
+
+.status-badge--processing {
+  border-color: #f2c46d;
+  color: #8a4b08;
+  background: #fff6df;
+}
+
+.status-badge--ready {
+  border-color: #7acda0;
+  color: #17663a;
+  background: #e8f8ef;
+}
+
+.status-badge--failed {
+  border-color: #f3a6a6;
+  color: #9f1d1d;
+  background: #fff0f0;
+}
+
+.document-card {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #d8deea;
+  border-radius: 1rem;
+  padding: 1rem;
+  text-align: left;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgb(23 32 51 / 0.06);
+}
+
+.document-card__summary {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.document-card__identity {
+  display: grid;
+  min-width: 0;
+  gap: 0.65rem;
+}
+
+.document-card__name {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #172033;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.document-card__metadata {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.document-card__metadata-item {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.document-card__metadata-item dt {
+  color: #667085;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.document-card__metadata-item dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #24324a;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.document-card__processing-error {
+  margin: 0;
+  border-left: 0.25rem solid #d92d20;
+  border-radius: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  overflow-wrap: anywhere;
+  color: #8f1b13;
+  background: #fff4f2;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.upload-box {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.upload-box__dropzone {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  border: 2px dashed #aeb8ca;
+  border-radius: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+  color: #24324a;
+  background: #ffffff;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.upload-box__dropzone:hover,
+.upload-box__dropzone:focus-within,
+.upload-box__dropzone--dragging {
+  border-color: #356ac3;
+  background: #f1f6ff;
+  box-shadow: 0 0 0 0.2rem rgb(53 106 195 / 0.12);
+}
+
+.upload-box__dropzone--disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.upload-box__dropzone--disabled:hover,
+.upload-box__dropzone--disabled:focus-within {
+  border-color: #aeb8ca;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.upload-box__label {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.upload-box__hint {
+  color: #667085;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.upload-box__input {
+  width: 100%;
+  max-width: 100%;
+  color: #24324a;
+}
+
+.upload-box__input::file-selector-button {
+  margin-right: 0.75rem;
+  border: 1px solid #356ac3;
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  color: #ffffff;
+  background: #356ac3;
+  font-weight: 700;
+}
+
+.upload-box__input:disabled::file-selector-button {
+  cursor: not-allowed;
+  border-color: #98a2b3;
+  background: #98a2b3;
+}
+
+.upload-box__feedback,
+.upload-box__error {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.upload-box__feedback {
+  color: #17663a;
+}
+
+.upload-box__error {
+  border-left: 0.25rem solid #d92d20;
+  border-radius: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  color: #8f1b13;
+  background: #fff4f2;
+}
+
+@media (max-width: 560px) {
+  .document-card {
+    padding: 0.85rem;
+  }
+
+  .document-card__summary {
+    display: grid;
+  }
+
+  .document-card__metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .document-card .status-badge {
+    justify-self: start;
+  }
+}

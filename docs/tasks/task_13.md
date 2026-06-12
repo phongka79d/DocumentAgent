@@ -256,7 +256,7 @@ Both pages need consistent status and document presentation, while upload behavi
 
 ### Tasks
 
-- [ ] (02A): Create the reusable status badge
+- [x] (02A): Create the reusable status badge
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 5. Core Features` > `### 5.2 Document List Page`
   - Source Requirements:
     - Display distinct states for `uploaded`, `processing`, `ready`, and `failed`.
@@ -271,7 +271,7 @@ Both pages need consistent status and document presentation, while upload behavi
   - Blocked Condition: None.
   - Files: `frontend/src/components/StatusBadge.tsx`, `frontend/src/styles.css`
 
-- [ ] (02B): Create the reusable document card or row
+- [x] (02B): Create the reusable document card or row
   - Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 5. Core Features` > `### 5.2 Document List Page`
   - Source Requirements:
     - Show file name, file type, upload time, status, chunk count, and processing error.
@@ -286,7 +286,7 @@ Both pages need consistent status and document presentation, while upload behavi
   - Blocked Condition: None.
   - Files: `frontend/src/components/DocumentCard.tsx`, `frontend/src/styles.css`
 
-- [ ] (02C): Create the reusable file input and optional dropzone
+- [x] (02C): Create the reusable file input and optional dropzone
   - Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 8. API Design`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 14. Frontend Page Plan` > `## 14.1 Upload Document Page`
   - Source Requirements:
     - Provide a file input.
@@ -303,7 +303,7 @@ Both pages need consistent status and document presentation, while upload behavi
   - Blocked Condition: None.
   - Files: `frontend/src/components/UploadBox.tsx`, `frontend/src/styles.css`
 
-- [ ] (02D): Implement supported-file and empty-file validation
+- [x] (02D): Implement supported-file and empty-file validation
   - Source of Truth: `docs/plans/Plan_13.md` > `## 8. API Design`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Accept `.pdf`, `.docx`, `.txt`, and `.csv`.
@@ -905,7 +905,7 @@ Optional future tracks are outside the mandatory dependency chain.
 ### Batches
 
 - [x] Batch01 - Frontend Contracts, Routing Dependency, and Document API Client
-- [ ] Batch02 - Reusable Upload and Document Display Components
+- [x] Batch02 - Reusable Upload and Document Display Components
 - [ ] Batch03 - Upload Page and Recent Document Feedback
 - [ ] Batch04 - Document List Page and Status Refresh
 - [ ] Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
@@ -922,10 +922,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch02
 
-- [ ] (02A): Create the reusable status badge
-- [ ] (02B): Create the reusable document card or row
-- [ ] (02C): Create the reusable file input and optional dropzone
-- [ ] (02D): Implement supported-file and empty-file validation
+- [x] (02A): Create the reusable status badge
+- [x] (02B): Create the reusable document card or row
+- [x] (02C): Create the reusable file input and optional dropzone
+- [x] (02D): Implement supported-file and empty-file validation
 
 #### Batch03
 
