@@ -354,6 +354,473 @@ def test_insert_agent_step_log_reports_safe_insert_failure(
     assert "database secret" not in message
 
 
+def test_create_chat_session_inserts_single_user_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {
+        "id": "session-id",
+        "user_id": "single_user",
+        "title": "Benefits Q&A",
+    }
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.create_chat_session(title="Benefits Q&A")
+
+    assert result == row
+    client.table.assert_called_once_with("chat_sessions")
+    query.insert.assert_called_once_with(
+        {
+            "user_id": "single_user",
+            "title": "Benefits Q&A",
+        }
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_get_chat_session_filters_single_user_and_session_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"id": "session-id", "user_id": "single_user", "title": "New chat"}
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.limit.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.get_chat_session("session-id")
+
+    assert result == row
+    client.table.assert_called_once_with("chat_sessions")
+    query.select.assert_called_once_with("*")
+    assert query.eq.call_args_list == [
+        (("id", "session-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.limit.assert_called_once_with(1)
+    query.execute.assert_called_once_with()
+
+
+def test_get_chat_session_returns_none_when_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.limit.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    assert supabase_service.get_chat_session("missing-session-id") is None
+
+
+def test_get_or_create_chat_session_creates_when_session_id_is_omitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    create_chat_session = Mock(return_value={"id": "new-session-id"})
+    get_chat_session = Mock()
+    monkeypatch.setattr(supabase_service, "create_chat_session", create_chat_session)
+    monkeypatch.setattr(supabase_service, "get_chat_session", get_chat_session)
+
+    result = supabase_service.get_or_create_chat_session(title="Question")
+
+    assert result == {"id": "new-session-id"}
+    create_chat_session.assert_called_once_with(title="Question")
+    get_chat_session.assert_not_called()
+
+
+def test_get_or_create_chat_session_fetches_when_session_id_is_present(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    create_chat_session = Mock()
+    get_chat_session = Mock(return_value={"id": "existing-session-id"})
+    monkeypatch.setattr(supabase_service, "create_chat_session", create_chat_session)
+    monkeypatch.setattr(supabase_service, "get_chat_session", get_chat_session)
+
+    result = supabase_service.get_or_create_chat_session("existing-session-id")
+
+    assert result == {"id": "existing-session-id"}
+    get_chat_session.assert_called_once_with("existing-session-id")
+    create_chat_session.assert_not_called()
+
+
+def test_list_chat_sessions_filters_single_user_and_orders_updated_desc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [{"id": "session-id", "user_id": "single_user"}]
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.execute.return_value = SimpleNamespace(data=rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_chat_sessions()
+
+    assert result == rows
+    client.table.assert_called_once_with("chat_sessions")
+    query.select.assert_called_once_with("*")
+    query.eq.assert_called_once_with("user_id", "single_user")
+    query.order.assert_called_once_with("updated_at", desc=True)
+    query.execute.assert_called_once_with()
+
+
+def test_insert_chat_message_inserts_single_user_row_with_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {
+        "id": "message-id",
+        "session_id": "session-id",
+        "user_id": "single_user",
+        "role": "assistant",
+        "content": "Answer",
+        "metadata": {"agent_run_id": "run-id"},
+    }
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_chat_message(
+        session_id="session-id",
+        role="assistant",
+        content="Answer",
+        metadata={"agent_run_id": "run-id"},
+    )
+
+    assert result == row
+    client.table.assert_called_once_with("chat_messages")
+    query.insert.assert_called_once_with(
+        {
+            "session_id": "session-id",
+            "user_id": "single_user",
+            "role": "assistant",
+            "content": "Answer",
+            "metadata": {"agent_run_id": "run-id"},
+        }
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_insert_chat_message_defaults_metadata_to_empty_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[{"id": "message-id"}])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    supabase_service.insert_chat_message(
+        session_id="session-id",
+        role="user",
+        content="Question?",
+    )
+
+    assert query.insert.call_args.args[0]["metadata"] == {}
+
+
+def test_insert_chat_message_reports_safe_insert_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.insert_chat_message(
+            session_id="session-id",
+            role="user",
+            content="Question?",
+        )
+
+    message = str(exc_info.value)
+    assert "chat message insert" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message
+
+
+def test_create_agent_run_inserts_running_single_user_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {
+        "id": "run-id",
+        "session_id": "session-id",
+        "user_id": "single_user",
+        "question": "When can I start?",
+        "selected_document_ids": ["document-id"],
+        "status": "running",
+    }
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.create_agent_run(
+        session_id="session-id",
+        question="When can I start?",
+        selected_document_ids=["document-id"],
+    )
+
+    assert result == row
+    client.table.assert_called_once_with("agent_runs")
+    query.insert.assert_called_once_with(
+        {
+            "session_id": "session-id",
+            "user_id": "single_user",
+            "question": "When can I start?",
+            "selected_document_ids": ["document-id"],
+            "status": "running",
+            "final_answer": None,
+            "confidence": None,
+            "error_message": None,
+        }
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_create_agent_run_allows_omitted_session_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[{"id": "run-id"}])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    supabase_service.create_agent_run(
+        session_id=None,
+        question="Question?",
+        selected_document_ids=[],
+    )
+
+    assert query.insert.call_args.args[0]["session_id"] is None
+
+
+def test_update_agent_run_success_filters_single_user_and_run_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {
+        "id": "run-id",
+        "user_id": "single_user",
+        "status": "success",
+        "final_answer": "Final answer",
+        "confidence": 0.82,
+        "error_message": None,
+    }
+    query = Mock()
+    query.update.return_value = query
+    query.eq.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.update_agent_run_success(
+        "run-id",
+        final_answer="Final answer",
+        confidence=0.82,
+    )
+
+    assert result == row
+    client.table.assert_called_once_with("agent_runs")
+    query.update.assert_called_once_with(
+        {
+            "status": "success",
+            "final_answer": "Final answer",
+            "confidence": 0.82,
+            "error_message": None,
+        }
+    )
+    assert query.eq.call_args_list == [
+        (("id", "run-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.execute.assert_called_once_with()
+
+
+def test_update_agent_run_failure_filters_single_user_and_run_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {
+        "id": "run-id",
+        "user_id": "single_user",
+        "status": "failed",
+        "error_message": "Agent 2 failed.",
+    }
+    query = Mock()
+    query.update.return_value = query
+    query.eq.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.update_agent_run_failure(
+        "run-id",
+        error_message="Agent 2 failed.",
+    )
+
+    assert result == row
+    query.update.assert_called_once_with(
+        {
+            "status": "failed",
+            "final_answer": None,
+            "confidence": None,
+            "error_message": "Agent 2 failed.",
+        }
+    )
+    assert query.eq.call_args_list == [
+        (("id", "run-id"),),
+        (("user_id", "single_user"),),
+    ]
+
+
+def test_get_agent_run_filters_single_user_and_run_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"id": "run-id", "user_id": "single_user", "status": "running"}
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.limit.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.get_agent_run("run-id")
+
+    assert result == row
+    client.table.assert_called_once_with("agent_runs")
+    query.select.assert_called_once_with("*")
+    assert query.eq.call_args_list == [
+        (("id", "run-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.limit.assert_called_once_with(1)
+    query.execute.assert_called_once_with()
+
+
+def test_get_agent_run_returns_none_when_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.limit.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    assert supabase_service.get_agent_run("missing-run-id") is None
+
+
+def test_list_agent_steps_for_run_checks_owned_run_and_orders_by_created_at(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_query = Mock()
+    run_query.select.return_value = run_query
+    run_query.eq.return_value = run_query
+    run_query.limit.return_value = run_query
+    run_query.execute.return_value = SimpleNamespace(
+        data=[{"id": "run-id", "user_id": "single_user"}]
+    )
+    steps = [
+        {
+            "id": "step-1",
+            "agent_run_id": "run-id",
+            "created_at": "2026-01-01T00:00:00Z",
+        }
+    ]
+    step_query = Mock()
+    step_query.select.return_value = step_query
+    step_query.eq.return_value = step_query
+    step_query.order.return_value = step_query
+    step_query.execute.return_value = SimpleNamespace(data=steps)
+    client = SimpleNamespace(table=Mock(side_effect=[run_query, step_query]))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_agent_steps_for_run("run-id")
+
+    assert result == steps
+    assert client.table.call_args_list == [
+        (("agent_runs",),),
+        (("agent_steps",),),
+    ]
+    assert run_query.eq.call_args_list == [
+        (("id", "run-id"),),
+        (("user_id", "single_user"),),
+    ]
+    step_query.select.assert_called_once_with("*")
+    step_query.eq.assert_called_once_with("agent_run_id", "run-id")
+    step_query.order.assert_called_once_with("created_at")
+    step_query.execute.assert_called_once_with()
+
+
+def test_list_agent_steps_for_run_returns_empty_for_unowned_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run_query = Mock()
+    run_query.select.return_value = run_query
+    run_query.eq.return_value = run_query
+    run_query.limit.return_value = run_query
+    run_query.execute.return_value = SimpleNamespace(data=[])
+    client = SimpleNamespace(table=Mock(return_value=run_query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_agent_steps_for_run("run-id")
+
+    assert result == []
+    client.table.assert_called_once_with("agent_runs")
+
+
+def test_agent_run_helpers_report_safe_query_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.update.return_value = query
+    query.eq.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.update_agent_run_failure(
+            "run-id",
+            error_message="Safe failure.",
+        )
+
+    message = str(exc_info.value)
+    assert "agent run failure update" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message
+
+
 def test_list_document_metadata_filters_user_and_orders_created_desc(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -413,6 +880,31 @@ def test_get_document_metadata_returns_none_when_missing(
     monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
 
     assert supabase_service.get_document_metadata("document-id", "single_user") is None
+
+
+def test_list_owned_document_metadata_by_ids_filters_single_user_and_selected_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [{"id": "document-id", "user_id": "single_user"}]
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.in_.return_value = query
+    query.execute.return_value = SimpleNamespace(data=rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_owned_document_metadata_by_ids(
+        ["document-id", "other-document-id"]
+    )
+
+    assert result == rows
+    client.table.assert_called_once_with("documents")
+    query.select.assert_called_once_with("*")
+    query.eq.assert_called_once_with("user_id", "single_user")
+    query.in_.assert_called_once_with("id", ["document-id", "other-document-id"])
+    query.execute.assert_called_once_with()
 
 
 def test_get_processing_document_uses_configured_single_user(

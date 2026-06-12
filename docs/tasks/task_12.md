@@ -261,7 +261,7 @@ The graph and API must persist all required state safely and consistently. Centr
 
 ### Tasks
 
-- [ ] (02A): Add Supabase helpers for chat sessions and messages
+- [x] (02A): Add Supabase helpers for chat sessions and messages
   - Source of Truth: `docs/plans/Plan_12.md` > `## 3. Scope`; `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Master_Plan.md` > `## Table: chat_sessions`; `docs/plans/Master_Plan.md` > `## Table: chat_messages`
   - Source Requirements:
     - Add chat session and message persistence.
@@ -277,7 +277,7 @@ The graph and API must persist all required state safely and consistently. Centr
   - Blocked Condition: None.
   - Files: `backend/app/services/supabase_service.py`, backend tests
 
-- [ ] (02B): Add Supabase helpers for agent runs and agent steps lookup
+- [x] (02B): Add Supabase helpers for agent runs and agent steps lookup
   - Source of Truth: `docs/plans/Plan_12.md` > `## 3. Scope`; `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Master_Plan.md` > `## Table: agent_runs`; `docs/plans/Master_Plan.md` > `## Table: agent_steps`
   - Source Requirements:
     - Persist `agent_runs`.
@@ -293,7 +293,7 @@ The graph and API must persist all required state safely and consistently. Centr
   - Blocked Condition: None.
   - Files: `backend/app/services/supabase_service.py`, backend tests
 
-- [ ] (02C): Create chat service for session and message orchestration
+- [x] (02C): Create chat service for session and message orchestration
   - Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - `chat_service.py` handles chat session, chat message, and agent run persistence.
@@ -309,7 +309,7 @@ The graph and API must persist all required state safely and consistently. Centr
   - Blocked Condition: None.
   - Files: `backend/app/services/chat_service.py`, `backend/tests/test_chat_api.py`
 
-- [ ] (02D): Create agent run service for lifecycle, evidence, and logs
+- [x] (02D): Create agent run service for lifecycle, evidence, and logs
   - Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - `agent_run_service.py` handles run creation, update, evidence lookup, and logs lookup.
@@ -326,7 +326,7 @@ The graph and API must persist all required state safely and consistently. Centr
   - Blocked Condition: None.
   - Files: `backend/app/services/agent_run_service.py`, `backend/tests/test_agent_runs_api.py`
 
-- [ ] (02E): Add selected document ownership validation
+- [x] (02E): Add selected document ownership validation
   - Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - `document_ids` must be valid UUIDs.
@@ -342,7 +342,7 @@ The graph and API must persist all required state safely and consistently. Centr
   - Blocked Condition: None.
   - Files: `backend/app/services/chat_service.py`, `backend/app/services/supabase_service.py`, `backend/tests/test_chat_api.py`
 
-- [ ] (02F): Define controlled service errors for API mapping
+- [x] (02F): Define controlled service errors for API mapping
   - Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - Empty question returns 400.
@@ -1190,12 +1190,12 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch02
 
-- [ ] (02A): Add Supabase helpers for chat sessions and messages
-- [ ] (02B): Add Supabase helpers for agent runs and agent steps lookup
-- [ ] (02C): Create chat service for session and message orchestration
-- [ ] (02D): Create agent run service for lifecycle, evidence, and logs
-- [ ] (02E): Add selected document ownership validation
-- [ ] (02F): Define controlled service errors for API mapping
+- [x] (02A): Add Supabase helpers for chat sessions and messages
+- [x] (02B): Add Supabase helpers for agent runs and agent steps lookup
+- [x] (02C): Create chat service for session and message orchestration
+- [x] (02D): Create agent run service for lifecycle, evidence, and logs
+- [x] (02E): Add selected document ownership validation
+- [x] (02F): Define controlled service errors for API mapping
 
 #### Batch03
 

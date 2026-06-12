@@ -223,6 +223,219 @@ def insert_agent_step_log(
     return _first_response_row("agent step log insert", response)
 
 
+def create_chat_session(*, title: str = "New chat") -> dict:
+    client = get_supabase_client()
+    row = {
+        "user_id": _get_single_user_id(),
+        "title": title,
+    }
+
+    try:
+        response = client.table("chat_sessions").insert(row).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("chat session insert", exc)
+
+    return _first_response_row("chat session insert", response)
+
+
+def get_chat_session(session_id: str) -> dict | None:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("chat_sessions")
+            .select("*")
+            .eq("id", session_id)
+            .eq("user_id", _get_single_user_id())
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("chat session lookup", exc)
+
+    rows = _response_rows(response)
+    if not rows:
+        return None
+
+    return rows[0]
+
+
+def get_or_create_chat_session(
+    session_id: str | None = None,
+    *,
+    title: str = "New chat",
+) -> dict | None:
+    if session_id:
+        return get_chat_session(session_id)
+
+    return create_chat_session(title=title)
+
+
+def list_chat_sessions() -> list[dict]:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("chat_sessions")
+            .select("*")
+            .eq("user_id", _get_single_user_id())
+            .order("updated_at", desc=True)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("chat session list", exc)
+
+    return _response_rows(response)
+
+
+def insert_chat_message(
+    *,
+    session_id: str,
+    role: str,
+    content: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict:
+    client = get_supabase_client()
+    row = {
+        "session_id": session_id,
+        "user_id": _get_single_user_id(),
+        "role": role,
+        "content": content,
+        "metadata": metadata or {},
+    }
+
+    try:
+        response = client.table("chat_messages").insert(row).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("chat message insert", exc)
+
+    return _first_response_row("chat message insert", response)
+
+
+def create_agent_run(
+    *,
+    session_id: str | None,
+    question: str,
+    selected_document_ids: list[str],
+) -> dict:
+    client = get_supabase_client()
+    row = {
+        "session_id": session_id,
+        "user_id": _get_single_user_id(),
+        "question": question,
+        "selected_document_ids": selected_document_ids,
+        "status": "running",
+        "final_answer": None,
+        "confidence": None,
+        "error_message": None,
+    }
+
+    try:
+        response = client.table("agent_runs").insert(row).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("agent run insert", exc)
+
+    return _first_response_row("agent run insert", response)
+
+
+def update_agent_run_success(
+    agent_run_id: str,
+    *,
+    final_answer: str,
+    confidence: float,
+) -> dict:
+    client = get_supabase_client()
+    values = {
+        "status": "success",
+        "final_answer": final_answer,
+        "confidence": confidence,
+        "error_message": None,
+    }
+
+    try:
+        response = (
+            client.table("agent_runs")
+            .update(values)
+            .eq("id", agent_run_id)
+            .eq("user_id", _get_single_user_id())
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("agent run success update", exc)
+
+    return _first_response_row("agent run success update", response)
+
+
+def update_agent_run_failure(
+    agent_run_id: str,
+    *,
+    error_message: str,
+) -> dict:
+    client = get_supabase_client()
+    values = {
+        "status": "failed",
+        "final_answer": None,
+        "confidence": None,
+        "error_message": error_message,
+    }
+
+    try:
+        response = (
+            client.table("agent_runs")
+            .update(values)
+            .eq("id", agent_run_id)
+            .eq("user_id", _get_single_user_id())
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("agent run failure update", exc)
+
+    return _first_response_row("agent run failure update", response)
+
+
+def get_agent_run(agent_run_id: str) -> dict | None:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("agent_runs")
+            .select("*")
+            .eq("id", agent_run_id)
+            .eq("user_id", _get_single_user_id())
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("agent run lookup", exc)
+
+    rows = _response_rows(response)
+    if not rows:
+        return None
+
+    return rows[0]
+
+
+def list_agent_steps_for_run(agent_run_id: str) -> list[dict]:
+    owned_run = get_agent_run(agent_run_id)
+    if owned_run is None:
+        return []
+
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("agent_steps")
+            .select("*")
+            .eq("agent_run_id", agent_run_id)
+            .order("created_at")
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("agent steps list", exc)
+
+    return _response_rows(response)
+
+
 def list_document_metadata(user_id: str) -> list[dict]:
     client = get_supabase_client()
 
@@ -260,6 +473,26 @@ def get_document_metadata(document_id: str, user_id: str) -> dict | None:
         return None
 
     return data[0]
+
+
+def list_owned_document_metadata_by_ids(document_ids: list[str]) -> list[dict]:
+    if not document_ids:
+        return []
+
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("documents")
+            .select("*")
+            .eq("user_id", _get_single_user_id())
+            .in_("id", document_ids)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("selected document metadata lookup", exc)
+
+    return _response_rows(response)
 
 
 def get_processing_document(document_id: str) -> dict | None:
