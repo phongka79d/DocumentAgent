@@ -137,7 +137,7 @@ The upload and document list pages depend on one consistent API boundary, exact 
 
 ### Tasks
 
-- [ ] (01A): Add the required React Router dependency
+- [x] (01A): Add the required React Router dependency
   - Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `README.md` > `## Repository Structure`
   - Source Requirements:
     - Add React Router if the app does not already have routing.
@@ -153,7 +153,7 @@ The upload and document list pages depend on one consistent API boundary, exact 
   - Blocked Condition: None unless package installation cannot access the configured registry; report the dependency-resolution failure safely.
   - Files: `frontend/package.json`, `frontend/package-lock.json`
 
-- [ ] (01B): Add typed document API response models
+- [x] (01B): Add typed document API response models
   - Source of Truth: `docs/plans/Plan_13.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_13.md` > `## 8. API Design`; `docs/plans/Master_Plan.md` > `# 13. Backend API Design` > `## 13.1 Upload Document`; `docs/plans/Master_Plan.md` > `# 13. Backend API Design` > `## 13.2 List Documents`; `docs/plans/Master_Plan.md` > `# 13. Backend API Design` > `## 13.3 Get Document Detail`
   - Source Requirements:
     - Define `DocumentStatus` as `uploaded | processing | ready | failed`.
@@ -170,7 +170,7 @@ The upload and document list pages depend on one consistent API boundary, exact 
   - Blocked Condition: None.
   - Files: `frontend/src/types/documents.ts`
 
-- [ ] (01C): Implement typed upload, list, and detail API functions
+- [x] (01C): Implement typed upload, list, and detail API functions
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 8. API Design`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Implement `uploadDocument(file, onUploadProgress)`.
@@ -187,7 +187,7 @@ The upload and document list pages depend on one consistent API boundary, exact 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live requests if `VITE_API_BASE_URL` is missing; static implementation and build must still proceed.
   - Files: `frontend/src/api/documents.ts`, `frontend/src/api/client.ts` only if a small existing-client adjustment is required
 
-- [ ] (01D): Define safe document API error and progress handling contracts
+- [x] (01D): Define safe document API error and progress handling contracts
   - Source of Truth: `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 13. Failure Handling`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Show backend error messages when upload fails.
@@ -904,7 +904,7 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ### Batches
 
-- [ ] Batch01 - Frontend Contracts, Routing Dependency, and Document API Client
+- [x] Batch01 - Frontend Contracts, Routing Dependency, and Document API Client
 - [ ] Batch02 - Reusable Upload and Document Display Components
 - [ ] Batch03 - Upload Page and Recent Document Feedback
 - [ ] Batch04 - Document List Page and Status Refresh
@@ -915,10 +915,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch01
 
-- [ ] (01A): Add the required React Router dependency
-- [ ] (01B): Add typed document API response models
-- [ ] (01C): Implement typed upload, list, and detail API functions
-- [ ] (01D): Define safe document API error and progress handling contracts
+- [x] (01A): Add the required React Router dependency
+- [x] (01B): Add typed document API response models
+- [x] (01C): Implement typed upload, list, and detail API functions
+- [x] (01D): Define safe document API error and progress handling contracts
 
 #### Batch02
 
