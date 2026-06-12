@@ -1,5 +1,3 @@
----
-
 # Task Review Report - (01A)
 
 ## Source Task File
@@ -173,175 +171,6 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
-
----
-
-# Task Review Report - (06E)
-
-## Source Task File
-docs/tasks/task_12.md
-
-## Execution Report Reviewed
-docs/reports/report_12_execute_agent.md
-
-## Review Report File
-docs/review/review_12_review_agent.md
-
-## Final Outcome
-ACCEPTED
-
-## Reviewed Scope
-- Batch: Batch06 - Required Automated Tests
-- Task ID: (06E)
-- Task title: Run required targeted automated validation
-- Task status reported by executor: complete
-- Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `README.md` > `## Testing and Validation`; `README.md` > `Important coordination rules`
-- Supplemental documents: None
-
-## Latest Report Selection
-- Latest report entry found: yes
-- Requested task ID, if any: (06E)
-- Reviewed task ID: (06E)
-- Correct selection: yes
-- Notes: Reviewed the latest `(06E)` execution report. A2 subagent execution was unavailable because token refresh failed, so this review was performed locally under the task-review-agent rules.
-
-## Git Diff Evidence
-- git status reviewed: yes
-- git diff reviewed: yes
-- changed files from git: `backend/tests/test_agent_runs_api.py`; `backend/tests/test_chat_api.py`; `backend/tests/test_langgraph_workflow.py`; `docs/reports/report_12_execute_agent.md`; `docs/review/review_12_review_agent.md`; `docs/tasks/task_12.md`
-- untracked files: none
-
-## Files Reviewed
-- `docs/reports/report_12_execute_agent.md`: in scope - latest (06E) report records the required validation commands and results.
-- `docs/tasks/task_12.md`: in scope - dependencies (06A)-(06D) were checked; only (06E) was updated after acceptance.
-- `backend/tests/test_langgraph_workflow.py`: accepted Batch06 context - required validation target.
-- `backend/tests/test_chat_api.py`: accepted Batch06 context - required validation target.
-- `backend/tests/test_agent_runs_api.py`: accepted Batch06 context - required validation target.
-- `docs/review/review_12_review_agent.md`: in scope - this review appended at EOF.
-
-## Reported Files Cross-Check
-- file from execution report: `docs/reports/report_12_execute_agent.md`
-- present in git/repo: yes
-- matches task scope: yes
-- notes: (06E) is validation/reporting only; no implementation file changes were claimed for this selected task.
-
-## Dependency Review
-- Required dependencies: (06A), (06B), (06C), and (06D).
-- Dependency status: satisfied
-- Missing or invalid dependency: none; all required dependency task checkboxes are checked.
-
-## Architecture Alignment
-- Passed: No runtime architecture, API, service, frontend, migration, auth, streaming, or provider behavior was changed for (06E).
-- Passed: Required validation stayed within Plan 12 backend targeted tests.
-- Failed: none
-- Uncertain: none
-
-## Implementation Reality
-- Real implementation: yes
-- Stub or fake logic found: no
-- Evidence: This is a validation-only task. The required pytest commands were rerun by the reviewer and passed.
-
-## Hardcoding Review
-- Hardcoding found: no
-- Evidence: No implementation changes were made for (06E).
-
-## Validations Reviewed
-- Command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`
-- Reported result: passed, 9 tests
-- Rerun result: passed, 9 tests
-- Status: satisfied
-- Notes: Required workflow validation was actually run.
-- Command/check: `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v`
-- Reported result: passed, 68 tests
-- Rerun result: passed, 68 tests
-- Status: satisfied
-- Notes: Required chat and agent-runs API validation was actually run.
-
-## Acceptance Review
-- Task acceptance: Required tests pass, or failures are documented with remaining in-scope work.
-- Status: satisfied
-- Evidence: Both required targeted pytest commands were rerun and passed.
-
-## Progress Tracking
-- Selected task checkbox: checked for (06E) in both task locations after acceptance
-- Checkbox updated by reviewer: yes
-- Batch status: Batch06 remains unchecked because A3 audit and batch commit have not run
-- Execution report entry: appended and accurate for (06E)
-- Review report entry: appended at EOF
-- Other: No A3 audit, batch commit, Batch07 task, sibling task, or future task was started by this review.
-
-## Report Accuracy
-- Accurate
-- Mismatches: none
-
-## Issues
-
-### Blocking
-- None
-
-### Major
-- None
-
-### Minor
-- None
-
-### Warnings
-- A1 and A2 subagent attempts for (06E) were unavailable because the subagent access token refresh failed. The local orchestrator fallback reran and reviewed the required validation commands.
-
-### Observations
-- Batch06 task IDs are now all checked, but the batch remains uncommitted and still requires A3 scope audit before any batch commit.
-
-## Decision
-- Accept selected task? yes
-- Repair required? no
-- Can next task proceed? yes, A3 can be run if requested
-- Should batch be marked complete? no, only after A3 PASS and successful batch commit
-
-## Repair Instructions
-- None
-
-## JSON Summary
-
-```json
-{
-  "review_outcome": "ACCEPTED",
-  "source_task_file": "docs/tasks/task_12.md",
-  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
-  "review_report_file": "docs/review/review_12_review_agent.md",
-  "selected_batch": "Batch06 - Required Automated Tests",
-  "selected_task_id": "(06E)",
-  "latest_report_entry_found": true,
-  "task_selection_correct": true,
-  "git_diff_reviewed": true,
-  "changed_files_reviewed": [
-    "backend/tests/test_agent_runs_api.py",
-    "backend/tests/test_chat_api.py",
-    "backend/tests/test_langgraph_workflow.py",
-    "docs/reports/report_12_execute_agent.md",
-    "docs/review/review_12_review_agent.md",
-    "docs/tasks/task_12.md"
-  ],
-  "reported_files_cross_checked": true,
-  "dependencies_satisfied": true,
-  "architecture_aligned": true,
-  "hardcoding_found": false,
-  "fake_implementation_found": false,
-  "validations_failed": [],
-  "validations_blocked": [],
-  "acceptance_satisfied": true,
-  "progress_tracking_accurate": true,
-  "checkbox_updated_by_reviewer": true,
-  "execution_report_accurate": true,
-  "blocking_issues": [],
-  "major_issues": [],
-  "warnings": [
-    "A1/A2 subagent attempts for (06E) failed due revoked refresh token; local fallback was used."
-  ],
-  "next_task_can_proceed": true,
-  "batch_can_be_marked_complete": false
-}
-```
-
 ---
 
 # Task Review Report - (01B)
@@ -6258,3 +6087,173 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (06E)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06E)
+- Task title: Run required targeted automated validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `README.md` > `## Testing and Validation`; `README.md` > `Important coordination rules`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06E)
+- Reviewed task ID: (06E)
+- Correct selection: yes
+- Notes: Reviewed the latest `(06E)` execution report. A2 subagent execution was unavailable because token refresh failed, so this review was performed locally under the task-review-agent rules.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_agent_runs_api.py`; `backend/tests/test_chat_api.py`; `backend/tests/test_langgraph_workflow.py`; `docs/reports/report_12_execute_agent.md`; `docs/review/review_12_review_agent.md`; `docs/tasks/task_12.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_12_execute_agent.md`: in scope - latest (06E) report records the required validation commands and results.
+- `docs/tasks/task_12.md`: in scope - dependencies (06A)-(06D) were checked; only (06E) was updated after acceptance.
+- `backend/tests/test_langgraph_workflow.py`: accepted Batch06 context - required validation target.
+- `backend/tests/test_chat_api.py`: accepted Batch06 context - required validation target.
+- `backend/tests/test_agent_runs_api.py`: accepted Batch06 context - required validation target.
+- `docs/review/review_12_review_agent.md`: in scope - this review appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (06E) is validation/reporting only; no implementation file changes were claimed for this selected task.
+
+## Dependency Review
+- Required dependencies: (06A), (06B), (06C), and (06D).
+- Dependency status: satisfied
+- Missing or invalid dependency: none; all required dependency task checkboxes are checked.
+
+## Architecture Alignment
+- Passed: No runtime architecture, API, service, frontend, migration, auth, streaming, or provider behavior was changed for (06E).
+- Passed: Required validation stayed within Plan 12 backend targeted tests.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: This is a validation-only task. The required pytest commands were rerun by the reviewer and passed.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No implementation changes were made for (06E).
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`
+- Reported result: passed, 9 tests
+- Rerun result: passed, 9 tests
+- Status: satisfied
+- Notes: Required workflow validation was actually run.
+- Command/check: `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v`
+- Reported result: passed, 68 tests
+- Rerun result: passed, 68 tests
+- Status: satisfied
+- Notes: Required chat and agent-runs API validation was actually run.
+
+## Acceptance Review
+- Task acceptance: Required tests pass, or failures are documented with remaining in-scope work.
+- Status: satisfied
+- Evidence: Both required targeted pytest commands were rerun and passed.
+
+## Progress Tracking
+- Selected task checkbox: checked for (06E) in both task locations after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because A3 audit and batch commit have not run
+- Execution report entry: appended and accurate for (06E)
+- Review report entry: appended at EOF
+- Other: No A3 audit, batch commit, Batch07 task, sibling task, or future task was started by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- A1 and A2 subagent attempts for (06E) were unavailable because the subagent access token refresh failed. The local orchestrator fallback reran and reviewed the required validation commands.
+
+### Observations
+- Batch06 task IDs are now all checked, but the batch remains uncommitted and still requires A3 scope audit before any batch commit.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, A3 can be run if requested
+- Should batch be marked complete? no, only after A3 PASS and successful batch commit
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch06 - Required Automated Tests",
+  "selected_task_id": "(06E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_agent_runs_api.py",
+    "backend/tests/test_chat_api.py",
+    "backend/tests/test_langgraph_workflow.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/review/review_12_review_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "A1/A2 subagent attempts for (06E) failed due revoked refresh token; local fallback was used."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
