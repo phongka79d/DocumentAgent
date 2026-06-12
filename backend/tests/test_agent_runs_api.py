@@ -300,7 +300,15 @@ def test_agent_run_service_fetches_agent_2_evidence_from_persisted_step(
                                 "supports_simple_reasoning": True,
                             }
                         ],
-                        "rejected_chunks": [],
+                        "rejected_chunks": [
+                            {
+                                "chunk_id": str(CHUNK_ID),
+                                "document_id": str(DOCUMENT_ID),
+                                "file_name": "contract.pdf",
+                                "quote": "The office closes on Fridays.",
+                                "rejection_reason": "This does not answer the question.",
+                            }
+                        ],
                         "missing_information": False,
                         "confidence": 0.86,
                     },
@@ -326,39 +334,86 @@ def test_agent_run_service_fetches_agent_2_evidence_from_persisted_step(
                 "supports_simple_reasoning": True,
             }
         ],
-        "rejected_chunks": [],
+        "rejected_chunks": [
+            {
+                "chunk_id": str(CHUNK_ID),
+                "document_id": str(DOCUMENT_ID),
+                "file_name": "contract.pdf",
+                "quote": "The office closes on Fridays.",
+                "rejection_reason": "This does not answer the question.",
+            }
+        ],
     }
+    assert all(
+        chunk["quote"] != "unverified"
+        for chunk in evidence.model_dump(mode="json")["verified_chunks"]
+    )
+    assert all(
+        chunk["quote"] != "unverified"
+        for chunk in evidence.model_dump(mode="json")["rejected_chunks"]
+    )
 
 
 def test_agent_run_service_fetches_ordered_logs_for_owned_run(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    verification_created_at = datetime(2026, 6, 1, 10, 1, tzinfo=timezone.utc)
+    answer_created_at = datetime(2026, 6, 1, 10, 2, tzinfo=timezone.utc)
     monkeypatch.setattr(
         agent_run_service.supabase_service,
         "get_agent_run",
         Mock(return_value={"id": str(AGENT_RUN_ID)}),
     )
+    list_steps = Mock(
+        return_value=[
+            {
+                "step_name": "agent_1_retrieval",
+                "agent_name": "retrieval_agent",
+                "input": {
+                    "question": "When does probation start?",
+                    "document_ids": [str(DOCUMENT_ID)],
+                },
+                "output": {
+                    "candidate_count": 1,
+                    "chunk_ids": [str(CHUNK_ID)],
+                },
+                "status": "success",
+                "created_at": CREATED_AT,
+            },
+            {
+                "step_name": "agent_2_verification",
+                "agent_name": "verification_agent",
+                "input": {
+                    "candidate_count": 1,
+                    "chunk_ids": [str(CHUNK_ID)],
+                },
+                "output": {
+                    "verified_chunks": [{"chunk_id": str(CHUNK_ID)}],
+                    "rejected_chunks": [],
+                },
+                "status": "success",
+                "created_at": verification_created_at,
+            },
+            {
+                "step_name": "agent_3_answer_self_check",
+                "agent_name": "answer_agent",
+                "input": {
+                    "verified_count": 1,
+                    "question": "When does probation start?",
+                },
+                "output": {
+                    "answer": "Probation starts on June 1, 2026.",
+                    "confidence": 0.88,
+                },
+                "status": "success",
+                "created_at": answer_created_at,
+            },
+        ]
+    )
     monkeypatch.setattr(
         agent_run_service.supabase_service,
         "list_agent_steps_for_run",
-        Mock(
-            return_value=[
-                {
-                    "step_name": "agent_1_retrieval",
-                    "agent_name": "retrieval_agent",
-                    "input": {
-                        "question": "When does probation start?",
-                        "document_ids": [str(DOCUMENT_ID)],
-                    },
-                    "output": {
-                        "candidate_count": 1,
-                        "chunk_ids": [str(CHUNK_ID)],
-                    },
-                    "status": "success",
-                    "created_at": CREATED_AT,
-                }
-            ]
-        ),
+        list_steps,
     )
 
     logs = agent_run_service.get_agent_run_logs(AGENT_RUN_ID)
@@ -379,9 +434,41 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                 },
                 "status": "success",
                 "created_at": "2026-06-01T10:00:00Z",
-            }
+            },
+            {
+                "agent_name": "verification_agent",
+                "input": {
+                    "candidate_count": 1,
+                    "chunk_ids": [str(CHUNK_ID)],
+                },
+                "output": {
+                    "verified_chunks": [{"chunk_id": str(CHUNK_ID)}],
+                    "rejected_chunks": [],
+                },
+                "status": "success",
+                "created_at": "2026-06-01T10:01:00Z",
+            },
+            {
+                "agent_name": "answer_agent",
+                "input": {
+                    "verified_count": 1,
+                    "question": "When does probation start?",
+                },
+                "output": {
+                    "answer": "Probation starts on June 1, 2026.",
+                    "confidence": 0.88,
+                },
+                "status": "success",
+                "created_at": "2026-06-01T10:02:00Z",
+            },
         ],
     }
+    assert [step.agent_name for step in logs.steps] == [
+        "retrieval_agent",
+        "verification_agent",
+        "answer_agent",
+    ]
+    list_steps.assert_called_once_with(str(AGENT_RUN_ID))
 
 
 def test_agent_run_service_raises_controlled_errors_for_lookup_failures(

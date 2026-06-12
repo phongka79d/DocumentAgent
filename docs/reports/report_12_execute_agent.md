@@ -2599,3 +2599,484 @@ complete
 - next task ID: (06A)
 - can proceed: yes, after review acceptance of (05E)
 - handoff notes: Batch06 can add required automated LangGraph workflow success-order tests; preserve the safe-error and single-user ownership behavior established in Batch05.
+
+---
+
+# Task Execution Report - (06A)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch06 - Required Automated Tests
+
+## Task
+(06A) - Add LangGraph workflow success-order tests
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 11. Required Tests
+- docs/plans/Plan_12.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_12.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06A)
+- Task title: Add LangGraph workflow success-order tests
+
+## Completed Work
+- Status: complete.
+- Added a deterministic LangGraph success lifecycle test with mocked Agent 1, Agent 2, Agent 3, and persistence boundaries.
+- The test asserts logical workflow order from START through Agent 1, Agent 2, Agent 3, Self-check, and FINAL.
+- The test asserts run creation, each mocked agent step log, state handoff between agents, success update, Agent 3 final answer source, citations, confidence, and response fields.
+
+## Files Created or Modified
+- backend/tests/test_langgraph_workflow.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`: Passed
+- evidence or reason: 9 tests collected and 9 passed, including `test_run_qa_workflow_success_creates_run_logs_steps_and_returns_agent_3_answer`.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove the full graph runs in required order and returns Agent 3 final answer.
+- Status: satisfied
+- Evidence: The new success test verifies `START -> Agent 1 -> Agent 2 -> Agent 3 -> Self-check -> FINAL`, asserts all three step log calls, and checks the returned answer, confidence, citations, and `agent_run_id` come from the Agent 3 output and created run.
+
+## Artifacts Produced
+- Deterministic LangGraph workflow success-order test coverage in `backend/tests/test_langgraph_workflow.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution; checkbox and batch updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept the change scoped to workflow tests and mocked agent/persistence boundaries so no live Supabase, Qdrant, or provider dependency is required.
+- Modeled self-check as part of the mocked Agent 3 answer step, matching the existing graph node `agent_3_answer_self_check`.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Selected task contained source-of-truth fields, source requirements, dependencies, validation, and file scope.
+- Dependencies through Batch03 and Batch05 were checked complete in `docs/tasks/task_12.md` before implementation.
+- No sibling Batch06 tasks, runtime code, frontend work, database migration, checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes, after A2 review acceptance of (06A)
+- handoff notes: Workflow success path coverage is in place; next task can add failure and insufficient-evidence tests without relying on live external services.
+
+---
+
+# Task Execution Report - (06B)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch06 - Required Automated Tests
+
+## Task
+(06B) - Add LangGraph workflow failure and insufficient-evidence tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06B)
+- Task title: Add LangGraph workflow failure and insufficient-evidence tests
+
+## Completed Work
+- Task is complete.
+- Added separate workflow failure tests for Agent 1, Agent 2, and Agent 3 failures by replacing the combined parametrized failure case with explicit test functions.
+- Confirmed each agent failure marks the created run failed through `mark_agent_run_failed`, does not mark success, raises the safe public workflow error, and does not leak the raw provider error text.
+- Preserved and validated missing-information coverage where Agent 2 returns `missing_information=true`, Agent 3 returns a safe insufficient-evidence answer, the workflow succeeds, and the run is not marked failed.
+
+## Files Created or Modified
+- backend/tests/test_langgraph_workflow.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`: Passed
+- evidence or reason: 9 tests collected and 9 passed, including separate Agent 1, Agent 2, and Agent 3 failure tests plus the insufficient-evidence safe-answer test.
+
+## Acceptance Check
+- Task acceptance condition: Agent failures mark runs failed; missing information returns safe successful output when Agent 3 handles it.
+- Status: satisfied
+- Evidence: `test_run_qa_workflow_marks_created_run_failed_on_agent_1_error`, `test_run_qa_workflow_marks_created_run_failed_on_agent_2_error`, and `test_run_qa_workflow_marks_created_run_failed_on_agent_3_error` each verify failed run lifecycle behavior. `test_run_qa_workflow_marks_success_for_insufficient_evidence` verifies missing information is passed to Agent 3, returns the safe insufficient-evidence answer, calls success, and does not call failure.
+
+## Artifacts Produced
+- Failure lifecycle and insufficient-evidence workflow test coverage in `backend/tests/test_langgraph_workflow.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution; checkbox and batch updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept all changes scoped to workflow tests and mocked agent/persistence boundaries so automated tests do not require live Supabase, Qdrant, or provider services.
+- Used a shared helper for the three explicit failure tests to keep assertions identical while satisfying the requirement to cover failure paths separately.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Selected task contained source-of-truth fields, source requirements, dependencies, validation, and file scope.
+- Dependencies Batch03 and Batch05 were checked complete in `docs/tasks/task_12.md` before implementation.
+- Preserved accepted uncommitted (06A) changes already present in `backend/tests/test_langgraph_workflow.py`.
+- No sibling Batch06 tasks, runtime code, frontend work, database migration, checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (06C)
+- can proceed: yes, after A2 review acceptance of (06B)
+- handoff notes: Workflow failure and insufficient-evidence coverage is in place; next task can add `/api/chat/ask` API tests.
+
+---
+
+# Task Execution Report - (06C)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch06 - Required Automated Tests
+
+## Task
+(06C) - Add `/api/chat/ask` API tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 8. API Design`
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_12.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06C)
+- Task title: Add `/api/chat/ask` API tests
+
+## Completed Work
+- Status: complete.
+- Added route-level `/api/chat/ask` coverage proving the API path persists both user and assistant chat messages through the real chat service functions while mocking Supabase and workflow dependencies.
+- Existing chat API tests also cover route mounting, response shape, service delegation, empty question and empty document validation, unknown session/document handling, workflow failure mapping, and safe controlled error responses.
+
+## Files Created or Modified
+- `backend/tests/test_chat_api.py`
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_chat_api.py -v`: Passed
+- evidence or reason: 39 tests collected and 39 passed.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove response shape, route mounting, service delegation, message persistence, and error mapping for `/api/chat/ask` without live Supabase, Qdrant, or ShopAIKey calls.
+- Status: satisfied
+- Evidence: `test_chat_ask_response_matches_plan_12_field_names`, `test_chat_ask_route_is_registered_in_application`, `test_chat_ask_route_runs_workflow_and_persists_assistant_message`, `test_chat_ask_route_persists_user_and_assistant_messages_with_services`, invalid request parametrization, unknown document/session tests, workflow failure test, and controlled error mapping tests all pass.
+
+## Artifacts Produced
+- API coverage for `/api/chat/ask` in `backend/tests/test_chat_api.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution; checkbox and batch updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept the new coverage inside `backend/tests/test_chat_api.py` and mocked Supabase/workflow boundaries to avoid live external services.
+- Added one focused route-level persistence test instead of changing runtime API code, because the route implementation already satisfied the tested contract.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Selected task contained source-of-truth fields, source requirements, dependencies, validation, and file scope.
+- Dependencies Batch04 and Batch05 were checked complete in `docs/tasks/task_12.md` before implementation.
+- Preserved accepted uncommitted (06A) and (06B) changes; did not revert or modify them.
+- No sibling Batch06 tasks, runtime code, frontend work, database migration, task checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (06D)
+- can proceed: yes, after A2 review acceptance of (06C)
+- handoff notes: `/api/chat/ask` API test coverage is in place and the required targeted validation passes.
+
+---
+
+# Task Execution Report - (06D)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch06 - Required Automated Tests
+
+## Task
+(06D) - Add evidence and logs API tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 8. API Design`
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06D)
+- Task title: Add evidence and logs API tests
+
+## Completed Work
+- State: complete.
+- Added focused logs coverage in `backend/tests/test_agent_runs_api.py` proving persisted Agent 1, Agent 2, and Agent 3 step rows are returned by the logs service in order.
+- Confirmed existing evidence and route tests cover route mounting, not-found behavior, safe query failure handling, Agent 2 evidence source, rejected/verified chunks, and safe error responses.
+
+## Files Created or Modified
+- `backend/tests/test_agent_runs_api.py`
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_agent_runs_api.py -v`: Passed
+- evidence or reason: 29 tests collected and 29 passed.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove route mounting, not-found behavior, safe query failure handling, evidence source, and ordered logs.
+- Status: satisfied
+- Evidence: `test_agent_run_routes_are_registered_in_production_application`, evidence/log 404 tests, evidence/log safe 500 tests, `test_agent_run_service_fetches_agent_2_evidence_from_persisted_step`, and `test_agent_run_service_fetches_ordered_logs_for_owned_run` all pass. The logs test now includes Agent 1 retrieval, Agent 2 verification, and Agent 3 answer/self-check rows in timestamp order.
+
+## Artifacts Produced
+- API coverage for evidence and logs endpoints in `backend/tests/test_agent_runs_api.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution; checkbox and batch updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Extended the existing service logs test instead of adding runtime code, because route and service behavior already existed and the missing coverage was the full Agent 1/2/3 ordered-step scenario.
+- Kept tests mocked at Supabase/service boundaries to avoid live external dependencies.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Selected task contained source-of-truth fields, source requirements, dependencies, validation, and file scope.
+- Dependencies Batch04 and Batch05 are marked complete in `docs/tasks/task_12.md`.
+- Preserved accepted uncommitted (06A), (06B), and (06C) changes; did not revert or modify them.
+- Did not implement sibling task (06E), update task checkboxes, commit, add frontend work, add migrations, or change runtime code.
+
+## Notes for Next Task
+- next task ID: (06E)
+- can proceed: yes, after A2 review acceptance of (06D)
+- handoff notes: Evidence and logs API test coverage is in place and the required targeted validation passes.
+
+---
+
+# Task Execution Repair Report - (06D)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch06 - Required Automated Tests
+
+## Task
+(06D) - Add evidence and logs API tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 8. API Design`
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06D)
+- Task title: Add evidence and logs API tests
+
+## Completed Work
+- State: complete repair.
+- Repaired the A2 rejection by adding a non-empty `rejected_chunks` list to the persisted Agent 2 verification output in `test_agent_run_service_fetches_agent_2_evidence_from_persisted_step`.
+- Added assertions that the evidence response includes the rejected chunk and that the unverified Agent 1 candidate quote is excluded from both verified and rejected evidence output.
+
+## Files Created or Modified
+- `backend/tests/test_agent_runs_api.py`
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_agent_runs_api.py -v`: Passed
+- evidence or reason: 29 tests collected and 29 passed.
+- command/check: `git diff --check`: Passed
+- evidence or reason: command exited successfully; Git printed only line-ending warnings for existing working-copy files.
+
+## Acceptance Check
+- Task acceptance condition: Tests prove route mounting, not-found behavior, safe query failure handling, evidence source, and ordered logs.
+- Status: satisfied
+- Evidence: The repaired evidence test now proves Agent 2 verified and rejected chunks are returned while Agent 1 unverified candidates are excluded. Existing route mounting, 404, safe 500, query failure, and ordered logs tests still pass.
+
+## Artifacts Produced
+- Repaired evidence/log API coverage in `backend/tests/test_agent_runs_api.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 repair execution; checkbox and batch updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Limited the repair to the exact A2 finding in the existing evidence-source test.
+- Kept the test mocked against persisted Supabase step rows to prove evidence comes from Agent 2 output rather than Agent 1 retrieval candidates.
+
+## Risks or Open Issues
+- None identified for this repair.
+
+## Minor Issues Fixed During Execution
+- Added missing rejected-chunk assertion coverage requested by A2.
+
+## Workflow Integrity Check
+- Continued the same selected task ID (06D) and did not start a fresh task.
+- Did not implement sibling task (06E), update task checkboxes, commit, add frontend work, add migrations, or change runtime code.
+- Preserved accepted uncommitted (06A), (06B), and (06C) changes.
+
+## Notes for Next Task
+- next task ID: (06E)
+- can proceed: yes, after A2 review acceptance of repaired (06D)
+- handoff notes: A2's rejected-chunk evidence-source repair is complete and the required validations pass.
+
+---
+
+# Task Execution Report - (06E)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch06 - Required Automated Tests
+
+## Task
+(06E) - Run required targeted automated validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+- `README.md` > `## Testing and Validation`
+- `README.md` > `Important coordination rules`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06E)
+- Task title: Run required targeted automated validation
+
+## Completed Work
+- Status: complete.
+- Ran the exact required targeted validation commands for Plan 12 Batch06.
+- Did not change implementation or test files for this selected task.
+- Previous A1 subagent attempts for (06E) failed before producing work because the subagent access token could not be refreshed. The required validation was therefore run locally by the orchestrator fallback, and this report records that evidence honestly.
+
+## Files Created or Modified
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`: Passed
+- evidence or reason: 9 tests collected and 9 passed.
+- command/check: `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v`: Passed
+- evidence or reason: 68 tests collected and 68 passed.
+
+## Acceptance Check
+- Task acceptance condition: Required tests pass, or failures are documented with remaining in-scope work.
+- Status: satisfied
+- Evidence: Both required targeted pytest commands were actually run and passed.
+
+## Artifacts Produced
+- Test result evidence for Plan 12 Batch06 in this execution report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated execution; checkbox and batch updates are left to A2 after ACCEPTED review. User explicitly requested not to start A3.
+
+## Key Implementation Decisions
+- No implementation repair was needed because both required validation commands passed.
+- Kept this task limited to validation and reporting; no A3 audit, commit, Batch07 work, frontend work, migrations, or runtime changes were performed.
+
+## Risks or Open Issues
+- A1 subagent execution for (06E) was unavailable because the subagent access token refresh failed. The orchestrator ran the required validation locally as a fallback.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependencies (06A), (06B), (06C), and (06D) are checked in `docs/tasks/task_12.md`.
+- Selected task contained source-of-truth fields, source requirements, dependencies, validation, and file scope.
+- No sibling task, future batch, A3 audit, task checkbox update, batch status update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: none in Batch06; A3 batch scope audit remains pending by orchestrator workflow, but user explicitly requested not to start A3.
+- can proceed: yes, after A2 review acceptance of (06E) and explicit user permission for A3.
+- handoff notes: Required automated validation commands passed and are ready for A2 review.

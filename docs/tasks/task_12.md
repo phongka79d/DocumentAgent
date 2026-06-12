@@ -838,7 +838,7 @@ Plan 12 explicitly requires deterministic workflow tests, chat API tests, eviden
 
 ### Tasks
 
-- [ ] (06A): Add LangGraph workflow success-order tests
+- [x] (06A): Add LangGraph workflow success-order tests
   - Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Add tests with mocked agent functions so workflow behavior is deterministic.
@@ -854,7 +854,7 @@ Plan 12 explicitly requires deterministic workflow tests, chat API tests, eviden
   - Blocked Condition: None.
   - Files: `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (06B): Add LangGraph workflow failure and insufficient-evidence tests
+- [x] (06B): Add LangGraph workflow failure and insufficient-evidence tests
   - Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Add error-path tests for Agent 1, Agent 2, and Agent 3 failures.
@@ -870,7 +870,7 @@ Plan 12 explicitly requires deterministic workflow tests, chat API tests, eviden
   - Blocked Condition: None.
   - Files: `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (06C): Add `/api/chat/ask` API tests
+- [x] (06C): Add `/api/chat/ask` API tests
   - Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Tests `/api/chat/ask`.
@@ -887,7 +887,7 @@ Plan 12 explicitly requires deterministic workflow tests, chat API tests, eviden
   - Blocked Condition: None.
   - Files: `backend/tests/test_chat_api.py`
 
-- [ ] (06D): Add evidence and logs API tests
+- [x] (06D): Add evidence and logs API tests
   - Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Tests evidence and logs endpoints.
@@ -904,7 +904,7 @@ Plan 12 explicitly requires deterministic workflow tests, chat API tests, eviden
   - Blocked Condition: None.
   - Files: `backend/tests/test_agent_runs_api.py`
 
-- [ ] (06E): Run required targeted automated validation
+- [x] (06E): Run required targeted automated validation
   - Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `README.md` > `## Testing and Validation`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - Run `cd backend` then `pytest tests/test_langgraph_workflow.py -v`.
@@ -1224,11 +1224,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch06
 
-- [ ] (06A): Add LangGraph workflow success-order tests
-- [ ] (06B): Add LangGraph workflow failure and insufficient-evidence tests
-- [ ] (06C): Add `/api/chat/ask` API tests
-- [ ] (06D): Add evidence and logs API tests
-- [ ] (06E): Run required targeted automated validation
+- [x] (06A): Add LangGraph workflow success-order tests
+- [x] (06B): Add LangGraph workflow failure and insufficient-evidence tests
+- [x] (06C): Add `/api/chat/ask` API tests
+- [x] (06D): Add evidence and logs API tests
+- [x] (06E): Run required targeted automated validation
 
 #### Batch07
 

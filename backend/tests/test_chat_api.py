@@ -1,7 +1,7 @@
 import sys
 from importlib import import_module
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 from uuid import UUID
 
 import pytest
@@ -621,6 +621,82 @@ def test_chat_ask_route_runs_workflow_and_persists_assistant_message(
         agent_run_id=AGENT_RUN_ID,
         answer="Employees may work remotely two days per week.",
         confidence=0.82,
+    )
+
+
+def test_chat_ask_route_persists_user_and_assistant_messages_with_services(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, chat_api = _chat_client()
+    insert_chat_message = Mock(
+        side_effect=[
+            {"id": "user-message-id", "role": "user"},
+            {"id": "assistant-message-id", "role": "assistant"},
+        ]
+    )
+    run_workflow = Mock(
+        return_value={
+            "answer": "Employees may work remotely two days per week.",
+            "confidence": 0.82,
+            "citations": [],
+            "agent_run_id": AGENT_RUN_ID,
+        }
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service.supabase_service,
+        "list_owned_document_metadata_by_ids",
+        Mock(return_value=[{"id": str(DOCUMENT_ID)}]),
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service.supabase_service,
+        "create_chat_session",
+        Mock(return_value={"id": str(SESSION_ID), "title": "What is covered?"}),
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service.supabase_service,
+        "get_chat_session",
+        Mock(return_value={"id": str(SESSION_ID), "title": "What is covered?"}),
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service.supabase_service,
+        "insert_chat_message",
+        insert_chat_message,
+    )
+    monkeypatch.setattr(chat_api, "run_qa_workflow", run_workflow)
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "question": "What is covered?",
+            "document_ids": [str(DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "Employees may work remotely two days per week.",
+        "confidence": 0.82,
+        "citations": [],
+        "agent_run_id": str(AGENT_RUN_ID),
+    }
+    assert insert_chat_message.call_args_list == [
+        call(
+            session_id=str(SESSION_ID),
+            role="user",
+            content="What is covered?",
+            metadata={"document_ids": [str(DOCUMENT_ID)]},
+        ),
+        call(
+            session_id=str(SESSION_ID),
+            role="assistant",
+            content="Employees may work remotely two days per week.",
+            metadata={"agent_run_id": str(AGENT_RUN_ID), "confidence": 0.82},
+        ),
+    ]
+    run_workflow.assert_called_once_with(
+        "What is covered?",
+        [DOCUMENT_ID],
+        session_id=str(SESSION_ID),
     )
 
 

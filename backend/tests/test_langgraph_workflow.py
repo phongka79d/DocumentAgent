@@ -265,6 +265,156 @@ def test_run_qa_workflow_uses_agent_3_output_as_final_answer(monkeypatch):
     assert result["agent_run_id"] == agent_run_id
 
 
+def test_run_qa_workflow_success_creates_run_logs_steps_and_returns_agent_3_answer(
+    monkeypatch,
+):
+    agent_run_id = UUID("00000000-0000-0000-0000-000000000050")
+    session_id = UUID("00000000-0000-0000-0000-000000000051")
+    document_id = UUID("00000000-0000-0000-0000-000000000052")
+    chunk_id = UUID("00000000-0000-0000-0000-000000000053")
+    question = "When does probation end?"
+    order = ["START"]
+
+    retrieval_candidate = RetrievalCandidate(
+        chunk_id=chunk_id,
+        document_id=document_id,
+        file_name="contract.pdf",
+        content="The probation period lasts two months.",
+        page_number=2,
+        section_title="Probation",
+        semantic_similarity=0.91,
+        graph_relevance=0.79,
+        keyword_overlap=0.72,
+        metadata_match=1.0,
+        recency_or_position_score=0.85,
+        final_score=0.86,
+        retrieval_reason="Matched probation duration.",
+    )
+    retrieval = RetrievalAgentOutput(question=question, candidates=[retrieval_candidate])
+    verified_chunk = VerifiedChunk(
+        chunk_id=chunk_id,
+        document_id=document_id,
+        file_name="contract.pdf",
+        quote="The probation period lasts two months.",
+        page_number=2,
+        verification_reason="Direct answer to the question.",
+        supports_simple_reasoning=True,
+    )
+    verification = VerificationAgentOutput(
+        verified_chunks=[verified_chunk],
+        rejected_chunks=[],
+        missing_information=False,
+        confidence=0.9,
+    )
+    answer = AnswerAgentOutput(
+        final_answer="Agent 3 says probation ends after two months.",
+        citations=[
+            Citation(
+                file_name="contract.pdf",
+                quote="The probation period lasts two months.",
+            )
+        ],
+        reasoning_summary="Answered only from Agent 2 verified evidence.",
+        confidence=0.88,
+        self_check=AnswerSelfCheck(
+            uses_only_verified_chunks=True,
+            has_citation=True,
+            has_unsupported_claims=False,
+            is_ready=True,
+        ),
+    )
+
+    create_run = Mock(return_value={"id": str(agent_run_id), "status": "running"})
+    mark_success = Mock(return_value={"id": str(agent_run_id), "status": "success"})
+    mark_failed = Mock()
+    log_step = Mock(
+        side_effect=lambda step_name: order.append(f"log:{step_name}")
+        or {"step_name": step_name, "status": "success"}
+    )
+
+    def fake_retrieval(input_data):
+        order.append("Agent 1")
+        assert input_data.agent_run_id == agent_run_id
+        assert input_data.question == question
+        assert input_data.document_ids == [document_id]
+        log_step("agent_1_retrieval")
+        return retrieval
+
+    def fake_verification(input_data):
+        order.append("Agent 2")
+        assert input_data.agent_run_id == agent_run_id
+        assert input_data.question == question
+        assert input_data.candidates == retrieval.candidates
+        log_step("agent_2_verification")
+        return verification
+
+    def fake_answer(input_data):
+        order.append("Agent 3")
+        assert input_data.agent_run_id == agent_run_id
+        assert input_data.question == question
+        assert input_data.verification is verification
+        order.append("Self-check")
+        assert answer.self_check.is_ready is True
+        log_step("agent_3_answer_self_check")
+        return answer
+
+    monkeypatch.setattr(
+        graph.agent_run_service,
+        "create_running_agent_run",
+        create_run,
+    )
+    monkeypatch.setattr(
+        graph.agent_run_service,
+        "mark_agent_run_success",
+        mark_success,
+    )
+    monkeypatch.setattr(
+        graph.agent_run_service,
+        "mark_agent_run_failed",
+        mark_failed,
+    )
+    monkeypatch.setattr(graph, "run_retrieval_agent", fake_retrieval)
+    monkeypatch.setattr(graph, "run_verification_agent", fake_verification)
+    monkeypatch.setattr(graph, "run_answer_agent", fake_answer)
+
+    result = graph.run_qa_workflow(question, [document_id], session_id=session_id)
+    order.append("FINAL")
+
+    assert order == [
+        "START",
+        "Agent 1",
+        "log:agent_1_retrieval",
+        "Agent 2",
+        "log:agent_2_verification",
+        "Agent 3",
+        "Self-check",
+        "log:agent_3_answer_self_check",
+        "FINAL",
+    ]
+    create_run.assert_called_once_with(
+        session_id=session_id,
+        question=question,
+        document_ids=[document_id],
+    )
+    assert [call.args[0] for call in log_step.call_args_list] == [
+        "agent_1_retrieval",
+        "agent_2_verification",
+        "agent_3_answer_self_check",
+    ]
+    mark_success.assert_called_once_with(
+        agent_run_id,
+        final_answer=answer.final_answer,
+        confidence=answer.confidence,
+    )
+    mark_failed.assert_not_called()
+    assert result == {
+        "answer": answer.final_answer,
+        "confidence": answer.confidence,
+        "citations": answer.citations,
+        "agent_run_id": agent_run_id,
+    }
+
+
 def test_run_qa_workflow_marks_success_for_insufficient_evidence(monkeypatch):
     agent_run_id = UUID("00000000-0000-0000-0000-000000000040")
     document_id = UUID("00000000-0000-0000-0000-000000000041")
@@ -343,11 +493,7 @@ def test_run_qa_workflow_marks_success_for_insufficient_evidence(monkeypatch):
     mark_failed.assert_not_called()
 
 
-@pytest.mark.parametrize(
-    "failing_agent",
-    ["agent_1", "agent_2", "agent_3"],
-)
-def test_run_qa_workflow_marks_created_run_failed_on_agent_error(
+def _assert_run_qa_workflow_marks_created_run_failed_on_agent_error(
     monkeypatch,
     failing_agent,
 ):
@@ -424,6 +570,28 @@ def test_run_qa_workflow_marks_created_run_failed_on_agent_error(
     mark_failed.assert_called_once()
     assert mark_failed.call_args.args == (agent_run_id,)
     assert isinstance(mark_failed.call_args.kwargs["error"], RuntimeError)
+    assert mark_failed.return_value["status"] == "failed"
+
+
+def test_run_qa_workflow_marks_created_run_failed_on_agent_1_error(monkeypatch):
+    _assert_run_qa_workflow_marks_created_run_failed_on_agent_error(
+        monkeypatch,
+        "agent_1",
+    )
+
+
+def test_run_qa_workflow_marks_created_run_failed_on_agent_2_error(monkeypatch):
+    _assert_run_qa_workflow_marks_created_run_failed_on_agent_error(
+        monkeypatch,
+        "agent_2",
+    )
+
+
+def test_run_qa_workflow_marks_created_run_failed_on_agent_3_error(monkeypatch):
+    _assert_run_qa_workflow_marks_created_run_failed_on_agent_error(
+        monkeypatch,
+        "agent_3",
+    )
 
 
 def test_qa_workflow_graph_is_compiled_in_required_order():

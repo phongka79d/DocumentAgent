@@ -176,6 +176,174 @@ ACCEPTED
 
 ---
 
+# Task Review Report - (06E)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06E)
+- Task title: Run required targeted automated validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `README.md` > `## Testing and Validation`; `README.md` > `Important coordination rules`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06E)
+- Reviewed task ID: (06E)
+- Correct selection: yes
+- Notes: Reviewed the latest `(06E)` execution report. A2 subagent execution was unavailable because token refresh failed, so this review was performed locally under the task-review-agent rules.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_agent_runs_api.py`; `backend/tests/test_chat_api.py`; `backend/tests/test_langgraph_workflow.py`; `docs/reports/report_12_execute_agent.md`; `docs/review/review_12_review_agent.md`; `docs/tasks/task_12.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_12_execute_agent.md`: in scope - latest (06E) report records the required validation commands and results.
+- `docs/tasks/task_12.md`: in scope - dependencies (06A)-(06D) were checked; only (06E) was updated after acceptance.
+- `backend/tests/test_langgraph_workflow.py`: accepted Batch06 context - required validation target.
+- `backend/tests/test_chat_api.py`: accepted Batch06 context - required validation target.
+- `backend/tests/test_agent_runs_api.py`: accepted Batch06 context - required validation target.
+- `docs/review/review_12_review_agent.md`: in scope - this review appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (06E) is validation/reporting only; no implementation file changes were claimed for this selected task.
+
+## Dependency Review
+- Required dependencies: (06A), (06B), (06C), and (06D).
+- Dependency status: satisfied
+- Missing or invalid dependency: none; all required dependency task checkboxes are checked.
+
+## Architecture Alignment
+- Passed: No runtime architecture, API, service, frontend, migration, auth, streaming, or provider behavior was changed for (06E).
+- Passed: Required validation stayed within Plan 12 backend targeted tests.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: This is a validation-only task. The required pytest commands were rerun by the reviewer and passed.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No implementation changes were made for (06E).
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`
+- Reported result: passed, 9 tests
+- Rerun result: passed, 9 tests
+- Status: satisfied
+- Notes: Required workflow validation was actually run.
+- Command/check: `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v`
+- Reported result: passed, 68 tests
+- Rerun result: passed, 68 tests
+- Status: satisfied
+- Notes: Required chat and agent-runs API validation was actually run.
+
+## Acceptance Review
+- Task acceptance: Required tests pass, or failures are documented with remaining in-scope work.
+- Status: satisfied
+- Evidence: Both required targeted pytest commands were rerun and passed.
+
+## Progress Tracking
+- Selected task checkbox: checked for (06E) in both task locations after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because A3 audit and batch commit have not run
+- Execution report entry: appended and accurate for (06E)
+- Review report entry: appended at EOF
+- Other: No A3 audit, batch commit, Batch07 task, sibling task, or future task was started by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- A1 and A2 subagent attempts for (06E) were unavailable because the subagent access token refresh failed. The local orchestrator fallback reran and reviewed the required validation commands.
+
+### Observations
+- Batch06 task IDs are now all checked, but the batch remains uncommitted and still requires A3 scope audit before any batch commit.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, A3 can be run if requested
+- Should batch be marked complete? no, only after A3 PASS and successful batch commit
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch06 - Required Automated Tests",
+  "selected_task_id": "(06E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_agent_runs_api.py",
+    "backend/tests/test_chat_api.py",
+    "backend/tests/test_langgraph_workflow.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/review/review_12_review_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "A1/A2 subagent attempts for (06E) failed due revoked refresh token; local fallback was used."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
 # Task Review Report - (01B)
 
 ## Source Task File
@@ -5176,6 +5344,895 @@ ACCEPTED
     "backend/app/services/agent_run_service.py",
     "backend/app/services/chat_service.py",
     "backend/app/core/config.py",
+    "backend/tests/test_agent_runs_api.py",
+    "backend/tests/test_chat_api.py",
+    "backend/tests/test_langgraph_workflow.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/review/review_12_review_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06A)
+- Task title: Add LangGraph workflow success-order tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_12.md > ## 11. Required Tests; docs/plans/Plan_12.md > ## 12. Acceptance Criteria; docs/plans/Plan_12.md > ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: The latest matching report entry is for Batch06 (06A), and the review was limited to that task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_langgraph_workflow.py; docs/reports/report_12_execute_agent.md; docs/tasks/task_12.md after reviewer acceptance checkbox update
+- untracked files: none observed before review report append
+
+## Files Reviewed
+- `backend/tests/test_langgraph_workflow.py`: in scope - new deterministic workflow success lifecycle test and surrounding existing workflow tests reviewed.
+- `backend/app/agents/graph.py`: in scope - verified graph order, runtime callable contract, run lifecycle, and Agent 3 final answer return path.
+- `backend/app/agents/retrieval_agent.py`: in scope - checked that Agent 1 owns success/failure step logging when not mocked.
+- `backend/app/agents/verification_agent.py`: in scope - checked that Agent 2 owns step logging when not mocked.
+- `backend/app/agents/answer_agent.py`: in scope - checked Agent 3/self-check step logging boundary.
+- `backend/app/services/agent_run_service.py`: in scope - verified create/success/failure run lifecycle used by workflow.
+- `docs/reports/report_12_execute_agent.md`: in scope - latest execution report cross-checked against git evidence.
+- `docs/tasks/task_12.md`: in scope - selected task entry, dependencies, and checkbox progress reviewed; only (06A) was updated after acceptance.
+- `docs/plans/Plan_12.md`: in scope - cited Required Tests, Acceptance Criteria, and Reviewer Checklist sections reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_langgraph_workflow.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new success-order workflow test for (06A).
+- file from execution report: docs/reports/report_12_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest report entry was appended and accurately describes the selected task.
+
+## Dependency Review
+- Required dependencies: Batch03 completed; Batch05 accepted before Batch06 start per task tracker.
+- Dependency status: satisfied
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Test uses mocked Agent 1, Agent 2, Agent 3, and run persistence boundaries; graph remains backend-only and follows START -> Agent 1 -> Agent 2 -> Agent 3/Self-check -> END.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The added test invokes `graph.run_qa_workflow`, which uses the compiled LangGraph graph, asserts state handoff between mocked agents, run creation, success marking, final Agent 3 answer fields, citations, confidence, and created run ID.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs and fixture text are confined to deterministic test data; production runtime logic was not changed.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`
+- Reported result: passed, 9 tests collected and 9 passed
+- Rerun result: passed, 9 tests collected and 9 passed in 1.49s
+- Status: satisfied
+- Notes: Rerun included the new `test_run_qa_workflow_success_creates_run_logs_steps_and_returns_agent_3_answer` test.
+
+## Acceptance Review
+- Task acceptance: Tests prove the full graph runs in required order and returns Agent 3 final answer.
+- Status: satisfied
+- Evidence: The new test asserts START, Agent 1, Agent 2, Agent 3, Self-check, and FINAL logical order; run creation; three expected step-log names through mocked agent-side logging; success update; no failed-run update; and final response values from the Agent 3 output.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for (06A)
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because sibling tasks (06B)-(06E) are not accepted.
+- Execution report entry: appended and accurate for (06A)
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkboxes were changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none requiring repair. Observation: the step-log coverage is simulated inside mocked agent functions, which is consistent with this deterministic graph test scope because real per-agent log persistence lives inside the agent callables and is covered by their own tests.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The new test intentionally mocks agent callables and simulates their step-log calls; it verifies graph order and lifecycle without requiring live Supabase, Qdrant, or provider services.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch06 - Required Automated Tests",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_langgraph_workflow.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06B)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06B)
+- Task title: Add LangGraph workflow failure and insufficient-evidence tests
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_12.md > ## 11. Required Tests; docs/plans/Plan_12.md > ## 13. Failure Handling
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06B)
+- Reviewed task ID: (06B)
+- Correct selection: yes
+- Notes: The latest report entry is for Batch06 (06B), matching the requested task ID. Review was limited to (06B); accepted uncommitted (06A) evidence was checked only to confirm its success-order coverage remained present.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/tests/test_langgraph_workflow.py; docs/reports/report_12_execute_agent.md; docs/review/review_12_review_agent.md; docs/tasks/task_12.md
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_langgraph_workflow.py`: in scope - selected (06B) failure and insufficient-evidence tests reviewed; accepted uncommitted (06A) success-order test verified as preserved.
+- `backend/app/agents/graph.py`: in scope - verified real workflow failure boundary marks created runs failed and wraps failures safely.
+- `backend/app/services/agent_run_service.py`: in scope - verified safe workflow error message and failed-run update contract used by tests.
+- `docs/reports/report_12_execute_agent.md`: in scope - latest (06B) execution report cross-checked against git evidence.
+- `docs/tasks/task_12.md`: in scope - selected task entry, dependencies, and checkbox progress reviewed; only (06B) was updated after acceptance.
+- `docs/plans/Plan_12.md`: in scope - cited Required Tests and Failure Handling sections reviewed.
+- `docs/review/review_12_review_agent.md`: in scope - existing EOF inspected before append; prior accepted (06A) review remains uncommitted and was not altered.
+
+## Reported Files Cross-Check
+- file from execution report: backend/tests/test_langgraph_workflow.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains explicit Agent 1, Agent 2, and Agent 3 failure tests plus preserved insufficient-evidence safe-answer coverage.
+- file from execution report: docs/reports/report_12_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry was appended for (06B) and accurately describes the selected task.
+
+## Dependency Review
+- Required dependencies: Batch03 and Batch05 per task entry; accepted uncommitted (06A) success-order coverage per user instruction.
+- Dependency status: satisfied
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Tests remain backend-only, deterministic, and use mocked Agent 1/2/3 plus persistence boundaries; they verify the approved failure behavior without live Supabase, Qdrant, or provider calls.
+- Passed: Missing-information flow remains a successful workflow outcome when Agent 3 returns the insufficient-evidence answer.
+- Passed: Accepted (06A) success-order test remains present and passed during rerun.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The tests invoke `graph.run_qa_workflow`, which creates a run through the real workflow boundary, invokes the compiled graph, marks failures through `mark_agent_run_failed`, and returns safe `AgentRunWorkflowError` on agent exceptions. Production runtime code was not replaced with test-only logic.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs and strings are deterministic test fixtures only. The synthetic `raw provider secret` string is used to prove safe error wrapping does not leak raw text; no runtime hardcoded secret or overfit production behavior was introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_langgraph_workflow.py -v`
+- Reported result: passed, 9 tests collected and 9 passed
+- Rerun result: passed, 9 tests collected and 9 passed in 1.45s
+- Status: satisfied
+- Notes: Rerun included the accepted (06A) success-order test, the insufficient-evidence test, and the separate Agent 1, Agent 2, and Agent 3 failure tests.
+- Command/check: `git diff --check`
+- Reported result: not reported by executor
+- Rerun result: passed with only line-ending conversion warnings
+- Status: satisfied
+- Notes: No whitespace errors were reported.
+
+## Acceptance Review
+- Task acceptance: Agent failures mark runs failed; missing information returns safe successful output when Agent 3 handles it.
+- Status: satisfied
+- Evidence: `test_run_qa_workflow_marks_created_run_failed_on_agent_1_error`, `test_run_qa_workflow_marks_created_run_failed_on_agent_2_error`, and `test_run_qa_workflow_marks_created_run_failed_on_agent_3_error` separately exercise each agent failure path through a shared assertion helper. Each verifies safe public error text, no raw provider leakage, no success update, one failed-run update for the created run, and failed status from the mocked persistence boundary.
+- Evidence: `test_run_qa_workflow_marks_success_for_insufficient_evidence` verifies `missing_information=True` is passed to Agent 3, Agent 3 returns a safe insufficient-evidence answer, success is marked, and failure is not marked.
+- Evidence: `test_run_qa_workflow_success_creates_run_logs_steps_and_returns_agent_3_answer` from accepted (06A) remains present and passed, so success-order coverage was not removed or weakened.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for (06B) in both task-list locations in `docs/tasks/task_12.md`.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because sibling tasks (06C)-(06E) are not accepted.
+- Execution report entry: appended and accurate for (06B)
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkboxes were changed. Accepted uncommitted (06A) changes were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The three explicit failure tests share a helper for identical lifecycle assertions, but each agent failure path is selected by a separate test function and was run independently by pytest.
+- The uncommitted diff also includes accepted (06A) changes and the prior (06A) review report; those were treated as existing accepted work and were not modified except for preserving compatibility.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch06 - Required Automated Tests",
+  "selected_task_id": "(06B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_langgraph_workflow.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/review/review_12_review_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (06C)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06C)
+- Task title: Add `/api/chat/ask` API tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06C)
+- Reviewed task ID: (06C)
+- Correct selection: yes
+- Notes: The latest execution report entry is for Batch06 (06C), matching the requested task. Review was limited to (06C); accepted uncommitted (06A) and (06B) changes were considered only as existing context.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_chat_api.py`; `backend/tests/test_langgraph_workflow.py`; `docs/reports/report_12_execute_agent.md`; `docs/review/review_12_review_agent.md`; `docs/tasks/task_12.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_chat_api.py`: in scope - selected (06C) route-level persistence test plus existing `/api/chat/ask` request, response, route, validation, delegation, unknown session/document, workflow failure, and safe error mapping coverage reviewed.
+- `backend/app/api/chat.py`: in scope - verified public route behavior, response model, service delegation, workflow delegation, assistant-message persistence, and controlled error mapping.
+- `backend/app/services/chat_service.py`: in scope - verified user-message persistence, selected-document validation, session lookup/creation, assistant-message persistence, and safe service errors used by tests.
+- `backend/app/schemas/chat.py`: in scope - verified request/response schema names, UUID validation, non-empty question, non-empty `document_ids`, and response field shape.
+- `backend/app/main.py`: in scope - verified chat router is mounted at `/api/chat`.
+- `backend/tests/test_langgraph_workflow.py`: accepted uncommitted context - (06A) and (06B) workflow test changes remain in the diff but are not selected (06C) work.
+- `docs/reports/report_12_execute_agent.md`: in scope - latest (06C) execution report cross-checked against git evidence.
+- `docs/tasks/task_12.md`: in scope - selected task entry, dependencies, and checkbox progress reviewed; only (06C) was updated by this review.
+- `docs/plans/Plan_12.md`: in scope - cited API Design, Required Tests, Acceptance Criteria, and Failure Handling sections reviewed.
+- `docs/review/review_12_review_agent.md`: in scope - existing EOF inspected before append; prior accepted (06A) and (06B) review reports remain uncommitted context.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_chat_api.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new selected (06C) test `test_chat_ask_route_persists_user_and_assistant_messages_with_services`.
+- file from execution report: `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry was appended for (06C) and accurately describes the selected task.
+
+## Dependency Review
+- Required dependencies: Batch04 and Batch05 per task entry; accepted uncommitted (06A) and (06B) Batch06 test context preserved.
+- Dependency status: satisfied
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Tests use FastAPI `TestClient` and mocked workflow/Supabase service boundaries, avoiding live Supabase, Qdrant, or ShopAIKey calls.
+- Passed: `/api/chat/ask` route remains backend-only and delegates to `chat_service.prepare_chat_persistence`, `run_qa_workflow`, and `chat_service.persist_assistant_message`.
+- Passed: The tests cover the Plan 12 public response fields and controlled API error behavior without changing runtime architecture.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The selected test drives the real chat route and real chat service functions while mocking only Supabase and workflow boundaries. Existing tests also verify route mounting in the created FastAPI app, service delegation, and API error mapping. Production runtime code was not changed for (06C).
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs, fixture text, and synthetic error strings are deterministic test data only. No production hardcoding, real secret, live credential, provider response, or sample-specific runtime branch was introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_chat_api.py -v`
+- Reported result: passed, 39 tests collected and 39 passed
+- Rerun result: passed, 39 tests collected and 39 passed in 1.83s
+- Status: satisfied
+- Notes: Rerun included the new selected (06C) persistence test and all existing `/api/chat/ask` schema, route, service, and error mapping tests.
+- Command/check: `git diff --check`
+- Reported result: not reported by executor
+- Rerun result: passed with line-ending conversion warnings only
+- Status: satisfied
+- Notes: No whitespace errors were reported.
+
+## Acceptance Review
+- Task acceptance: Tests prove response shape, route mounting, service delegation, message persistence, and error mapping.
+- Status: satisfied
+- Evidence: Response shape is covered by `test_chat_ask_response_matches_plan_12_field_names` and route success response assertions.
+- Evidence: Route mounting is covered by `test_chat_ask_route_is_registered_in_application`.
+- Evidence: Service delegation is covered by `test_chat_ask_route_runs_workflow_and_persists_assistant_message`, which asserts calls to `prepare_chat_persistence`, `run_qa_workflow`, and `persist_assistant_message`.
+- Evidence: User and assistant message persistence is covered by the selected (06C) test `test_chat_ask_route_persists_user_and_assistant_messages_with_services`, which asserts the two `insert_chat_message` calls and metadata.
+- Evidence: Empty question, missing/empty/invalid `document_ids`, and invalid request payloads return HTTP 400 without starting workflow.
+- Evidence: Unknown selected document and unknown/not-owned session paths return HTTP 404 and do not persist an assistant message.
+- Evidence: Workflow failure returns HTTP 500 with the safe public workflow message and does not leak synthetic raw provider text.
+- Evidence: Controlled validation, not-found, dependency, and workflow errors are mapped to expected safe public responses.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for (06C) in both selected task-list locations in `docs/tasks/task_12.md`.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because sibling tasks (06D) and (06E) are not accepted.
+- Execution report entry: appended and accurate for (06C)
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkboxes were updated by this review. Accepted uncommitted (06A) and (06B) changes remain in the working tree. Observation only: the preexisting progress tracker still shows (06A) unchecked in the lower tracker even though prior accepted (06A) evidence exists; this was not a selected (06C) change and was left untouched.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none for selected (06C). The execution report correctly distinguishes the selected chat API test work from accepted uncommitted (06A) and (06B) workflow test changes.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The selected (06C) diff adds one focused route-level persistence test; the broader required `/api/chat/ask` coverage is satisfied by existing tests in the same file and all 39 tests pass together.
+- The working tree includes accepted uncommitted (06A) and (06B) changes and prior review reports; they were not treated as selected (06C) implementation.
+- The lower progress tracker has a preexisting accepted-task mismatch for (06A). It does not change the selected (06C) outcome, and this review did not modify sibling task tracking.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch06 - Required Automated Tests",
+  "selected_task_id": "(06C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_chat_api.py",
+    "backend/tests/test_langgraph_workflow.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/review/review_12_review_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Review Correction Note - (06A)
+
+After the ACCEPTED review for `(06A)`, the detailed task checkbox had been updated but the Progress Tracker Task IDs entry remained unchecked. Corrected only the Progress Tracker `(06A)` checkbox in `docs/tasks/task_12.md` from unchecked to checked. Batch06 status and sibling/future task checkboxes were not changed.
+
+---
+
+# Task Review Report - (06D)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+REJECTED_WITH_WARNINGS
+
+## Reviewed Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06D)
+- Task title: Add evidence and logs API tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06D)
+- Reviewed task ID: (06D)
+- Correct selection: yes
+- Notes: The latest matching execution report entry for (06D) was selected. Review was limited to (06D); accepted uncommitted (06A), (06B), and (06C) changes were treated as existing context only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_agent_runs_api.py`; `backend/tests/test_chat_api.py`; `backend/tests/test_langgraph_workflow.py`; `docs/reports/report_12_execute_agent.md`; `docs/review/review_12_review_agent.md`; `docs/tasks/task_12.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_agent_runs_api.py`: in scope - selected (06D) evidence/log API and service tests reviewed, including route mounting, not-found behavior, safe query failure handling, Agent 2 evidence source, and ordered logs with Agent 1, Agent 2, and Agent 3 rows.
+- `backend/app/api/agent_runs.py`: in scope - verified evidence and logs route handlers, response models, 404 mapping, controlled 500 mapping, and unexpected-error safe messages.
+- `backend/app/services/agent_run_service.py`: in scope - verified owned-run lookup, Agent 2 verification-step evidence extraction, log step response construction, and safe dependency-error wrapping.
+- `backend/app/main.py`: in scope - verified agent run router is mounted at `/api/agent-runs`.
+- `backend/tests/test_chat_api.py`: accepted uncommitted context - belongs to (06C), not selected (06D), and was not treated as selected work.
+- `backend/tests/test_langgraph_workflow.py`: accepted uncommitted context - belongs to (06A) and (06B), not selected (06D), and was not treated as selected work.
+- `docs/reports/report_12_execute_agent.md`: in scope - latest (06D) execution report cross-checked against repository evidence.
+- `docs/tasks/task_12.md`: in scope - selected task entry, dependencies, and checkbox progress reviewed; no checkbox was updated because the outcome is not ACCEPTED.
+- `docs/plans/Plan_12.md`: in scope - cited API Design, Required Tests, Acceptance Criteria, and Reviewer Checklist sections reviewed.
+- `docs/review/review_12_review_agent.md`: in scope - existing EOF inspected before append; prior review entries remain uncommitted context.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_agent_runs_api.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the selected (06D) logs test expansion and existing evidence/log API tests. The selected logs expansion covers persisted Agent 1, Agent 2, and Agent 3 rows in order.
+- file from execution report: `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry was appended for (06D), but its acceptance claim is partial because non-empty rejected chunk propagation is not covered through the Agent 2 persisted evidence path.
+
+## Dependency Review
+- Required dependencies: Batch04 and Batch05 per task entry; accepted uncommitted (06A), (06B), and (06C) context preserved.
+- Dependency status: satisfied
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Evidence/log tests remain backend-only and use mocked Supabase/service boundaries, avoiding live Supabase, Qdrant, or ShopAIKey calls.
+- Passed: Route mounting is verified through the production FastAPI app.
+- Passed: Evidence service tests verify Agent 2 output is used instead of unverified Agent 1 retrieval candidates.
+- Passed: Logs service test now includes Agent 1 retrieval, Agent 2 verification, and Agent 3 answer/self-check rows in timestamp order.
+- Failed: none
+- Uncertain: Evidence rejected-chunk behavior is only proven at response-schema level, not through the persisted Agent 2 evidence extraction/API path.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: Tests exercise the real route and service functions with mocked persistence/service boundaries. The selected implementation is real test coverage, but one required evidence behavior is under-tested.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs, timestamps, file names, and synthetic error strings are deterministic test fixtures only. No runtime hardcoding, real credentials, or sample-specific production branches were introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_agent_runs_api.py -v`
+- Reported result: passed, 29 tests collected and 29 passed
+- Rerun result: passed, 29 tests collected and 29 passed in 1.66s
+- Status: satisfied
+- Notes: Rerun included the selected ordered logs test and existing evidence/log route, not-found, safe failure, and service evidence tests.
+- Command/check: `git diff --check`
+- Reported result: not reported by executor
+- Rerun result: passed with line-ending conversion warnings only
+- Status: satisfied
+- Notes: No whitespace errors were reported.
+
+## Acceptance Review
+- Task acceptance: Tests prove route mounting, not-found behavior, safe query failure handling, evidence source, and ordered logs.
+- Status: partially satisfied
+- Evidence: Route mounting is covered by `test_agent_run_routes_are_registered_in_production_application`.
+- Evidence: Evidence and logs not-found behavior is covered by `test_agent_run_evidence_route_maps_missing_owned_run_to_safe_404` and `test_agent_run_logs_route_maps_missing_owned_run_to_safe_404`.
+- Evidence: Safe query failure handling is covered by evidence/log service safe-message tests and unexpected route failure tests.
+- Evidence: Agent 2 evidence source rather than unverified Agent 1 candidates is covered by `test_agent_run_service_fetches_agent_2_evidence_from_persisted_step`.
+- Evidence: Ordered logs containing agent steps is covered by `test_agent_run_service_fetches_ordered_logs_for_owned_run`, which includes retrieval, verification, and answer/self-check rows in order.
+- Gap: Verified and rejected chunk shapes are covered by `test_agent_run_evidence_response_reuses_agent_2_chunk_shapes`, but the persisted Agent 2 evidence extraction test and evidence route test use `rejected_chunks: []`. There is no test proving a non-empty rejected chunk from Agent 2 persisted output is returned by the evidence service/API path.
+
+## Progress Tracking
+- Selected task checkbox: remains unchecked for (06D) in `docs/tasks/task_12.md`
+- Checkbox updated by reviewer: no
+- Batch status: Batch06 remains incomplete; (06D) and (06E) are unchecked.
+- Execution report entry: appended for (06D), but acceptance claim is partial due to the rejected-chunk test gap.
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkbox was updated. Accepted uncommitted (06A), (06B), and (06C) changes were preserved.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report says existing evidence tests cover rejected/verified chunks. Repository evidence shows non-empty rejected chunks are covered by the schema response model test, but not by the persisted Agent 2 evidence extraction/API path required for endpoint behavior.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- The evidence tests do not prove that a non-empty `rejected_chunks` entry from persisted Agent 2 verification output flows through `agent_run_service.get_agent_run_evidence()` and/or the evidence API response. This is a narrow required-test coverage gap for Plan 12's evidence endpoint acceptance.
+
+### Observations
+- The selected (06D) diff only expands the ordered logs service test. Existing route, not-found, and safe-failure tests are present and pass.
+- The worktree includes accepted uncommitted (06A), (06B), and (06C) changes plus prior review report entries. They were not treated as selected (06D) implementation.
+- No (06E) checkbox, batch completion marker, commit, frontend work, migration, or runtime code change was added for this review.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/tests/test_agent_runs_api.py`, evidence service/API coverage around `test_agent_run_service_fetches_agent_2_evidence_from_persisted_step` and/or `test_agent_run_evidence_route_returns_persisted_agent_2_output`
+- change: Add a non-empty rejected chunk to the persisted Agent 2 verification output and assert the evidence response includes it, while still asserting unverified Agent 1 retrieval candidates are not returned. Route-level evidence response may also assert a non-empty rejected chunk if the chosen coverage is at the route boundary.
+- validation: Run `cd backend` then `pytest tests/test_agent_runs_api.py -v`; keep `git diff --check` clean.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED_WITH_WARNINGS",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch06 - Required Automated Tests",
+  "selected_task_id": "(06D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/tests/test_agent_runs_api.py",
+    "backend/tests/test_chat_api.py",
+    "backend/tests/test_langgraph_workflow.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/review/review_12_review_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Non-empty rejected chunk propagation from persisted Agent 2 output is not covered through the evidence service/API path."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06D) Repair Review
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Required Automated Tests
+- Task ID: (06D)
+- Task title: Add evidence and logs API tests
+- Task status reported by executor: complete repair
+- Source of Truth: `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06D)
+- Reviewed task ID: (06D)
+- Correct selection: yes
+- Notes: Reviewed the latest `Task Execution Repair Report - (06D)` appended after the prior A2 `REJECTED_WITH_WARNINGS` review. Review was limited to whether the prior rejected-chunk coverage finding was repaired and whether A1 stayed inside the selected task scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_agent_runs_api.py`; `backend/tests/test_chat_api.py`; `backend/tests/test_langgraph_workflow.py`; `docs/reports/report_12_execute_agent.md`; `docs/review/review_12_review_agent.md`; `docs/tasks/task_12.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/tests/test_agent_runs_api.py`: in scope - repaired persisted Agent 2 evidence-source test now includes non-empty `rejected_chunks`, asserts the rejected chunk in the evidence response, and asserts the Agent 1 unverified quote is excluded from verified and rejected evidence output. Existing route mounting, not-found, safe failure, and ordered logs coverage remains present.
+- `docs/reports/report_12_execute_agent.md`: in scope - latest repair report for (06D) accurately describes the rejected-chunk repair and validation results.
+- `docs/review/review_12_review_agent.md`: in scope - prior A2 rejection and EOF location reviewed before append.
+- `docs/tasks/task_12.md`: in scope - selected (06D) checkbox updated after acceptance only; (06E) and Batch06 remain unchecked.
+- `backend/tests/test_chat_api.py`: accepted uncommitted context - belongs to (06C), not selected repair work.
+- `backend/tests/test_langgraph_workflow.py`: accepted uncommitted context - belongs to (06A) and (06B), not selected repair work.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_agent_runs_api.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the exact repair requested by A2: a non-empty rejected chunk in persisted Agent 2 output and assertions that evidence output includes it while excluding Agent 1 unverified candidates.
+- file from execution report: `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair report is appended and accurately limited to (06D).
+
+## Dependency Review
+- Required dependencies: Batch04 and Batch05; accepted uncommitted (06A), (06B), and (06C) context preserved.
+- Dependency status: satisfied
+- Missing or invalid dependency: none found
+
+## Architecture Alignment
+- Passed: Repair is test-only and remains within `backend/tests/test_agent_runs_api.py`.
+- Passed: Tests remain deterministic and mocked against persisted Supabase step rows; no live Supabase, Qdrant, or ShopAIKey dependency was added.
+- Passed: Evidence source remains Agent 2 verification output, not Agent 1 retrieval candidates.
+- Passed: No runtime code, frontend work, migration, sibling task (06E), or batch-completion work was introduced.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The repaired test calls the real `agent_run_service.get_agent_run_evidence()` function with mocked persisted step rows and verifies actual response contents from the service model. The repair does not fake route or service success.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed UUIDs, quotes, timestamps, and file names are deterministic test fixtures. No production hardcoding, credential, or sample-specific runtime branch was introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend` then `pytest tests/test_agent_runs_api.py -v`
+- Reported result: passed, 29 tests collected and 29 passed
+- Rerun result: passed, 29 tests collected and 29 passed in 1.81s
+- Status: satisfied
+- Notes: Rerun includes the repaired `test_agent_run_service_fetches_agent_2_evidence_from_persisted_step` and the existing evidence/log route and service tests.
+- Command/check: `git diff --check`
+- Reported result: passed with line-ending warnings only
+- Rerun result: passed with line-ending warnings only
+- Status: satisfied
+- Notes: No whitespace errors were reported.
+
+## Acceptance Review
+- Task acceptance: A1 fixed the prior (06D) rejected-chunk evidence-source finding and stayed inside current task scope.
+- Status: satisfied
+- Evidence: The persisted Agent 2 output in `test_agent_run_service_fetches_agent_2_evidence_from_persisted_step` now includes a non-empty rejected chunk with `quote`, `rejection_reason`, `chunk_id`, `document_id`, and `file_name`.
+- Evidence: The expected `AgentRunEvidenceResponse` JSON now asserts the rejected chunk is returned.
+- Evidence: The same test asserts the Agent 1 retrieval candidate quote `unverified` is absent from both verified and rejected output arrays.
+- Evidence: Route mounting, not-found behavior, safe query failure handling, Agent 2 evidence source, verified and rejected chunks, and ordered logs containing agent steps are covered by passing tests in `backend/tests/test_agent_runs_api.py`.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for (06D) in both selected task-list locations in `docs/tasks/task_12.md`
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because (06E) is not accepted
+- Execution report entry: latest repair report appended and accurate for (06D)
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkboxes were updated. (06E) remains unchecked. Accepted uncommitted (06A), (06B), and (06C) changes were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none for the repair report
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The uncommitted diff still includes accepted (06A), (06B), and (06C) work plus prior review entries; these were treated as existing accepted context and not re-reviewed as selected repair work.
+- The selected repair did not start or complete (06E).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch06 - Required Automated Tests",
+  "selected_task_id": "(06D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
     "backend/tests/test_agent_runs_api.py",
     "backend/tests/test_chat_api.py",
     "backend/tests/test_langgraph_workflow.py",
