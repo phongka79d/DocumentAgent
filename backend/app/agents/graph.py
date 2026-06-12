@@ -2,13 +2,14 @@
 
 from collections.abc import Sequence
 from typing import TypedDict, cast
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from langgraph.graph import END, START, StateGraph
 
 from app.agents.schemas import (
     AnswerAgentInput,
     AnswerAgentOutput,
+    Citation,
     RetrievalAgentInput,
     RetrievalAgentOutput,
     VerificationAgentInput,
@@ -18,6 +19,7 @@ from app.agents.schemas import (
 from app.agents.answer_agent import run_answer_agent
 from app.agents.retrieval_agent import run_retrieval_agent
 from app.agents.verification_agent import run_verification_agent
+from app.services import agent_run_service
 
 
 class QAWorkflowState(TypedDict):
@@ -29,6 +31,13 @@ class QAWorkflowState(TypedDict):
     verification: VerificationAgentOutput | None
     answer: AnswerAgentOutput | None
     error: str | None
+
+
+class QAWorkflowResult(TypedDict):
+    answer: str
+    confidence: float
+    citations: list[Citation]
+    agent_run_id: UUID
 
 
 def _coerce_uuid(value: UUID | str) -> UUID:
@@ -47,9 +56,10 @@ def _build_initial_state(
     question: str,
     document_ids: Sequence[UUID | str],
     session_id: UUID | str | None,
+    agent_run_id: UUID | str,
 ) -> QAWorkflowState:
     return {
-        "agent_run_id": uuid4(),
+        "agent_run_id": _coerce_uuid(agent_run_id),
         "session_id": _coerce_optional_uuid(session_id),
         "question": question,
         "document_ids": [_coerce_uuid(document_id) for document_id in document_ids],
@@ -108,17 +118,70 @@ def _build_qa_workflow_graph():
 qa_workflow_graph = _build_qa_workflow_graph()
 
 
+def _agent_run_id_from_row(agent_run: dict) -> UUID:
+    return _coerce_uuid(agent_run["id"])
+
+
+def _answer_from_state(state: QAWorkflowState) -> AnswerAgentOutput:
+    answer = state["answer"]
+    if answer is None:
+        raise ValueError("workflow did not produce an answer")
+    return answer
+
+
+def _mark_failed_after_run_creation(
+    agent_run_id: UUID,
+    error: BaseException,
+) -> None:
+    agent_run_service.mark_agent_run_failed(agent_run_id, error=error)
+
+
 def run_qa_workflow(
     question: str,
     document_ids: Sequence[UUID | str],
     session_id: UUID | str | None = None,
-) -> QAWorkflowState:
-    initial_state = _build_initial_state(question, document_ids, session_id)
-    return cast(QAWorkflowState, qa_workflow_graph.invoke(initial_state))
+) -> QAWorkflowResult:
+    agent_run = agent_run_service.create_running_agent_run(
+        session_id=session_id,
+        question=question,
+        document_ids=document_ids,
+    )
+    agent_run_id = _agent_run_id_from_row(agent_run)
+
+    try:
+        initial_state = _build_initial_state(
+            question,
+            document_ids,
+            session_id,
+            agent_run_id,
+        )
+        final_state = cast(QAWorkflowState, qa_workflow_graph.invoke(initial_state))
+        answer = _answer_from_state(final_state)
+    except Exception as exc:
+        _mark_failed_after_run_creation(agent_run_id, exc)
+        raise agent_run_service.AgentRunWorkflowError(exc) from exc
+
+    try:
+        agent_run_service.mark_agent_run_success(
+            agent_run_id,
+            final_answer=answer.final_answer,
+            confidence=answer.confidence,
+        )
+    except Exception as exc:
+        _mark_failed_after_run_creation(agent_run_id, exc)
+        raise
+
+    return {
+        "answer": answer.final_answer,
+        "confidence": answer.confidence,
+        "citations": answer.citations,
+        "agent_run_id": agent_run_id,
+    }
 
 
 __all__ = [
     "END",
+    "QAWorkflowResult",
     "QAWorkflowState",
     "START",
     "StateGraph",

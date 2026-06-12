@@ -416,7 +416,7 @@ Plan 12's central milestone is the full backend QA workflow. The graph must prov
 
 ### Tasks
 
-- [ ] (03A): Implement LangGraph node for Agent 1 retrieval
+- [x] (03A): Implement LangGraph node for Agent 1 retrieval
   - Source of Truth: `docs/plans/Plan_12.md` > `## 1. Goal`; `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 9. Question Answering Workflow`
   - Source Requirements:
     - Workflow runs Agent 1 first.
@@ -432,7 +432,7 @@ Plan 12's central milestone is the full backend QA workflow. The graph must prov
   - Blocked Condition: None.
   - Files: `backend/app/agents/graph.py`, `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (03B): Implement LangGraph node for Agent 2 verification
+- [x] (03B): Implement LangGraph node for Agent 2 verification
   - Source of Truth: `docs/plans/Plan_12.md` > `## 1. Goal`; `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 9. Question Answering Workflow`
   - Source Requirements:
     - Workflow runs Agent 2 after Agent 1.
@@ -448,7 +448,7 @@ Plan 12's central milestone is the full backend QA workflow. The graph must prov
   - Blocked Condition: None.
   - Files: `backend/app/agents/graph.py`, `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (03C): Implement LangGraph node for Agent 3 answer and self-check
+- [x] (03C): Implement LangGraph node for Agent 3 answer and self-check
   - Source of Truth: `docs/plans/Plan_12.md` > `## 1. Goal`; `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `# 9. Question Answering Workflow`
   - Source Requirements:
     - Workflow runs Agent 3 after Agent 2.
@@ -464,7 +464,7 @@ Plan 12's central milestone is the full backend QA workflow. The graph must prov
   - Blocked Condition: None.
   - Files: `backend/app/agents/graph.py`, `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (03D): Compile graph in required order
+- [x] (03D): Compile graph in required order
   - Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `# 9. Question Answering Workflow`
   - Source Requirements:
     - Define LangGraph workflow `START -> Agent 1 -> Agent 2 -> Agent 3 -> Self-check -> FINAL`.
@@ -480,7 +480,7 @@ Plan 12's central milestone is the full backend QA workflow. The graph must prov
   - Blocked Condition: None.
   - Files: `backend/app/agents/graph.py`, `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (03E): Implement `run_qa_workflow` lifecycle orchestration
+- [x] (03E): Implement `run_qa_workflow` lifecycle orchestration
   - Source of Truth: `docs/plans/Plan_12.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Implement `run_qa_workflow(question, document_ids, session_id=None)`.
@@ -497,7 +497,7 @@ Plan 12's central milestone is the full backend QA workflow. The graph must prov
   - Blocked Condition: None.
   - Files: `backend/app/agents/graph.py`, `backend/tests/test_langgraph_workflow.py`
 
-- [ ] (03F): Preserve insufficient-evidence behavior through the workflow
+- [x] (03F): Preserve insufficient-evidence behavior through the workflow
   - Source of Truth: `docs/plans/Plan_12.md` > `## 13. Failure Handling`; `docs/plans/Master_Plan.md` > `# 9. Question Answering Workflow`; `docs/plans/Master_Plan.md` > `## 18.4 Missing Information Rule`
   - Source Requirements:
     - Agent 2 missing information should still allow Agent 3 to return safe insufficient-evidence answer.
@@ -1199,12 +1199,12 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch03
 
-- [ ] (03A): Implement LangGraph node for Agent 1 retrieval
-- [ ] (03B): Implement LangGraph node for Agent 2 verification
-- [ ] (03C): Implement LangGraph node for Agent 3 answer and self-check
-- [ ] (03D): Compile graph in required order
-- [ ] (03E): Implement `run_qa_workflow` lifecycle orchestration
-- [ ] (03F): Preserve insufficient-evidence behavior through the workflow
+- [x] (03A): Implement LangGraph node for Agent 1 retrieval
+- [x] (03B): Implement LangGraph node for Agent 2 verification
+- [x] (03C): Implement LangGraph node for Agent 3 answer and self-check
+- [x] (03D): Compile graph in required order
+- [x] (03E): Implement `run_qa_workflow` lifecycle orchestration
+- [x] (03F): Preserve insufficient-evidence behavior through the workflow
 
 #### Batch04
 
