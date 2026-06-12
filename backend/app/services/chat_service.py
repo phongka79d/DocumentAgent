@@ -53,7 +53,6 @@ class ChatWorkflowError(ChatServiceError):
 @dataclass(frozen=True)
 class ChatPersistenceContext:
     session: dict[str, Any]
-    agent_run: dict[str, Any]
     user_message: dict[str, Any]
 
 
@@ -90,10 +89,6 @@ def _validate_selected_document_ownership(
 
 def _session_id_from_row(session: dict[str, Any]) -> str:
     return str(session["id"])
-
-
-def _agent_run_id_from_row(agent_run: dict[str, Any]) -> str:
-    return str(agent_run["id"])
 
 
 def _title_from_question(question: str) -> str:
@@ -142,32 +137,17 @@ def prepare_chat_persistence(
     resolved_session_id = _session_id_from_row(session)
 
     try:
-        agent_run = supabase_service.create_agent_run(
-            session_id=resolved_session_id,
-            question=trimmed_question,
-            selected_document_ids=selected_document_ids,
-        )
-    except Exception as exc:
-        raise ChatDependencyError() from exc
-
-    agent_run_id = _agent_run_id_from_row(agent_run)
-
-    try:
         user_message = supabase_service.insert_chat_message(
             session_id=resolved_session_id,
             role="user",
             content=trimmed_question,
-            metadata={
-                "agent_run_id": agent_run_id,
-                "document_ids": selected_document_ids,
-            },
+            metadata={"document_ids": selected_document_ids},
         )
     except Exception as exc:
         raise ChatDependencyError() from exc
 
     return ChatPersistenceContext(
         session=session,
-        agent_run=agent_run,
         user_message=user_message,
     )
 

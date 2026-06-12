@@ -1,15 +1,18 @@
 import sys
+from importlib import import_module
 from pathlib import Path
 from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.schemas.chat import ChatAskRequest, ChatAskResponse, ChatCitation
-from app.services import chat_service
+from app.services import agent_run_service, chat_service
 
 
 SESSION_ID = UUID("11111111-1111-1111-1111-111111111111")
@@ -144,9 +147,7 @@ def test_prepare_chat_persistence_creates_session_when_session_id_is_omitted(
         return_value={"id": str(SESSION_ID), "title": "What is covered?"}
     )
     get_chat_session = Mock()
-    create_agent_run = Mock(
-        return_value={"id": str(AGENT_RUN_ID), "status": "running"}
-    )
+    create_agent_run = Mock()
     insert_chat_message = Mock(return_value={"id": "user-message-id", "role": "user"})
     monkeypatch.setattr(
         chat_service.supabase_service,
@@ -172,24 +173,16 @@ def test_prepare_chat_persistence_creates_session_when_session_id_is_omitted(
     )
 
     assert context.session == {"id": str(SESSION_ID), "title": "What is covered?"}
-    assert context.agent_run == {"id": str(AGENT_RUN_ID), "status": "running"}
     assert context.user_message == {"id": "user-message-id", "role": "user"}
     list_owned_documents.assert_called_once_with([str(DOCUMENT_ID)])
     create_chat_session.assert_called_once_with(title="What is covered?")
     get_chat_session.assert_not_called()
-    create_agent_run.assert_called_once_with(
-        session_id=str(SESSION_ID),
-        question="What is covered?",
-        selected_document_ids=[str(DOCUMENT_ID)],
-    )
+    create_agent_run.assert_not_called()
     insert_chat_message.assert_called_once_with(
         session_id=str(SESSION_ID),
         role="user",
         content="What is covered?",
-        metadata={
-            "agent_run_id": str(AGENT_RUN_ID),
-            "document_ids": [str(DOCUMENT_ID)],
-        },
+        metadata={"document_ids": [str(DOCUMENT_ID)]},
     )
 
 
@@ -386,9 +379,7 @@ def test_prepare_chat_persistence_uses_existing_owned_session(
     list_owned_documents = Mock(return_value=[{"id": str(DOCUMENT_ID)}])
     get_chat_session = Mock(return_value={"id": str(SESSION_ID), "title": "Existing"})
     create_chat_session = Mock()
-    create_agent_run = Mock(
-        return_value={"id": str(AGENT_RUN_ID), "status": "running"}
-    )
+    create_agent_run = Mock()
     insert_chat_message = Mock(return_value={"id": "user-message-id", "role": "user"})
     monkeypatch.setattr(
         chat_service.supabase_service,
@@ -418,11 +409,7 @@ def test_prepare_chat_persistence_uses_existing_owned_session(
     list_owned_documents.assert_called_once_with([str(DOCUMENT_ID)])
     get_chat_session.assert_called_once_with(str(SESSION_ID))
     create_chat_session.assert_not_called()
-    create_agent_run.assert_called_once_with(
-        session_id=str(SESSION_ID),
-        question="What is covered?",
-        selected_document_ids=[str(DOCUMENT_ID)],
-    )
+    create_agent_run.assert_not_called()
     assert context.user_message["role"] == "user"
 
 
@@ -452,3 +439,138 @@ def test_persist_assistant_message_stores_safe_run_metadata(
         content="Employees may work remotely two days per week.",
         metadata={"agent_run_id": str(AGENT_RUN_ID), "confidence": 0.82},
     )
+
+
+def _chat_client():
+    chat_api = import_module("app.api.chat")
+    application = FastAPI()
+    application.include_router(chat_api.router, prefix="/api/chat")
+    return TestClient(application), chat_api
+
+
+def test_chat_ask_route_is_registered_in_application() -> None:
+    main = import_module("app.main")
+
+    route = next(
+        (
+            route
+            for route in main.create_app().routes
+            if route.path == "/api/chat/ask"
+        ),
+        None,
+    )
+
+    assert route is not None
+    assert "POST" in route.methods
+
+
+def test_chat_ask_route_runs_workflow_and_persists_assistant_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, chat_api = _chat_client()
+    prepare_chat = Mock(
+        return_value=chat_service.ChatPersistenceContext(
+            session={"id": str(SESSION_ID), "title": "Existing"},
+            user_message={"id": "user-message-id", "role": "user"},
+        )
+    )
+    run_workflow = Mock(
+        return_value={
+            "answer": "Employees may work remotely two days per week.",
+            "confidence": 0.82,
+            "citations": [
+                {
+                    "file_name": "handbook.pdf",
+                    "quote": "Remote work is allowed for two days each week.",
+                }
+            ],
+            "agent_run_id": AGENT_RUN_ID,
+        }
+    )
+    persist_assistant = Mock(
+        return_value={"id": "assistant-message-id", "role": "assistant"}
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        prepare_chat,
+    )
+    monkeypatch.setattr(chat_api, "run_qa_workflow", run_workflow)
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "persist_assistant_message",
+        persist_assistant,
+    )
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "session_id": str(SESSION_ID),
+            "question": "What is the remote work policy?",
+            "document_ids": [str(DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "Employees may work remotely two days per week.",
+        "confidence": 0.82,
+        "citations": [
+            {
+                "file_name": "handbook.pdf",
+                "quote": "Remote work is allowed for two days each week.",
+            }
+        ],
+        "agent_run_id": str(AGENT_RUN_ID),
+    }
+    prepare_chat.assert_called_once_with(
+        session_id=SESSION_ID,
+        question="What is the remote work policy?",
+        document_ids=[DOCUMENT_ID],
+    )
+    run_workflow.assert_called_once_with(
+        "What is the remote work policy?",
+        [DOCUMENT_ID],
+        session_id=str(SESSION_ID),
+    )
+    persist_assistant.assert_called_once_with(
+        session_id=str(SESSION_ID),
+        agent_run_id=AGENT_RUN_ID,
+        answer="Employees may work remotely two days per week.",
+        confidence=0.82,
+    )
+
+
+@pytest.mark.parametrize(
+    ("service_error", "expected_status"),
+    [
+        (chat_service.ChatValidationError("Question must be non-empty."), 400),
+        (chat_service.ChatSessionNotFoundError(), 404),
+        (chat_service.SelectedDocumentNotFoundError(), 404),
+        (chat_service.ChatDependencyError(), 500),
+        (agent_run_service.AgentRunWorkflowError(RuntimeError("secret")), 500),
+    ],
+)
+def test_chat_ask_route_maps_controlled_errors_safely(
+    monkeypatch: pytest.MonkeyPatch,
+    service_error: Exception,
+    expected_status: int,
+) -> None:
+    client, chat_api = _chat_client()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        Mock(side_effect=service_error),
+    )
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "question": "What is covered?",
+            "document_ids": [str(DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == expected_status
+    assert response.json() == {"detail": service_error.public_message}
+    assert "secret" not in response.text.lower()

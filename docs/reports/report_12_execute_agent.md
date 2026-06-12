@@ -1525,3 +1525,623 @@ complete
 - next task ID: (04A)
 - can proceed: yes, after A2 review acceptance for (03F)
 - handoff notes: Batch03 workflow now has explicit coverage for successful insufficient-evidence handling. After review acceptance and batch scope audit, Batch04 can wire API routes to the workflow without changing graph insufficient-evidence semantics.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch04 - Public Chat, Evidence, and Logs APIs
+
+## Task
+(04A) - Implement `POST /api/chat/ask`
+
+## Status
+blocked
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 1. Goal
+- docs/plans/Plan_12.md > ## 6. Required Files and Folders
+- docs/plans/Plan_12.md > ## 8. API Design
+- docs/plans/Plan_12.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 13.4 Ask Question
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04A)
+- Task title: Implement `POST /api/chat/ask`
+
+## Completed Work
+- Status: blocked.
+- Inspected the approved chat schemas, chat persistence service, agent run service, workflow callable, existing API patterns, tests, and prior Batch02/Batch03 execution decisions.
+- Identified an incompatible dependency contract that prevents a correct thin route implementation within the selected task scope.
+- No production or test implementation was added because doing so would either create two `agent_runs` rows for one question, bypass required service-owned session/message/document setup, or modify completed sibling-task contracts outside the allowed files.
+
+## Files Created or Modified
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_chat_api.py -v`: Passed
+- evidence or reason: 19 passed in 0.59s. These are the existing schema and chat-service tests; no `/api/chat/ask` route test exists yet, so this baseline pass does not satisfy the task acceptance condition.
+
+## Acceptance Check
+- Task acceptance condition: API test can post a question and receive `answer`, `confidence`, `citations`, and `agent_run_id`, with one question creating one `agent_runs` row and storing messages.
+- Status: blocked
+- Evidence: `chat_service.prepare_chat_persistence` creates an `agent_runs` row and user message before workflow execution, while `graph.run_qa_workflow(question, document_ids, session_id=None)` independently calls `agent_run_service.create_running_agent_run` and has no parameter for reusing the prepared run. A route calling both would create two runs; omitting either call would violate required persistence, validation, or workflow delegation behavior.
+
+## Artifacts Produced
+- Blocked execution report documenting the dependency contract conflict.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution and task acceptance is blocked; A2 owns checkbox updates only after an accepted review.
+
+## Key Implementation Decisions
+- Did not implement a route that knowingly creates duplicate `agent_runs` rows.
+- Did not bypass `chat_service` by performing persistence directly in the FastAPI route.
+- Did not change `backend/app/services/chat_service.py` or `backend/app/agents/graph.py` because (04A) is scoped to `backend/app/api/chat.py` and `backend/tests/test_chat_api.py`, and those dependency contracts were completed in prior tasks.
+
+## Risks or Open Issues
+- Exact blocker: the accepted Batch02 and Batch03 contracts each own initial agent-run creation. One contract must change before (04A) can satisfy the one-question/one-run requirement.
+- A source-of-truth decision is required: either let `prepare_chat_persistence` create the run and extend `run_qa_workflow` to accept/reuse that run ID, or move run creation exclusively into `run_qa_workflow` and split chat preparation into session/document/user-message operations that do not create a run.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Workflow integrity issue identified: completed dependency contracts conflict with the selected task's source requirement that one question creates one `agent_runs` row.
+- Dependencies Batch02 and Batch03 are marked complete, but their public integration boundaries cannot be composed without duplicate run creation.
+- User Action: a contract correction must be authorized in a prior dependency file/task or the selected task scope must explicitly permit that correction.
+- No frontend, router registration, evidence/log endpoint, auth, streaming, migration, or sibling-task work was performed.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: no
+- handoff notes: Resolve the initial agent-run ownership conflict, then rerun (04A). Do not register a chat router in (04B) until the route exists and (04A) passes review.
+
+---
+
+# Task Execution Report - (04A) Repair
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch04 - Public Chat, Evidence, and Logs APIs
+
+## Task
+(04A) - Implement `POST /api/chat/ask`
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 1. Goal
+- docs/plans/Plan_12.md > ## 6. Required Files and Folders
+- docs/plans/Plan_12.md > ## 8. API Design
+- docs/plans/Plan_12.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 13.4 Ask Question
+- User-authorized dependency correction: `run_qa_workflow` is the sole owner of `agent_runs` creation and lifecycle.
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04A)
+- Task title: Implement `POST /api/chat/ask`
+
+## Completed Work
+- Status: complete.
+- Added `backend/app/api/chat.py` with a thin `POST /ask` router handler intended for the `/api/chat` prefix in sibling task (04B).
+- The route validates requests through `ChatAskRequest`, delegates selected-document validation, session creation/lookup, and user-message persistence to `chat_service`, invokes `run_qa_workflow` once with the resolved session ID, persists the assistant message, and returns `ChatAskResponse`.
+- Added controlled HTTP mappings: chat validation to 400, unknown/unowned session or selected document to 404, and controlled chat/workflow dependency failures to safe 500 responses.
+- Corrected `prepare_chat_persistence` so it no longer creates or owns an `agent_runs` row. It now persists the user message with selected document metadata only. `run_qa_workflow` remains the sole run lifecycle owner.
+- Added focused route and service regression tests proving the response shape, workflow delegation, assistant persistence, safe error mapping, and absence of duplicate run creation.
+- Did not register the router in `backend/app/main.py`; that remains explicitly scoped to (04B).
+
+## Files Created or Modified
+- backend/app/api/chat.py
+- backend/app/services/chat_service.py
+- backend/tests/test_chat_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_chat_api.py -v`: Failed as expected before implementation with 8 failures and 17 passes; failures showed the service still created a run and `app.api.chat` was missing.
+- Required validation, `cd backend; pytest tests/test_chat_api.py -v`: Passed; 25 passed in 1.81s.
+- Relevant workflow validation, `cd backend; pytest tests/test_langgraph_workflow.py -v`: Passed; 6 passed in 1.52s.
+- Full backend regression, `cd backend; pytest -q`: Passed; 484 passed in 3.30s.
+- `cd backend; python -m py_compile app/api/chat.py app/services/chat_service.py`: Passed; exit code 0.
+- `git diff --check -- backend/app/api/chat.py backend/app/services/chat_service.py backend/tests/test_chat_api.py`: Passed; no whitespace errors. Git reported only existing line-ending conversion warnings.
+
+## Acceptance Check
+- Task acceptance condition: API test can post a question and receive the expected response shape with `agent_run_id`; one question creates one `agent_runs` row and stores messages.
+- Status: satisfied
+- Evidence: `test_chat_ask_route_runs_workflow_and_persists_assistant_message` posts to `/api/chat/ask`, receives `answer`, `confidence`, `citations`, and `agent_run_id`, asserts one workflow call with the resolved session ID, and asserts assistant-message persistence with the returned run ID. Updated preparation tests assert `supabase_service.create_agent_run` is not called, while existing workflow tests prove `run_qa_workflow` creates and manages the single run. User-message persistence occurs before workflow invocation in the route flow.
+
+## Artifacts Produced
+- Thin chat ask route module.
+- Corrected chat preparation service contract.
+- Focused `/api/chat/ask` and duplicate-run regression tests.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update; A2 reviews and updates progress after acceptance.
+
+## Key Implementation Decisions
+- Kept `run_qa_workflow` as the only owner of `agent_runs` creation, success updates, and failure updates.
+- Removed `agent_run` from `ChatPersistenceContext` because chat preparation no longer creates a run.
+- Stored selected document IDs on the pre-workflow user message; the assistant message stores the workflow-returned run ID and confidence.
+- Kept router registration out of scope by testing the router on an isolated FastAPI application with the intended `/api/chat` prefix.
+
+## Risks or Open Issues
+- The route is not reachable from the production FastAPI application until sibling task (04B) registers the router, as intentionally required by task separation.
+
+## Minor Issues Fixed During Execution
+- Resolved the previously reported duplicate `agent_runs` ownership conflict under the user's explicit authorization.
+
+## Workflow Integrity Check
+- No remaining dependency conflict identified for (04A).
+- The authorized correction aligns chat preparation with the existing workflow lifecycle contract and preserves one run per question.
+- Scope remained limited to the chat route, required chat service correction, focused tests, and report. No router registration, evidence/log endpoints, frontend, auth, streaming, migration, or future-task behavior was added.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 review acceptance for repaired (04A)
+- handoff notes: Register `app.api.chat.router` in `backend/app/main.py` with prefix `/api/chat`; do not change the route's persistence or workflow ownership contract.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch04 - Public Chat, Evidence, and Logs APIs
+
+## Task
+(04B) - Register chat router in FastAPI app
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 6. Required Files and Folders
+- README.md > Important coordination rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04B)
+- Task title: Register chat router in FastAPI app
+
+## Completed Work
+- Status: complete.
+- Imported the accepted (04A) chat router in `backend/app/main.py`.
+- Registered the router in `create_app()` with the `/api/chat` prefix, producing the final mounted route `POST /api/chat/ask`.
+- Added a focused application-level test that verifies the production FastAPI app exposes the route with the POST method.
+- Preserved accepted uncommitted (04A) changes and did not implement evidence or logs endpoints.
+
+## Files Created or Modified
+- backend/app/main.py
+- backend/tests/test_chat_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_chat_api.py -v`: Failed as expected with 1 failed and 25 passed because `create_app()` did not contain `/api/chat/ask`.
+- Required validation, `cd backend; pytest tests/test_chat_api.py -v`: Passed with 26 passed in 1.76s.
+- `git diff --check -- backend/app/main.py backend/tests/test_chat_api.py`: Passed; no whitespace errors. Git reported only line-ending conversion warnings.
+
+## Acceptance Check
+- Task acceptance condition: FastAPI route exists at `POST /api/chat/ask` in tests.
+- Status: satisfied
+- Evidence: `test_chat_ask_route_is_registered_in_application` constructs the production app through `create_app()`, finds `/api/chat/ask`, and confirms `POST` is an allowed method.
+
+## Artifacts Produced
+- Mounted public chat API route at `POST /api/chat/ask`.
+- Application-level route registration regression test.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no task checkbox updates.
+
+## Key Implementation Decisions
+- Followed the existing router registration style and mounted `app.api.chat.router` with prefix `/api/chat` because the router defines its handler at `/ask`.
+
+## Risks or Open Issues
+- None for (04B).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependency (04A) is present and marked complete in the task tracker.
+- No source conflict or missing required field was identified.
+- Existing accepted uncommitted changes were preserved.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes, after review acceptance of (04B)
+- handoff notes: Evidence and logs endpoints remain unimplemented and out of scope for this execution.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch04 - Public Chat, Evidence, and Logs APIs
+
+## Task
+(04C) - Implement `GET /api/agent-runs/{agent_run_id}/evidence`
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 1. Goal
+- docs/plans/Plan_12.md > ## 6. Required Files and Folders
+- docs/plans/Plan_12.md > ## 8. API Design
+- docs/plans/Plan_12.md > ## 9. Implementation Steps
+- docs/plans/Plan_12.md > ## 15. Reviewer Checklist
+- docs/plans/Master_Plan.md > ## 13.5 Get Evidence
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04C)
+- Task title: Implement `GET /api/agent-runs/{agent_run_id}/evidence`
+
+## Completed Work
+- Status: complete.
+- Created `backend/app/api/agent_runs.py` with only `GET /{agent_run_id}/evidence` for mounting under the future `/api/agent-runs` prefix.
+- Delegated evidence retrieval to `agent_run_service.get_agent_run_evidence`, preserving the Batch02 owned-run lookup and persisted Agent 2 verification-step source.
+- Returned the typed `AgentRunEvidenceResponse` containing `verified_chunks` and `rejected_chunks`.
+- Mapped an unowned or missing run to safe HTTP 404 and other controlled evidence lookup failures to safe HTTP 500 responses.
+- Added focused route tests for successful Agent 2 evidence output, missing owned run, and controlled service failures.
+- Did not implement the logs endpoint or register the agent-runs router.
+
+## Files Created or Modified
+- backend/app/api/agent_runs.py
+- backend/tests/test_agent_runs_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_agent_runs_api.py -v`: Failed as expected with 5 route-test failures and 14 passes because `app.api.agent_runs` did not exist.
+- Required validation, `cd backend; pytest tests/test_agent_runs_api.py -v`: Passed with 19 passed in 1.48s.
+- `cd backend; python -m py_compile app/api/agent_runs.py`: Passed; exit code 0.
+- `cd backend; git diff --check -- app/api/agent_runs.py tests/test_agent_runs_api.py`: Passed; no whitespace errors. Git reported only an existing line-ending conversion warning.
+
+## Acceptance Check
+- Task acceptance condition: API test returns verified/rejected chunks from mocked Agent 2 step output and returns 404 for unknown run.
+- Status: satisfied
+- Evidence: `test_agent_run_evidence_route_returns_persisted_agent_2_output` verifies the exact typed response and service delegation by UUID. `test_agent_run_evidence_route_maps_missing_owned_run_to_safe_404` verifies the controlled not-found response. Existing service coverage proves evidence is selected from persisted Agent 2 output while ignoring Agent 1 candidates.
+
+## Artifacts Produced
+- Evidence-only agent-runs API router module.
+- Focused evidence endpoint regression tests.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit.
+
+## Key Implementation Decisions
+- Kept the route thin and delegated all ownership and persisted-step lookup behavior to the accepted Batch02 service.
+- Used a UUID path parameter so malformed run IDs are rejected by FastAPI before service access.
+- Tested the router on an isolated FastAPI application with the intended `/api/agent-runs` prefix, leaving production registration to (04E).
+
+## Risks or Open Issues
+- The route is intentionally not mounted in the production FastAPI app until task (04E).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependency (02D) evidence lookup is present and provides owned-run scoping plus persisted Agent 2 step extraction.
+- No source conflict or missing required field was identified.
+- Prior accepted uncommitted work was preserved.
+- No logs endpoint, router registration, frontend, auth, streaming, migration, or unrelated refactor was added.
+
+## Notes for Next Task
+- next task ID: (04D)
+- can proceed: yes, after review acceptance of (04C)
+- handoff notes: Add only the logs handler to the existing `backend/app/api/agent_runs.py`; keep router registration deferred to (04E).
+
+---
+
+# Task Execution Report - (04D)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch04 - Public Chat, Evidence, and Logs APIs
+
+## Task
+(04D) - Implement `GET /api/agent-runs/{agent_run_id}/logs`
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 1. Goal
+- docs/plans/Plan_12.md > ## 6. Required Files and Folders
+- docs/plans/Plan_12.md > ## 8. API Design
+- docs/plans/Plan_12.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > ## 13.6 Get Agent Logs
+- docs/plans/Master_Plan.md > ## 18.5 Debuggability Rule
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04D)
+- Task title: Implement `GET /api/agent-runs/{agent_run_id}/logs`
+
+## Completed Work
+- Status: complete.
+- Added `GET /{agent_run_id}/logs` to the existing agent-runs API router for future mounting under `/api/agent-runs`.
+- Delegated owned-run and ordered step lookup to `agent_run_service.get_agent_run_logs`.
+- Returned the typed `AgentRunLogsResponse` with `agent_run_id` and JSON-safe ordered steps containing `agent_name`, `input`, `output`, `status`, and `created_at`.
+- Mapped missing or unowned runs to a safe HTTP 404 response and controlled log serialization or persistence failures to safe HTTP 500 responses.
+- Added focused route tests for ordered response serialization, service delegation, missing-run mapping, invalid step payload mapping, and safe log dependency failure mapping.
+- Did not register the agent-runs router, alter evidence behavior, or implement sibling tasks.
+
+## Files Created or Modified
+- backend/app/api/agent_runs.py
+- backend/tests/test_agent_runs_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_agent_runs_api.py -v`: Failed as expected with 4 failed and 19 passed because `/api/agent-runs/{agent_run_id}/logs` was absent.
+- Required validation, `cd backend; pytest tests/test_agent_runs_api.py -v`: Passed with 23 passed in 1.36s.
+- `cd backend; python -m py_compile app/api/agent_runs.py`: Passed; exit code 0.
+- `cd backend; git diff --check -- app/api/agent_runs.py tests/test_agent_runs_api.py`: Passed; no whitespace errors. Git reported only an existing line-ending conversion warning.
+- Agent-runs registration scope check in `backend/app/main.py`: Passed; no agent-runs router import or registration is present.
+
+## Acceptance Check
+- Task acceptance condition: API test returns steps in `created_at` order and includes agent name, input, output, status, and timestamp.
+- Status: satisfied
+- Evidence: `test_agent_run_logs_route_returns_ordered_json_safe_steps` verifies the exact JSON response, chronological timestamps, all required step fields, and delegation by UUID. Existing service and Supabase tests verify owned-run lookup, `.order("created_at")`, and rejection of non-JSON-safe payloads.
+
+## Artifacts Produced
+- Logs handler on the existing agent-runs API router.
+- Focused logs endpoint regression tests.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit.
+
+## Key Implementation Decisions
+- Kept ordering and persisted-step conversion in the accepted service layer instead of duplicating them in the route.
+- Used `AgentRunLogsResponse` as the FastAPI response model so UUIDs, timestamps, and nested JSON values are serialized through the approved schema.
+- Preserved the evidence handler unchanged and tested the router on an isolated FastAPI application so production registration remains scoped to (04E).
+
+## Risks or Open Issues
+- The evidence and logs routes are intentionally not mounted in the production FastAPI app until task (04E).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependency (02D) is present and provides owned-run lookup, ordered `created_at` step retrieval, JSON-safe response conversion, and controlled errors.
+- No source conflict, missing dependency, or user action was identified.
+- Prior accepted uncommitted changes were preserved.
+- No router registration, evidence behavior change, frontend, auth, streaming, migration, or unrelated refactor was added.
+
+## Notes for Next Task
+- next task ID: (04E)
+- can proceed: yes, after review acceptance of (04D)
+- handoff notes: Register the existing agent-runs router in `backend/app/main.py` under `/api/agent-runs`; do not change evidence or logs behavior.
+
+---
+
+# Task Execution Report - (04D) Repair
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch04 - Public Chat, Evidence, and Logs APIs
+
+## Task
+(04D) - Implement `GET /api/agent-runs/{agent_run_id}/logs`
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 1. Goal
+- docs/plans/Plan_12.md > ## 6. Required Files and Folders
+- docs/plans/Plan_12.md > ## 8. API Design
+- docs/plans/Plan_12.md > ## 9. Implementation Steps
+- docs/plans/Master_Plan.md > ## 13.6 Get Agent Logs
+- docs/plans/Master_Plan.md > ## 18.5 Debuggability Rule
+- A2 rejection feedback for (04D)
+
+## Supplemental Documents Used
+- docs/review/review_12_review_agent.md
+
+## Selected Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04D)
+- Task title: Implement `GET /api/agent-runs/{agent_run_id}/logs`
+
+## Completed Work
+- Status: complete after repair.
+- Verified that `supabase_service.insert_agent_step_log` persists payloads in `agent_steps.input` and `agent_steps.output`.
+- Corrected `agent_run_service._log_step_response` to read the actual persisted `input` and `output` row keys instead of non-existent `input_payload` and `output_payload` keys.
+- Updated the service-level log retrieval test to use realistic persisted rows and assert preservation of nested input/output payload values.
+- Preserved ordered lookup by `created_at`, JSON-safe response validation, controlled 404/500 mappings, and the existing evidence behavior.
+- Did not register the router, alter task checkboxes, implement sibling tasks, or commit.
+
+## Files Created or Modified
+- backend/app/services/agent_run_service.py
+- backend/tests/test_agent_runs_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_agent_runs_api.py::test_agent_run_service_fetches_ordered_logs_for_owned_run -v`: Failed as expected because persisted `input` and `output` values were returned as empty objects.
+- Required validation, `cd backend; pytest tests/test_agent_runs_api.py -v`: Passed with 23 passed in 1.49s.
+- Directly affected service validation, `cd backend; pytest tests/test_agent_log_service.py tests/test_supabase_service.py -q`: Passed with 63 passed in 1.33s.
+- `cd backend; python -m py_compile app/services/agent_run_service.py app/api/agent_runs.py`: Passed; exit code 0.
+- `cd backend; git diff --check -- app/services/agent_run_service.py tests/test_agent_runs_api.py`: Passed; no whitespace errors. Git reported only existing line-ending conversion warnings.
+
+## Acceptance Check
+- Task acceptance condition: API log retrieval preserves persisted step input/output payloads and returns ordered JSON-safe steps containing agent name, input, output, status, and timestamp.
+- Status: satisfied
+- Evidence: `test_agent_run_service_fetches_ordered_logs_for_owned_run` now supplies database-realistic `input` and `output` columns with nested values and asserts their exact public response representation. The route tests still verify ordered timestamps and safe error mappings.
+
+## Artifacts Produced
+- Corrected persisted log row mapping.
+- Regression coverage for exact input/output payload preservation.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit; A2 must review the repaired task.
+
+## Key Implementation Decisions
+- Fixed the mapping at the service boundary where persisted rows are converted to the public response model.
+- Kept the route and Supabase ordered query unchanged because they already satisfy their respective responsibilities.
+
+## Risks or Open Issues
+- The agent-runs router remains intentionally unregistered until (04E).
+
+## Minor Issues Fixed During Execution
+- Corrected the mismatch between Supabase database column names and the public log mapper.
+
+## Workflow Integrity Check
+- A2's rejection was technically confirmed against the insertion helper and database row contract.
+- The repair is limited to the selected (04D) log retrieval path and its regression test.
+- Prior accepted uncommitted changes were preserved.
+- No checkbox, router registration, evidence behavior, sibling implementation, or unrelated refactor was changed.
+
+## Notes for Next Task
+- next task ID: (04E)
+- can proceed: yes, after A2 accepts the repaired (04D)
+- handoff notes: Review the corrected persisted payload mapping before registering the existing agent-runs router under `/api/agent-runs`.
+
+---
+
+# Task Execution Report - (04E)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch04 - Public Chat, Evidence, and Logs APIs
+
+## Task
+(04E) - Register agent run router in FastAPI app
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_12.md > ## 6. Required Files and Folders
+- README.md > Important coordination rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04E)
+- Task title: Register agent run router in FastAPI app
+
+## Completed Work
+- Status: complete.
+- Imported the existing agent-runs router in `backend/app/main.py`.
+- Mounted it with the existing FastAPI registration style under `/api/agent-runs`.
+- Added a production-application route test that calls both evidence and logs endpoints through `app.main.create_app()`.
+- Preserved endpoint behavior and all prior accepted uncommitted changes.
+- Did not implement future tasks, update checkboxes, or commit.
+
+## Files Created or Modified
+- backend/app/main.py
+- backend/tests/test_agent_runs_api.py
+- docs/reports/report_12_execute_agent.md
+
+## Tests or Validations Run
+- TDD red check, `cd backend; pytest tests/test_agent_runs_api.py::test_agent_run_routes_are_registered_in_production_application -v`: Failed as expected with 404 because the production app had not mounted the agent-runs router.
+- TDD green check, `cd backend; pytest tests/test_agent_runs_api.py::test_agent_run_routes_are_registered_in_production_application -v`: Passed with 1 passed.
+- Required validation, `cd backend; pytest tests/test_agent_runs_api.py -v`: Passed with 24 passed in 1.67s.
+- Related route regression, `cd backend; pytest tests/test_chat_api.py::test_chat_ask_route_is_registered_in_application -v`: Passed with 1 passed.
+- Exact production route-table check: Passed; confirmed GET `/api/agent-runs/{agent_run_id}/evidence` and GET `/api/agent-runs/{agent_run_id}/logs`.
+- `cd backend; python -m py_compile app/main.py tests/test_agent_runs_api.py`: Passed; exit code 0.
+- `git diff --check -- backend/app/main.py backend/tests/test_agent_runs_api.py`: Passed; no whitespace errors. Git reported only existing line-ending conversion warnings.
+
+## Acceptance Check
+- Task acceptance condition: FastAPI route tests can call both endpoints through the production application at the exact required paths.
+- Status: satisfied
+- Evidence: `test_agent_run_routes_are_registered_in_production_application` uses `TestClient(main.create_app())` and receives 200 responses from both exact production URLs. The route-table check also confirmed both paths and GET methods.
+
+## Artifacts Produced
+- Production FastAPI registration for the existing agent-runs router.
+- Production-app regression coverage for both agent-run endpoints.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit; progress remains for review handling.
+
+## Key Implementation Decisions
+- Used the established import alias and `application.include_router(..., prefix=...)` pattern in `backend/app/main.py`.
+- Kept the router's existing relative endpoint paths unchanged so the final production paths are formed only by the `/api/agent-runs` prefix.
+
+## Risks or Open Issues
+- None identified within task 04E scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependencies (04C) and (04D) were marked complete before execution.
+- The change is limited to router registration, production-app route coverage, and the required report append.
+- Existing endpoint behavior, prior accepted uncommitted changes, task checkboxes, and future tasks were left unchanged.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after review acceptance of (04E)
+- handoff notes: Verify the production router registration and exact paths before beginning Batch05 validation behavior.

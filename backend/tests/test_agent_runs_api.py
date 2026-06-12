@@ -1,10 +1,13 @@
 import sys
 from datetime import datetime, timezone
+from importlib import import_module
 from pathlib import Path
 from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -307,8 +310,14 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                 {
                     "step_name": "agent_1_retrieval",
                     "agent_name": "retrieval_agent",
-                    "input_payload": {"question": "When does probation start?"},
-                    "output_payload": {"candidate_count": 1},
+                    "input": {
+                        "question": "When does probation start?",
+                        "document_ids": [str(DOCUMENT_ID)],
+                    },
+                    "output": {
+                        "candidate_count": 1,
+                        "chunk_ids": [str(CHUNK_ID)],
+                    },
                     "status": "success",
                     "created_at": CREATED_AT,
                 }
@@ -324,8 +333,14 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
         "steps": [
             {
                 "agent_name": "retrieval_agent",
-                "input": {"question": "When does probation start?"},
-                "output": {"candidate_count": 1},
+                "input": {
+                    "question": "When does probation start?",
+                    "document_ids": [str(DOCUMENT_ID)],
+                },
+                "output": {
+                    "candidate_count": 1,
+                    "chunk_ids": [str(CHUNK_ID)],
+                },
                 "status": "success",
                 "created_at": "2026-06-01T10:00:00Z",
             }
@@ -417,3 +432,208 @@ def test_agent_run_service_wraps_persistence_dependency_failures(
         exc_info.value.public_message
         == "Agent run logs are temporarily unavailable."
     )
+
+
+def _agent_runs_client():
+    agent_runs_api = import_module("app.api.agent_runs")
+    application = FastAPI()
+    application.include_router(agent_runs_api.router, prefix="/api/agent-runs")
+    return TestClient(application), agent_runs_api
+
+
+def test_agent_run_routes_are_registered_in_production_application(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    main = import_module("app.main")
+    agent_runs_api = import_module("app.api.agent_runs")
+    evidence = AgentRunEvidenceResponse(
+        verified_chunks=[],
+        rejected_chunks=[],
+    )
+    logs = AgentRunLogsResponse(agent_run_id=AGENT_RUN_ID, steps=[])
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_evidence",
+        Mock(return_value=evidence),
+    )
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_logs",
+        Mock(return_value=logs),
+    )
+    client = TestClient(main.create_app())
+
+    evidence_response = client.get(
+        f"/api/agent-runs/{AGENT_RUN_ID}/evidence"
+    )
+    logs_response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/logs")
+
+    assert evidence_response.status_code == 200
+    assert evidence_response.json() == evidence.model_dump(mode="json")
+    assert logs_response.status_code == 200
+    assert logs_response.json() == logs.model_dump(mode="json")
+
+
+def test_agent_run_evidence_route_returns_persisted_agent_2_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, agent_runs_api = _agent_runs_client()
+    evidence = AgentRunEvidenceResponse.model_validate(
+        {
+            "verified_chunks": [
+                {
+                    "chunk_id": str(CHUNK_ID),
+                    "document_id": str(DOCUMENT_ID),
+                    "file_name": "contract.pdf",
+                    "quote": "Probation starts on June 1, 2026.",
+                    "page_number": 3,
+                    "verification_reason": "Direct support.",
+                    "supports_simple_reasoning": True,
+                }
+            ],
+            "rejected_chunks": [],
+        }
+    )
+    get_evidence = Mock(return_value=evidence)
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_evidence",
+        get_evidence,
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/evidence")
+
+    assert response.status_code == 200
+    assert response.json() == evidence.model_dump(mode="json")
+    get_evidence.assert_called_once_with(AGENT_RUN_ID)
+
+
+def test_agent_run_evidence_route_maps_missing_owned_run_to_safe_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, agent_runs_api = _agent_runs_client()
+    error = agent_run_service.AgentRunNotFoundError()
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_evidence",
+        Mock(side_effect=error),
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/evidence")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": error.public_message}
+
+
+@pytest.mark.parametrize(
+    "service_error",
+    [
+        agent_run_service.AgentRunStepNotFoundError("agent_2_verification"),
+        agent_run_service.AgentRunStepDataError(),
+        agent_run_service.AgentRunDependencyError(
+            agent_run_service.SAFE_AGENT_RUN_EVIDENCE_MESSAGE
+        ),
+    ],
+)
+def test_agent_run_evidence_route_maps_controlled_failures_to_safe_500(
+    monkeypatch: pytest.MonkeyPatch,
+    service_error: agent_run_service.AgentRunServiceError,
+) -> None:
+    client, agent_runs_api = _agent_runs_client()
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_evidence",
+        Mock(side_effect=service_error),
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/evidence")
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": service_error.public_message}
+
+
+def test_agent_run_logs_route_returns_ordered_json_safe_steps(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, agent_runs_api = _agent_runs_client()
+    later_created_at = datetime(2026, 6, 1, 10, 1, tzinfo=timezone.utc)
+    logs = AgentRunLogsResponse(
+        agent_run_id=AGENT_RUN_ID,
+        steps=[
+            AgentRunLogStepResponse(
+                agent_name="retrieval_agent",
+                input={"question": "When does probation start?"},
+                output={"candidate_count": 2},
+                status="success",
+                created_at=CREATED_AT,
+            ),
+            AgentRunLogStepResponse(
+                agent_name="verification_agent",
+                input={"candidate_count": 2},
+                output={"verified_count": 1},
+                status="success",
+                created_at=later_created_at,
+            ),
+        ],
+    )
+    get_logs = Mock(return_value=logs)
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_logs",
+        get_logs,
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/logs")
+
+    assert response.status_code == 200
+    assert response.json() == logs.model_dump(mode="json")
+    assert [
+        step["created_at"] for step in response.json()["steps"]
+    ] == [
+        "2026-06-01T10:00:00Z",
+        "2026-06-01T10:01:00Z",
+    ]
+    get_logs.assert_called_once_with(AGENT_RUN_ID)
+
+
+def test_agent_run_logs_route_maps_missing_owned_run_to_safe_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, agent_runs_api = _agent_runs_client()
+    error = agent_run_service.AgentRunNotFoundError()
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_logs",
+        Mock(side_effect=error),
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/logs")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": error.public_message}
+
+
+@pytest.mark.parametrize(
+    "service_error",
+    [
+        agent_run_service.AgentRunStepDataError(),
+        agent_run_service.AgentRunDependencyError(
+            agent_run_service.SAFE_AGENT_RUN_LOGS_MESSAGE
+        ),
+    ],
+)
+def test_agent_run_logs_route_maps_controlled_failures_to_safe_500(
+    monkeypatch: pytest.MonkeyPatch,
+    service_error: agent_run_service.AgentRunServiceError,
+) -> None:
+    client, agent_runs_api = _agent_runs_client()
+    monkeypatch.setattr(
+        agent_runs_api.agent_run_service,
+        "get_agent_run_logs",
+        Mock(side_effect=service_error),
+    )
+
+    response = client.get(f"/api/agent-runs/{AGENT_RUN_ID}/logs")
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": service_error.public_message}

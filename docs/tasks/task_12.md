@@ -564,7 +564,7 @@ Plan 12 is testable only when an API request can run the workflow and when evide
 
 ### Tasks
 
-- [ ] (04A): Implement `POST /api/chat/ask`
+- [x] (04A): Implement `POST /api/chat/ask`
   - Source of Truth: `docs/plans/Plan_12.md` > `## 1. Goal`; `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 13.4 Ask Question`
   - Source Requirements:
     - Add `POST /api/chat/ask`.
@@ -581,7 +581,7 @@ Plan 12 is testable only when an API request can run the workflow and when evide
   - Blocked Condition: None.
   - Files: `backend/app/api/chat.py`, `backend/tests/test_chat_api.py`
 
-- [ ] (04B): Register chat router in FastAPI app
+- [x] (04B): Register chat router in FastAPI app
   - Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - `backend/app/main.py` includes chat router.
@@ -596,7 +596,7 @@ Plan 12 is testable only when an API request can run the workflow and when evide
   - Blocked Condition: None.
   - Files: `backend/app/main.py`, `backend/tests/test_chat_api.py`
 
-- [ ] (04C): Implement `GET /api/agent-runs/{agent_run_id}/evidence`
+- [x] (04C): Implement `GET /api/agent-runs/{agent_run_id}/evidence`
   - Source of Truth: `docs/plans/Plan_12.md` > `## 1. Goal`; `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## 13.5 Get Evidence`
   - Source Requirements:
     - Add evidence endpoint by `agent_run_id`.
@@ -613,7 +613,7 @@ Plan 12 is testable only when an API request can run the workflow and when evide
   - Blocked Condition: None.
   - Files: `backend/app/api/agent_runs.py`, `backend/tests/test_agent_runs_api.py`
 
-- [ ] (04D): Implement `GET /api/agent-runs/{agent_run_id}/logs`
+- [x] (04D): Implement `GET /api/agent-runs/{agent_run_id}/logs`
   - Source of Truth: `docs/plans/Plan_12.md` > `## 1. Goal`; `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_12.md` > `## 8. API Design`; `docs/plans/Plan_12.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `## 13.6 Get Agent Logs`; `docs/plans/Master_Plan.md` > `## 18.5 Debuggability Rule`
   - Source Requirements:
     - Add logs endpoint by `agent_run_id`.
@@ -629,7 +629,7 @@ Plan 12 is testable only when an API request can run the workflow and when evide
   - Blocked Condition: None.
   - Files: `backend/app/api/agent_runs.py`, `backend/tests/test_agent_runs_api.py`
 
-- [ ] (04E): Register agent run router in FastAPI app
+- [x] (04E): Register agent run router in FastAPI app
   - Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - `backend/app/main.py` includes `agent_runs` router.
@@ -1208,11 +1208,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch04
 
-- [ ] (04A): Implement `POST /api/chat/ask`
-- [ ] (04B): Register chat router in FastAPI app
-- [ ] (04C): Implement `GET /api/agent-runs/{agent_run_id}/evidence`
-- [ ] (04D): Implement `GET /api/agent-runs/{agent_run_id}/logs`
-- [ ] (04E): Register agent run router in FastAPI app
+- [x] (04A): Implement `POST /api/chat/ask`
+- [x] (04B): Register chat router in FastAPI app
+- [x] (04C): Implement `GET /api/agent-runs/{agent_run_id}/evidence`
+- [x] (04D): Implement `GET /api/agent-runs/{agent_run_id}/logs`
+- [x] (04E): Register agent run router in FastAPI app
 
 #### Batch05
 

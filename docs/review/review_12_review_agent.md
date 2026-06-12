@@ -3083,3 +3083,1143 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04A)
+- Task title: Implement `POST /api/chat/ask`
+- Task status reported by executor: complete in the latest matching `(04A) Repair` entry
+- Source of Truth: `docs/plans/Plan_12.md` sections 1, 6, 8, and 12; `docs/plans/Master_Plan.md` section 13.4; user-authorized dependency correction
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A), latest matching repair entry
+- Correct selection: yes
+- Notes: The earlier blocked `(04A)` entry was superseded by the appended complete repair entry after the user authorized the dependency correction.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/services/chat_service.py`, `backend/tests/test_chat_api.py`, `docs/reports/report_12_execute_agent.md`; reviewer-only progress update in `docs/tasks/task_12.md`
+- untracked files: `backend/app/api/chat.py`
+
+## Files Reviewed
+- `backend/app/api/chat.py`: in scope - Implements the thin `POST /ask` route for later mounting at `/api/chat`.
+- `backend/app/services/chat_service.py`: in scope - Minimal authorized dependency correction removes agent-run creation from chat preparation.
+- `backend/tests/test_chat_api.py`: in scope - Covers request/response schemas, chat persistence, route behavior, safe error mapping, and no duplicate run creation.
+- `backend/app/agents/graph.py`: in scope dependency evidence - Confirms `run_qa_workflow` creates and owns the run lifecycle.
+- `backend/app/services/agent_run_service.py`: in scope dependency evidence - Confirms the workflow delegates the sole production `agent_runs` creation path through this service.
+- `backend/app/schemas/chat.py`: in scope dependency evidence - Confirms request and response validation contracts.
+- `backend/app/main.py`: in scope boundary evidence - Unchanged and contains no chat router registration; registration remains assigned to (04B).
+- `backend/tests/test_langgraph_workflow.py`: in scope dependency evidence - Confirms one run is created and success/failure lifecycle updates are owned by the workflow.
+- `docs/reports/report_12_execute_agent.md`: in scope - Contains the blocked entry and the latest complete repair report.
+- `docs/tasks/task_12.md`: reviewer-only progress tracking - Only `(04A)` was checked in the detailed task list and progress tracker.
+- `docs/review/review_12_review_agent.md`: reviewer-only report append.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/api/chat.py`
+- present in git/repo: yes, untracked
+- matches task scope: yes
+- notes: Route module exists and is intentionally not registered in the production app.
+- file from execution report: `backend/app/services/chat_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Authorized minimal dependency correction; no agent run is created during chat preparation.
+- file from execution report: `backend/tests/test_chat_api.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Targeted route and ownership regression coverage is present.
+- file from execution report: `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest repair entry is appended after the earlier blocked attempt.
+
+## Dependency Review
+- Required dependencies: Batch02 chat/agent-run services and Batch03 workflow callable.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none. The prior ownership conflict was corrected under explicit user authorization.
+
+## Architecture Alignment
+- Passed: Chat preparation owns document validation, session creation/fetch, and user-message persistence.
+- Passed: `run_qa_workflow` is the sole owner of agent-run creation, success update, and failure update.
+- Passed: The route invokes the workflow once with the resolved session ID and persists the assistant message using the returned run ID.
+- Passed: `backend/app/main.py` remains unchanged; production router registration remains for (04B).
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The route calls real service and workflow boundaries; production run creation resolves through `graph.run_qa_workflow` to `agent_run_service.create_running_agent_run` and `supabase_service.create_agent_run`. Mocks are confined to tests.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: UUIDs, answer text, and document names are test fixtures only. Production logic uses request values and service/workflow outputs.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_chat_api.py -v`
+- Reported result: 25 passed
+- Rerun result: 25 passed
+- Status: passed
+- Notes: Required task validation passed.
+- Command/check: `pytest tests/test_langgraph_workflow.py -v`
+- Reported result: 6 passed
+- Rerun result: 6 passed
+- Status: passed
+- Notes: Confirms sole workflow run creation and lifecycle ownership.
+- Command/check: `pytest -q`
+- Reported result: 484 passed
+- Rerun result: 484 passed
+- Status: passed
+- Notes: Executor's exact command reproduced successfully.
+- Command/check: `.venv\Scripts\python.exe -m pytest -q`
+- Reported result: not reported
+- Rerun result: 481 passed, 3 unrelated async document upload tests failed because the venv lacks `pytest-asyncio`
+- Status: observation
+- Notes: Environment-specific test-runner dependency mismatch; selected task tests pass and the reported exact full-suite command passes.
+- Command/check: `python -m py_compile app/api/chat.py app/services/chat_service.py`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: No syntax errors.
+- Command/check: `git diff --check -- backend/app/api/chat.py backend/app/services/chat_service.py backend/tests/test_chat_api.py`
+- Reported result: passed with line-ending warnings
+- Rerun result: passed with line-ending warnings
+- Status: passed
+- Notes: No whitespace errors.
+
+## Acceptance Review
+- Task acceptance: API test can post a question and receive `answer`, `confidence`, `citations`, and `agent_run_id`; one question has one workflow-owned run and user/assistant messages are persisted.
+- Status: satisfied
+- Evidence: The route success test verifies response shape, one workflow invocation, resolved session propagation, and assistant persistence. Chat preparation tests verify `create_agent_run` is not called. Workflow tests verify exactly one running run is created and lifecycle updates use that run.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch04 task entry and the progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: `(04B)` and all sibling/future tasks remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The exact reported commands and results were reproduced. The untracked route is absent from `git diff --stat` by Git design but is present in status and was reviewed directly.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The route is intentionally tested through an isolated FastAPI mount and is not reachable from the production app until (04B).
+- The backend venv lacks `pytest-asyncio`, while the executor's `pytest` environment includes it; this does not affect the selected task or the reproduced reported full-suite result.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch04 - Public Chat, Evidence, and Logs APIs",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/chat.py",
+    "backend/app/services/chat_service.py",
+    "backend/tests/test_chat_api.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/tasks/task_12.md",
+    "docs/review/review_12_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04B)
+- Task title: Register chat router in FastAPI app
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `README.md` > `Important coordination rules`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The latest execution report entry is the requested `(04B)` task. Accepted uncommitted `(04A)` changes were treated as dependency context and not attributed to `(04B)`.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/main.py`, accepted uncommitted `(04A)` files, execution/review reports, and task tracking
+- untracked files: `backend/app/api/chat.py` from accepted `(04A)`
+
+## Files Reviewed
+- `backend/app/main.py`: in scope - Imports and mounts the chat router with prefix `/api/chat`.
+- `backend/tests/test_chat_api.py`: in scope for `(04B)` only for `test_chat_ask_route_is_registered_in_application`; remaining changes are accepted `(04A)` context.
+- `backend/app/api/chat.py`: accepted `(04A)` dependency - Defines only `POST /ask`.
+- `backend/app/services/chat_service.py`: accepted `(04A)` dependency - No `(04B)` changes.
+- `docs/reports/report_12_execute_agent.md`: in scope report artifact - Latest entry is `(04B)`.
+- `docs/tasks/task_12.md`: reviewer progress update - Only `(04B)` was checked in its two task locations.
+- `docs/review/review_12_review_agent.md`: reviewer report append.
+- `docs/plans/Plan_12.md`: source evidence - Requires `backend/app/main.py` to include chat and agent-run routers.
+- `README.md`: source evidence - Requires router registration in `backend/app/main.py`.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/main.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds one import and one router registration.
+- file from execution report: `backend/tests/test_chat_api.py`
+- present in git/repo: yes
+- matches task scope: yes, limited to the production-app registration test.
+- notes: The rest of the file's uncommitted delta belongs to accepted `(04A)`.
+- file from execution report: `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(04B)` report was appended after `(04A)`.
+
+## Dependency Review
+- Required dependencies: accepted `(04A)` chat router.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Registration follows existing `include_router` style in `create_app()`.
+- Passed: Router path `/ask` plus prefix `/api/chat` produces `/api/chat/ask`.
+- Passed: No evidence or logs router was added.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The production application imports and mounts the real `(04A)` APIRouter.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: `/api/chat` is the approved route prefix; no fixture-dependent production logic was added.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_chat_api.py -v`
+- Reported result: 26 passed
+- Rerun result: 26 passed in 1.65s
+- Status: passed
+- Notes: Includes the production-app route registration test.
+- Command/check: production route enumeration through `create_app()`
+- Reported result: not separately reported
+- Rerun result: exactly `('/api/chat/ask', ['POST'])` for chat routes; no `/api/agent-runs` routes
+- Status: passed
+- Notes: Independently verifies the user's exact-route and no-sibling-route requirement.
+- Command/check: `git diff --check -- backend/app/main.py backend/tests/test_chat_api.py`
+- Reported result: passed with line-ending warnings
+- Rerun result: passed with line-ending warnings
+- Status: passed
+- Notes: No whitespace errors.
+
+## Acceptance Review
+- Task acceptance: FastAPI route exists at `POST /api/chat/ask` in production-app tests.
+- Status: satisfied
+- Evidence: `create_app()` mounts the chat router once; targeted tests pass; runtime route enumeration shows exactly one chat route with only the POST method and no sibling evidence/log routes.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch04 task entry and the progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: `(04C)`, `(04D)`, `(04E)`, and all sibling/future task checkboxes remain unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The test-file delta also contains accepted uncommitted `(04A)` work, which the report correctly says was preserved.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The registration test proves presence and POST allowance; the independent route enumeration additionally proves exact uniqueness and absence of sibling agent-run routes.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch04 - Public Chat, Evidence, and Logs APIs",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/main.py",
+    "backend/tests/test_chat_api.py",
+    "backend/app/api/chat.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/tasks/task_12.md",
+    "docs/review/review_12_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04C)
+- Task title: Implement `GET /api/agent-runs/{agent_run_id}/evidence`
+- Task status reported by executor: complete
+- Source of Truth: Plan 12 sections 1, 6, 8, 9, and 15; Master Plan section 13.5
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The last appended execution report is the requested 04C task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/main.py`, `backend/app/services/chat_service.py`, `backend/tests/test_agent_runs_api.py`, `backend/tests/test_chat_api.py`, `docs/reports/report_12_execute_agent.md`, `docs/review/review_12_review_agent.md`, `docs/tasks/task_12.md`
+- untracked files: `backend/app/api/agent_runs.py`, `backend/app/api/chat.py`
+
+## Files Reviewed
+- `backend/app/api/agent_runs.py`: in scope - evidence-only router with typed response and controlled 404/500 mapping.
+- `backend/tests/test_agent_runs_api.py`: in scope - route coverage plus existing service proof that Agent 1 candidates are ignored.
+- `backend/app/services/agent_run_service.py`: in scope dependency - owned-run lookup and persisted Agent 2 output extraction.
+- `backend/app/services/supabase_service.py`: in scope dependency - run lookup filters by configured single user and steps come from persisted `agent_steps`.
+- `backend/app/schemas/agent_runs.py`: in scope dependency - verified/rejected response contract.
+- `backend/app/main.py`: in scope verification - no agent-runs production router registration was added.
+- `docs/reports/report_12_execute_agent.md`: in scope - latest 04C report is appended and accurate.
+- `docs/tasks/task_12.md`: in scope - only 04C was checked in both task locations after acceptance.
+- Prior 04A/04B working-tree files: out of selected execution scope but accepted prior task work; no 04C regression found.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/api/agent_runs.py`, `backend/tests/test_agent_runs_api.py`, `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The production module is untracked as expected for a newly created file; all reported artifacts are present.
+
+## Dependency Review
+- Required dependencies: Batch02 evidence lookup service, evidence response schema, persisted run/step helpers.
+- Dependency status: satisfied
+- Missing or invalid dependency: None
+
+## Architecture Alignment
+- Passed: Route delegates to the service; service verifies owned run before step access; evidence is parsed from persisted Agent 2 verification output; response exposes only verified and rejected chunks.
+- Failed: None
+- Uncertain: None
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The route calls the production service, and the service queries persisted run/step helpers and validates `VerificationAgentOutput` before building the API response.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production selection uses shared Agent 2 step/agent constants and runtime UUID input; fixed UUIDs and sample text are limited to tests.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_agent_runs_api.py -v`
+- Reported result: 19 passed
+- Rerun result: 19 passed in 1.43s
+- Status: passed
+- Notes: Includes route success, safe 404, safe controlled 500s, owned-run service behavior, invalid Agent 2 payload rejection, and explicit Agent 1 candidate exclusion.
+- Command/check: `python -m py_compile app/api/agent_runs.py`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: Exit code 0.
+- Command/check: `git diff --check -- app/api/agent_runs.py tests/test_agent_runs_api.py`
+- Reported result: passed with line-ending warning only
+- Rerun result: passed with the same non-blocking line-ending warning
+- Status: passed
+- Notes: No whitespace errors.
+
+## Acceptance Review
+- Task acceptance: Evidence endpoint returns typed verified/rejected chunks from mocked persisted Agent 2 output and returns safe 404 for a missing/unowned run.
+- Status: satisfied
+- Evidence: Route tests pass; service test includes both Agent 1 retrieval candidates and Agent 2 verification output and returns only Agent 2 evidence. `get_agent_run` filters by run ID and `SINGLE_USER_ID` before step retrieval.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch04 task entry and the progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: 04D and 04E remain unchecked; no batch completion, repair, or commit performed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The reported validation counts and scope match the repository evidence and fresh reruns.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/app/api/agent_runs.py` contains only the evidence handler. The existing service already contains logs lookup from accepted Batch02 work, but no logs API handler was added by 04C.
+- `backend/app/main.py` mounts only the previously accepted chat router and does not register the agent-runs router.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch04 - Public Chat, Evidence, and Logs APIs",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/agent_runs.py",
+    "backend/tests/test_agent_runs_api.py",
+    "backend/app/services/agent_run_service.py",
+    "backend/app/services/supabase_service.py",
+    "backend/app/schemas/agent_runs.py",
+    "backend/app/main.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/tasks/task_12.md",
+    "docs/review/review_12_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04D)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04D)
+- Task title: Implement `GET /api/agent-runs/{agent_run_id}/logs`
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_12.md` sections 1, 6, 8, and 9; `docs/plans/Master_Plan.md` sections 13.6 and 18.5
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04D)
+- Reviewed task ID: (04D)
+- Correct selection: yes
+- Notes: The final execution report entry is the requested 04D task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/main.py`, `backend/app/services/chat_service.py`, `backend/tests/test_agent_runs_api.py`, `backend/tests/test_chat_api.py`, `docs/reports/report_12_execute_agent.md`, `docs/review/review_12_review_agent.md`, `docs/tasks/task_12.md`
+- untracked files: `backend/app/api/agent_runs.py`, `backend/app/api/chat.py`
+
+## Files Reviewed
+- `backend/app/api/agent_runs.py`: in scope - logs handler added beside the accepted evidence handler.
+- `backend/tests/test_agent_runs_api.py`: in scope - route tests added, but persisted-row fixtures use incorrect field names.
+- `backend/app/services/agent_run_service.py`: dependency review - logs conversion reads `input_payload` and `output_payload`.
+- `backend/app/services/supabase_service.py`: dependency review - persisted rows are inserted and returned with `input` and `output`, ordered by `created_at`.
+- `backend/app/db/migrations/001_initial_schema.sql`: dependency review - `agent_steps` columns are `input` and `output`.
+- `backend/app/schemas/agent_runs.py`: dependency review - exact public fields are correct and extra fields are forbidden.
+- `backend/app/main.py`: scope check - no agent-runs router registration was added.
+- `docs/reports/report_12_execute_agent.md`: in scope - latest report appended.
+- `docs/tasks/task_12.md`: progress check - both 04D checkboxes remain unchecked.
+- Other dirty files: prior accepted Batch04 work, not attributable to 04D.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/api/agent_runs.py`, `backend/tests/test_agent_runs_api.py`, `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File scope is correct, but the report's persisted-step validation claim is inaccurate.
+
+## Dependency Review
+- Required dependencies: Batch02 owned-run and ordered logs lookup service.
+- Dependency status: present but contract-invalid for real persisted rows.
+- Missing or invalid dependency: `get_agent_run_logs` expects `input_payload`/`output_payload`, while Supabase and the migration use `input`/`output`.
+
+## Architecture Alignment
+- Passed: Thin route delegates to the service; UUID path validation is used; router registration remains deferred to 04E; evidence route code was not changed by 04D.
+- Failed: The service-to-persistence row contract does not match the approved `agent_steps` schema.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: The route and safe error mappings are real, but persisted input/output data is discarded because the service reads nonexistent keys.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-specific production logic or fixed success response was added.
+
+## Validations Reviewed
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_agent_runs_api.py -v`
+- Reported result: 23 passed
+- Rerun result: 23 passed, 1 warning
+- Status: passed but insufficient
+- Notes: Service fixtures use `input_payload` and `output_payload`, unlike real database rows.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m py_compile app/api/agent_runs.py`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: None.
+- Command/check: `git diff --check -- app/api/agent_runs.py tests/test_agent_runs_api.py`
+- Reported result: passed
+- Rerun result: passed with line-ending warning only
+- Status: passed
+- Notes: None.
+- Command/check: persisted-row contract smoke check using `input` and `output`
+- Reported result: not run
+- Rerun result: returned `input: {}` and `output: {}` instead of persisted values
+- Status: failed
+- Notes: This reproduces the real migration/Supabase row shape.
+
+## Acceptance Review
+- Task acceptance: API returns all persisted steps in `created_at` order with agent name, input, output, status, and timestamp.
+- Status: not satisfied
+- Evidence: Ordering and envelope fields are present, but persisted `input` and `output` values are silently replaced with empty objects.
+
+## Progress Tracking
+- Selected task checkbox: unchecked in both the detailed Batch04 task list and Task IDs tracker.
+- Checkbox updated by reviewer: no
+- Batch status: unchecked and unchanged.
+- Execution report entry: appended.
+- Review report entry: appended at EOF.
+- Other: No repair, batch completion, sibling checkbox update, or commit performed.
+
+## Report Accuracy
+- partial
+- Mismatches: The report claims existing service and Supabase tests verify persisted JSON-safe response conversion. They do not use the actual persisted column names, and the real row-shape smoke check fails.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- `backend/app/services/agent_run_service.py` reads `input_payload` and `output_payload`, but `backend/app/services/supabase_service.py` and the migration persist/return `input` and `output`. The logs endpoint therefore loses real step inputs and outputs, violating the API contract and debuggability requirement.
+- `backend/tests/test_agent_runs_api.py` models service rows with the wrong keys, allowing the defect to pass all 23 tests.
+
+### Minor
+- None.
+
+### Warnings
+- The same `output_payload` mismatch exists in the accepted evidence lookup dependency. Repair must preserve and regression-test the evidence endpoint against actual `input`/`output` row shapes.
+
+### Observations
+- Public response schemas expose exactly `agent_run_id`, `steps`, `agent_name`, `input`, `output`, `status`, and `created_at`.
+- Controlled not-found, invalid-data, and dependency errors are mapped to safe public messages.
+- No agent-runs router registration is present in `backend/app/main.py`.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no
+
+## Repair Instructions
+- target: `backend/app/services/agent_run_service.py`
+- change: Convert persisted rows using the actual `input` and `output` fields. Do not silently substitute `{}` for malformed non-dict values; raise the controlled step-data error. Preserve safe public error mapping.
+- target: `backend/tests/test_agent_runs_api.py`
+- change: Replace persisted-row fixtures with the migration/Supabase shape (`input`, `output`) and assert exact non-empty values survive through the service and `/logs` route. Add a regression test proving `/evidence` still reads Agent 2 data from the actual `output` field.
+- validation: Run `cd backend; pytest tests/test_agent_runs_api.py -v`, the persisted-row smoke path, `python -m py_compile app/api/agent_runs.py app/services/agent_run_service.py`, and `git diff --check` for touched files.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch04 - Public Chat, Evidence, and Logs APIs",
+  "selected_task_id": "(04D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/agent_runs.py",
+    "backend/tests/test_agent_runs_api.py",
+    "backend/app/services/agent_run_service.py",
+    "backend/app/services/supabase_service.py",
+    "backend/app/db/migrations/001_initial_schema.sql",
+    "backend/app/schemas/agent_runs.py",
+    "backend/app/main.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": false,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "Persisted agent_steps row shape loses input/output values"
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "Service reads input_payload/output_payload instead of persisted input/output",
+    "Tests use incorrect persisted-row keys and miss the defect"
+  ],
+  "warnings": [
+    "Repair must regression-test the accepted evidence endpoint with the actual output column"
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04D) Repair Re-review
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04D)
+- Task title: Implement `GET /api/agent-runs/{agent_run_id}/logs`
+- Task status reported by executor: complete after repair
+- Source of Truth: `docs/plans/Plan_12.md` sections 1, 6, 8, and 9; `docs/plans/Master_Plan.md` sections 13.6 and 18.5; prior A2 rejection
+- Supplemental documents: `docs/review/review_12_review_agent.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04D)
+- Reviewed task ID: (04D) Repair
+- Correct selection: yes
+- Notes: The latest execution report entry is the requested 04D repair.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/main.py`, `backend/app/services/agent_run_service.py`, `backend/app/services/chat_service.py`, `backend/tests/test_agent_runs_api.py`, `backend/tests/test_chat_api.py`, `docs/reports/report_12_execute_agent.md`, `docs/review/review_12_review_agent.md`, `docs/tasks/task_12.md`
+- untracked files: `backend/app/api/agent_runs.py`, `backend/app/api/chat.py`
+
+## Files Reviewed
+- `backend/app/services/agent_run_service.py`: in scope - repaired logs conversion now reads persisted `input` and `output` keys.
+- `backend/tests/test_agent_runs_api.py`: in scope - realistic persisted log row preserves nested input/output payloads; ordering and safe error coverage remain.
+- `backend/app/api/agent_runs.py`: in scope dependency - logs and accepted evidence handlers remain thin and safely mapped.
+- `backend/app/services/supabase_service.py`: dependency evidence - lookup remains ordered by `created_at`; insert/read schema uses `input` and `output`.
+- `backend/app/db/migrations/001_initial_schema.sql`: dependency evidence - confirms actual `agent_steps.input` and `agent_steps.output` columns.
+- `backend/app/schemas/agent_runs.py`: dependency evidence - exact safe response fields and JSON-safe validation remain.
+- `backend/app/main.py`: scope check - no agent-runs router import or registration; existing chat registration is prior accepted 04B work.
+- `docs/reports/report_12_execute_agent.md`: in scope - repair report appended accurately.
+- `docs/tasks/task_12.md`: progress - only both 04D entries checked by reviewer; Batch04 and 04E remain unchecked.
+- Other dirty files: prior accepted Batch04 work, not introduced by the 04D repair.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/agent_run_service.py`, `backend/tests/test_agent_runs_api.py`, `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair diff is limited to the rejected persisted-row mapping, regression test, and report.
+
+## Dependency Review
+- Required dependencies: Batch02 owned-run lookup, ordered step retrieval, schemas, and accepted evidence route.
+- Dependency status: satisfied for 04D.
+- Missing or invalid dependency: none for logs retrieval.
+
+## Architecture Alignment
+- Passed: Route delegates to service; service maps real persistence rows; Supabase owns deterministic ordering; response model enforces safe fields; registration remains deferred to 04E.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Direct smoke validation with real persisted keys preserved nested payloads and ordered both steps.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production mapping is field-contract based and contains no fixture-specific behavior.
+
+## Validations Reviewed
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_agent_runs_api.py -v`
+- Reported result: 23 passed
+- Rerun result: 23 passed, 1 deprecation warning
+- Status: passed
+- Notes: Includes logs payload preservation, order, exact fields, evidence-route regression, not-found, invalid-data, and safe dependency error tests.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_agent_log_service.py tests/test_supabase_service.py -q`
+- Reported result: 63 passed
+- Rerun result: 63 passed
+- Status: passed
+- Notes: Confirms persistence serialization and ordered query behavior.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m py_compile app/services/agent_run_service.py app/api/agent_runs.py`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: None.
+- Command/check: `git diff --check -- app/services/agent_run_service.py tests/test_agent_runs_api.py`
+- Reported result: passed
+- Rerun result: passed with line-ending warnings only
+- Status: passed
+- Notes: No whitespace errors.
+- Command/check: direct persisted-row smoke test with nested `input` and `output`
+- Reported result: covered by repaired test
+- Rerun result: exact nested payloads and chronological order preserved
+- Status: passed
+- Notes: Reproduces the original rejection path.
+- Command/check: agent-runs registration scan in `backend/app/main.py`
+- Reported result: no registration
+- Rerun result: no registration
+- Status: passed
+- Notes: 04E remains unimplemented.
+
+## Acceptance Review
+- Task acceptance: Logs endpoint returns all persisted steps in `created_at` order with exact safe agent name, input, output, status, and timestamp fields.
+- Status: satisfied
+- Evidence: Real persisted `input`/`output` values survive service conversion, route/schema tests pass, and controlled 404/500 behavior remains intact.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch04 task entry and Task IDs tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked.
+- Execution report entry: repair appended accurately.
+- Review report entry: appended at EOF.
+- Other: 04E remains unchecked; no batch completion, sibling update, repair, or commit performed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The accepted evidence route remains present and its route/error regression tests pass; the 04D repair did not modify its handler.
+- Production registration remains correctly deferred to 04E.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch04 - Public Chat, Evidence, and Logs APIs",
+  "selected_task_id": "(04D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/agent_run_service.py",
+    "backend/tests/test_agent_runs_api.py",
+    "backend/app/api/agent_runs.py",
+    "backend/app/services/supabase_service.py",
+    "backend/app/db/migrations/001_initial_schema.sql",
+    "backend/app/schemas/agent_runs.py",
+    "backend/app/main.py",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04E)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Execution Report Reviewed
+docs/reports/report_12_execute_agent.md
+
+## Review Report File
+docs/review/review_12_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Public Chat, Evidence, and Logs APIs
+- Task ID: (04E)
+- Task title: Register agent run router in FastAPI app
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_12.md` > `## 6. Required Files and Folders`; `README.md` > `Important coordination rules`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04E)
+- Reviewed task ID: (04E)
+- Correct selection: yes
+- Notes: The final appended execution report entry is the requested 04E task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/main.py`, `backend/app/services/agent_run_service.py`, `backend/app/services/chat_service.py`, `backend/tests/test_agent_runs_api.py`, `backend/tests/test_chat_api.py`, `docs/reports/report_12_execute_agent.md`, `docs/review/review_12_review_agent.md`, `docs/tasks/task_12.md`
+- untracked files: `backend/app/api/agent_runs.py`, `backend/app/api/chat.py`
+
+## Files Reviewed
+- `backend/app/main.py`: in scope - imports the existing agent-runs router and mounts it once under `/api/agent-runs`.
+- `backend/tests/test_agent_runs_api.py`: in scope - production-app test calls both exact required paths through `create_app()`.
+- `backend/app/api/agent_runs.py`: dependency evidence - defines only relative `/{agent_run_id}/evidence` and `/{agent_run_id}/logs` GET routes.
+- `docs/plans/Plan_12.md`: source evidence - requires `main.py` to include chat and agent-runs routers.
+- `README.md`: source evidence - requires router registration in `main.py` when API routes are added.
+- `docs/reports/report_12_execute_agent.md`: in scope - 04E report is appended and materially accurate.
+- `docs/tasks/task_12.md`: progress - only both 04E task entries checked by reviewer; Batch04 remains unchecked.
+- Other dirty files: prior accepted Batch04 work, not introduced by 04E.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/main.py`, `backend/tests/test_agent_runs_api.py`, `docs/reports/report_12_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Router registration, production route coverage, and report append match the selected task.
+
+## Dependency Review
+- Required dependencies: accepted (04C) evidence endpoint and accepted repaired (04D) logs endpoint.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Established import-alias and `include_router` style is followed; endpoint handlers remain in `app.api.agent_runs`; final paths are formed by one production prefix.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Requests through the production `create_app()` instance reach mocked service-backed evidence and logs handlers with HTTP 200 responses.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production registration uses the required stable API prefix and generic UUID path parameters; no fixture-specific production logic was added.
+
+## Validations Reviewed
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_agent_runs_api.py -v`
+- Reported result: 24 passed
+- Rerun result: 24 passed, 1 deprecation warning
+- Status: passed
+- Notes: Includes production-app calls to both evidence and logs endpoints.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_chat_api.py::test_chat_ask_route_is_registered_in_application -v`
+- Reported result: 1 passed
+- Rerun result: 1 passed, 1 deprecation warning
+- Status: passed
+- Notes: Confirms the new registration did not regress the accepted chat route.
+- Command/check: independent production route-table assertion
+- Reported result: passed
+- Rerun result: exact GET paths each appeared once: `/api/agent-runs/{agent_run_id}/evidence` and `/api/agent-runs/{agent_run_id}/logs`
+- Status: passed
+- Notes: No duplicate, double-prefixed, or alternate agent-run production routes were present.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m py_compile app/main.py app/api/agent_runs.py tests/test_agent_runs_api.py`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: None.
+- Command/check: `git diff --check -- backend/app/main.py backend/tests/test_agent_runs_api.py`
+- Reported result: passed
+- Rerun result: passed with line-ending warnings only
+- Status: passed
+- Notes: No whitespace errors.
+
+## Acceptance Review
+- Task acceptance: FastAPI route tests can call both endpoints through the production application at the exact required paths.
+- Status: satisfied
+- Evidence: Targeted tests and independent route inspection prove both GET routes are mounted exactly once with no mis-prefixing.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch04 task entry and Task IDs tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked as explicitly required.
+- Execution report entry: appended accurately.
+- Review report entry: appended at EOF.
+- Other: No sibling/future task checkbox, batch completion, repair, or commit performed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The full dirty worktree contains prior accepted Batch04 changes; the 04E implementation itself is limited to router registration, its production-app regression test, and the report append.
+- No Batch05 or later implementation was added.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_12.md",
+  "execution_report_reviewed": "docs/reports/report_12_execute_agent.md",
+  "review_report_file": "docs/review/review_12_review_agent.md",
+  "selected_batch": "Batch04 - Public Chat, Evidence, and Logs APIs",
+  "selected_task_id": "(04E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/main.py",
+    "backend/tests/test_agent_runs_api.py",
+    "backend/app/api/agent_runs.py",
+    "docs/plans/Plan_12.md",
+    "README.md",
+    "docs/reports/report_12_execute_agent.md",
+    "docs/tasks/task_12.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

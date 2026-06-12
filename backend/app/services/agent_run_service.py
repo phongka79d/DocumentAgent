@@ -202,8 +202,8 @@ def _log_step_response(step: dict[str, Any]) -> AgentRunLogStepResponse:
     try:
         return AgentRunLogStepResponse(
             agent_name=step["agent_name"],
-            input=step.get("input_payload") or {},
-            output=step.get("output_payload") or {},
+            input=step.get("input") or {},
+            output=step.get("output") or {},
             status=step["status"],
             created_at=step["created_at"],
         )
