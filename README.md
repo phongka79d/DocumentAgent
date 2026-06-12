@@ -14,6 +14,8 @@ The current codebase is not the complete MVP described in `docs/plans/Master_Pla
 
 Plan 10 Batch05 also completed the required automated Agent 2 verification tests for accept/reject behavior, missing-information handling, invalid provider output, unknown chunk IDs, provider failures, quote safety, duplicate filtering, contradictions, confidence bounds, and targeted pytest validation. Plan 10 Batch06 completed manual validation reporting and scope review: a user-authorized live technical Agent 1 -> Agent 2 smoke run succeeded on existing indexed smoke-test data after Agent 2 compact evidence payloads were updated to include `document_id`, while the exact contract-specific start-date/probation/official-work-condition sample remains unavailable until matching indexed document content is provided. Plan 11 Batch05 completed required automated Agent 3 answer tests for grounded simple reasoning, insufficient-evidence refusal, citation enforcement, rejected chunk exclusion, unsupported self-check claims, provider/parsing/logging failures, and targeted pytest validation. Plan 11 Batch06 completed Agent 3 manual validation reporting and scope review: a live synthetic Agent 2-shaped evidence smoke check succeeded after Agent 3 answer-generation and self-check payloads were updated to include explicit JSON-mode instructions, while no real user-provided Agent 2 payload was available.
 
+Plan 12 Batch07 completed live chat, evidence, and logs validation plus final reporting and scope review. The live checks found and repaired two response-boundary mismatches: `/api/chat/ask` now serializes Agent 3 citation models into the public chat citation shape, and agent-run evidence now reads Agent 2 data from the persisted `agent_steps.output` field. Production-shaped regression tests cover both fixes, and the repaired live endpoints returned HTTP 200 with grounded chat output, verified/rejected evidence arrays, and chronologically ordered agent steps.
+
 ## What This Folder Does
 
 This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
@@ -483,6 +485,8 @@ cd backend
 pytest tests/test_langgraph_workflow.py -v
 pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v
 ```
+
+Plan 12 Batch07 also completed live validation of `POST /api/chat/ask` and both agent-run inspection endpoints using configured Supabase, Qdrant, ShopAIKey, and indexed document data. The final targeted results were 9 workflow tests, 68 combined chat/agent-run tests, and 55 Supabase service tests passing; the live chat, evidence, and logs requests returned HTTP 200 after the citation and persisted-output repairs.
 
 Frontend validation commands from `frontend/package.json`:
 

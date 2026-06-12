@@ -3080,3 +3080,694 @@ complete
 - next task ID: none in Batch06; A3 batch scope audit remains pending by orchestrator workflow, but user explicitly requested not to start A3.
 - can proceed: yes, after A2 review acceptance of (06E) and explicit user permission for A3.
 - handoff notes: Required automated validation commands passed and are ready for A2 review.
+
+---
+
+# Task Execution Report - (07A)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch07 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(07A) - Run manual `/api/chat/ask` check when setup is available
+
+## Status
+failed
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`
+- `README.md` > `## Configuration`
+- `README.md` > `## Known Gaps or Unclear Areas`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch07 - Manual Validation, Reporting, and Scope Review
+- Task ID: (07A)
+- Task title: Run manual `/api/chat/ask` check when setup is available
+
+## Completed Work
+- Task status: failed.
+- Confirmed the backend `.env` contains the required Supabase, Qdrant, and ShopAIKey chat settings without printing secret values.
+- Queried real Supabase document metadata for the configured single user and found ready documents.
+- Confirmed `task5-live-test.txt` (`25580d60-ba7e-4cce-ab60-071b935fe898`) has a real indexed Qdrant point.
+- Started the FastAPI backend on `127.0.0.1:8000` and confirmed `/api/health` returned healthy status.
+- Sent a real POST to `/api/chat/ask` with question `What is this document intended to test?` and the real selected document ID.
+- The workflow completed all external calls and persisted agent run `e1c550bf-a32e-4a5e-90ba-a08c599c04ef` with status `success`, a final answer, and confidence `1`.
+- The public endpoint returned HTTP 500 during response serialization because `ChatAskResponse` rejected Agent 3 `Citation` model instances where `ChatCitation` values were required.
+- Did not fabricate a successful API response, modify runtime code from earlier tasks, execute sibling tasks, update task checkboxes, or commit.
+
+## Files Created or Modified
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- configuration presence check for Supabase, Qdrant, and ShopAIKey chat settings: Passed
+- evidence or reason: all required setting names resolved to non-empty values; secret values were not printed.
+- real Supabase ready-document lookup: Passed
+- evidence or reason: multiple documents were returned with status `ready` and non-zero chunk counts.
+- real Qdrant indexed-point lookup for selected document: Passed
+- evidence or reason: the selected document returned an indexed point with a real chunk ID and matching file name.
+- `GET http://127.0.0.1:8000/api/health`: Passed
+- evidence or reason: returned `status=ok`, service `document-qa-agent`, and development environment.
+- real `POST http://127.0.0.1:8000/api/chat/ask`: Failed
+- evidence or reason: returned HTTP 500. Backend traceback identifies a Pydantic validation error at `citations.0`: Agent 3 `Citation` is not accepted as `ChatCitation` by `ChatAskResponse.model_validate`.
+- persisted agent run verification: Passed
+- evidence or reason: run `e1c550bf-a32e-4a5e-90ba-a08c599c04ef` was persisted with status `success`, a final answer, confidence `1`, and the selected real document ID.
+- backend process cleanup: Passed
+- evidence or reason: stopped the local Uvicorn process after validation.
+
+## Acceptance Check
+- Task acceptance condition: Successful response includes `answer`, `confidence`, `citations`, and `agent_run_id`, or manual validation is explicitly blocked with a safe setup reason.
+- Status: not satisfied
+- Evidence: setup was available and the real workflow succeeded, so `BLOCKED_BY_USER_ACTION` does not apply. The public API returned HTTP 500 before producing a valid response due to citation schema incompatibility.
+
+## Artifacts Produced
+- Real failed `/api/chat/ask` validation result.
+- Persisted successful agent run ID: `e1c550bf-a32e-4a5e-90ba-a08c599c04ef`.
+- Runtime defect evidence: Agent 3 `Citation` to API `ChatCitation` serialization mismatch.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after review. Acceptance was not satisfied.
+
+## Key Implementation Decisions
+- Used an existing real ready/indexed document rather than creating a fake document ID or simulating provider/database success.
+- Classified the result as `failed`, not `BLOCKED_BY_USER_ACTION`, because required user setup and live services were available.
+- Did not repair the runtime serialization defect because this execution was restricted to manual validation task (07A), and no sibling or earlier implementation task was authorized.
+
+## Risks or Open Issues
+- `/api/chat/ask` can complete and persist the full workflow but still return HTTP 500 whenever the result contains Agent 3 `Citation` model objects that are not converted to `ChatCitation` response objects.
+- The request created real session, message, run, and step rows before response serialization failed; retrying without a code repair would create additional persisted records.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- The selected task includes source-of-truth fields, dependencies, validation, blocked conditions, and file scope.
+- Batch06 tasks are checked complete and their required automated validations are reported as passing.
+- No fake IDs, provider success, database success, response shape, or blocked reason was used.
+- No sibling tasks (07B-07D), runtime repair, checkbox update, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (07A) repair/rerun before (07B)
+- can proceed: no
+- handoff notes: Repair the citation conversion at the chat response boundary, then rerun the real `/api/chat/ask` request. A valid persisted agent run exists, but (07B) should not be started under this execution request.
+
+---
+
+# Task Execution Repair Report - (07A)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch07 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(07A) - Run manual `/api/chat/ask` check when setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`
+- `README.md` > `## Configuration`
+- `README.md` > `## Known Gaps or Unclear Areas`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch07 - Manual Validation, Reporting, and Scope Review
+- Task ID: (07A)
+- Task title: Run manual `/api/chat/ask` check when setup is available
+
+## Completed Work
+- Task status: complete repair.
+- Updated the successful `/api/chat/ask` route test so the mocked workflow returns real `app.agents.schemas.Citation` instances, reproducing the live production type mismatch.
+- Confirmed the regression test failed before the runtime repair with the same `Citation` versus `ChatCitation` Pydantic validation error seen during the original live check.
+- Updated `backend/app/api/chat.py` to JSON-encode workflow citations into dictionary-shaped values before validating `ChatAskResponse`.
+- Reran the full chat API test file successfully.
+- Reran the real `/api/chat/ask` request against existing ready/indexed document `25580d60-ba7e-4cce-ab60-071b935fe898`.
+- Verified HTTP 200 and a public response containing `answer`, `confidence`, `citations`, and `agent_run_id`.
+- Stopped the local backend after live validation.
+- Did not execute sibling tasks, update task checkboxes, or commit.
+
+## Files Created or Modified
+- `backend/app/api/chat.py`
+- `backend/tests/test_chat_api.py`
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `cd backend` then `pytest tests/test_chat_api.py::test_chat_ask_route_runs_workflow_and_persists_assistant_message -v` before repair: Failed as expected
+- evidence or reason: Pydantic rejected `app.agents.schemas.Citation` at `citations.0` because `ChatCitation` input was required, reproducing the live defect.
+- command/check: `cd backend` then `pytest tests/test_chat_api.py::test_chat_ask_route_runs_workflow_and_persists_assistant_message -v` after repair: Passed
+- evidence or reason: 1 test collected and 1 passed.
+- command/check: `cd backend` then `pytest tests/test_chat_api.py -v`: Passed
+- evidence or reason: 39 tests collected and 39 passed; one existing Starlette/httpx deprecation warning was reported.
+- command/check: `GET http://127.0.0.1:8000/api/health`: Passed
+- evidence or reason: returned HTTP 200 with `status=ok`.
+- command/check: real `POST http://127.0.0.1:8000/api/chat/ask`: Passed
+- evidence or reason: server access log and Node HTTP client both confirmed HTTP 200. Response contained a grounded answer, confidence `1`, one citation for `task5-live-test.txt`, and agent run ID `34d20637-92fe-4a31-8136-7a1b7c98f415`.
+- command/check: public response field verification: Passed
+- evidence or reason: response included exactly the required top-level fields `answer`, `confidence`, `citations`, and `agent_run_id`.
+- command/check: `git diff --check -- backend/app/api/chat.py backend/tests/test_chat_api.py`: Passed
+- evidence or reason: no whitespace errors; Git printed line-ending warnings only.
+- command/check: backend process cleanup: Passed
+- evidence or reason: stopped local Uvicorn PID 26860 after validation.
+
+## Acceptance Check
+- Task acceptance condition: Successful response includes `answer`, `confidence`, `citations`, and `agent_run_id`, or manual validation is explicitly blocked with a safe setup reason.
+- Status: satisfied
+- Evidence: the real live request returned HTTP 200 with all four required fields and a grounded citation from the selected indexed document.
+
+## Artifacts Produced
+- Successful live `/api/chat/ask` response shape:
+  - `answer`: non-empty grounded answer
+  - `confidence`: `1`
+  - `citations`: one entry with `file_name` and `quote`
+  - `agent_run_id`: `34d20637-92fe-4a31-8136-7a1b7c98f415`
+- Regression test using the real Agent 3 `Citation` model type.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run; checkbox and batch updates are left to A2 after `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Converted only workflow citations at the public API boundary using the existing FastAPI `jsonable_encoder`, preserving the workflow result and persistence behavior.
+- Kept the regression inside the existing successful route test so its mocked workflow output matches the real graph contract.
+- Reused the existing real indexed document and did not fabricate IDs or external-service success.
+
+## Risks or Open Issues
+- The full test file reports an existing Starlette deprecation warning about `httpx`; it does not affect task validation.
+- The live repair validation created real session, message, run, and step rows as expected for the endpoint contract.
+
+## Minor Issues Fixed During Execution
+- None beyond the A2-listed citation serialization defect and its regression coverage.
+
+## Workflow Integrity Check
+- Continued the same task ID `(07A)` after A2 rejection.
+- Implemented only the two A2-requested code/test changes and the required live rerun.
+- No sibling tasks `(07B)` through `(07D)`, checkbox updates, unrelated refactors, or commits were performed.
+
+## Notes for Next Task
+- next task ID: (07B)
+- can proceed: yes, only after A2 accepts this repaired `(07A)` execution
+- handoff notes: `/api/chat/ask` now returns the required public response shape with real Agent 3 citation objects converted at the API boundary.
+
+---
+
+# Task Execution Report - (07B)
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch07 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(07B) - Run manual evidence and logs checks when setup is available
+
+## Status
+failed
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch07 - Manual Validation, Reporting, and Scope Review
+- Task ID: (07B)
+- Task title: Run manual evidence and logs checks when setup is available
+
+## Completed Work
+- Task status: failed.
+- Started the backend and confirmed the health endpoint before live validation.
+- Queried both required endpoints for real agent run `34d20637-92fe-4a31-8136-7a1b7c98f415`.
+- Verified the logs endpoint returned HTTP 200 with three persisted successful steps ordered chronologically as `retrieval_agent -> verification_agent -> answer_agent`.
+- Verified the persisted Agent 2 row itself contains a valid `VerificationAgentOutput` with both required arrays: one verified chunk and an empty rejected-chunks array.
+- The evidence endpoint returned HTTP 500 with the safe detail `Agent 2 output payload is invalid.`
+- Traced the failure to a persistence mapping mismatch: live Supabase `agent_steps` rows store the Agent 2 payload under `output`, but `agent_run_service._agent_2_output_payload()` reads `output_payload`.
+- Stopped the local backend after validation.
+- Did not modify runtime code, execute sibling tasks, update task checkboxes, or commit.
+
+## Files Created or Modified
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `GET http://127.0.0.1:8000/api/health`: Passed
+- evidence or reason: returned HTTP 200 with `status=ok`.
+- command/check: `curl http://127.0.0.1:8000/api/agent-runs/34d20637-92fe-4a31-8136-7a1b7c98f415/evidence`: Failed
+- evidence or reason: returned HTTP 500 with `{"detail":"Agent 2 output payload is invalid."}`.
+- command/check: direct persisted Agent 2 output validation with `VerificationAgentOutput.model_validate(agent_step["output"])`: Passed
+- evidence or reason: the real persisted verification step had keys `confidence`, `missing_information`, `rejected_chunks`, and `verified_chunks`; it contained one verified chunk, zero rejected chunks, `missing_information=false`, and confidence `1.0`.
+- command/check: persisted-row mapping inspection: Failed
+- evidence or reason: the real row contains `input` and `output` columns and no `output_payload` column, while the evidence service reads `step.get("output_payload")`.
+- command/check: `curl http://127.0.0.1:8000/api/agent-runs/34d20637-92fe-4a31-8136-7a1b7c98f415/logs`: Passed
+- evidence or reason: returned HTTP 200 with top-level `agent_run_id` and `steps`; three steps each contained `agent_name`, `input`, `output`, `status`, and `created_at`.
+- command/check: logs ordering check: Passed
+- evidence or reason: ascending timestamps were `2026-06-12T11:36:33.470560Z`, `2026-06-12T11:36:36.601511Z`, and `2026-06-12T11:36:41.416899Z`, matching `retrieval_agent -> verification_agent -> answer_agent`.
+- command/check: backend process cleanup: Passed
+- evidence or reason: stopped local Uvicorn PID 4700 after validation.
+
+## Acceptance Check
+- Task acceptance condition: Evidence and logs endpoints return expected shapes, or manual validation is explicitly blocked with a safe setup reason.
+- Status: not satisfied
+- Evidence: setup and the real run were available, so `BLOCKED_BY_USER_ACTION` does not apply. The logs endpoint returned the expected ordered shape, but the evidence endpoint returned HTTP 500 instead of the persisted Agent 2 verified/rejected arrays.
+
+## Artifacts Produced
+- Verified logs response shape:
+  - `agent_run_id`: UUID string matching the requested run
+  - `steps`: ordered array of three entries
+  - each step: `agent_name`, `input`, `output`, `status`, `created_at`
+- Persisted Agent 2 verification evidence summary:
+  - `verified_chunks`: array with one entry
+  - `rejected_chunks`: empty array
+  - `missing_information`: `false`
+  - `confidence`: `1.0`
+- Evidence endpoint failure record: HTTP 500 with a safe public error.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated execution and failed acceptance; checkbox and batch updates remain unchanged.
+
+## Key Implementation Decisions
+- Did not classify the task as `BLOCKED_BY_USER_ACTION` because the backend, external setup, real run, persisted evidence, and logs were available.
+- Did not repair runtime code because this execution was restricted to `(07B)` manual validation and the task's declared file scope is the execution report.
+- Reported the live failure and persistence-column mismatch without fabricating endpoint success.
+
+## Risks or Open Issues
+- `GET /api/agent-runs/{agent_run_id}/evidence` cannot currently return live persisted Agent 2 evidence because it reads `output_payload` instead of the persisted `output` column.
+- Existing evidence tests mock `output_payload`, so they do not reproduce the live Supabase row shape.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependency `(07A)` was accepted and the supplied real `agent_run_id` remained available.
+- The selected task exposed a production mismatch between mocked evidence-service test rows and real Supabase `agent_steps` rows.
+- Only `(07B)` was executed; `(07C)` and `(07D)` were not started.
+
+## Notes for Next Task
+- next task ID: (07C)
+- can proceed: no
+- handoff notes: repair the evidence service to read the real persisted `output` column, update tests to use the real Supabase row shape, then rerun `(07B)` and confirm HTTP 200 with both `verified_chunks` and `rejected_chunks`.
+
+---
+
+# Task Execution Report - (07B) Repair
+
+## Source Task File
+docs/tasks/task_12.md
+
+## Report File
+docs/reports/report_12_execute_agent.md
+
+## Batch
+Batch07 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(07B) - Run manual evidence and logs checks when setup is available
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 11. Required Tests`
+- `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- A2 rejection and repair instructions supplied in chat
+
+## Selected Scope
+- Batch: Batch07 - Manual Validation, Reporting, and Scope Review
+- Task ID: (07B)
+- Task title: Run manual evidence and logs checks when setup is available
+
+## Completed Work
+- Task status: complete repair.
+- Updated `_agent_2_output_payload()` to read the real persisted `agent_steps.output` field returned by `supabase_service.list_agent_steps_for_run()`.
+- Updated evidence-service fixtures from `input_payload`/`output_payload` to production `input`/`output` row keys.
+- Preserved an Agent 1 retrieval row containing unverified candidates and assertions proving the evidence response is sourced only from Agent 2 verification output.
+- Preserved malformed Agent 2 output coverage and existing missing-step controlled-error coverage.
+- Verified the regression test failed before the runtime repair with `Agent 2 output payload is invalid.`
+- Ran the full required agent-runs API test file successfully.
+- Reran the live evidence and logs endpoints for real run `34d20637-92fe-4a31-8136-7a1b7c98f415`.
+- Verified evidence returned HTTP 200 with `verified_chunks` and `rejected_chunks`.
+- Verified logs returned HTTP 200 with chronological `retrieval_agent -> verification_agent -> answer_agent` steps.
+- Stopped the local backend after live validation.
+- Did not execute `(07C)` or `(07D)`, update task checkboxes, or commit.
+
+## Files Created or Modified
+- `backend/app/services/agent_run_service.py`
+- `backend/tests/test_agent_runs_api.py`
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- command/check: `pytest tests/test_agent_runs_api.py::test_agent_run_service_fetches_agent_2_evidence_from_persisted_step -v` before runtime repair: Failed as expected
+- evidence or reason: the production-shaped Agent 2 fixture used `output`, while the service still read `output_payload`, reproducing the live defect.
+- command/check: `pytest tests/test_agent_runs_api.py::test_agent_run_service_fetches_agent_2_evidence_from_persisted_step tests/test_agent_runs_api.py::test_agent_run_service_rejects_invalid_agent_2_step_payload -v` after repair: Passed
+- evidence or reason: 2 tests collected and 2 passed, covering valid production-shaped Agent 2 output and malformed output rejection.
+- command/check: `cd backend` then `pytest tests/test_agent_runs_api.py -v`: Passed
+- evidence or reason: 29 tests collected and 29 passed.
+- command/check: `GET http://127.0.0.1:8000/api/health`: Passed
+- evidence or reason: returned HTTP 200.
+- command/check: `GET http://127.0.0.1:8000/api/agent-runs/34d20637-92fe-4a31-8136-7a1b7c98f415/evidence`: Passed
+- evidence or reason: returned HTTP 200 with exactly the top-level fields `verified_chunks` and `rejected_chunks`; counts were one verified chunk and zero rejected chunks.
+- command/check: `GET http://127.0.0.1:8000/api/agent-runs/34d20637-92fe-4a31-8136-7a1b7c98f415/logs`: Passed
+- evidence or reason: returned HTTP 200 with the matching `agent_run_id` and three successful persisted steps.
+- command/check: live logs ordering assertion: Passed
+- evidence or reason: timestamps were ascending and agent order was `retrieval_agent -> verification_agent -> answer_agent`.
+- command/check: `git diff --check -- backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py`: Passed
+- evidence or reason: no whitespace errors; Git emitted line-ending warnings only.
+- command/check: backend process cleanup: Passed
+- evidence or reason: the verification process was stopped after endpoint checks.
+
+## Acceptance Check
+- Task acceptance condition: Evidence and logs endpoints return expected shapes, or manual validation is explicitly blocked with a safe setup reason.
+- Status: satisfied
+- Evidence: the real evidence endpoint returned HTTP 200 with Agent 2 verified/rejected arrays, and the real logs endpoint returned HTTP 200 with three chronological persisted workflow steps.
+
+## Artifacts Produced
+- Successful live evidence response shape:
+  - `verified_chunks`: array with one Agent 2-verified entry
+  - `rejected_chunks`: empty array
+- Verified live logs response shape:
+  - `agent_run_id`: `34d20637-92fe-4a31-8136-7a1b7c98f415`
+  - `steps`: three-entry ordered array
+  - each step: `agent_name`, `input`, `output`, `status`, `created_at`
+- Regression coverage using the production Supabase `agent_steps` row shape.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run; checkbox and batch updates remain with A2 after accepted review.
+
+## Key Implementation Decisions
+- Changed only the persisted field lookup from `output_payload` to `output`; no fallback to Agent 1 candidates was added.
+- Preserved the public evidence response contract containing only `verified_chunks` and `rejected_chunks`.
+- Kept Agent 1 candidate data in the fixture to prove it is not returned as verified evidence.
+
+## Risks or Open Issues
+- None identified for `(07B)`.
+
+## Minor Issues Fixed During Execution
+- None beyond the A2-listed persisted-field mismatch and fixture realism issue.
+
+## Workflow Integrity Check
+- Continued the same rejected task `(07B)`.
+- Implemented only A2's requested service and test repairs plus required validation.
+- Existing `(07A)` and unrelated work were preserved.
+- `(07C)` and `(07D)` were not started; task checkboxes were not changed; no commit was created.
+
+## Notes for Next Task
+- next task ID: (07C)
+- can proceed: yes, only after A2 accepts this repaired `(07B)` execution
+- handoff notes: live evidence and logs checks now satisfy the required response shapes and persisted workflow ordering.
+
+---
+
+# Task Execution Report - (07C)
+
+## Source Task File
+`docs/tasks/task_12.md`
+
+## Report File
+`docs/reports/report_12_execute_agent.md`
+
+## Batch
+Batch07 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(07C) - Create execution report with required Plan 12 contents
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- Accepted `(07A)` and `(07B)` execution and review entries in the Plan 12 report artifacts.
+
+## Selected Scope
+- Batch: Batch07 - Manual Validation, Reporting, and Scope Review
+- Task ID: (07C)
+- Task title: Create execution report with required Plan 12 contents
+
+## Completed Work
+- Consolidated the Plan 12 implementation, automated validation, live validation, repair history, known issues, and scope exclusions for reviewer handoff.
+- Reported the initial live `/api/chat/ask` citation-conversion failure and evidence persisted-field failure without treating either as success.
+- Recorded that both issues were repaired, covered by production-shaped regression tests, and revalidated successfully against the live backend.
+- Added safe structural examples derived from the accepted live responses; answer, quote, input, and output content is summarized rather than presented as verbatim live data.
+- Did not perform `(07D)`, update checkboxes, or create a commit.
+
+## Files Created
+- `backend/app/agents/graph.py`
+- `backend/app/api/agent_runs.py`
+- `backend/app/api/chat.py`
+- `backend/app/schemas/agent_runs.py`
+- `backend/app/schemas/chat.py`
+- `backend/app/services/agent_run_service.py`
+- `backend/app/services/chat_service.py`
+- `backend/tests/test_agent_runs_api.py`
+- `backend/tests/test_chat_api.py`
+- `backend/tests/test_langgraph_workflow.py`
+- `docs/reports/report_12_execute_agent.md`
+- `docs/review/review_12_review_agent.md`
+
+## Files Modified
+- `README.md`
+- `backend/app/main.py`
+- `backend/app/services/supabase_service.py`
+- `backend/requirements.txt`
+- `backend/tests/test_supabase_service.py`
+- `docs/tasks/task_12.md`
+- `docs/reports/report_12_execute_agent.md` was appended for this selected task.
+
+## Commands Run and Test Results
+- `cd backend` then `pytest tests/test_langgraph_workflow.py -v`: Passed in final required Batch06 validation, 9 passed.
+- `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v`: Passed in final required Batch06 validation, 68 passed.
+- `cd backend` then `pytest tests/test_chat_api.py -v`: Passed after the `(07A)` citation repair, 39 passed with one existing Starlette/httpx deprecation warning.
+- `cd backend` then `pytest tests/test_agent_runs_api.py -v`: Passed after the `(07B)` persisted-output repair, 29 passed.
+- Focused citation regression test: Failed before repair with the live `Citation`/`ChatCitation` mismatch, then passed after API-boundary encoding.
+- Focused evidence regression tests: Failed before repair because the service read `output_payload`, then 2 passed after switching to the persisted `output` field.
+- Live `GET /api/health`: Passed with HTTP 200 before manual checks.
+- Live `POST /api/chat/ask`: Initially returned HTTP 500 after a successful persisted workflow; after repair it returned HTTP 200 with `answer`, `confidence`, `citations`, and `agent_run_id`.
+- Live `GET /api/agent-runs/{agent_run_id}/evidence`: Initially returned safe HTTP 500; after repair it returned HTTP 200 with one Agent 2-verified chunk and an empty rejected array.
+- Live `GET /api/agent-runs/{agent_run_id}/logs`: Passed with HTTP 200 and chronological `retrieval_agent -> verification_agent -> answer_agent` steps.
+- `git diff --check` on each repair's changed runtime/test files: Passed; line-ending warnings only.
+- Backend cleanup after both manual validation runs: Passed.
+
+## Live and Manual Validation Status
+- Setup status: available; valid Supabase, Qdrant, ShopAIKey configuration and an existing ready/indexed document were used.
+- Successful live run: `34d20637-92fe-4a31-8136-7a1b7c98f415`.
+- Chat validation: passed after repair.
+- Evidence validation: passed after repair and confirmed to use persisted Agent 2 output, not Agent 1 candidates.
+- Logs validation: passed with three persisted successful steps in chronological workflow order.
+- `BLOCKED_BY_USER_ACTION`: not applicable.
+
+## Successful `/api/chat/ask` Response Shape
+Structural example derived from the accepted live response; `answer` and `quote` are summaries, not verbatim live values:
+
+```json
+{
+  "answer": "<non-empty grounded answer>",
+  "confidence": 1,
+  "citations": [
+    {
+      "file_name": "task5-live-test.txt",
+      "quote": "<grounded excerpt omitted>"
+    }
+  ],
+  "agent_run_id": "34d20637-92fe-4a31-8136-7a1b7c98f415"
+}
+```
+
+## Verified Logs Response Shape
+Structural example derived from the accepted live response; persisted `input` and `output` payloads are summarized:
+
+```json
+{
+  "agent_run_id": "34d20637-92fe-4a31-8136-7a1b7c98f415",
+  "steps": [
+    {"agent_name": "retrieval_agent", "input": {}, "output": {}, "status": "success", "created_at": "<timestamp-1>"},
+    {"agent_name": "verification_agent", "input": {}, "output": {}, "status": "success", "created_at": "<timestamp-2>"},
+    {"agent_name": "answer_agent", "input": {}, "output": {}, "status": "success", "created_at": "<timestamp-3>"}
+  ]
+}
+```
+
+## Known Issues
+- One existing Starlette/httpx deprecation warning remains in the chat API test run; it did not affect validation.
+- The initial live citation serialization and evidence field-mapping defects are historical resolved issues, not current failures.
+- `(07D)` scope, secret, and architecture review remains pending by design and is not claimed complete here.
+
+## Intentionally Out-of-Scope Work
+- No frontend chat, evidence viewer, or logs/debug UI.
+- No streaming responses.
+- No JWT/authentication or multi-user support.
+- No document deletion.
+- No database schema changes or migrations.
+- No conversation memory beyond persisted chat messages.
+- No additional provider projects, credentials, documents, or synthetic live success were created.
+
+## Files Created or Modified
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- Report content check against Plan 12 section 14: Passed.
+- Accepted `(07A)` and `(07B)` report/review evidence cross-check: Passed.
+- No runtime tests rerun for this documentation-only task; the recorded final test and live validation results above are from accepted task executions.
+
+## Acceptance Check
+- Task acceptance condition: Report includes files created, files modified, commands run, test results, known issues, intentionally out-of-scope work, one successful chat response shape, and one verified logs response shape without claiming blocked or failed checks as successful.
+- Status: satisfied
+- Evidence: Every required section is present; initial failures and subsequent repairs are distinguished, and response examples are labeled as structural summaries.
+
+## Artifacts Produced
+- Consolidated Plan 12 reviewer-handoff report entry in `docs/reports/report_12_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Explicit user instruction; progress remains for A2 after review.
+
+## Key Implementation Decisions
+- Used accepted recorded results rather than rerunning live services for a documentation-only task.
+- Included the real accepted run ID while redacting/summarizing potentially verbose live answer, citation, input, and output content.
+
+## Risks or Open Issues
+- `(07D)` must still perform the independent scope, secret, and architecture review before Batch07 can complete.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Dependencies `(07A)` and `(07B)` are accepted and checked.
+- Only `(07C)` was executed.
+- No checkbox update, `(07D)` work, runtime change, unrelated cleanup, or commit was performed.
+
+## Notes for Next Task
+- next task ID: (07D)
+- can proceed: yes, after A2 accepts `(07C)`
+- handoff notes: Use this consolidated entry as the reviewer handoff, then independently verify scope, secrets, architecture, workflow order, single-user scoping, Agent 3 answer ownership, and Agent 2 evidence sourcing.
+
+---
+
+# Task Execution Report - (07D)
+
+## Source Task File
+`docs/tasks/task_12.md`
+
+## Report File
+`docs/reports/report_12_execute_agent.md`
+
+## Batch
+Batch07 - Manual Validation, Reporting, and Scope Review
+
+## Task
+(07D) - Complete scope, secret, and architecture review
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_12.md` > `## 4. Out of Scope`
+- `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
+- `docs/plans/Master_Plan.md` > `## Phase 9: LangGraph Orchestration`
+- `README.md` > `Important coordination rules`
+
+## Supplemental Documents Used
+- Accepted `(07A)`, `(07B)`, and `(07C)` execution and review entries.
+
+## Selected Scope
+- Batch: Batch07 - Manual Validation, Reporting, and Scope Review
+- Task ID: (07D)
+- Task title: Complete scope, secret, and architecture review
+
+## Completed Work
+- Reviewed the current Batch07 diff and relevant Plan 12 graph, API, service, persistence, schema, and test implementation.
+- Confirmed no Plan 12 changes add frontend chat/evidence/log UI, streaming, auth/JWT, multi-user behavior, document deletion, database migrations, or conversation memory beyond stored chat messages.
+- Confirmed the graph path is `START -> Agent 1 -> Agent 2 -> Agent 3/self-check -> END`.
+- Confirmed the workflow response and persisted successful run values come from Agent 3 `AnswerAgentOutput`.
+- Confirmed session, message, run, selected-document, and step access is scoped through `SINGLE_USER_ID`; step reads first require an owned run.
+- Confirmed evidence validates persisted Agent 2 `output`, while logs return persisted steps ordered by `created_at`.
+- Confirmed public error messages are controlled and focused scans found no hardcoded runtime credentials, tracked private environment files, or private provider error exposure.
+- Confirmed required automated tests and accepted live chat/evidence/log evidence exist.
+- No runtime defect was found, so no runtime files were changed.
+
+## Files Created or Modified
+- `docs/reports/report_12_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend` then `pytest tests/test_langgraph_workflow.py -v`: Passed, 9 tests.
+- `cd backend` then `pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v`: Passed, 68 tests.
+- `cd backend` then `pytest tests/test_supabase_service.py -q`: Passed, 55 tests.
+- FastAPI route introspection: Passed; found `POST /api/chat/ask`, `GET /api/agent-runs/{agent_run_id}/evidence`, and `GET /api/agent-runs/{agent_run_id}/logs`.
+- Changed-file scope scan: Passed; no changed frontend, migration, auth/JWT, streaming, or document-deletion files.
+- Runtime secret-assignment scan: Passed; no hardcoded key, service-role key, secret, password, or token assignment found.
+- Tracked private environment/key-file scan: Passed; only placeholder `backend/.env.example` and `frontend/.env.example` were found.
+- Git diff review: Passed; current runtime changes are limited to citation response conversion and persisted Agent 2 output mapping with regression tests.
+- `git diff --check`: Passed with line-ending warnings only.
+- Accepted live validation evidence review: Passed; chat, evidence, and logs returned HTTP 200 after the recorded repairs, with ordered persisted steps.
+
+## Acceptance Check
+- Task acceptance condition: Scope review confirms Plan 12 boundaries or documents exact deviations requiring fixes before reviewer handoff.
+- Status: satisfied
+- Evidence: Focused code, diff, route, secret, ownership, workflow, persistence, test, and accepted live-evidence checks found no remaining deviation.
+
+## Artifacts Produced
+- Reviewer-ready Plan 12 scope, secret, architecture, ownership, provenance, and validation audit in this report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Explicit user instruction and orchestrated workflow; A2 owns acceptance and progress updates.
+
+## Key Implementation Decisions
+- Treated Agent 3's existing internal self-check as the approved self-check stage rather than adding a separate public agent or graph node.
+- Treated `agent_steps` ownership as scoped through the required owned `agent_runs` lookup because the step table has no separate user ownership field.
+
+## Risks or Open Issues
+- One existing Starlette/httpx deprecation warning remains; it does not affect Plan 12 behavior.
+- No Plan 12 scope, secret, architecture, ownership, evidence, logs, route, or validation issue remains open from this audit.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Executed only `(07D)`.
+- Dependencies Batch06 and accepted `(07C)` were available.
+- Existing user and agent changes were preserved.
+- No checkbox or Batch07 marker was updated, no sibling task was executed, and no commit was created.
+
+## Notes for Next Task
+- next task ID: None in Batch07
+- can proceed: yes, to A2 review of `(07D)`
+- handoff notes: Review this audit, then update `(07D)` and Batch07 progress only if accepted.

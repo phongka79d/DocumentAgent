@@ -182,7 +182,7 @@ def _is_agent_2_verification_step(step: dict[str, Any]) -> bool:
 
 
 def _agent_2_output_payload(step: dict[str, Any]) -> dict[str, Any]:
-    output_payload = step.get("output_payload")
+    output_payload = step.get("output")
     if not isinstance(output_payload, dict):
         raise AgentRunStepDataError("Agent 2 output payload is invalid.")
     return output_payload

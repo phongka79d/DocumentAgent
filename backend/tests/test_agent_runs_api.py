@@ -279,16 +279,16 @@ def test_agent_run_service_fetches_agent_2_evidence_from_persisted_step(
                 {
                     "step_name": "agent_1_retrieval",
                     "agent_name": "retrieval_agent",
-                    "input_payload": {},
-                    "output_payload": {"candidates": [{"quote": "unverified"}]},
+                    "input": {},
+                    "output": {"candidates": [{"quote": "unverified"}]},
                     "status": "success",
                     "created_at": CREATED_AT,
                 },
                 {
                     "step_name": "agent_2_verification",
                     "agent_name": "verification_agent",
-                    "input_payload": {"candidate_count": 1},
-                    "output_payload": {
+                    "input": {"candidate_count": 1},
+                    "output": {
                         "verified_chunks": [
                             {
                                 "chunk_id": str(CHUNK_ID),
@@ -579,8 +579,8 @@ def test_agent_run_service_rejects_invalid_agent_2_step_payload(
                 {
                     "step_name": "agent_2_verification",
                     "agent_name": "verification_agent",
-                    "input_payload": {},
-                    "output_payload": {"verified_chunks": []},
+                    "input": {},
+                    "output": {"verified_chunks": []},
                     "status": "success",
                     "created_at": CREATED_AT,
                 }

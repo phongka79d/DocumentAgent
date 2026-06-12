@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.agents.schemas import Citation
 from app.schemas.chat import ChatAskRequest, ChatAskResponse, ChatCitation
 from app.services import agent_run_service, chat_service
 
@@ -562,10 +563,10 @@ def test_chat_ask_route_runs_workflow_and_persists_assistant_message(
             "answer": "Employees may work remotely two days per week.",
             "confidence": 0.82,
             "citations": [
-                {
-                    "file_name": "handbook.pdf",
-                    "quote": "Remote work is allowed for two days each week.",
-                }
+                Citation(
+                    file_name="handbook.pdf",
+                    quote="Remote work is allowed for two days each week.",
+                )
             ],
             "agent_run_id": AGENT_RUN_ID,
         }

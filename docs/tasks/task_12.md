@@ -978,7 +978,7 @@ Automated tests prove deterministic behavior, but Plan 12 also requires manual c
 
 ### Tasks
 
-- [ ] (07A): Run manual `/api/chat/ask` check when setup is available
+- [x] (07A): Run manual `/api/chat/ask` check when setup is available
   - Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`; `README.md` > `## Configuration`; `README.md` > `## Known Gaps or Unclear Areas`
   - Source Requirements:
     - Manual API check posts to `/api/chat/ask`.
@@ -994,7 +994,7 @@ Automated tests prove deterministic behavior, but Plan 12 also requires manual c
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if required backend secrets, service setup, running backend, ready indexed document, or valid selected `document_id` are missing.
   - Files: `docs/reports/report_12_execute_agent.md`
 
-- [ ] (07B): Run manual evidence and logs checks when setup is available
+- [x] (07B): Run manual evidence and logs checks when setup is available
   - Source of Truth: `docs/plans/Plan_12.md` > `## 11. Required Tests`; `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Run evidence/log checks by `agent_run_id`.
@@ -1010,7 +1010,7 @@ Automated tests prove deterministic behavior, but Plan 12 also requires manual c
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if no valid `agent_run_id`, backend service setup, or live data is available.
   - Files: `docs/reports/report_12_execute_agent.md`
 
-- [ ] (07C): Create execution report with required Plan 12 contents
+- [x] (07C): Create execution report with required Plan 12 contents
   - Source of Truth: `docs/plans/Plan_12.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created.
@@ -1031,7 +1031,7 @@ Automated tests prove deterministic behavior, but Plan 12 also requires manual c
   - Blocked Condition: None.
   - Files: `docs/reports/report_12_execute_agent.md`
 
-- [ ] (07D): Complete scope, secret, and architecture review
+- [x] (07D): Complete scope, secret, and architecture review
   - Source of Truth: `docs/plans/Plan_12.md` > `## 4. Out of Scope`; `docs/plans/Plan_12.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_12.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `## Phase 9: LangGraph Orchestration`; `README.md` > `Important coordination rules`
   - Source Requirements:
     - Scope was followed.
@@ -1232,10 +1232,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch07
 
-- [ ] (07A): Run manual `/api/chat/ask` check when setup is available
-- [ ] (07B): Run manual evidence and logs checks when setup is available
-- [ ] (07C): Create execution report with required Plan 12 contents
-- [ ] (07D): Complete scope, secret, and architecture review
+- [x] (07A): Run manual `/api/chat/ask` check when setup is available
+- [x] (07B): Run manual evidence and logs checks when setup is available
+- [x] (07C): Create execution report with required Plan 12 contents
+- [x] (07D): Complete scope, secret, and architecture review
 
 ## Completion Reporting Rules for Future Execution Agents
 
