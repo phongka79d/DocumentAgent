@@ -159,7 +159,11 @@ export function UploadDocumentPage() {
         </p>
       </div>
 
-      <form className="upload-page__form" onSubmit={handleSubmit}>
+      <form
+        aria-busy={isUploading}
+        className="upload-page__form"
+        onSubmit={handleSubmit}
+      >
         <UploadBox
           disabled={isUploading}
           label="Select document"

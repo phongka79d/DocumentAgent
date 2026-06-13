@@ -1504,3 +1504,415 @@ complete
 - next task ID: (05A)
 - can proceed: yes
 - handoff notes: Manual refresh is implemented on the list page, but browser route verification still depends on Batch05 mounting routes/navigation.
+
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05A) - Mount the router provider and page routes
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (05A): Mount the router provider and page routes
+- docs/plans/Plan_13.md > ## 3. Scope
+- docs/plans/Plan_13.md > ## 6. Required Files and Folders
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05A)
+- Task title: Mount the router provider and page routes
+
+## Completed Work
+- Complete.
+- Mounted React Router's BrowserRouter provider in frontend/src/main.tsx.
+- Replaced the placeholder App shell with route rendering for /upload and /documents.
+- Added a root redirect and wildcard fallback that land on /upload instead of a placeholder or marketing page.
+- Did not implement compact navigation links, active-page feedback, broader styling, scope hardening, or sibling Batch05 tasks.
+
+## Files Created or Modified
+- frontend/src/App.tsx
+- frontend/src/main.tsx
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- npm run build: Passed
+- evidence or reason: TypeScript and Vite production build completed successfully from frontend/.
+- HTTP direct-route refresh checks against Vite dev server: Passed
+- evidence or reason: GET /, /upload, /documents, and /unknown-route on http://127.0.0.1:5173 all returned 200 text/html with the Vite app shell.
+- Placeholder source search: Passed
+- evidence or reason: rg found no Future routes placeholder or placeholder text in frontend/src/App.tsx, frontend/src/main.tsx, or frontend/src.
+- Manual in-app browser route/navigation check: Not run
+- evidence or reason: The Browser plugin's in-app browser target was unavailable with response "Browser is not available: iab". No browser-only result is claimed.
+
+## Acceptance Check
+- Task acceptance condition: Direct navigation and browser refresh work for both routes under the Vite development server; the placeholder text is removed.
+- Status: satisfied
+- Evidence: /upload and /documents returned 200 from the Vite development server, root and wildcard fallback returned the app shell, npm run build passed, and placeholder text was removed from source. Browser-only visual/navigation inspection was not practical because the in-app browser target was unavailable.
+
+## Artifacts Produced
+- Navigable application routes for /upload and /documents.
+- Root/default route behavior that redirects users to /upload.
+- Safe fallback route that redirects unknown paths to /upload.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated single-task run; checkbox and batch updates are left to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Mounted BrowserRouter in the entry layer so direct navigation and refresh use React Router history behavior under Vite.
+- Used Navigate with replace for root and wildcard fallback so users land on the upload tool without adding navigation UI reserved for (05B).
+
+## Risks or Open Issues
+- Browser-only route navigation was not manually verified because the in-app browser target was unavailable in this session.
+- The upload and document pages may still show backend connection states if the backend is not running; live upload/list behavior is outside this task.
+
+## Minor Issues Fixed During Execution
+- Removed the placeholder App text as part of route rendering.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (01A), Batch03, and Batch04 were marked complete in docs/tasks/task_13.md before implementation.
+- No task checkbox update, commit, sibling task, compact navigation, active-page styling, responsive/accessibility styling, scope hardening, backend change, detail route, chat/evidence/log/auth/deletion UI, processing/index control, or marketing page was added.
+- No frontend test runner is configured, so no route test was added to avoid out-of-scope tooling changes.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: Router provider and /upload, /documents, root, and fallback routes are wired. The next task can add compact navigation and active-page feedback.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05B) - Add compact navigation between Upload and Documents
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (05B): Add compact navigation between Upload and Documents
+- docs/plans/Plan_13.md > ## 3. Scope
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+- docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05B)
+- Task title: Add compact navigation between Upload and Documents
+
+## Completed Work
+- Complete.
+- Added a compact application header with Upload and Documents navigation only.
+- Used React Router NavLink elements so route changes remain client-side and active links receive React Router's aria-current feedback.
+- Added readable active, hover, and keyboard focus-visible treatments.
+- Added wrapping and a narrow-width two-link layout so labels remain readable down to the existing 320px minimum viewport.
+- Preserved the accepted (05A) BrowserRouter, route, root redirect, and wildcard fallback behavior.
+- Did not implement broader (05C) styling, (05D) scope hardening, extra routes, extra destinations, or marketing content.
+
+## Files Created or Modified
+- frontend/src/App.tsx
+- frontend/src/styles.css
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- npm run build: Passed
+- evidence or reason: TypeScript no-emit compilation and Vite production build completed successfully; 101 modules transformed.
+- HTTP direct-route checks for /upload and /documents: Passed
+- evidence or reason: Both routes returned HTTP 200 text/html from the Vite development server at http://127.0.0.1:5174.
+- Client-navigation source check: Passed
+- evidence or reason: App.tsx uses NavLink targets for /upload and /documents inside a primary navigation landmark; no full-page anchor navigation was added.
+- Active/focus/narrow-width source check: Passed
+- evidence or reason: styles.css contains the active-link class, :focus-visible outline, wrapping header, and max-width: 400px equal-width navigation layout alongside the existing 320px body minimum.
+- git diff --check: Passed
+- evidence or reason: No whitespace errors were reported; only existing line-ending conversion warnings appeared.
+- Manual mouse and keyboard browser navigation: Blocked
+- evidence or reason: The Browser plugin's in-app browser target was unavailable with response "Browser is not available: iab". No browser interaction result is claimed.
+- Automated frontend tests: Not run
+- evidence or reason: frontend/package.json has no test script or testing dependencies, and adding a test stack is outside (05B).
+
+## Acceptance Check
+- Task acceptance condition: Users can move between pages without a full reload; labels and active state remain readable at narrow widths.
+- Status: satisfied
+- Evidence: React Router NavLink provides client-side navigation and aria-current active-page feedback; focused CSS checks confirm explicit active and keyboard-focus states plus wrapping/equal-width behavior for narrow viewports. Both direct routes returned HTTP 200 and the production build passed. Browser-only mouse/keyboard interaction could not be run because the in-app browser was unavailable.
+
+## Artifacts Produced
+- Compact two-page application header and navigation.
+- Active-page and keyboard-focus feedback.
+- Narrow-width navigation layout for Upload and Documents.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no task checkbox update; review/acceptance tracking remains with the reviewer workflow.
+
+## Key Implementation Decisions
+- Used NavLink rather than plain anchors to preserve SPA navigation and obtain route-aware aria-current behavior.
+- Kept the header to a small product label and the two approved destinations.
+- Allowed the header to wrap and made links share the available width below 400px to prevent narrow-screen label compression or overflow.
+
+## Risks or Open Issues
+- Manual mouse, keyboard-tab, and visual active-state checks remain unperformed because the in-app browser was unavailable.
+- Live upload/list backend behavior was not exercised because it is outside the selected navigation task.
+
+## Minor Issues Fixed During Execution
+- Added narrow-width header wrapping after source review identified that the title and both links could exceed the 320px content width on one line.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or dependency issues identified; (05A) is marked complete and its uncommitted routing changes were preserved.
+- No task checkbox, commit, sibling task, broad page restyling, scope-hardening work, backend change, extra route, extra navigation destination, or marketing content was added.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes
+- handoff notes: Routing and compact navigation are in place. Broader responsive/accessibility styling remains intentionally reserved for (05C); browser interaction should be rechecked when an in-app browser is available.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05C) - Complete responsive, accessible, work-focused styling
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (05C): Complete responsive, accessible, work-focused styling
+- docs/plans/Plan_13.md > ## 6. Required Files and Folders
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+- docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05C)
+- Task title: Complete responsive, accessible, work-focused styling
+
+## Completed Work
+- Complete.
+- Refined the existing plain CSS into a compact application layout while preserving the accepted routing and navigation work.
+- Added consistent visible focus treatment for file input, upload, refresh, retry, and navigation controls.
+- Added explicit hover, disabled, and busy-state presentation, including semantic aria-busy state on the upload form.
+- Strengthened error and success treatments with borders, text, and existing roles so feedback is not color-only.
+- Added long filename and button/status wrapping or ellipsis protections and constrained controls to their containers.
+- Added fixed mobile behavior for 560px and 360px breakpoints, including full-width actions, stacked metadata, compact padding, and a mobile file-selector button suitable for a 320px viewport.
+- Reduced oversized rounding and shadows so forms and document records read as compact work surfaces rather than landing-page cards.
+
+## Files Created or Modified
+- frontend/src/styles.css
+- frontend/src/pages/UploadDocumentPage.tsx
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- Initial focused CSS/semantic assertions: Failed as expected before implementation
+- evidence or reason: Missing shared page-button focus rules, filename overflow protection, and upload-form aria-busy semantics were detected.
+- npm run build: Passed
+- evidence or reason: TypeScript no-emit compilation and Vite production build completed successfully; 101 modules transformed.
+- Responsive/accessibility source checks: Passed
+- evidence or reason: Confirmed the 320px minimum, 360px mobile breakpoint, focus-visible rules, disabled-state rules, filename overflow protections, reduced-motion handling, and upload aria-busy semantics; no viewport-scaled font sizes were present.
+- git diff --check for selected runtime files: Passed
+- evidence or reason: No whitespace errors were reported; only existing line-ending conversion warnings appeared.
+- Direct route HTTP checks: Passed
+- evidence or reason: /upload and /documents each returned HTTP 200 text/html from the Vite development server at http://127.0.0.1:5175.
+- Manual desktop and 320-375px browser viewport inspection: Not run
+- evidence or reason: The Browser plugin's configured in-app browser target was unavailable with response "Browser is not available: iab". No visual overflow result is claimed.
+- Manual keyboard focus inspection: Not run
+- evidence or reason: The same unavailable browser target prevented interactive Tab-order and rendered focus-ring inspection. Focus behavior was checked in source only.
+- Automated frontend tests: Not run
+- evidence or reason: frontend/package.json has no test script or testing dependencies, and adding a test framework is outside (05C).
+
+## Acceptance Check
+- Task acceptance condition: Controls remain reachable and readable; long labels do not cause horizontal overflow; status is not communicated by color alone.
+- Status: satisfied
+- Evidence: Build and focused source checks confirm constrained/flexible controls, explicit long-content wrapping or ellipsis, 320px/mobile layout rules, visible focus selectors, disabled/busy states, and textual status labels with indicator and border treatment. Browser-only visual and keyboard interaction checks could not be performed because the in-app browser was unavailable.
+
+## Artifacts Produced
+- Responsive compact upload and document-list styling.
+- Consistent focus, hover, disabled, busy, success, and error states.
+- Long filename and narrow-screen overflow protections.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no task checkbox update and no commit; review/acceptance tracking remains with the reviewer workflow.
+
+## Key Implementation Decisions
+- Preserved the existing plain CSS architecture and component class names instead of adding a framework or dependency.
+- Used fixed font sizes at responsive breakpoints rather than viewport-scaled typography.
+- Added aria-busy only to the existing upload form because it is the semantic container whose controls become unavailable during upload.
+- Kept status text visible and allowed it to wrap instead of relying on color or truncating the status meaning.
+
+## Risks or Open Issues
+- Rendered desktop/mobile overflow and keyboard focus order remain unverified because the in-app browser was unavailable.
+- Live backend upload and document-list behavior was not exercised because this task was limited to styling and semantic markup.
+
+## Minor Issues Fixed During Execution
+- Replaced an initially considered viewport-scaled heading size with fixed responsive sizes to match the frontend rules.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or dependency issues identified; accepted dependencies (02A), (02B), (02C), and (05B) were present and preserved.
+- No task checkbox, commit, dependency, framework, marketing content, new feature, backend change, or (05D) secret/endpoint audit was added.
+- Existing uncommitted (05A)/(05B) work and unrelated user/reviewer edits were not reverted.
+
+## Notes for Next Task
+- next task ID: (05D)
+- can proceed: yes
+- handoff notes: Responsive/accessibility styling is implemented and builds successfully. A reviewer should repeat rendered desktop, 320-375px, and keyboard focus checks when the in-app browser is available.
+
+---
+
+# Task Execution Report - (05D)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05D) - Enforce frontend secret, endpoint, and scope boundaries
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (05D): Enforce frontend secret, endpoint, and scope boundaries
+- docs/plans/Plan_13.md > ## 4. Out of Scope
+- docs/plans/Plan_13.md > ## 10. Configuration and Environment Variables
+- docs/plans/Plan_13.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+- README.md > ## Development Notes for AI Agents > Important coordination rules
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05D)
+- Task title: Enforce frontend secret, endpoint, and scope boundaries
+
+## Completed Work
+- Complete.
+- Audited the full current Batch05 frontend diff: `frontend/src/App.tsx`, `frontend/src/main.tsx`, `frontend/src/pages/UploadDocumentPage.tsx`, and `frontend/src/styles.css` (261 insertions and 36 deletions across four files).
+- Read the complete current contents of all four changed frontend files and reviewed the route, navigation, semantic, and styling changes for scope violations.
+- Reviewed `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`, and `frontend/tsconfig.json`; Batch05 has no dependency or build-configuration diff.
+- Confirmed the installed direct dependency tree contains only the expected React, React DOM, React Router DOM, Axios, TypeScript, Vite, React plugin, and type packages. No provider SDK or unrelated frontend framework is present.
+- Confirmed frontend environment files expose only the variable name `VITE_API_BASE_URL`; no environment values were copied into this report.
+- Confirmed `frontend/src/api/client.ts` is the only Axios client constructor and uses `import.meta.env.VITE_API_BASE_URL` as its base URL.
+- Confirmed all frontend API endpoints are in `frontend/src/api/documents.ts` and are limited to `POST /api/documents/upload`, `GET /api/documents`, and `GET /api/documents/{document_id}` through `apiClient`.
+- Confirmed no direct `fetch` or direct Axios method calls bypass the configured backend API client.
+- Confirmed the only application routes are `/`, `/upload`, `/documents`, and the wildcard redirect; `/` and unknown paths redirect to `/upload`.
+- Confirmed there are no Supabase, Qdrant, ShopAIKey, provider, private-key, credential-shaped, internal-indexing, chat, evidence, logs, authentication/JWT, deletion, detail-page, or marketing/landing implementation matches in frontend source.
+- No genuine Batch05 violation was found, so no frontend runtime, dependency, or configuration file was modified.
+
+## Files Created or Modified
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- `git diff -- frontend` and full changed-file content review: Passed
+- evidence or reason: Reviewed all current Batch05 hunks and full contents for the four changed frontend files; changes are limited to approved router mounting, upload/documents navigation, upload busy semantics, and responsive/accessibility styling.
+- `git diff --stat -- frontend` and `git diff --name-only -- frontend`: Passed
+- evidence or reason: Exactly four frontend files are changed, with 261 insertions and 36 deletions; no unexpected frontend file is present in the current diff.
+- `git diff --exit-code -- frontend/package.json frontend/package-lock.json frontend/vite.config.ts frontend/tsconfig.json`: Passed
+- evidence or reason: No Batch05 dependency or build-configuration change exists.
+- `npm ls --depth=0` from `frontend/`: Passed
+- evidence or reason: Direct packages are limited to Axios, React, React DOM, React Router DOM, Vite, TypeScript, the React Vite plugin, and React/Node type packages.
+- Provider dependency search across `frontend/package.json` and `frontend/package-lock.json`: Passed
+- evidence or reason: No Supabase, Qdrant, ShopAIKey, OpenAI, Anthropic, Firebase, Pinecone, Weaviate, Milvus, or Chroma package/lock entry was found.
+- Frontend environment-name inspection and `rg` search for `import.meta.env`, `process.env`, and `VITE_*`: Passed
+- evidence or reason: `frontend/.env`, `frontend/.env.example`, and `frontend/src/api/client.ts` use only `VITE_API_BASE_URL`; no other frontend configuration variable was found.
+- Secret/provider-key term search across frontend files: Passed
+- evidence or reason: No Supabase, Qdrant, ShopAIKey, service-role, private-key, secret-key, API-key, access-key, client-secret, database URL, PostgreSQL password, PEM private key, JWT-shaped value, provider token, or credential assignment was found.
+- Direct-provider and absolute runtime URL search: Passed
+- evidence or reason: No direct provider domain, provider SDK usage, or absolute runtime API URL was found in frontend source; package-lock registry and funding metadata were excluded from runtime conclusions.
+- Backend API boundary search across `frontend/src`: Passed
+- evidence or reason: Only `apiClient` calls to the approved upload, list, and detail document endpoints were found; no direct `fetch` or direct `axios.get/post/put/patch/delete` call exists.
+- Route and exported page/component inventory: Passed
+- evidence or reason: Routes are limited to `/upload` and `/documents` plus root/wildcard redirects; exported UI modules are UploadDocumentPage, DocumentListPage, UploadBox, StatusBadge, and DocumentCard.
+- Out-of-scope frontend source search: Passed
+- evidence or reason: No chat, evidence, agent logs, auth, JWT, bearer, login/logout, sign-in/sign-up, deletion, internal `/index`, marketing, or landing implementation term was found in `frontend/src` or `frontend/index.html`.
+- `git diff --check -- frontend`: Passed
+- evidence or reason: No whitespace errors were reported; only existing LF-to-CRLF conversion warnings appeared.
+- Runtime build or browser test: Not run
+- evidence or reason: (05D) is an audit/report-only task whose required validation is final diff review and targeted searches. No code was changed, and Batch06 owns mandatory build and browser validation.
+
+## Acceptance Check
+- Task acceptance condition: Changed frontend code contains no private credentials, direct provider calls, internal index calls, chat/evidence/log/auth/deletion UI, or marketing landing page.
+- Status: satisfied
+- Evidence: Full diff/content review, dependency inspection, environment-name review, endpoint inventory, route/component inventory, and targeted forbidden-term searches all passed. Frontend configuration is limited to `VITE_API_BASE_URL`, and all HTTP behavior remains behind the backend document API client.
+
+## Artifacts Produced
+- Scope, secret, endpoint, dependency, configuration, route, and component boundary confirmation in this execution report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly required no checkbox update and no commit. The task remains available for reviewer acceptance tracking.
+
+## Key Implementation Decisions
+- Treated the current uncommitted frontend diff as accepted Batch05 work and audited it without rewriting or normalizing it.
+- Inspected frontend environment variable names without reproducing local environment values.
+- Did not run or add feature/build/test work because the selected task requires only boundary auditing and reporting; mandatory build/browser validation remains in Batch06.
+
+## Risks or Open Issues
+- None for the (05D) static boundary audit.
+- This task does not claim live network inspection or bundled-output inspection; those remain part of Batch06 validation.
+
+## Minor Issues Fixed During Execution
+- None; no genuine in-scope violation was found.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, blocker, or architecture conflict identified.
+- Dependencies (05A), (05B), and (05C) are present and accepted in the task tracker.
+- Existing uncommitted Batch05 frontend work and unrelated report/review/task edits were preserved.
+- No runtime code, dependency, configuration, task checkbox, or batch status was changed, and no commit was created.
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes
+- handoff notes: (05D) found no secret, endpoint, dependency, route, component, or scope violation. Batch06 can proceed with conditional test handling, mandatory build validation, browser checks where available, and final reviewer handoff.

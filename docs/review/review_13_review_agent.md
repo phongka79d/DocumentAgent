@@ -3160,3 +3160,831 @@ ACCEPTED
   "batch_can_be_marked_complete": true
 }
 ```
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05A)
+- Task title: Mount the router provider and page routes
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The last appended matching execution report is for Batch05 task (05A). Review was limited to this task and did not accept the rest of Batch05.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_13_execute_agent.md`, `docs/tasks/task_13.md`, `frontend/src/App.tsx`, `frontend/src/main.tsx`; this review also appends `docs/review/review_13_review_agent.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - latest execution report for (05A) was appended and reviewed.
+- `docs/tasks/task_13.md`: in scope - (05A) detailed checkbox and progress tracker checkbox were updated by reviewer only after acceptance; sibling tasks and Batch05 status remain unchecked.
+- `docs/plans/Plan_13.md`: in scope - cited sections confirm upload/list routing, App route/navigation location, router provider in main, and implementation step 15.
+- `frontend/src/App.tsx`: in scope - placeholder shell replaced by React Router routes for `/`, `/upload`, `/documents`, and wildcard fallback.
+- `frontend/src/main.tsx`: in scope - `BrowserRouter` mounted around `App`.
+- `frontend/src/pages/UploadDocumentPage.tsx`: in scope - export presence verified for routed upload page.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope - export presence verified for routed document list page.
+- `frontend/package.json`: in scope dependency check - `react-router-dom` is present from prior accepted (01A), and no new dependency was added for (05A).
+- `docs/review/review_13_review_agent.md`: in scope - review report appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/App.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements route rendering and removes placeholder text.
+
+- file from execution report: `frontend/src/main.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Mounts `BrowserRouter` in the entry layer.
+
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is appended and accurately lists validations and limitations.
+
+## Dependency Review
+- Required dependencies: (01A), Batch03, Batch04.
+- Dependency status: satisfied for this scoped review. The tracker shows (01A), all Batch03 tasks, and all Batch04 tasks checked from prior accepted work.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Uses `react-router-dom` through the existing React/Vite entry point; keeps routes in `App.tsx`; preserves frontend-only scope; keeps root/default behavior on the tool UI instead of a landing page.
+- Failed: none.
+- Uncertain: Browser-only visual route inspection was not available, but source and Vite direct-route checks support acceptance.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `main.tsx` wraps `App` with `BrowserRouter`; `App.tsx` defines real `Routes` to existing page components and redirects root/wildcard paths to `/upload`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Route paths are the approved static application routes. No fixture values, provider calls, private URLs, internal index route, or fake success logic were introduced.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed
+- Rerun result: passed; TypeScript and Vite production build completed successfully.
+- Status: passed
+- Notes: Confirms imports, router usage, and page references compile.
+
+- Command/check: Vite direct-route refresh checks for `/`, `/upload`, `/documents`, and `/unknown-route`
+- Reported result: passed
+- Rerun result: passed; each path returned `200 text/html` from `http://127.0.0.1:5173`.
+- Status: passed
+- Notes: Confirms Vite dev server fallback supports direct route refresh for approved routes and fallback path.
+
+- Command/check: placeholder source search
+- Reported result: passed
+- Rerun result: passed by source/diff review and targeted `rg`; placeholder App text was removed.
+- Status: passed
+- Notes: No placeholder or marketing page was introduced.
+
+- Command/check: sibling/future Batch05 scope search
+- Reported result: no early sibling work claimed
+- Rerun result: passed; no `NavLink`, `<nav`, active-page feedback, scope-hardening changes, secret/provider calls, internal index call, chat/evidence/log/auth/deletion UI, or detail route was added by this diff.
+- Status: passed
+- Notes: (05B), (05C), and (05D) remain unimplemented and unchecked.
+
+- Command/check: manual in-app browser route/navigation check
+- Reported result: not run; executor reported Browser target unavailable.
+- Rerun result: not run with in-app browser; reviewer used build, source review, and HTTP direct-route checks.
+- Status: warning
+- Notes: This does not block (05A) because direct route refresh and route source behavior were validated; compact navigation and active feedback are explicitly (05B).
+
+## Acceptance Review
+- Task acceptance: Direct navigation and browser refresh work for both routes under the Vite development server; placeholder text is removed.
+- Status: satisfied
+- Evidence: `/upload` and `/documents` are defined in `App.tsx`, `BrowserRouter` is mounted in `main.tsx`, Vite returns the app shell for direct route loads, build passes, and placeholder text was removed.
+
+## Progress Tracking
+- Selected task checkbox: was unchecked before review; now checked in the selected task block and progress tracker for (05A) only.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch05 remains unchecked because (05B), (05C), and (05D) are still unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended.
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The report accurately states that build and HTTP direct-route checks passed, placeholder text was removed, and in-app browser manual verification was not run.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Browser-only visual/manual route inspection was not rerun because the in-app browser target was unavailable to the executor and no browser target was available in this review flow. Build, source, and Vite direct-route checks passed.
+
+### Observations
+- The fallback redirects unknown routes to `/upload`, which is consistent with the task's safe default behavior.
+- No compact navigation or active-page feedback was added early; that remains correctly reserved for (05B).
+- No broader responsive/accessibility styling or scope-hardening work from (05C)/(05D) was implemented early.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A) is accepted in Batch05 and sibling tasks remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch05 - Application Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/tasks/task_13.md",
+    "docs/review/review_13_review_agent.md",
+    "frontend/src/App.tsx",
+    "frontend/src/main.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Browser-only visual/manual route inspection was not rerun; build, source, and Vite direct-route checks passed."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05B)
+- Task title: Add compact navigation between Upload and Documents
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `## 9. Implementation Steps`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: Review was limited to (05B), distinguishing the accepted uncommitted (05A) routing changes.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`, `frontend/src/App.tsx`, `frontend/src/main.tsx`, `frontend/src/styles.css`
+- untracked files: none
+
+## Files Reviewed
+- `frontend/src/App.tsx`: in scope - (05B) adds the compact header and exactly two `NavLink` destinations; accepted (05A) routes remain intact.
+- `frontend/src/styles.css`: in scope - adds navigation active, hover, focus-visible, wrapping, and narrow-width styles.
+- `frontend/src/main.tsx`: accepted prior scope - unchanged by (05B); contains the accepted (05A) `BrowserRouter` mount.
+- `docs/reports/report_13_execute_agent.md`: in scope - latest (05B) execution report is appended and accurate.
+- `docs/tasks/task_13.md`: in scope - only (05B) detailed and tracker checkboxes were updated after acceptance.
+- `docs/plans/Plan_13.md`: in scope - cited sections confirm simple two-page navigation and compact, non-marketing UI.
+- `docs/review/review_13_review_agent.md`: in scope - this review is appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/App.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses `NavLink` for `/upload` and `/documents` only.
+- file from execution report: `frontend/src/styles.css`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Navigation-specific active, focus, wrapping, and 320px-readable layout styles are present.
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report is appended and identifies blocked in-app browser validation honestly.
+
+## Dependency Review
+- Required dependencies: (05A).
+- Dependency status: satisfied; (05A) is accepted and checked.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Uses React Router `NavLink` inside the existing routed app; keeps navigation in `App.tsx`; preserves the provider, routes, redirects, and fallback from accepted (05A).
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Both links perform working client-side route transitions and active state changes in browser automation.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Only approved static route paths and display labels are present; no fixtures, secrets, provider calls, internal index calls, or fake success logic were introduced.
+
+## Validations Reviewed
+- Command/check: `npm run build`
+- Reported result: passed
+- Rerun result: passed; TypeScript and Vite built 101 modules.
+- Status: passed
+- Notes: Router and navigation code compiles.
+- Command/check: mouse client-side navigation and active state
+- Reported result: blocked in the in-app browser
+- Rerun result: passed using local Chrome automation; clicking Documents changed the URL and `aria-current="page"` while the navigation entry count remained 1.
+- Status: passed
+- Notes: Confirms no full reload.
+- Command/check: keyboard focus and activation
+- Reported result: blocked in the in-app browser
+- Rerun result: passed; Tab reached Upload and Documents with a visible 3px outline, and Enter on Documents navigated client-side.
+- Status: passed
+- Notes: Focus-visible treatment is functional.
+- Command/check: 320px narrow-width readability
+- Reported result: source check passed
+- Rerun result: passed in local Chrome at 320x720; document scroll width was 320px, both links were visible at equal width, and active state remained readable.
+- Status: passed
+- Notes: No horizontal overflow was found.
+- Command/check: `git diff --check`
+- Reported result: passed
+- Rerun result: passed with line-ending warnings only.
+- Status: passed
+- Notes: No whitespace errors.
+- Command/check: future-scope search and diff review
+- Reported result: no early (05C)/(05D) work
+- Rerun result: passed; no broad page/component restyling, secret audit implementation, provider/internal endpoint work, extra route, extra destination, or marketing page was added by (05B).
+- Status: passed
+- Notes: Navigation-specific mobile layout is required by (05B), not premature (05C).
+
+## Acceptance Review
+- Task acceptance: Users can move between pages without a full reload; labels and active state remain readable at narrow widths.
+- Status: satisfied
+- Evidence: Browser checks confirmed client-side mouse and keyboard navigation, correct active `aria-current`, visible focus outlines, and overflow-free 320px rendering.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed task block and Batch05 task tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended.
+- Other: (05C), (05D), and all sibling/future task checkboxes remain unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches: The executor could not run browser interaction because the in-app target was unavailable; reviewer fallback browser validation subsequently passed.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The small product label does not add a route or marketing surface.
+- Accepted (05A) provider and route changes remain preserved and are not re-attributed to (05B).
+- Broader (05C) responsive/accessibility styling and (05D) scope-hardening work remain unimplemented.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch05 - Application Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/App.tsx",
+    "frontend/src/main.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05C)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05C)
+- Task title: Complete responsive, accessible, work-focused styling
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05C)
+- Reviewed task ID: (05C)
+- Correct selection: yes
+- Notes: The latest appended execution entry is (05C). Review was limited to this task and preserved accepted uncommitted (05A)/(05B) work.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`, `frontend/src/App.tsx`, `frontend/src/main.tsx`, `frontend/src/pages/UploadDocumentPage.tsx`, `frontend/src/styles.css`
+- untracked files: none
+
+## Files Reviewed
+- `frontend/src/styles.css`: in scope - plain CSS responsive, focus, disabled/busy, feedback, and overflow styling for (05C), plus preserved accepted navigation styles.
+- `frontend/src/pages/UploadDocumentPage.tsx`: in scope - necessary semantic `aria-busy` addition on the form whose controls are disabled during upload.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope supporting review - confirms refresh busy/disabled state and text-based loading/error states used by the CSS.
+- `frontend/src/components/UploadBox.tsx`: in scope supporting review - confirms file input, selected filename, validation feedback, and disabled state markup.
+- `frontend/src/components/DocumentCard.tsx`: in scope supporting review - confirms long filename, metadata, processing error, and status rendering targets.
+- `frontend/src/components/StatusBadge.tsx`: in scope supporting review - confirms every status includes a visible text label and accessible name.
+- `frontend/src/App.tsx`: accepted prior scope - preserved compact two-route navigation; no marketing page or new destination was added by (05C).
+- `frontend/src/main.tsx`: accepted prior scope - preserved router provider; unchanged by (05C).
+- `frontend/package.json`: dependency check - no (05C) dependency or framework change.
+- `docs/plans/Plan_13.md`: in scope - cited sections reviewed.
+- `docs/reports/report_13_execute_agent.md`: in scope - latest (05C) execution report reviewed.
+- `docs/tasks/task_13.md`: in scope - only (05C) detailed and tracker checkboxes updated after acceptance.
+- `docs/review/review_13_review_agent.md`: in scope - this review appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/styles.css`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements compact plain-CSS layout, fixed mobile breakpoints, focus/disabled/busy feedback, and long-content protections.
+
+- file from execution report: `frontend/src/pages/UploadDocumentPage.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The only semantic change is `aria-busy={isUploading}` on the upload form; it is necessary for the styled busy state and accurately represents the form-wide upload operation.
+
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report is appended and clearly distinguishes source/build checks from unavailable browser checks.
+
+## Dependency Review
+- Required dependencies: (02A), (02B), (02C), (05B).
+- Dependency status: satisfied; all required task checkboxes were already accepted and checked, and their components/navigation are present.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Retains the existing plain CSS architecture and React component boundaries; styles the approved upload/list tool directly; uses semantic markup only where required; adds no framework, provider integration, route, or backend behavior.
+- Failed: none.
+- Uncertain: Rendered browser behavior at desktop/mobile widths and interactive keyboard focus order could not be inspected because the configured browser target was unavailable.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: CSS selectors target real mounted components and states; the upload form receives real `aria-busy` state from `isUploading`; status/error/success content is rendered from existing application state and backend results.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fixed breakpoints, labels, and palette values are presentation configuration. No fixture-specific filename, response, ID, private endpoint, or fake success value was added.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed
+- Rerun result: passed; TypeScript no-emit compilation and Vite production build completed with 101 modules transformed.
+- Status: passed
+- Notes: Confirms the semantic markup and CSS imports compile in the current routed application.
+
+- Command/check: `git diff --check -- frontend/src/styles.css frontend/src/pages/UploadDocumentPage.tsx`
+- Reported result: passed
+- Rerun result: passed with line-ending conversion warnings only.
+- Status: passed
+- Notes: No whitespace errors were reported.
+
+- Command/check: responsive/accessibility source assertions
+- Reported result: passed
+- Rerun result: passed; verified 320px minimum, 560px and 360px fixed breakpoints, focus-visible selectors, disabled selectors, busy semantics, overflow wrapping/ellipsis, status text, and no viewport-scaled font sizes.
+- Status: passed
+- Notes: These are static checks and are not presented as rendered browser validation.
+
+- Command/check: dependency/framework and scope diff review
+- Reported result: no dependency, framework, feature, marketing, backend, or (05D) audit work added
+- Rerun result: passed; package manifests are unchanged for (05C), runtime changes are limited to CSS and the upload form semantic attribute, and accepted (05A)/(05B) work is preserved.
+- Status: passed
+- Notes: No secret/endpoint audit implementation or Batch05 sibling completion was performed.
+
+- Command/check: manual desktop and 320-375px browser inspection
+- Reported result: not run because the in-app browser target was unavailable
+- Rerun result: not run; browser target remained unavailable for this review context.
+- Status: warning
+- Notes: No claim of rendered overflow, visual polish, or exact browser layout was made.
+
+- Command/check: manual keyboard focus inspection
+- Reported result: not run because the in-app browser target was unavailable
+- Rerun result: not run; source selectors and semantics were reviewed only.
+- Status: warning
+- Notes: No claim of observed Tab order or rendered focus rings was made.
+
+## Acceptance Review
+- Task acceptance: Controls remain reachable and readable; long labels do not cause horizontal overflow; status is not communicated by color alone.
+- Status: satisfied with browser-validation warning
+- Evidence: Controls use bounded widths and mobile full-width layouts; filenames, metadata, buttons, errors, and status text wrap or ellipsize; status badges contain visible labels and accessible names; error/success/busy states include text and semantic roles rather than color alone. The build passes. Rendered browser checks remain outstanding but were reported honestly.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed task block and Batch05 tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at EOF.
+- Other: (05D) remains unchecked; no Batch05 completion checkbox was changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The executor accurately reports the passing build/static checks and explicitly states that rendered mobile/desktop and keyboard checks were not run because the browser target was unavailable.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Rendered desktop and 320-375px overflow behavior was not manually observed because the browser target was unavailable.
+- Keyboard Tab order and rendered focus indicators were not manually observed; source-level focus and semantic checks passed.
+
+### Observations
+- Plain CSS is retained, with compact spacing, restrained shadows, and 0.4-0.5rem control/surface radii appropriate to a work-focused tool.
+- Mobile rules stack document metadata, make primary actions full width, reduce padding, and stack the native file-selector button at the 360px breakpoint for the required 320px minimum viewport.
+- Long filenames and other uncontrolled text have `min-width: 0`, bounded widths, and `overflow-wrap` or ellipsis protections.
+- Busy state is represented by real text, disabled controls, `aria-busy`, and progress/status semantics, not color alone.
+- The `UploadDocumentPage` semantic change is necessary and within the task allowance for page/component semantic markup corrections.
+- No marketing page, new dependency/framework, new feature, backend change, or (05D) scope/secret audit work was introduced.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, with browser checks still due in the later manual validation task when a browser is available.
+- Should batch be marked complete? no; (05D) remains incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch05 - Application Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/App.tsx",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/UploadDocumentPage.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Rendered desktop/mobile browser inspection unavailable",
+    "Interactive keyboard focus inspection unavailable"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Rendered 320-375px overflow and desktop layout were not manually observed because the browser target was unavailable.",
+    "Keyboard Tab order and rendered focus rings were not manually observed."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05D)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05D)
+- Task title: Enforce frontend secret, endpoint, and scope boundaries
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` sections 4, 10, 12, and 15; `README.md` Development Notes for AI Agents coordination rules
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05D)
+- Reviewed task ID: (05D)
+- Correct selection: yes
+- Notes: The final appended execution entry is the requested final Batch05 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`, `frontend/src/App.tsx`, `frontend/src/main.tsx`, `frontend/src/pages/UploadDocumentPage.tsx`, `frontend/src/styles.css`
+- untracked files: none
+
+## Files Reviewed
+- `frontend/src/App.tsx`: in scope - approved Upload/Documents navigation and routes only.
+- `frontend/src/main.tsx`: in scope - BrowserRouter mounting only.
+- `frontend/src/pages/UploadDocumentPage.tsx`: in scope - prior Batch05 `aria-busy` semantic change only.
+- `frontend/src/styles.css`: in scope - prior Batch05 responsive/accessibility styling only.
+- `frontend/src/api/client.ts`: in scope verification - sole Axios constructor; only `VITE_API_BASE_URL`.
+- `frontend/src/api/documents.ts`: in scope verification - approved upload/list/detail calls through `apiClient` only.
+- `frontend/src/types/documents.ts`: in scope verification - document response types only.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope verification - list/refresh UI only.
+- `frontend/src/components/DocumentCard.tsx`: in scope verification - document summary only; no detail/deletion action.
+- `frontend/src/components/StatusBadge.tsx`: in scope verification - four approved statuses only.
+- `frontend/src/components/UploadBox.tsx`: in scope verification - file selection only.
+- `frontend/src/utils/fileValidation.ts`: in scope verification - supported extension and empty-file validation only.
+- `frontend/index.html`: in scope verification - application mount only; no landing content.
+- `frontend/package.json`: in scope verification - expected React/Axios/router packages only.
+- `frontend/package-lock.json`: in scope verification - lockfile v3, 101 package entries, no provider SDK.
+- `frontend/vite.config.ts`: in scope verification - React plugin only.
+- `frontend/tsconfig.json`: in scope verification - no unexpected configuration.
+- `docs/reports/report_13_execute_agent.md`: in scope - (05D) audit report appended.
+- `docs/review/review_13_review_agent.md`: in scope - prior reviews preserved; this review appended at EOF.
+- `docs/tasks/task_13.md`: in scope - only (05D) detailed/tracker checkboxes updated by this reviewer.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The task is audit/report-only. No frontend runtime, dependency, or configuration file is attributed to (05D).
+
+## Dependency Review
+- Required dependencies: (05A), (05B), (05C)
+- Dependency status: all accepted and checked before review
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Frontend uses one configured backend Axios client and only document upload/list/detail endpoints; provider and internal indexing boundaries remain backend-only.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Audit claims were reproduced against full source, manifests/lock, environment names, API modules, backend route mounting, current diff, and build output.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No private credentials, provider URLs/SDKs, absolute runtime API URLs, JWT-shaped values, or credential assignments were found.
+
+## Validations Reviewed
+- Command/check: `git diff --stat -- frontend`, `git diff --numstat -- frontend`, full frontend diff/content review
+- Reported result: four frontend files, 261 insertions and 36 deletions
+- Rerun result: matched exactly
+- Status: passed
+- Notes: These are cumulative prior Batch05 runtime changes; (05D) reports no runtime edit.
+
+- Command/check: dependency/config diff and package inventory
+- Reported result: no Batch05 manifest/lock/Vite/TypeScript config diff; expected direct packages only
+- Rerun result: `git diff --exit-code` passed; `npm ls --depth=0` and parsed lock inventory matched
+- Status: passed
+- Notes: No provider SDK or unexpected framework was found.
+
+- Command/check: environment variable name inspection
+- Reported result: only `VITE_API_BASE_URL`
+- Rerun result: `.env`, `.env.example`, and `src/api/client.ts` expose/reference only `VITE_API_BASE_URL`
+- Status: passed
+- Notes: Environment values were not reproduced.
+
+- Command/check: endpoint/client inventory
+- Reported result: one Axios client; only upload/list/detail document endpoints through `apiClient`
+- Rerun result: matched; backend router independently confirms these endpoints and a separate internal index route that frontend does not call
+- Status: passed
+- Notes: No direct `fetch` or direct Axios method bypass exists.
+
+- Command/check: prohibited provider/secret/scope searches
+- Reported result: no provider, secret, internal index, chat/evidence/log/auth/JWT/deletion/detail-page/marketing UI
+- Rerun result: no prohibited frontend source matches
+- Status: passed
+- Notes: `getDocument` exists as the approved API module function, but no document-detail route/page/UI exists.
+
+- Command/check: `git diff --check -- frontend`
+- Reported result: passed with line-ending warnings only
+- Rerun result: passed with line-ending warnings only
+- Status: passed
+- Notes: No whitespace error.
+
+- Command/check: `npm run build`
+- Reported result: not run by (05D), deferred to Batch06
+- Rerun result: passed; TypeScript and Vite completed, 101 modules transformed
+- Status: passed
+- Notes: Independent reviewer validation; it does not alter the audit-only scope.
+
+## Acceptance Review
+- Task acceptance: Changed frontend code contains no private credentials, direct provider calls, internal index calls, chat/evidence/log/auth/deletion UI, or marketing landing page.
+- Status: satisfied
+- Evidence: Full source/diff review, environment-name inventory, dependency/lock inspection, API-route inventory, prohibited-term searches, backend route comparison, whitespace check, and build all passed.
+
+## Progress Tracking
+- Selected task checkbox: checked in detailed task block and Batch05 tracker after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 completion checkbox remains unchecked as explicitly required
+- Execution report entry: appended and accurate
+- Review report entry: appended at physical EOF
+- Other: No Batch06 or future task checkbox was changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None. Exact frontend file/count claims, package/config claims, environment names, endpoints, routes, scope exclusions, and audit-only runtime status matched repository evidence.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The backend mounts chat, agent-run, retrieval, and internal indexing APIs, but the frontend does not call or expose them.
+- Package-lock registry and funding URLs are dependency metadata, not frontend runtime provider calls.
+- Current frontend runtime changes belong to earlier accepted Batch05 tasks; (05D) added only its execution report entry.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no; explicit user instruction requires leaving the Batch05 checkbox unchanged.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch05 - Application Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/App.tsx",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/UploadDocumentPage.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

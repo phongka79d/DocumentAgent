@@ -592,7 +592,7 @@ Individually functional pages are not a usable application until users can reach
 
 ### Tasks
 
-- [ ] (05A): Mount the router provider and page routes
+- [x] (05A): Mount the router provider and page routes
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - Add basic routing for upload and document list.
@@ -607,7 +607,7 @@ Individually functional pages are not a usable application until users can reach
   - Blocked Condition: None.
   - Files: `frontend/src/App.tsx`, `frontend/src/main.tsx`
 
-- [ ] (05B): Add compact navigation between Upload and Documents
+- [x] (05B): Add compact navigation between Upload and Documents
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Add navigation between upload and document list.
@@ -623,7 +623,7 @@ Individually functional pages are not a usable application until users can reach
   - Blocked Condition: None.
   - Files: `frontend/src/App.tsx`, `frontend/src/styles.css`
 
-- [ ] (05C): Complete responsive, accessible, work-focused styling
+- [x] (05C): Complete responsive, accessible, work-focused styling
   - Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Adjust styles consistently with the existing frontend.
@@ -640,7 +640,7 @@ Individually functional pages are not a usable application until users can reach
   - Blocked Condition: None.
   - Files: `frontend/src/styles.css`, page/component files only where semantic markup changes are required
 
-- [ ] (05D): Enforce frontend secret, endpoint, and scope boundaries
+- [x] (05D): Enforce frontend secret, endpoint, and scope boundaries
   - Source of Truth: `docs/plans/Plan_13.md` > `## 4. Out of Scope`; `docs/plans/Plan_13.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`; `README.md` > `## Development Notes for AI Agents` > `Important coordination rules`
   - Source Requirements:
     - No Supabase, Qdrant, or ShopAIKey keys in frontend code.
@@ -942,10 +942,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch05
 
-- [ ] (05A): Mount the router provider and page routes
-- [ ] (05B): Add compact navigation between Upload and Documents
-- [ ] (05C): Complete responsive, accessible, work-focused styling
-- [ ] (05D): Enforce frontend secret, endpoint, and scope boundaries
+- [x] (05A): Mount the router provider and page routes
+- [x] (05B): Add compact navigation between Upload and Documents
+- [x] (05C): Complete responsive, accessible, work-focused styling
+- [x] (05D): Enforce frontend secret, endpoint, and scope boundaries
 
 #### Batch06
 
