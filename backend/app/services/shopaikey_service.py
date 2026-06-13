@@ -7,6 +7,7 @@ from app.core.config import get_settings
 
 EMBEDDING_REQUEST_TIMEOUT_SECONDS = 30.0
 CHAT_COMPLETION_REQUEST_TIMEOUT_SECONDS = 60.0
+CHAT_COMPLETION_MAX_ATTEMPTS = 2
 CandidateT = TypeVar("CandidateT")
 
 
@@ -20,6 +21,10 @@ def _embeddings_url(base_url: str) -> str:
 
 def _chat_completions_url(base_url: str) -> str:
     return f"{base_url.rstrip('/')}/chat/completions"
+
+
+def _is_retryable_chat_status(status_code: int) -> bool:
+    return status_code in {408, 429} or status_code >= 500
 
 
 def rerank_candidates(
@@ -133,32 +138,46 @@ def chat_completion(
     if response_format is not None:
         request_payload["response_format"] = response_format
 
-    try:
-        response = httpx.post(
-            _chat_completions_url(settings["base_url"]),
-            headers={
-                "Authorization": f"Bearer {settings['api_key']}",
-                "Content-Type": "application/json",
-            },
-            json=request_payload,
-            timeout=CHAT_COMPLETION_REQUEST_TIMEOUT_SECONDS,
-        )
-    except httpx.TimeoutException as exc:
-        raise ShopAIKeyServiceError(
-            "ShopAIKey chat completion request timed out."
-        ) from exc
-    except httpx.RequestError as exc:
-        raise ShopAIKeyServiceError(
-            "ShopAIKey chat completion request failed."
-        ) from exc
-
-    try:
-        response.raise_for_status()
-    except httpx.HTTPStatusError as exc:
-        status_code = exc.response.status_code if exc.response is not None else "unknown"
-        raise ShopAIKeyServiceError(
-            f"ShopAIKey chat completion request failed with status {status_code}."
-        ) from exc
+    for attempt in range(CHAT_COMPLETION_MAX_ATTEMPTS):
+        try:
+            response = httpx.post(
+                _chat_completions_url(settings["base_url"]),
+                headers={
+                    "Authorization": f"Bearer {settings['api_key']}",
+                    "Content-Type": "application/json",
+                },
+                json=request_payload,
+                timeout=CHAT_COMPLETION_REQUEST_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+            break
+        except httpx.TimeoutException as exc:
+            if attempt + 1 < CHAT_COMPLETION_MAX_ATTEMPTS:
+                continue
+            raise ShopAIKeyServiceError(
+                "ShopAIKey chat completion request timed out."
+            ) from exc
+        except httpx.RequestError as exc:
+            if attempt + 1 < CHAT_COMPLETION_MAX_ATTEMPTS:
+                continue
+            raise ShopAIKeyServiceError(
+                "ShopAIKey chat completion request failed."
+            ) from exc
+        except httpx.HTTPStatusError as exc:
+            status_code = (
+                exc.response.status_code
+                if exc.response is not None
+                else "unknown"
+            )
+            if (
+                isinstance(status_code, int)
+                and _is_retryable_chat_status(status_code)
+                and attempt + 1 < CHAT_COMPLETION_MAX_ATTEMPTS
+            ):
+                continue
+            raise ShopAIKeyServiceError(
+                f"ShopAIKey chat completion request failed with status {status_code}."
+            ) from exc
 
     try:
         response_payload = response.json()

@@ -689,6 +689,26 @@ def test_run_answer_agent_executes_self_check_for_grounded_draft_without_provide
     assert chat_completion.call_count == 2
 
 
+def test_run_answer_agent_uses_verification_confidence_for_ready_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload(confidence=0.0)),
+            json.dumps(_ready_self_check_payload()),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert output.confidence == 0.82
+
+
 def test_execute_answer_self_check_marks_reasoning_ready_when_grounded_in_verified_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

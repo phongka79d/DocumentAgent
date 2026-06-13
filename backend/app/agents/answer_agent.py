@@ -428,7 +428,12 @@ def run_answer_agent(
         raise failure from exc
 
     try:
-        checked_output = draft_output.model_copy(update={"self_check": self_check})
+        checked_output = draft_output.model_copy(
+            update={
+                "self_check": self_check,
+                "confidence": answer_input.verification.confidence,
+            }
+        )
         final_output = normalize_validated_draft_output(checked_output)
     except _AnswerAgentFailure as exc:
         _log_failed_answer_self_check(answer_input, exc.failure_type)

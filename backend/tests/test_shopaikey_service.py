@@ -436,6 +436,54 @@ def test_chat_completion_maps_network_failures_to_safe_errors(
     assert "provider unavailable" not in message
 
 
+def test_chat_completion_retries_once_after_transient_network_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    response = Mock()
+    response.json.return_value = {"choices": [{"message": {"content": "{}"}}]}
+    response.raise_for_status = Mock()
+    post = Mock(
+        side_effect=[
+            httpx.TimeoutException("timed out"),
+            response,
+        ]
+    )
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(shopaikey_service.httpx, "post", post)
+
+    content = shopaikey_service.chat_completion(
+        [{"role": "user", "content": "Verify."}]
+    )
+
+    assert content == "{}"
+    assert post.call_count == 2
+
+
+def test_chat_completion_retries_once_after_transient_server_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    request = httpx.Request(
+        "POST",
+        "https://api.shopaikey.test/v1/chat/completions",
+    )
+    unavailable = httpx.Response(status_code=503, request=request)
+    success = Mock()
+    success.json.return_value = {"choices": [{"message": {"content": "{}"}}]}
+    success.raise_for_status = Mock()
+    post = Mock(side_effect=[unavailable, success])
+
+    monkeypatch.setattr(shopaikey_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(shopaikey_service.httpx, "post", post)
+
+    content = shopaikey_service.chat_completion(
+        [{"role": "user", "content": "Verify."}]
+    )
+
+    assert content == "{}"
+    assert post.call_count == 2
+
+
 def test_chat_completion_maps_non_success_status_to_safe_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
