@@ -251,7 +251,7 @@ The chat page must prevent invalid submissions before it calls the backend. Read
 
 ### Tasks
 
-- [ ] (02A): Build a ready-document selector component
+- [x] (02A): Build a ready-document selector component
   - Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 8. API Design`; `README.md` > `## Main Workflows` > `### Frontend Document API Client`
   - Source Requirements:
     - `DocumentSelector.tsx` selects one or more ready documents.
@@ -267,7 +267,7 @@ The chat page must prevent invalid submissions before it calls the backend. Read
   - Blocked Condition: None.
   - Files: `frontend/src/components/DocumentSelector.tsx`
 
-- [ ] (02B): Add document selection state and validation helpers
+- [x] (02B): Add document selection state and validation helpers
   - Source of Truth: `docs/plans/Plan_14.md` > `## 8. API Design`; `docs/plans/Plan_14.md` > `## 13. Failure Handling`
   - Source Requirements:
     - At least one ready document must be selected.
@@ -283,7 +283,7 @@ The chat page must prevent invalid submissions before it calls the backend. Read
   - Blocked Condition: None.
   - Files: `frontend/src/components/DocumentSelector.tsx`, `frontend/src/pages/ChatPage.tsx`
 
-- [ ] (02C): Build the reusable chat input component
+- [x] (02C): Build the reusable chat input component
   - Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 8. API Design`; `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
   - Source Requirements:
     - `ChatBox.tsx` must provide textarea/input, submit button, disabled loading state, and validation message.
@@ -863,9 +863,9 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] (01D): Confirm frontend runtime configuration and API scope boundaries
 
 #### Batch02
-- [ ] (02A): Build a ready-document selector component
-- [ ] (02B): Add document selection state and validation helpers
-- [ ] (02C): Build the reusable chat input component
+- [x] (02A): Build a ready-document selector component
+- [x] (02B): Add document selection state and validation helpers
+- [x] (02C): Build the reusable chat input component
 
 #### Batch03
 - [ ] (03A): Build the answer display component

@@ -307,3 +307,316 @@ complete
 - next task ID: (02A)
 - can proceed: yes, after A2 accepts (01D) and A3 passes/commits Batch01
 - handoff notes: Batch01 should trigger A3 after (01D) acceptance because all Batch01 task IDs will be accepted.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch02 - Ready Document Selector and Question Input Components
+
+## Task
+(02A) - Build a ready-document selector component
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 8. API Design`
+- `README.md` > `## Main Workflows` > `### Frontend Document API Client`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Ready Document Selector and Question Input Components
+- Task ID: (02A)
+- Task title: Build a ready-document selector component
+
+## Completed Work
+- Complete.
+- Created `frontend/src/components/DocumentSelector.tsx` as a reusable controlled multi-select component for document chat selection.
+- The component can receive documents from a parent or load them through the existing `listDocuments()` frontend API client when documents are not provided.
+- Ready documents are selectable; `uploaded`, `processing`, and `failed` documents are rendered unavailable and disabled.
+- Added loading, API error, empty document, and no-ready-documents states.
+- Added responsive selector styling in `frontend/src/styles.css`.
+
+## Files Created or Modified
+- `frontend/src/components/DocumentSelector.tsx`
+- `frontend/src/styles.css`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed.
+
+## Acceptance Check
+- Task acceptance condition: `ready` documents are selectable; `uploaded`, `processing`, and `failed` documents are not selectable; no-ready-documents state is clear.
+- Status: satisfied
+- Evidence: `DocumentSelector` enables checkboxes only for `status === "ready"`, prunes selected IDs to ready documents, disables unavailable statuses, and renders `No ready documents are available for chat.` when documents exist but none are ready.
+
+## Artifacts Produced
+- `frontend/src/components/DocumentSelector.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Running under orchestrator; checkbox updates are left to A2 after accepted review.
+
+## Key Implementation Decisions
+- Used a controlled `selectedDocumentIds` prop and `onSelectedDocumentIdsChange` callback so later chat-page work can own submission state.
+- Allowed parent-provided document data while preserving a default `listDocuments()` load path for reuse.
+
+## Risks or Open Issues
+- Manual browser validation remains scheduled for Batch06 per task validation.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (02A).
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes, after A2 accepts (02A)
+- handoff notes: (02B) can build validation helpers on the controlled selected ready document IDs exposed by `DocumentSelector`.
+
+---
+
+# Task Execution Report - (02A) Repair
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch02 - Ready Document Selector and Question Input Components
+
+## Task
+(02A) - Build a ready-document selector component
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 8. API Design`
+- `README.md` > `## Main Workflows` > `### Frontend Document API Client`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Ready Document Selector and Question Input Components
+- Task ID: (02A)
+- Task title: Build a ready-document selector component
+
+## Completed Work
+- Complete.
+- Repaired the selector metadata separator so `DocumentSelector.tsx` uses ASCII text and does not render mojibake.
+
+## Files Created or Modified
+- `frontend/src/components/DocumentSelector.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed.
+
+## Acceptance Check
+- Task acceptance condition: `ready` documents are selectable; `uploaded`, `processing`, and `failed` documents are not selectable; no-ready-documents state is clear.
+- Status: satisfied
+- Evidence: The repair preserved ready-only checkbox behavior and no-ready-documents messaging while removing the text encoding issue.
+
+## Artifacts Produced
+- Repaired `frontend/src/components/DocumentSelector.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Running under orchestrator; checkbox updates are left to A2 after accepted review.
+
+## Key Implementation Decisions
+- Used an ASCII hyphen separator in document metadata to match repository editing constraints.
+
+## Risks or Open Issues
+- Manual browser validation remains scheduled for Batch06 per task validation.
+
+## Minor Issues Fixed During Execution
+- Replaced a mojibake-rendered separator in document metadata with ASCII text.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (02A).
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes, after A2 accepts (02A)
+- handoff notes: (02B) can build validation helpers on the controlled selected ready document IDs exposed by `DocumentSelector`.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch02 - Ready Document Selector and Question Input Components
+
+## Task
+(02B) - Add document selection state and validation helpers
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 8. API Design`
+- `docs/plans/Plan_14.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Ready Document Selector and Question Input Components
+- Task ID: (02B)
+- Task title: Add document selection state and validation helpers
+
+## Completed Work
+- Complete.
+- Added typed document-selection validation contracts to `DocumentSelector.tsx`.
+- Added `getReadyDocumentIds()` to normalize selected IDs to documents whose status is `ready`.
+- Added `validateReadyDocumentSelection()` with safe messages for no ready documents and no selected ready document.
+- Added `useReadyDocumentSelection()` so the later chat page can own selected document state and block submission before calling `askQuestion()`.
+- Added an optional `validationMessage` display surface to `DocumentSelector` and matching CSS.
+
+## Files Created or Modified
+- `frontend/src/components/DocumentSelector.tsx`
+- `frontend/src/styles.css`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed.
+
+## Acceptance Check
+- Task acceptance condition: Submit attempts with no selected ready document are blocked before `askQuestion` is called and display a clear safe message.
+- Status: satisfied for the reusable validation boundary in this task scope.
+- Evidence: `validateReadyDocumentSelection()` returns invalid output with `Select at least one ready document before asking a question.` when ready documents exist but none are selected, and `DocumentSelector` can render that message via `validationMessage`. The full chat submit wiring is intentionally left to Batch04, which owns `ChatPage.tsx` creation and `askQuestion()` integration.
+
+## Artifacts Produced
+- Selection validation helper functions and hook exported from `frontend/src/components/DocumentSelector.tsx`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Running under orchestrator; checkbox updates are left to A2 after accepted review.
+
+## Key Implementation Decisions
+- Kept the selected document state controlled and reusable instead of creating the full chat page ahead of Batch04.
+- Used safe static validation messages that do not expose backend or provider details.
+
+## Risks or Open Issues
+- Manual negative submission validation remains scheduled for Batch06 after ChatPage is assembled in Batch04.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (02B).
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes, after A2 accepts (02B)
+- handoff notes: ChatPage can call `useReadyDocumentSelection()` and pass `validation.message` into `DocumentSelector` before invoking `askQuestion()`.
+
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch02 - Ready Document Selector and Question Input Components
+
+## Task
+(02C) - Build the reusable chat input component
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 8. API Design`
+- `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Ready Document Selector and Question Input Components
+- Task ID: (02C)
+- Task title: Build the reusable chat input component
+
+## Completed Work
+- Complete.
+- Created `frontend/src/components/ChatBox.tsx` as a reusable controlled question form.
+- Added `validateQuestion()` and `QUESTION_REQUIRED_MESSAGE` for trimmed non-empty question validation.
+- Empty or whitespace-only questions set a validation message and do not invoke the submit callback.
+- Added disabled/busy submit behavior so duplicate submissions are blocked while loading.
+- Added accessible textarea labeling, validation feedback, and responsive styles.
+
+## Files Created or Modified
+- `frontend/src/components/ChatBox.tsx`
+- `frontend/src/styles.css`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed.
+
+## Acceptance Check
+- Task acceptance condition: Empty or whitespace-only questions are blocked before `askQuestion` is called; duplicate submit is disabled while loading.
+- Status: satisfied
+- Evidence: `handleSubmit()` validates `question.trim()` before invoking `onSubmit`; `disabled || isSubmitting` returns early and disables textarea/button while the parent marks submission loading.
+
+## Artifacts Produced
+- `frontend/src/components/ChatBox.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Running under orchestrator; checkbox updates are left to A2 after accepted review.
+
+## Key Implementation Decisions
+- Kept `ChatBox` controlled so Batch04 `ChatPage` can own question state and call `askQuestion()` only after validation.
+- Passed the trimmed question to `onSubmit` so page-level code does not send leading/trailing whitespace.
+
+## Risks or Open Issues
+- Manual empty-question and loading-state checks remain scheduled for Batch06 after the chat page is assembled.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (02C).
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes, after A2 accepts (02C) and A3 passes/commits Batch02
+- handoff notes: `ChatBox` exposes trimmed question submission and can be composed with `DocumentSelector` in Batch04.

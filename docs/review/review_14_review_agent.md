@@ -700,3 +700,502 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Execution Report Reviewed
+docs/reports/report_14_execute_agent.md
+
+## Review Report File
+docs/review/review_14_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Ready Document Selector and Question Input Components
+- Task ID: (02A)
+- Task title: Build a ready-document selector component
+- Task status reported by executor: complete, with same-task repair complete
+- Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 8. API Design`; `README.md` > `## Main Workflows` > `### Frontend Document API Client`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: Reviewed the original (02A) execution report and the appended same-task repair report.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_14_execute_agent.md`
+  - `docs/tasks/task_14.md`
+  - `docs/review/review_14_review_agent.md`
+  - `frontend/src/components/DocumentSelector.tsx`
+  - `frontend/src/styles.css`
+- untracked files:
+  - `frontend/src/components/DocumentSelector.tsx`
+
+## Files Reviewed
+- `frontend/src/components/DocumentSelector.tsx`: in scope - new reusable ready-document selector component.
+- `frontend/src/styles.css`: in scope - selector styles only.
+- `docs/reports/report_14_execute_agent.md`: in scope - A1 execution and repair reports appended.
+- `docs/tasks/task_14.md`: in scope - selected (02A) checkbox updated by reviewer.
+- `docs/plans/Plan_14.md`: in scope - cited source sections reviewed.
+- `README.md`: in scope - cited frontend document API client section reviewed.
+
+## Reported Files Cross-Check
+- `frontend/src/components/DocumentSelector.tsx`: present in git/repo: yes; matches task scope: yes; notes: ready-only multi-select component exists.
+- `frontend/src/styles.css`: present in git/repo: yes; matches task scope: yes; notes: selector styling only.
+- `docs/reports/report_14_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: execution and repair reports appended.
+
+## Dependency Review
+- Required dependencies: Existing `listDocuments()` and `DocumentListItem` type.
+- Dependency status: satisfied.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Uses existing frontend document API client and shared document type; does not add backend APIs, provider calls, secrets, auth, logs, streaming, or indexing calls.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Component renders document choices, loads documents when no `documents` prop is provided, filters selected IDs to ready documents, disables non-ready statuses, and surfaces loading/error/empty/no-ready states.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No document IDs, filenames, fixture records, expected answers, or backend origins are hardcoded.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: Passed
+- Notes: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed after the repair.
+
+## Acceptance Review
+- Task acceptance: `ready` documents are selectable; `uploaded`, `processing`, and `failed` documents are not selectable; no-ready-documents state is clear.
+- Status: satisfied
+- Evidence: Checkbox disabled state is `!isReady || disabled || loading`; toggle path also rejects non-ready IDs; empty ready state renders `No ready documents are available for chat.`.
+
+## Progress Tracking
+- Selected task checkbox: checked for (02A) in the detailed Batch02 task list and Progress Tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch02 still has unfinished tasks (02B) and (02C).
+- Execution report entry: appended/present.
+- Review report entry: appended/present.
+- Other: No sibling task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None after same-task repair.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Manual browser validation remains deferred to Batch06 as specified by the task.
+
+### Observations
+- The same-task repair replaced a mojibake-rendered metadata separator with ASCII text before acceptance.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (02A) is accepted in Batch02.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_14.md",
+  "execution_report_reviewed": "docs/reports/report_14_execute_agent.md",
+  "review_report_file": "docs/review/review_14_review_agent.md",
+  "selected_batch": "Batch02 - Ready Document Selector and Question Input Components",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_14_execute_agent.md",
+    "docs/tasks/task_14.md",
+    "docs/review/review_14_review_agent.md",
+    "frontend/src/components/DocumentSelector.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Manual browser validation remains deferred to Batch06 as specified by the task."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02B)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Execution Report Reviewed
+docs/reports/report_14_execute_agent.md
+
+## Review Report File
+docs/review/review_14_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Ready Document Selector and Question Input Components
+- Task ID: (02B)
+- Task title: Add document selection state and validation helpers
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_14.md` > `## 8. API Design`; `docs/plans/Plan_14.md` > `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02B)
+- Reviewed task ID: (02B)
+- Correct selection: yes
+- Notes: Latest execution entry is the (02B) report appended after accepted (02A).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_14_execute_agent.md`
+  - `docs/review/review_14_review_agent.md`
+  - `docs/tasks/task_14.md`
+  - `frontend/src/components/DocumentSelector.tsx`
+  - `frontend/src/styles.css`
+- untracked files:
+  - `frontend/src/components/DocumentSelector.tsx`
+
+## Files Reviewed
+- `frontend/src/components/DocumentSelector.tsx`: in scope - selection validation types, helpers, hook, and validation message display.
+- `frontend/src/styles.css`: in scope - validation message styling for the selector.
+- `docs/reports/report_14_execute_agent.md`: in scope - (02B) execution report appended.
+- `docs/tasks/task_14.md`: in scope - selected (02B) checkbox updated by reviewer.
+- `docs/plans/Plan_14.md`: in scope - cited API design and failure handling sections reviewed.
+
+## Reported Files Cross-Check
+- `frontend/src/components/DocumentSelector.tsx`: present in git/repo: yes; matches task scope: yes; notes: exports typed validation output and state hook.
+- `frontend/src/styles.css`: present in git/repo: yes; matches task scope: yes; notes: selector validation state styling added.
+- `docs/reports/report_14_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: execution report appended.
+
+## Dependency Review
+- Required dependencies: (02A).
+- Dependency status: satisfied; (02A) is accepted and checked.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Adds reusable frontend validation only; does not create backend APIs, does not call `askQuestion`, does not add auth/logs/streaming/indexing, and leaves `ChatPage.tsx` creation to Batch04 where the task file explicitly owns it.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `validateReadyDocumentSelection()` derives selected ready IDs from actual `DocumentListItem.status`; invalid states return typed messages; `useReadyDocumentSelection()` exposes controlled selected IDs and validation output.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Static validation messages are UI text, not hardcoded IDs, records, provider settings, or expected answers.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: Passed
+- Notes: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed.
+
+## Acceptance Review
+- Task acceptance: Submit attempts with no selected ready document are blocked before `askQuestion` is called and display a clear safe message.
+- Status: satisfied for Batch02 reusable validation scope
+- Evidence: The exported validation helper returns `isValid: false` and `Select at least one ready document before asking a question.` when ready documents exist but selected ready IDs are empty; `DocumentSelector` exposes `validationMessage` rendering so Batch04 ChatPage can block before invoking `askQuestion()`.
+
+## Progress Tracking
+- Selected task checkbox: checked for (02B) in the detailed Batch02 task list and Progress Tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated; Batch02 still has unfinished task (02C).
+- Execution report entry: appended/present.
+- Review report entry: appended/present.
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- The full negative submit browser test remains deferred until Batch06 because `ChatPage.tsx` and `askQuestion()` page wiring are planned for Batch04.
+
+### Observations
+- `frontend/src/pages/ChatPage.tsx` appears in the (02B) file list, but the task details ask for validation output the chat page can use, while Batch04 (04A) explicitly owns creating `ChatPage.tsx` and calling `askQuestion()`. Keeping (02B) reusable avoids implementing future page scope early.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, (02C) remains incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_14.md",
+  "execution_report_reviewed": "docs/reports/report_14_execute_agent.md",
+  "review_report_file": "docs/review/review_14_review_agent.md",
+  "selected_batch": "Batch02 - Ready Document Selector and Question Input Components",
+  "selected_task_id": "(02B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_14_execute_agent.md",
+    "docs/review/review_14_review_agent.md",
+    "docs/tasks/task_14.md",
+    "frontend/src/components/DocumentSelector.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Full negative submit browser test remains deferred until Batch06 after ChatPage wiring."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02C)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Execution Report Reviewed
+docs/reports/report_14_execute_agent.md
+
+## Review Report File
+docs/review/review_14_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Ready Document Selector and Question Input Components
+- Task ID: (02C)
+- Task title: Build the reusable chat input component
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 8. API Design`; `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02C)
+- Reviewed task ID: (02C)
+- Correct selection: yes
+- Notes: Latest execution entry is the (02C) report appended after accepted (02B).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_14_execute_agent.md`
+  - `docs/review/review_14_review_agent.md`
+  - `docs/tasks/task_14.md`
+  - `frontend/src/components/ChatBox.tsx`
+  - `frontend/src/components/DocumentSelector.tsx`
+  - `frontend/src/styles.css`
+- untracked files:
+  - `frontend/src/components/ChatBox.tsx`
+  - `frontend/src/components/DocumentSelector.tsx`
+
+## Files Reviewed
+- `frontend/src/components/ChatBox.tsx`: in scope - reusable controlled question form and validation helper.
+- `frontend/src/styles.css`: in scope - chat box styles plus prior accepted Batch02 selector styles.
+- `docs/reports/report_14_execute_agent.md`: in scope - (02C) execution report appended.
+- `docs/tasks/task_14.md`: in scope - selected (02C) checkbox updated by reviewer.
+- `docs/plans/Plan_14.md`: in scope - cited required files, API design, and implementation steps reviewed.
+
+## Reported Files Cross-Check
+- `frontend/src/components/ChatBox.tsx`: present in git/repo: yes; matches task scope: yes; notes: controlled textarea, submit button, loading disabled state, and validation message exist.
+- `frontend/src/styles.css`: present in git/repo: yes; matches task scope: yes; notes: chat box layout, focus, validation, disabled, responsive, and reduced-motion styles added.
+- `docs/reports/report_14_execute_agent.md`: present in git/repo: yes; matches task scope: yes; notes: execution report appended.
+
+## Dependency Review
+- Required dependencies: Batch01.
+- Dependency status: satisfied; Batch01 was committed before Batch02 started.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Adds a reusable frontend component only; no backend routes, direct provider calls, auth, streaming, logs, or indexing endpoints were added.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `validateQuestion()` trims input and returns a typed validation result; `handleSubmit()` prevents default, blocks empty/whitespace questions, and only calls `onSubmit()` with a trimmed question when valid.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Static UI labels/messages are appropriate component text; no IDs, expected answers, backend URLs, provider settings, or fixture data are hardcoded.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: Passed
+- Notes: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed.
+
+## Acceptance Review
+- Task acceptance: Empty or whitespace-only questions are blocked before `askQuestion` is called; duplicate submit is disabled while loading.
+- Status: satisfied
+- Evidence: Empty/whitespace input sets `QUESTION_REQUIRED_MESSAGE` and does not call the submit callback; `disabled || isSubmitting` disables textarea and submit button and returns early from submit handling.
+
+## Progress Tracking
+- Selected task checkbox: checked for (02C) in the detailed Batch02 task list and Progress Tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: not updated by reviewer; all Batch02 task IDs are now accepted, so A3 audit is required before commit/batch completion.
+- Execution report entry: appended/present.
+- Review report entry: appended/present.
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Manual empty-question/loading browser checks remain deferred to Batch06 after ChatPage composition.
+
+### Observations
+- `ChatBox` intentionally accepts a parent `isSubmitting` state so Batch04 can bind duplicate-submit protection to the actual `askQuestion()` request lifecycle.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? no, Batch02 must run A3 audit and batch commit gate first.
+- Should batch be marked complete? no, not before A3 PASS and batch commit.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_14.md",
+  "execution_report_reviewed": "docs/reports/report_14_execute_agent.md",
+  "review_report_file": "docs/review/review_14_review_agent.md",
+  "selected_batch": "Batch02 - Ready Document Selector and Question Input Components",
+  "selected_task_id": "(02C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_14_execute_agent.md",
+    "docs/review/review_14_review_agent.md",
+    "docs/tasks/task_14.md",
+    "frontend/src/components/ChatBox.tsx",
+    "frontend/src/components/DocumentSelector.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Manual empty-question/loading browser checks remain deferred to Batch06 after ChatPage composition."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
