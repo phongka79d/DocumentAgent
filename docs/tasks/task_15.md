@@ -290,7 +290,7 @@ The debug page must make complex persisted JSON readable while remaining resilie
 
 ### Tasks
 
-- [ ] (02A): Build the reusable raw JSON viewer
+- [x] (02A): Build the reusable raw JSON viewer
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Plan_15.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Display raw JSON input and output for every step.
@@ -306,7 +306,7 @@ The debug page must make complex persisted JSON readable while remaining resilie
   - Blocked Condition: None.
   - Files: `frontend/src/components/JsonViewer.tsx`, `frontend/src/styles.css`
 
-- [ ] (02B): Build the Agent 1 retrieval score table
+- [x] (02B): Build the Agent 1 retrieval score table
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.4 Scoring Formula`; `docs/plans/Master_Plan.md` > `# 10. Agent 1: Retrieval Agent` > `## 10.6 Agent 1 Output Schema`
   - Source Requirements:
     - Read Agent 1 candidates from step output.
@@ -322,7 +322,7 @@ The debug page must make complex persisted JSON readable while remaining resilie
   - Blocked Condition: None.
   - Files: `frontend/src/components/RetrievalScoreTable.tsx`, `frontend/src/styles.css`
 
-- [ ] (02C): Build the Agent 2 verification result panel
+- [x] (02C): Build the Agent 2 verification result panel
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 11. Agent 2: Evidence Verification Agent` > `## 11.4 Agent 2 Output Schema`
   - Source Requirements:
     - Display `verified_chunks`, `rejected_chunks`, `missing_information`, and `confidence`.
@@ -337,7 +337,7 @@ The debug page must make complex persisted JSON readable while remaining resilie
   - Blocked Condition: None.
   - Files: `frontend/src/components/VerificationResultPanel.tsx`, `frontend/src/styles.css`
 
-- [ ] (02D): Build the Agent 3 answer and self-check panel
+- [x] (02D): Build the Agent 3 answer and self-check panel
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.5 Self-Check`; `docs/plans/Master_Plan.md` > `# 12. Agent 3: Answer Generation and Self-Check Agent` > `## 12.6 Agent 3 Output Schema`
   - Source Requirements:
     - Display the final answer and Agent 3 self-check booleans.
@@ -928,7 +928,7 @@ Optional future tracks are outside the mandatory dependency chain.
 ### Batches
 
 - [x] Batch01 - Existing Logs Contract and Frontend API Boundary
-- [ ] Batch02 - Raw JSON and Specialized Step Panels
+- [x] Batch02 - Raw JSON and Specialized Step Panels
 - [ ] Batch03 - Agent Step List and Detail Viewer
 - [ ] Batch04 - Logs Page Lookup and Chat Integration
 - [ ] Batch05 - Routing, Navigation, Styling, and Scope Hardening
@@ -944,10 +944,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch02
 
-- [ ] (02A): Build the reusable raw JSON viewer
-- [ ] (02B): Build the Agent 1 retrieval score table
-- [ ] (02C): Build the Agent 2 verification result panel
-- [ ] (02D): Build the Agent 3 answer and self-check panel
+- [x] (02A): Build the reusable raw JSON viewer
+- [x] (02B): Build the Agent 1 retrieval score table
+- [x] (02C): Build the Agent 2 verification result panel
+- [x] (02D): Build the Agent 3 answer and self-check panel
 
 #### Batch03
 

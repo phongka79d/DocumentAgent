@@ -26,7 +26,9 @@ Plan 14 Batches03 through 05 completed the chat and evidence display flow. The f
 
 Plan 14 Batch06 completed frontend chat/evidence validation and reviewer handoff. The production build passed, no frontend test script is configured, and user-performed browser checks covered ready-only selection, grounded answer/confidence/citations, verified/rejected evidence display, empty-question and no-selection validation, safe backend connection errors, keyboard focus, and desktop/320px/375px overflow. Direct `/evidence/:agentRunId` navigation and evidence-load failure isolation were not manually simulated and remain documented validation gaps.
 
-Plan 15 Batch01 completed the existing logs contract and frontend API boundary. The mounted agent-run logs endpoint now returns persisted `step_name` and nullable `error_message` fields for every step, including safe failed-step messages. The frontend defines shared `AgentStep` and `AgentRunLogsResponse` types and exposes encoded `getAgentRunLogs()` requests through the existing `VITE_API_BASE_URL` Axios client. The Agent Logs page and debug components remain planned for later Plan 15 batches.
+Plan 15 Batch01 completed the existing logs contract and frontend API boundary. The mounted agent-run logs endpoint now returns persisted `step_name` and nullable `error_message` fields for every step, including safe failed-step messages. The frontend defines shared `AgentStep` and `AgentRunLogsResponse` types and exposes encoded `getAgentRunLogs()` requests through the existing `VITE_API_BASE_URL` Axios client. The Agent Logs page and debug-component integration remain planned for later Plan 15 batches.
+
+Plan 15 Batch02 completed the standalone agent-step debug display components. The frontend now has a safe read-only raw JSON viewer, an Agent 1 retrieval score table that preserves persisted candidate order and score fields, an Agent 2 verified/rejected evidence panel with defensive malformed states, and an Agent 3 answer/self-check panel that supports current `self_check_result` logs plus the `self_check` compatibility key. Selected-step dispatch, page integration, routing, and navigation remain planned for later Plan 15 batches.
 
 ## What This Folder Does
 
@@ -257,7 +259,7 @@ Evidence:
 - `frontend/src/utils/fileValidation.ts` accepts PDF, DOCX, TXT, and CSV files case-insensitively and rejects unsupported or zero-byte files before upload callers receive the file.
 - `frontend/src/styles.css` contains responsive application, navigation, focus, busy, error/success, status badge, document card, document selector, chat box, and upload box styles.
 
-The upload, document list, chat, and direct evidence screens are mounted and navigable. The Agent Logs frontend screen is not implemented yet; Plan 15 Batch01 provides the aligned backend response, frontend log types, and API helper required by later debug UI batches.
+The upload, document list, chat, and direct evidence screens are mounted and navigable. The Agent Logs frontend screen is not implemented yet; Plan 15 Batch01 provides the aligned backend response, frontend log types, and API helper, while Batch02 provides the standalone raw and specialized step panels required by later integration work.
 
 ## Backend
 
@@ -457,6 +459,8 @@ React Router is mounted through `BrowserRouter`. `App.tsx` exposes `/upload`, `/
 `frontend/src/components/AnswerPanel.tsx` renders answer text, percentage confidence or an unavailable state, file-name-plus-quote citations, and an explicit no-citations state without exposing internal chunk IDs.
 
 `frontend/src/components/EvidencePanel.tsx` renders read-only verified and rejected evidence in separate labeled sections. It includes the approved optional page, verification reason, simple-reasoning, and rejection-reason metadata, with responsive long-content wrapping shared through `frontend/src/styles.css`.
+
+`frontend/src/components/JsonViewer.tsx`, `RetrievalScoreTable.tsx`, `VerificationResultPanel.tsx`, and `SelfCheckPanel.tsx` provide the standalone Plan 15 debug displays for raw step JSON and recognized Agent 1, Agent 2, and Agent 3 outputs. They defensively handle missing or malformed persisted values, preserve numeric zero and false booleans, and use scoped overflow-safe styles; they are not yet wired into an Agent Logs page.
 
 `frontend/src/pages/ChatPage.tsx` assembles ready-document loading and selection, guarded question submission through `askQuestion()`, answer/confidence/citation rendering, and lazy evidence loading for the latest returned `agent_run_id`. Evidence failures remain isolated from the displayed answer.
 
