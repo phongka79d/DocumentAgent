@@ -708,7 +708,7 @@ Plan 13 requires a passing frontend build, manual browser workflow checks, condi
 
 ### Tasks
 
-- [ ] (06A): Add file-validation tests only when a frontend test runner exists
+- [x] (06A): Add file-validation tests only when a frontend test runner exists
   - Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 11. Required Tests`; `README.md` > `## Testing and Validation`
   - Source Requirements:
     - Add tests for file validation where frontend testing infrastructure exists.
@@ -723,7 +723,7 @@ Plan 13 requires a passing frontend build, manual browser workflow checks, condi
   - Blocked Condition: None. Absence of optional test infrastructure is not `BLOCKED_BY_USER_ACTION`.
   - Files: `frontend/src/components/UploadBox.test.tsx`, `frontend/src/utils/fileValidation.test.ts`, or existing test-convention equivalents only if a runner exists
 
-- [ ] (06B): Add API client and page tests only when a frontend test runner exists
+- [x] (06B): Add API client and page tests only when a frontend test runner exists
   - Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 11. Required Tests`
   - Source Requirements:
     - Add API client tests if a frontend test runner exists.
@@ -739,7 +739,7 @@ Plan 13 requires a passing frontend build, manual browser workflow checks, condi
   - Blocked Condition: None.
   - Files: `frontend/src/api/documents.test.ts`, `frontend/src/pages/UploadDocumentPage.test.tsx`, `frontend/src/pages/DocumentListPage.test.tsx` only if supported by configured infrastructure
 
-- [ ] (06C): Run the mandatory frontend build and available automated tests
+- [x] (06C): Run the mandatory frontend build and available automated tests
   - Source of Truth: `docs/plans/Plan_13.md` > `## 11. Required Tests`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`; `README.md` > `## Running the Project` > `### Production Frontend Build`; `README.md` > `## Testing and Validation`
   - Source Requirements:
     - Run `npm run build`.
@@ -756,7 +756,7 @@ Plan 13 requires a passing frontend build, manual browser workflow checks, condi
   - Blocked Condition: None unless dependency installation is impossible because of external registry/network state; do not claim completion while the build is unverified.
   - Files: Runtime/test files only as required to resolve in-scope failures; `docs/reports/report_13_execute_agent.md`
 
-- [ ] (06D): Run manual browser upload, list, error, and responsive checks
+- [x] (06D): Run manual browser upload, list, error, and responsive checks
   - Source of Truth: `docs/plans/Plan_13.md` > `## 11. Required Tests`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_13.md` > `## 13. Failure Handling`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Start backend and frontend.
@@ -775,7 +775,7 @@ Plan 13 requires a passing frontend build, manual browser workflow checks, condi
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if backend credentials, Supabase project/storage, frontend base URL, supported fixture, or running services are unavailable.
   - Files: `docs/reports/report_13_execute_agent.md`
 
-- [ ] (06E): Create the execution report and complete final scope review
+- [x] (06E): Create the execution report and complete final scope review
   - Source of Truth: `docs/plans/Plan_13.md` > `## 4. Out of Scope`; `docs/plans/Plan_13.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created and modified.
@@ -949,11 +949,11 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch06
 
-- [ ] (06A): Add file-validation tests only when a frontend test runner exists
-- [ ] (06B): Add API client and page tests only when a frontend test runner exists
-- [ ] (06C): Run the mandatory frontend build and available automated tests
-- [ ] (06D): Run manual browser upload, list, error, and responsive checks
-- [ ] (06E): Create the execution report and complete final scope review
+- [x] (06A): Add file-validation tests only when a frontend test runner exists
+- [x] (06B): Add API client and page tests only when a frontend test runner exists
+- [x] (06C): Run the mandatory frontend build and available automated tests
+- [x] (06D): Run manual browser upload, list, error, and responsive checks
+- [x] (06E): Create the execution report and complete final scope review
 
 ## Completion Reporting Rules for Future Execution Agents
 

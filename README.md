@@ -16,6 +16,8 @@ Plan 10 Batch05 also completed the required automated Agent 2 verification tests
 
 Plan 12 Batch07 completed live chat, evidence, and logs validation plus final reporting and scope review. The live checks found and repaired two response-boundary mismatches: `/api/chat/ask` now serializes Agent 3 citation models into the public chat citation shape, and agent-run evidence now reads Agent 2 data from the persisted `agent_steps.output` field. Production-shaped regression tests cover both fixes, and the repaired live endpoints returned HTTP 200 with grounded chat output, verified/rejected evidence arrays, and chronologically ordered agent steps.
 
+Plan 13 Batch06 completed frontend validation and final scope review for the upload and document list UI. The mandatory `npm run build` passed, no frontend test runner is configured, and live browser checks covered TXT upload, unsupported-file rejection, progress/busy state, recent-document refresh, document list refresh, failed-status error rendering, connection-error handling, keyboard focus, backend API network destinations, and 320px mobile through desktop overflow. A development React StrictMode document-list loading issue was repaired by ignoring stale list responses while allowing the latest load to render.
+
 ## What This Folder Does
 
 This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.

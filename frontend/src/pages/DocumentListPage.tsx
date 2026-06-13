@@ -18,15 +18,14 @@ export function DocumentListPage() {
   const [requestError, setRequestError] = useState<DocumentListErrorState>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const requestInFlightRef = useRef(false);
+  const latestRequestIdRef = useRef(0);
 
   useEffect(() => {
     let isCurrentRequest = true;
 
     async function loadDocuments() {
-      if (requestInFlightRef.current) {
-        return;
-      }
-
+      const requestId = latestRequestIdRef.current + 1;
+      latestRequestIdRef.current = requestId;
       requestInFlightRef.current = true;
       setRequestState("loading");
       setRequestError(null);
@@ -34,14 +33,14 @@ export function DocumentListPage() {
       try {
         const response = await listDocuments();
 
-        if (!isCurrentRequest) {
+        if (!isCurrentRequest || latestRequestIdRef.current !== requestId) {
           return;
         }
 
         setDocuments(response.documents);
         setRequestState("ready");
       } catch (error) {
-        if (!isCurrentRequest) {
+        if (!isCurrentRequest || latestRequestIdRef.current !== requestId) {
           return;
         }
 
@@ -57,7 +56,9 @@ export function DocumentListPage() {
             : "error",
         );
       } finally {
-        requestInFlightRef.current = false;
+        if (latestRequestIdRef.current === requestId) {
+          requestInFlightRef.current = false;
+        }
       }
     }
 
@@ -85,6 +86,8 @@ export function DocumentListPage() {
       return;
     }
 
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
     requestInFlightRef.current = true;
     setIsRefreshing(true);
     setRequestState(hasDocuments ? "ready" : "loading");
@@ -92,9 +95,18 @@ export function DocumentListPage() {
 
     try {
       const response = await listDocuments();
+
+      if (latestRequestIdRef.current !== requestId) {
+        return;
+      }
+
       setDocuments(response.documents);
       setRequestState("ready");
     } catch (error) {
+      if (latestRequestIdRef.current !== requestId) {
+        return;
+      }
+
       const apiError = getDocumentApiError(error);
 
       setRequestError({
@@ -103,8 +115,10 @@ export function DocumentListPage() {
       });
       setRequestState(hasDocuments ? "ready" : "error");
     } finally {
-      requestInFlightRef.current = false;
-      setIsRefreshing(false);
+      if (latestRequestIdRef.current === requestId) {
+        requestInFlightRef.current = false;
+        setIsRefreshing(false);
+      }
     }
   }
 

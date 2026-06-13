@@ -1916,3 +1916,609 @@ complete
 - next task ID: (06A)
 - can proceed: yes
 - handoff notes: (05D) found no secret, endpoint, dependency, route, component, or scope violation. Batch06 can proceed with conditional test handling, mandatory build validation, browser checks where available, and final reviewer handoff.
+
+---
+
+# Task Execution Report - 06A
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06A) - Add file-validation tests only when a frontend test runner exists
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_13.md` > `Mandatory Batch06` > `(06A)`
+- `docs/plans/Plan_13.md` sections cited by the selected task: `## 6. Required Files and Folders`, `## 9. Implementation Steps`, and `## 11. Required Tests`
+- `README.md` > `## Testing and Validation`, as summarized by the selected task contract
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06A)
+- Task title: Add file-validation tests only when a frontend test runner exists
+
+## Completed Work
+- Complete.
+- Re-checked `frontend/package.json` and confirmed the only configured scripts are `dev`, `build`, and `preview`; there is no `test` script.
+- Confirmed the frontend dependency manifests do not configure Vitest, Jest, Mocha, Playwright, Cypress, Testing Library, or another test runner.
+- Confirmed there are no existing frontend test/spec files or test-runner configuration files establishing a repository convention to follow.
+- Inspected `frontend/src/utils/fileValidation.ts` and confirmed the file-validation implementation exists for supported extensions, case normalization, unsupported files, and zero-byte files, but no configured runner is available to execute focused automated tests.
+- Per the conditional task contract, did not add test files, install a test framework, alter frontend dependencies, or invoke `npm test`.
+
+## Files Created or Modified
+- `docs/reports/report_13_execute_agent.md`
+
+## Tests or Validations Run
+- `frontend/package.json` script and dependency inspection: Passed
+- evidence or reason: Scripts are exactly `dev`, `build`, and `preview`; dependencies contain no frontend test runner or test library.
+- Frontend test/config file inventory with `rg --files`: Passed
+- evidence or reason: No `*.test.*`, `*.spec.*`, Vitest, Jest, Playwright, or Cypress configuration file was found.
+- Test-runner/configuration term search across `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`, and `frontend/tsconfig.json`: Passed
+- evidence or reason: No configured test runner, test script, or test-library convention was found.
+- `frontend/src/utils/fileValidation.ts` inspection: Passed
+- evidence or reason: The implementation targeted by the conditional tests exists and covers `.pdf`, `.docx`, `.txt`, and `.csv` through case-normalized extension checks, rejects unsupported extensions, and rejects files with `size === 0`.
+- `npm test`: Not run
+- evidence or reason: No frontend test script or real configured runner exists, and the selected task explicitly prohibits fabricating or invoking a missing test command.
+
+## Acceptance Check
+- Task acceptance condition: Test coverage exists when infrastructure exists; otherwise the report clearly states why no test command/file was added.
+- Status: satisfied
+- Evidence: No frontend test infrastructure exists at execution time. This report records the verified absence, and no test file, framework, dependency, or fabricated test command was added.
+
+## Artifacts Produced
+- Accurate not-configured frontend test result recorded in this execution report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly instructed not to update the checkbox. Batch06 also contains later tasks that were not executed.
+
+## Key Implementation Decisions
+- Followed the task's conditional branch for repositories without a real configured frontend test runner.
+- Preserved the current dependency and test conventions instead of introducing a testing stack solely for optional Plan 13 coverage.
+
+## Risks or Open Issues
+- File-validation behavior does not have automated frontend test coverage because the repository currently has no frontend test runner. This is an accurately documented tooling gap, not a blocker for (06A).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or architecture conflict identified.
+- Dependency (02D) is marked complete and `frontend/src/utils/fileValidation.ts` is present.
+- No user action was required.
+- Existing changes were preserved; no task checkbox was updated and no commit was created.
+- Tasks (06B) and later were not implemented or validated.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes
+- handoff notes: The frontend still has no configured test runner or `test` script. Apply (06B)'s same conditional rule unless approved concurrent work adds real test infrastructure before execution.
+
+---
+
+# Task Execution Report - 06B
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06B) - Add API client and page tests only when a frontend test runner exists
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_13.md` > `Mandatory Batch06` > `(06B)`
+- `docs/plans/Plan_13.md` sections cited by the selected task: `## 6. Required Files and Folders`, `## 9. Implementation Steps`, and `## 11. Required Tests`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06B)
+- Task title: Add API client and page tests only when a frontend test runner exists
+
+## Completed Work
+- Complete.
+- Re-checked `frontend/package.json` and confirmed the only configured scripts are `dev`, `build`, and `preview`; no frontend test command exists.
+- Re-checked `frontend/package-lock.json` and the installed top-level dependency tree and found no Vitest, Jest, Mocha, Playwright, Cypress, Testing Library, jsdom, happy-dom, MSW, Axios mock adapter, Nock, or equivalent test/DOM/API-mocking infrastructure.
+- Re-inventoried frontend files and found no test/spec files, runner configuration, test setup file, or established frontend testing convention.
+- Searched frontend source for DOM and API mocking patterns and found none; the only `render` match is the normal React application mount in `frontend/src/main.tsx`.
+- Confirmed the API client and both target page implementations required by dependencies are present.
+- Per the conditional task contract, did not create API/page test files, install a test stack, alter frontend dependencies, create placeholder tests, or invoke `npm test`.
+
+## Files Created or Modified
+- `docs/reports/report_13_execute_agent.md`
+
+## Tests or Validations Run
+- `frontend/package.json` script and dependency inspection: Passed
+- evidence or reason: Scripts are exactly `dev`, `build`, and `preview`; no test script or test dependency is configured.
+- `frontend/package-lock.json` test/DOM/mock package search: Passed
+- evidence or reason: No recognized test runner, browser/DOM environment, component-testing library, or API-mocking package is present.
+- `npm ls --depth=0`: Passed
+- evidence or reason: The installed top-level tree contains the application/build dependencies only and no frontend test stack.
+- Frontend test/config file inventory with `rg --files`: Passed
+- evidence or reason: No `*.test.*`, `*.spec.*`, test directory, runner configuration, or setup file was found.
+- Frontend DOM/API mocking convention search with `rg`: Passed
+- evidence or reason: No mocking or component-test pattern was found; the single `render` result is the production React root mount.
+- Dependency implementation presence check: Passed
+- evidence or reason: `frontend/src/api/documents.ts`, `frontend/src/pages/UploadDocumentPage.tsx`, and `frontend/src/pages/DocumentListPage.tsx` exist, and prerequisite tasks (01C), (01D), Batch03, and Batch04 are marked complete.
+- `npm test`: Not run
+- evidence or reason: No frontend test script or real configured runner exists, and the selected task explicitly prohibits invoking a fabricated test command.
+- `npm run build`: Not run
+- evidence or reason: Mandatory build execution belongs to task (06C), which was explicitly outside this execution scope.
+
+## Acceptance Check
+- Task acceptance condition: Any created tests run and pass; no placeholder tests or fabricated output exist.
+- Status: satisfied
+- Evidence: The repository has no real configured frontend runner or supporting DOM/API mocking convention, so the required conditional result is an accurate not-configured record. No tests, dependencies, placeholder files, or fabricated command output were added.
+
+## Artifacts Produced
+- Accurate not-configured API client and page test result recorded in this execution report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly instructed not to update the checkbox. Batch06 also contains later tasks that were not executed.
+
+## Key Implementation Decisions
+- Followed the task's no-runner branch after checking the manifest, lockfile, installed dependency tree, test files/configuration, and DOM/API mocking conventions.
+- Kept optional test infrastructure absent rather than introducing a broad testing stack solely for Plan 13 conditional coverage.
+
+## Risks or Open Issues
+- API client and page behaviors remain without automated frontend coverage because the repository has no configured test runner, DOM environment, or API mocking infrastructure. This is an accurately documented tooling gap and not a blocker for (06B).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issue, blocker, or architecture conflict identified.
+- Dependencies (01C), (01D), Batch03, and Batch04 are marked complete; the API client and target page files are present.
+- Existing accepted uncommitted 06A report, review, and task changes were preserved.
+- No frontend runtime code, test file, dependency manifest, lockfile, task checkbox, batch status, or review report was changed, and no commit was created.
+- Tasks (06C) and later were not implemented or validated.
+
+## Notes for Next Task
+- next task ID: (06C)
+- can proceed: yes
+- handoff notes: The frontend still has no configured test command. Task (06C) should run the mandatory frontend build and continue to avoid `npm test` unless approved concurrent work adds a real runner first.
+---
+
+# Task Execution Report - (06C)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06C) - Run the mandatory frontend build and available automated tests
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_13.md` > `Mandatory Batch06` > `(06C)`
+- `docs/plans/Plan_13.md` sections cited by the selected task: `## 11. Required Tests`, `## 12. Acceptance Criteria`, and `## 15. Reviewer Checklist`
+- `README.md` sections cited by the selected task: `## Running the Project` > `### Production Frontend Build` and `## Testing and Validation`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06C)
+- Task title: Run the mandatory frontend build and available automated tests
+
+## Completed Work
+- Complete.
+- Re-checked the frontend package scripts immediately before validation.
+- Confirmed that `frontend/package.json` configures only `dev`, `build`, and `preview`; no real frontend test command exists.
+- Ran the mandatory production build from `frontend/`.
+- TypeScript validation and the Vite production build both completed successfully, so no runtime or test source repair was required.
+- Did not invoke `npm test` or fabricate automated test results because no test script or configured frontend test runner exists.
+- Did not perform manual browser validation or final scope-review work assigned to tasks (06D) and (06E).
+
+## Files Created or Modified
+- `docs/reports/report_13_execute_agent.md`
+
+## Tests or Validations Run
+- `npm pkg get scripts`: Passed
+- evidence or reason: Returned exactly `dev`, `build`, and `preview`; no test command is configured.
+- `npm run build`: Passed
+- evidence or reason: `tsc --noEmit && vite build` exited with code 0; Vite 7.3.5 transformed 101 modules and emitted `dist/index.html`, one CSS asset, and one JavaScript asset.
+- Configured frontend automated tests: Not run
+- evidence or reason: No real test script or frontend test runner exists, and the task requires tests to run only when configured.
+- Manual browser checks: Not run
+- evidence or reason: Manual checks belong to task (06D), which was explicitly outside this execution scope.
+
+## Acceptance Check
+- Task acceptance condition: `npm run build` exits successfully; configured tests pass; absent tests are reported as not configured.
+- Status: satisfied
+- Evidence: The mandatory build exited successfully with TypeScript and Vite build stages passing. Package script inspection confirmed tests are absent, and no test execution was claimed.
+
+## Artifacts Produced
+- Successful frontend production build output under `frontend/dist/`.
+- Appended (06C) execution evidence in `docs/reports/report_13_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly instructed not to update the checkbox. Batch06 also contains later tasks that were not executed.
+
+## Key Implementation Decisions
+- Treated the package manifest as the authoritative source for available npm commands and did not infer or fabricate a test command.
+- Made no frontend source changes because the mandatory TypeScript and production build validation passed on the first run.
+
+## Risks or Open Issues
+- Frontend behavior still lacks automated test coverage because no test runner or test command is configured. This is an accurately reported tooling gap and does not block (06C).
+- Manual browser workflows and environment-dependent live API checks remain pending for (06D).
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issue, blocker, or architecture conflict identified.
+- Dependencies (06A), (06B), and Batch05 were accepted as stated by the user.
+- Existing uncommitted 06A/06B report, review, and task changes were preserved.
+- No frontend runtime file, test file, dependency manifest, lockfile, task checkbox, batch status, or review report was changed, and no commit was created.
+- Tasks (06D) and (06E) were not implemented or validated.
+
+## Notes for Next Task
+- next task ID: (06D)
+- can proceed: yes
+- handoff notes: The mandatory frontend build passes. No automated frontend test command exists. Proceed with manual browser upload, list, error, navigation, keyboard, and responsive checks only when task (06D) is explicitly assigned.
+
+---
+
+# Task Execution Report - (06D)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06D) - Run manual browser upload, list, error, and responsive checks
+
+## Status
+failed
+
+## Source of Truth Used
+- docs/tasks/task_13.md > Mandatory Batch06 > (06D)
+- docs/plans/Plan_13.md > ## 11. Required Tests
+- docs/plans/Plan_13.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_13.md > ## 13. Failure Handling
+- docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06D)
+- Task title: Run manual browser upload, list, error, and responsive checks
+
+## Completed Work
+- Failed after running the manual browser validation workflow locally.
+- Started the backend on `127.0.0.1:8000` with Uvicorn and confirmed `GET /api/health` returned `status: ok`.
+- Started the frontend dev server on `127.0.0.1:5173` and opened the routed UI in headless Chrome 149 through the Chrome DevTools Protocol.
+- Verified `/upload` renders the upload page and navigation.
+- Verified unsupported `.exe` selection is rejected before upload with the supported-types message and the submit button remains disabled.
+- Verified supported `plan13-smoke.txt` selection enables upload.
+- Verified upload progress/busy state appears and duplicate submission is disabled while uploading.
+- Verified live `POST http://localhost:8000/api/documents/upload` returned 200 and the upload success state displayed `plan13-smoke.txt` with backend status `uploaded`.
+- Verified recent-document feedback refreshed and included the uploaded file.
+- Verified network calls used the configured backend base URL `http://localhost:8000` and did not call provider services directly from the frontend.
+- Verified desktop and mobile widths 1365px, 375px, and 320px showed no horizontal overflow on `/upload` and `/documents` shell routes.
+- Verified keyboard Tab focus reached the Upload navigation link and visible outline styling was present.
+- Found a blocking document-list page issue: direct `/documents` loaded `GET http://localhost:8000/api/documents` with status 200 but remained stuck on `Loading documents...` with the Refresh button disabled.
+
+## Files Created or Modified
+- docs/reports/report_13_execute_agent.md
+- Temp-only validation fixtures outside the repo: `%TEMP%/document-agent-06D-fixtures/plan13-smoke.txt` and `%TEMP%/document-agent-06D-fixtures/unsupported.exe`
+- Temp-only CDP helper outside the repo: `%TEMP%/document-agent-cdp-tools`
+
+## Tests or Validations Run
+- `backend/.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000`: Passed
+- evidence or reason: backend log reported startup complete and Uvicorn running on `http://127.0.0.1:8000`.
+- `npm run dev -- --host 127.0.0.1 --port 5173` from `frontend/`: Passed
+- evidence or reason: Vite 7.3.5 reported local server `http://127.0.0.1:5173/`.
+- `GET http://127.0.0.1:8000/api/health`: Passed
+- evidence or reason: returned `status: ok`, `service: document-qa-agent`, `app_env: development`.
+- Browser `/upload` route and navigation check: Passed
+- evidence or reason: Chrome rendered `Upload a document`, active Upload nav, Documents nav, disabled initial submit, and recent-documents loading state.
+- Unsupported file check with `.exe`: Passed
+- evidence or reason: UI displayed `Unsupported file type. Choose a PDF, DOCX, TXT, or CSV file.` and kept submit disabled.
+- TXT selection and live upload check: Passed
+- evidence or reason: `plan13-smoke.txt` was selected, submit enabled, upload state showed `Uploading selected document: 100%`, form `aria-busy=true`, submit disabled, backend upload returned 200, and success displayed `Upload completed for plan13-smoke.txt` with status `Uploaded`.
+- Recent document refresh after upload: Passed
+- evidence or reason: recent list displayed `plan13-smoke.txt`, type `txt`, status `Uploaded`, and `0 chunks` after upload.
+- Network destination inspection: Passed
+- evidence or reason: observed `OPTIONS` and `POST http://localhost:8000/api/documents/upload`, followed by `GET http://localhost:8000/api/documents`; no provider-service frontend calls were observed.
+- Direct `/documents` route list rendering and refresh availability: Failed
+- evidence or reason: browser observed `GET http://localhost:8000/api/documents` with HTTP 200, but the page remained on `Loading documents...`, rendered no `.document-card`, and left the Refresh button disabled after 7 seconds.
+- Desktop/mobile responsive overflow checks: Passed for shell layout
+- evidence or reason: at 1365px, 375px, and 320px, both `/upload` and `/documents` had `documentElement.scrollWidth <= clientWidth`.
+- Keyboard focus check: Passed
+- evidence or reason: Tab focus reached the Upload navigation link and computed outline was solid with 3px width.
+- Failed-status error rendering: Not completed
+- evidence or reason: backend list contained an existing failed document with `error_message`, but the document-list page failure prevented verifying failed-status rendering on `/documents`.
+- Connection-error state: Not completed
+- evidence or reason: stopped after the document-list loading failure to avoid conflating failures.
+
+## Acceptance Check
+- Task acceptance condition: Required checks pass, or each environment-dependent check is explicitly marked blocked without fake success.
+- Status: not satisfied
+- Evidence: Live backend and frontend setup were available, upload checks passed, but direct `/documents` list rendering failed despite a 200 backend list response. This is an implementation validation failure, not `BLOCKED_BY_USER_ACTION`.
+
+## Artifacts Produced
+- Live uploaded document `plan13-smoke.txt` in the configured backend environment.
+- Browser validation evidence in this report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated execution leaves checkbox updates to A2, and the selected validation failed.
+
+## Key Implementation Decisions
+- Used installed Chrome 149 through the Chrome DevTools Protocol because the in-app browser surface was unavailable and no project browser-test dependency existed.
+- Installed a temporary `ws` package under `%TEMP%` only for CDP automation; project dependencies were not changed.
+- Stopped short of connection-error and failed-status UI verification once direct document-list rendering failed.
+
+## Risks or Open Issues
+- Direct `/documents` remains stuck on `Loading documents...` after `GET /api/documents` returns 200 in dev/StrictMode.
+- Failed-status error rendering and connection-error behavior still need verification after the document-list loading issue is repaired.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No source-of-truth or dependency issue identified. Dependency (06C) is accepted. The failure is a runtime UI validation failure in the document list page.
+
+## Notes for Next Task
+- next task ID: (06D) repair before (06E)
+- can proceed: no
+- handoff notes: Repair the document-list loading behavior, rerun the manual browser checks for `/documents`, failed-status error rendering, refresh, and connection-error state, then re-review (06D).
+
+---
+
+# Task Execution Report - (06D Repair)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06D) - Run manual browser upload, list, error, and responsive checks
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > Mandatory Batch06 > (06D)
+- docs/plans/Plan_13.md > ## 11. Required Tests
+- docs/plans/Plan_13.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_13.md > ## 13. Failure Handling
+- docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+- A2 rejection report for (06D) in docs/review/review_13_review_agent.md
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06D)
+- Task title: Run manual browser upload, list, error, and responsive checks
+
+## Completed Work
+- Complete after repair.
+- Repaired the document-list loading bug found during the first (06D) browser validation.
+- Updated `frontend/src/pages/DocumentListPage.tsx` so initial list loading uses a latest-request ID guard instead of suppressing React StrictMode's replacement effect with a shared in-flight flag.
+- Preserved manual refresh overlap prevention while preventing stale initial requests from updating state.
+- Reran the mandatory frontend build.
+- Reran browser validation in Chrome 149 against the local Vite frontend and FastAPI backend.
+- Confirmed direct `/documents` now renders the backend document list after `GET /api/documents` returns 200.
+- Confirmed the uploaded `plan13-smoke.txt` appears in the document list.
+- Confirmed an existing failed document renders `Failed` plus `Processing error: Parsed document is empty.`.
+- Confirmed manual Refresh triggers `GET http://localhost:8000/api/documents` and leaves the list rendered.
+- Confirmed backend-unavailable state displays `Connection error` and the safe connection message with Retry.
+- Restarted the backend after the connection-error check and confirmed `GET /api/health` returns `status: ok`.
+
+## Files Created or Modified
+- frontend/src/pages/DocumentListPage.tsx
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed
+- evidence or reason: `tsc --noEmit && vite build` exited 0; Vite 7.3.5 transformed 101 modules and emitted production assets.
+- Browser direct `/documents` check after repair: Passed
+- evidence or reason: Chrome rendered seven `.document-card` entries including `plan13-smoke.txt`; Refresh button was enabled; no alert was present.
+- Browser failed-status rendering check: Passed
+- evidence or reason: document `task04e-empty.txt` rendered status `Failed` and `Processing error: Parsed document is empty.`.
+- Browser manual refresh check: Passed
+- evidence or reason: clicking Refresh triggered `GET http://localhost:8000/api/documents`; the list remained rendered with document cards after refresh.
+- Browser connection-error check: Passed
+- evidence or reason: with backend stopped, `/documents` displayed `Connection error` and `Unable to connect to the backend. Confirm the backend is running and try again.`; network showed `net::ERR_CONNECTION_REFUSED` for backend document requests.
+- Backend restart health check: Passed
+- evidence or reason: after restarting Uvicorn, `GET http://127.0.0.1:8000/api/health` returned `status: ok`.
+- Prior browser upload workflow from this (06D) run: Passed
+- evidence or reason: unsupported `.exe` was rejected before upload; `plan13-smoke.txt` selected and uploaded; progress/busy state appeared; duplicate submit was disabled; `POST http://localhost:8000/api/documents/upload` returned 200; upload success displayed backend status `Uploaded`; recent documents refreshed and included the uploaded file.
+- Network destination inspection: Passed
+- evidence or reason: observed frontend calls only to `http://localhost:8000/api/documents/upload` and `http://localhost:8000/api/documents`; no direct Supabase, Qdrant, ShopAIKey, or internal index frontend calls were observed.
+- Responsive overflow checks: Passed
+- evidence or reason: at 1365px, 375px, and 320px, `/upload` and `/documents` had no horizontal overflow (`scrollWidth <= clientWidth`).
+- Keyboard focus check: Passed
+- evidence or reason: Tab focus reached the Upload nav link and computed outline was solid with 3px width.
+
+## Acceptance Check
+- Task acceptance condition: Required checks pass, or each environment-dependent check is explicitly marked blocked without fake success.
+- Status: satisfied
+- Evidence: Backend/frontend/browser setup was available. The failed document-list behavior was repaired, build passed, upload/list/error/refresh/responsive/keyboard/network checks passed, and no environment-dependent check was falsely marked as passed.
+
+## Artifacts Produced
+- Live uploaded document `plan13-smoke.txt` in the configured backend environment.
+- Repair to document-list request handling.
+- Browser validation evidence in this report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated execution leaves checkbox updates to A2 after accepted review.
+
+## Key Implementation Decisions
+- Used a monotonically increasing request ID to ignore stale list responses while allowing the StrictMode replacement initial request to run.
+- Kept manual refresh overlap prevention with `requestInFlightRef`.
+- Did not add project browser-test dependencies; temporary CDP tooling stayed outside the repository.
+
+## Risks or Open Issues
+- The local validation uploaded `plan13-smoke.txt` into the configured backend environment.
+- React StrictMode can issue duplicate initial list GETs in development; stale responses are ignored and the latest request renders. Production builds should not double-run this effect.
+
+## Minor Issues Fixed During Execution
+- Removed an unintended untracked root `package.json` generated during temporary CDP helper setup before finalizing the report.
+
+## Workflow Integrity Check
+- No source-of-truth or dependency issue identified. The repair stayed inside the selected validation failure scope and did not implement (06E).
+
+## Notes for Next Task
+- next task ID: (06E)
+- can proceed: yes
+- handoff notes: (06D) browser validation now passes after the document-list loading repair. Proceed to final execution report/scope review only after A2 accepts this repair and updates the (06D) checkbox.
+
+---
+
+# Task Execution Report - (06E)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06E) - Create the execution report and complete final scope review
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > Mandatory Batch06 > (06E)
+- docs/plans/Plan_13.md > ## 4. Out of Scope
+- docs/plans/Plan_13.md > ## 14. Agent Report Requirement
+- docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+- Prior Batch06 execution and review entries in docs/reports/report_13_execute_agent.md and docs/review/review_13_review_agent.md
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06E)
+- Task title: Create the execution report and complete final scope review
+
+## Completed Work
+- Complete.
+- Reviewed the accumulated Plan 13 Batch06 execution and review evidence.
+- Confirmed (06A) and (06B) accurately recorded that no frontend test runner or `test` script exists, so optional tests were not fabricated.
+- Confirmed (06C) mandatory frontend build passed.
+- Confirmed (06D) manual browser validation passed after the document-list StrictMode loading repair.
+- Confirmed the current final diff is limited to Plan 13 report/review/task tracking plus `frontend/src/pages/DocumentListPage.tsx` repair for the (06D) validation failure.
+- Confirmed frontend scope boundaries: no frontend private credentials, no direct provider calls, no internal document index call, no chat/evidence/log/auth/deletion/detail/marketing UI, and only `VITE_API_BASE_URL` is used for frontend runtime API configuration.
+- Confirmed frontend document API calls remain behind `apiClient` and target the approved backend document endpoints.
+- Confirmed `docs/tasks/task_13.md` has accepted Batch06 tasks (06A)-(06D) checked and leaves only (06E) unchecked for A2 ownership.
+- Did not implement new runtime features, tests, backend changes, or sibling/future task work.
+
+## Files Created or Modified
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed
+- evidence or reason: `tsc --noEmit && vite build` exited 0; Vite 7.3.5 transformed 101 modules and emitted production assets.
+- `npm pkg get scripts` from `frontend/`: Passed
+- evidence or reason: scripts are `dev`, `build`, and `preview`; there is still no frontend `test` script.
+- Forbidden frontend scope search: Passed
+- evidence or reason: `rg` found no `SUPABASE_SERVICE_ROLE_KEY`, `QDRANT_API_KEY`, `SHOPAIKEY_API_KEY`, service-role/private-key terms, internal `/index` document call, chat, evidence, agent logs, auth/login/logout, deletion, marketing, or landing implementation in `frontend/src`, `frontend/index.html`, or `frontend/.env.example`.
+- Frontend API/config search: Passed
+- evidence or reason: frontend source shows only `apiClient` and `VITE_API_BASE_URL` in `frontend/src/api/client.ts`; `frontend/src/api/documents.ts` uses approved backend document calls through `apiClient`.
+- `git diff --check`: Passed
+- evidence or reason: no whitespace errors; Git only warned that LF will be replaced by CRLF when touched.
+- `git status --short`: Passed
+- evidence or reason: dirty files are `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`, and `frontend/src/pages/DocumentListPage.tsx`; no untracked files remain.
+- `git diff --stat` and scoped diff review: Passed
+- evidence or reason: final diff contains report/review/task updates and the document-list request-state repair; no backend, dependency, route expansion, provider, or unrelated source changes are present.
+- Batch06 report/review/task consistency check: Passed
+- evidence or reason: accepted tasks (06A)-(06D) have execution/review evidence and checked task tracker entries; (06E) remains unchecked for A2 review ownership.
+
+## Acceptance Check
+- Task acceptance condition: Report includes every Plan 13 required field, does not claim blocked live checks as passed, and explicitly confirms no out-of-scope UI or frontend secrets were added.
+- Status: satisfied
+- Evidence: The execution report history lists files, commands, test/build/manual results, known issues, out-of-scope exclusions, and browser-test status. Live browser checks were actually run in (06D), optional tests were honestly reported as not configured, and final targeted searches found no secret/scope/endpoint violations.
+
+## Artifacts Produced
+- Final Batch06 execution-report handoff entry.
+- Final scope, endpoint, secret-boundary, diff, build, manual-browser, and optional-test summary for reviewer handoff.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated execution leaves checkbox updates to A2 after accepted review. Batch completion also requires A3 scope audit and commit after every Batch06 task is accepted.
+
+## Key Implementation Decisions
+- Treated the document-list StrictMode repair from (06D) as part of validation stabilization, not as a new feature.
+- Did not add a frontend test stack because Plan 13 makes tests conditional on existing infrastructure and none exists.
+- Kept final review focused on changed frontend and documentation artifacts.
+
+## Risks or Open Issues
+- Frontend automated tests remain unavailable because no test runner is configured.
+- Manual validation uploaded `plan13-smoke.txt` into the configured backend environment.
+- Development StrictMode may duplicate initial document-list GETs; stale responses are ignored by the repaired request ID guard.
+
+## Minor Issues Fixed During Execution
+- None during (06E). The earlier (06D) repair removed an accidental untracked root `package.json` generated by temporary CDP setup.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, architecture conflicts, or user-action blockers identified.
+- Dependencies (06C), (06D), and (05D) are satisfied.
+- This task did not update its own checkbox, did not mark Batch06 complete, and did not commit.
+
+## Notes for Next Task
+- next task ID: none in Batch06 after A2 accepts (06E)
+- can proceed: yes, after A2 review
+- handoff notes: If A2 accepts (06E), A2 should update only (06E), then the orchestrator should run the Batch06 A3 scope audit before any commit.

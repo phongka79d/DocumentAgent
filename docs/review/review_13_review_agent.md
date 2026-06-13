@@ -3988,3 +3988,1127 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06A)
+- Task title: Add file-validation tests only when a frontend test runner exists
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 11. Required Tests`; `README.md` > `## Testing and Validation`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: The final appended execution-report entry is for Batch06 task (06A).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git before reviewer updates: `docs/reports/report_13_execute_agent.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - latest 06A report entry accurately documents the conditional no-runner branch.
+- `docs/tasks/task_13.md`: in scope - 06A requirements, dependency, acceptance, and validation rules reviewed.
+- `docs/plans/Plan_13.md`: in scope - cited required-files, implementation, and conditional-test sections reviewed.
+- `README.md`: in scope - testing section explicitly states there is no frontend test script.
+- `frontend/package.json`: in scope - scripts are only `dev`, `build`, and `preview`; no test dependencies exist.
+- `frontend/package-lock.json`: in scope - root dependencies match the manifest and no test framework package is configured.
+- `frontend/vite.config.ts`: in scope - React plugin only; no test configuration.
+- `frontend/tsconfig.json`: in scope - no test types, includes, or runner configuration.
+- `frontend/src/utils/fileValidation.ts`: in scope - required validator exists and covers supported extensions, case normalization, unsupported files, and zero-byte files.
+- Frontend source/test inventory: in scope - no `*.test.*`, `*.spec.*`, or runner configuration files exist.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The pre-review diff contains only the appended 06A report entry; no frontend code, test, manifest, or lockfile change was made.
+
+## Dependency Review
+- Required dependencies: (02D)
+- Dependency status: satisfied; both tracker occurrences are checked and `frontend/src/utils/fileValidation.ts` exists.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Followed the approved conditional branch and preserved the existing frontend toolchain.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: This is a conditional validation/report task. Repository inspection proves no configured frontend runner exists, so adding no tests is the required real outcome.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No runtime or test implementation was added.
+
+## Validations Reviewed
+- Command/check: `npm run` from `frontend/`
+- Reported result: no test script; only `dev`, `build`, and `preview`
+- Rerun result: confirmed exactly those three scripts
+- Status: passed
+- Notes: `npm test` was intentionally not invoked.
+
+- Command/check: `npm ls vitest jest mocha playwright cypress @testing-library/react ava tap --depth=0`
+- Reported result: no frontend test framework dependency
+- Rerun result: empty dependency tree
+- Status: passed
+- Notes: Nonzero npm exit reflects no matching installed packages.
+
+- Command/check: frontend file and configuration inventory
+- Reported result: no test/spec files or runner configuration
+- Rerun result: confirmed
+- Status: passed
+- Notes: No test files/framework were improperly added.
+
+- Command/check: git status, diff stat, full diff, and diff check
+- Reported result: only execution report modified
+- Rerun result: confirmed before reviewer-owned tracker/review updates
+- Status: passed
+- Notes: No fabricated test output or hidden frontend change exists.
+
+## Acceptance Review
+- Task acceptance: Test coverage exists when infrastructure exists; otherwise the report clearly states why no test command/file was added.
+- Status: satisfied
+- Evidence: No real frontend runner or `test` script exists. The report accurately records tests as not configured, says `npm test` was not run, and no test/framework files were added.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed task and Batch06 progress tracker by reviewer
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and incomplete
+- Execution report entry: appended, not overwritten
+- Review report entry: appended, not overwritten
+- Other: (06B), (06C), (06D), and (06E) remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Automated frontend coverage for file validation remains absent because the repository has no configured frontend test infrastructure; this is the task's explicitly permitted outcome.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no; (06B) through (06E) remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/tasks/task_13.md",
+    "docs/review/review_13_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (06B)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06B)
+- Task title: Add API client and page tests only when a frontend test runner exists
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `## 9. Implementation Steps`; `## 11. Required Tests`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06B)
+- Reviewed task ID: (06B)
+- Correct selection: yes
+- Notes: The final appended execution-report entry is for Batch06 task (06B).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git before this review: `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`
+- untracked files: none
+- notes: The report contains accepted 06A plus the new 06B entry. The task/review changes before this review are reviewer-owned accepted 06A tracking and review evidence. No frontend file is changed.
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - latest 06B report accurately records the no-runner branch.
+- `docs/tasks/task_13.md`: in scope - 06B requirements, dependencies, acceptance, validation, and progress boundaries reviewed.
+- `docs/review/review_13_review_agent.md`: in scope - accepted 06A review remains intact and 06B had no prior review entry.
+- `docs/plans/Plan_13.md`: in scope - cited required-files, implementation, and conditional-test sections reviewed.
+- `frontend/package.json`: in scope - scripts are only `dev`, `build`, and `preview`; no test dependencies exist.
+- `frontend/package-lock.json`: in scope - root manifest matches `package.json`; no runner, DOM, component-test, or API-mocking package is present.
+- Installed dependency tree: in scope - only application/build dependencies are installed at top level; targeted test/mock packages resolve to an empty tree.
+- Frontend file inventory: in scope - no test/spec files, test directories, runner configuration, setup files, mocks, or placeholder test artifacts exist.
+- `frontend/src/api/documents.ts`: in scope - API implementation required by 06B dependencies exists.
+- `frontend/src/pages/UploadDocumentPage.tsx`: in scope - upload page behavior targeted by conditional tests exists.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope - document list behavior targeted by conditional tests exists.
+- `frontend/src/main.tsx`: in scope - the only DOM `render` convention found is the production React root mount.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The 06B executor added only the report entry. No runtime, test, package manifest, or lockfile change was made.
+
+## Dependency Review
+- Required dependencies: (01C), (01D), Batch03, Batch04
+- Dependency status: satisfied; task tracker entries are accepted and the API/upload/list implementation files exist.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Followed Plan 13's conditional testing rule and preserved the existing React/Vite/Axios toolchain.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: This is a conditional validation/report task. Repository evidence proves there is no configured frontend runner or supporting DOM/API mocking convention, so adding no tests is the required outcome.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No runtime or test implementation was added.
+
+## Validations Reviewed
+- Command/check: `npm run` from `frontend/`
+- Reported result: only `dev`, `build`, and `preview`; no test command
+- Rerun result: confirmed
+- Status: passed
+- Notes: `npm test` was correctly not invoked.
+
+- Command/check: `npm ls --depth=0` and targeted `npm ls` for runner/DOM/mock packages
+- Reported result: no frontend test stack
+- Rerun result: top-level application/build dependencies only; targeted dependency tree empty
+- Status: passed
+- Notes: Installed dependency evidence matches the manifest and lockfile.
+
+- Command/check: package-lock search for Vitest, Jest, Mocha, Playwright, Cypress, Testing Library, jsdom, happy-dom, MSW, Axios mock adapter, and Nock
+- Reported result: no matching package entries
+- Rerun result: confirmed
+- Status: passed
+- Notes: No hidden supporting test infrastructure exists in the lockfile.
+
+- Command/check: frontend file/configuration inventory and DOM/API mocking convention search
+- Reported result: no tests, configs, setup, mocks, or established convention
+- Rerun result: confirmed; only production `ReactDOM.createRoot(...).render(...)` matched
+- Status: passed
+- Notes: No placeholder or skipped test artifact exists.
+
+- Command/check: git status, stat, full diff, frontend diff, and diff check
+- Reported result: no frontend/test/dependency changes; 06A preserved; 06C+ untouched
+- Rerun result: confirmed
+- Status: passed
+- Notes: `frontend/package.json`, `frontend/package-lock.json`, and `frontend/src` have no diff.
+
+- Command/check: `npm test`
+- Reported result: not run
+- Rerun result: not run
+- Status: correctly omitted
+- Notes: No test script exists.
+
+- Command/check: `npm run build`
+- Reported result: not run because it belongs to 06C
+- Rerun result: not run
+- Status: correctly omitted
+- Notes: The report does not falsely claim a build result.
+
+## Acceptance Review
+- Task acceptance: Any created tests run and pass; no placeholder tests or fabricated output exist.
+- Status: satisfied
+- Evidence: No configured runner or DOM/API mocking convention exists, so no tests were required or created. No test dependency, placeholder, fabricated command output, or false build/test claim exists.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed task and Batch06 task-ID tracker by reviewer
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and incomplete
+- Execution report entry: appended, not overwritten
+- Review report entry: appended, not overwritten
+- Other: Accepted 06A changes remain preserved. Tasks 06C, 06D, and 06E remain unchecked and untouched.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- API client and page behavior remains without automated frontend coverage because the repository has no configured frontend test, DOM, or API-mocking infrastructure. This is explicitly permitted by the task.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to (06C)
+- Should batch be marked complete? no; (06C), (06D), and (06E) remain incomplete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff",
+  "selected_task_id": "(06B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/package.json",
+    "frontend/package-lock.json",
+    "frontend/src/api/documents.ts",
+    "frontend/src/pages/UploadDocumentPage.tsx",
+    "frontend/src/pages/DocumentListPage.tsx",
+    "frontend/src/main.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06C)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06C)
+- Task title: Run the mandatory frontend build and available automated tests
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` > `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 15. Reviewer Checklist`; `README.md` > `## Running the Project` > `### Production Frontend Build`; `README.md` > `## Testing and Validation`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06C)
+- Reviewed task ID: (06C)
+- Correct selection: yes
+- Notes: The final appended execution-report entry is for Batch06 task (06C).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git before this review: `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`
+- untracked files: none
+- notes: The report contains accepted 06A/06B entries plus the new 06C entry. Existing task/review changes are reviewer-owned 06A/06B tracking and review evidence. No frontend source, test, manifest, or lockfile is changed.
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - latest 06C entry reports the build and absent test command accurately.
+- `docs/tasks/task_13.md`: in scope - 06C requirements, dependencies, validation, and 06D/06E boundaries reviewed.
+- `docs/review/review_13_review_agent.md`: in scope - prior accepted 06A/06B reviews preserved.
+- `docs/plans/Plan_13.md`: in scope - cited required-test, acceptance, and reviewer-checklist sections reviewed.
+- `README.md`: in scope - cited production-build and testing sections reviewed.
+- `frontend/package.json`: in scope - build script is `tsc --noEmit && vite build`; scripts are only `dev`, `build`, and `preview`.
+- `frontend/dist/`: in scope - regenerated by the successful build and ignored by git.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The 06C executor appended only the report entry. No runtime or test source change was attributed to 06C.
+
+## Dependency Review
+- Required dependencies: (06A), (06B), Batch05
+- Dependency status: satisfied; 06A and 06B are accepted and checked, and Batch05 tasks are checked complete.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Used the existing frontend build script and honored Plan 13's conditional-test rule.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: This is a validation task. The reviewer independently ran the actual production build and inspected the authoritative package scripts.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No runtime or test source was changed for 06C.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed; TypeScript and Vite completed, 101 modules transformed
+- Rerun result: passed with exit code 0; Vite 7.3.5 transformed 101 modules and emitted HTML, CSS, and JavaScript assets
+- Status: passed
+- Notes: Fresh reviewer execution confirms the mandatory build.
+
+- Command/check: `npm pkg get scripts` and `frontend/package.json` inspection
+- Reported result: only `dev`, `build`, and `preview`; no test command
+- Rerun result: confirmed
+- Status: passed
+- Notes: No automated frontend test command exists, so no test command was run.
+
+- Command/check: frontend git diff/status and test/config inventory
+- Reported result: no frontend source/test/dependency changes
+- Rerun result: confirmed; no frontend diff or untracked test artifact exists
+- Status: passed
+- Notes: The build did not create tracked source changes.
+
+- Command/check: 06D/06E tracker and report-boundary inspection
+- Reported result: 06D/06E untouched
+- Rerun result: confirmed; both remain unchecked and no 06D/06E execution entry exists
+- Status: passed
+- Notes: Manual browser and final scope-review work were not falsely claimed.
+
+## Acceptance Review
+- Task acceptance: `npm run build` exits successfully; configured tests pass; absent tests are reported as not configured.
+- Status: satisfied
+- Evidence: The independently rerun build exited successfully. The manifest has no test command, and the report accurately records automated tests as not configured and not run.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed task and Batch06 task-ID tracker by reviewer
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and incomplete
+- Execution report entry: appended, not overwritten
+- Review report entry: appended, not overwritten
+- Other: 06D and 06E remain unchecked and untouched; Batch06 was not marked complete.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Frontend automated coverage remains unavailable because the repository has no configured test command or runner; this is the task's explicitly permitted outcome.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to (06D)
+- Should batch be marked complete? no; (06D) and (06E) remain incomplete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff",
+  "selected_task_id": "(06C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "docs/plans/Plan_13.md",
+    "README.md",
+    "frontend/package.json"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06D)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06D)
+- Task title: Run manual browser upload, list, error, and responsive checks
+- Task status reported by executor: failed
+- Source of Truth: `docs/plans/Plan_13.md` > `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06D)
+- Reviewed task ID: (06D)
+- Correct selection: yes
+- Notes: The latest appended execution report is the failed (06D) manual browser validation entry.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - latest (06D) failed execution evidence reviewed.
+- `docs/tasks/task_13.md`: in scope - selected task requirements and unchecked status reviewed.
+- `docs/review/review_13_review_agent.md`: in scope - this rejection report appended.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope for repair diagnosis - contains the loading/request effect involved in the failed validation.
+- `frontend/src/components/DocumentCard.tsx`: in scope for render diagnosis - card rendering appears normal and supports failed error messages.
+- `frontend/src/api/documents.ts`: in scope for API diagnosis - list client targets the approved backend endpoint.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report contains concrete browser evidence and does not falsely claim the failed document-list checks passed.
+- file from execution report: temp fixtures and temp CDP helper
+- present in git/repo: no
+- matches task scope: yes
+- notes: These are outside the repository and only used for manual validation.
+
+## Dependency Review
+- Required dependencies: (06C)
+- Dependency status: satisfied; (06C) is checked and accepted, and the frontend build previously passed.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Browser validation used the existing backend and frontend routes, did not add project dependencies, and did not modify runtime code during the initial validation pass.
+- Failed: Direct document list route did not satisfy Plan 13 manual-list acceptance despite a successful backend list response.
+- Uncertain: Connection-error and failed-status rendering remain unverified because validation stopped at the document-list loading failure.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: Upload path works live; document-list path makes a real backend request but does not render the result.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No runtime code was changed in the failed validation pass; browser fixtures were ordinary temp files.
+
+## Validations Reviewed
+- Command/check: backend and frontend local server startup
+- Reported result: passed
+- Rerun result: reviewed from logs and live endpoint evidence
+- Status: passed
+- Notes: Local environment was available; this is not a user-action block.
+- Command/check: upload route unsupported file, supported TXT upload, progress, network destination, recent feedback
+- Reported result: passed
+- Rerun result: accepted based on concrete CDP output and backend log evidence
+- Status: passed
+- Notes: Upload path satisfies the checked portions of (06D).
+- Command/check: direct `/documents` route list rendering and refresh
+- Reported result: failed
+- Rerun result: confirmed by focused CDP probe: `GET http://localhost:8000/api/documents` returned 200, but UI remained `Loading documents...` with disabled Refresh after 7 seconds
+- Status: failed
+- Notes: This blocks (06D) acceptance.
+
+## Acceptance Review
+- Task acceptance: Required checks pass, or environment-dependent checks are explicitly blocked without fake success.
+- Status: not satisfied
+- Evidence: Required document-list rendering/refresh checks failed in an available local environment. This must be repaired and revalidated before (06D) can be accepted.
+
+## Progress Tracking
+- Selected task checkbox: remains unchecked
+- Checkbox updated by reviewer: no
+- Batch status: unchanged and incomplete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: (06E) remains unchecked and must not proceed until (06D) is repaired and accepted.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- Direct `/documents` remains stuck on `Loading documents...` after a successful `GET /api/documents` 200 response, leaving Refresh disabled and preventing list/failed-status validation.
+
+### Major
+- None beyond the blocking issue.
+
+### Minor
+- None.
+
+### Warnings
+- Connection-error behavior and failed-status error rendering are still unverified because the document-list page failure stopped validation.
+
+### Observations
+- The failure is consistent with a React StrictMode effect/request guard issue: the first dev-mode effect cleanup can mark the active request stale while `requestInFlightRef.current` prevents the second effect run from starting a replacement request.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no
+
+## Repair Instructions
+- target: `frontend/src/pages/DocumentListPage.tsx`
+- change: Repair the initial document-list loading effect so it cannot remain stuck in `loading` under React StrictMode/dev double-effect execution. Keep overlapping request prevention for manual refresh, but ensure a canceled initial effect cannot suppress the replacement load forever.
+- validation: rerun `npm run build`; rerun browser checks for direct `/documents`, list card rendering, manual Refresh, failed-status error rendering from existing failed document data, connection-error behavior, upload route smoke, network destination, keyboard focus, and 1365px/375px/320px overflow.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff",
+  "selected_task_id": "(06D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/tasks/task_13.md",
+    "docs/review/review_13_review_agent.md",
+    "frontend/src/pages/DocumentListPage.tsx",
+    "frontend/src/components/DocumentCard.tsx",
+    "frontend/src/api/documents.ts"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "Direct /documents route remains loading after GET /api/documents returns 200"
+  ],
+  "validations_blocked": [
+    "Connection-error behavior not reached before blocking document-list failure",
+    "Failed-status error rendering not reached before blocking document-list failure"
+  ],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [
+    "Document list route stuck loading after successful backend list response"
+  ],
+  "major_issues": [],
+  "warnings": [
+    "Remaining 06D document-list-related checks still need rerun after repair"
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06D Repair)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06D)
+- Task title: Run manual browser upload, list, error, and responsive checks
+- Task status reported by executor: complete after repair
+- Source of Truth: `docs/plans/Plan_13.md` > `## 11. Required Tests`; `## 12. Acceptance Criteria`; `## 13. Failure Handling`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06D)
+- Reviewed task ID: (06D Repair)
+- Correct selection: yes
+- Notes: The latest appended execution report is the (06D) repair report following the rejected first validation attempt.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `frontend/src/pages/DocumentListPage.tsx`, `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`
+- untracked files: none after removing the accidental generated root `package.json`
+
+## Files Reviewed
+- `frontend/src/pages/DocumentListPage.tsx`: in scope - repairs the document-list loading failure found by (06D) validation.
+- `docs/reports/report_13_execute_agent.md`: in scope - contains failed first attempt plus complete repair execution evidence.
+- `docs/tasks/task_13.md`: in scope - reviewer updated only the selected (06D) checkboxes after acceptance.
+- `docs/review/review_13_review_agent.md`: in scope - contains rejection and accepted repair review entries.
+- `frontend/src/components/DocumentCard.tsx`: in scope for validation context - renders failed document error messages.
+- `frontend/src/api/documents.ts`: in scope for validation context - uses approved backend document endpoints.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/pages/DocumentListPage.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The change directly repairs the validation failure blocking (06D).
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest repair report is appended and includes real validation evidence.
+- file from execution report: temp fixtures/CDP tooling
+- present in git/repo: no
+- matches task scope: yes
+- notes: Temporary validation artifacts were kept outside the repository; no untracked project files remain.
+
+## Dependency Review
+- Required dependencies: (06C)
+- Dependency status: satisfied; (06C) is checked and accepted, and the build passed again during repair validation.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: The repair preserves the existing API boundary, routes, and manual refresh behavior while fixing stale request handling in the document-list page. No provider calls, secrets, test framework, backend change, chat/evidence/log/auth/deletion UI, or next-task work was added.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Browser validation after repair rendered real backend data, including the newly uploaded document and an existing failed document with its real error message.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime code uses request IDs to handle async list requests. It does not special-case fixture names, document IDs, statuses, or expected browser output.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed
+- Rerun result: reviewed command output from repair execution; TypeScript and Vite build completed successfully
+- Status: passed
+- Notes: Required build validation is satisfied after the code repair.
+- Command/check: browser `/upload` unsupported file, TXT upload, progress, disabled duplicate submit, success, and recent refresh
+- Reported result: passed
+- Rerun result: reviewed concrete CDP output and backend logs
+- Status: passed
+- Notes: Upload path used `http://localhost:8000/api/documents/upload` and refreshed recent documents.
+- Command/check: browser direct `/documents`, list rendering, manual refresh, failed-status error rendering
+- Reported result: passed after repair
+- Rerun result: reviewed CDP output showing seven document cards, `plan13-smoke.txt`, failed `task04e-empty.txt`, `Processing error: Parsed document is empty.`, and refresh GET to `/api/documents`
+- Status: passed
+- Notes: This resolves the prior rejection.
+- Command/check: browser connection-error behavior
+- Reported result: passed
+- Rerun result: reviewed CDP output showing `Connection error`, the safe backend connection message, Retry, and `net::ERR_CONNECTION_REFUSED`
+- Status: passed
+- Notes: Backend was restarted and health checked afterward.
+- Command/check: responsive overflow and keyboard focus
+- Reported result: passed
+- Rerun result: reviewed CDP output for 1365px, 375px, and 320px no horizontal overflow and visible Tab focus outline
+- Status: passed
+- Notes: Required manual usability checks are satisfied.
+
+## Acceptance Review
+- Task acceptance: Required checks pass, or environment-dependent checks are explicitly blocked without fake success.
+- Status: satisfied
+- Evidence: Local backend/frontend/browser setup was available. All required (06D) checks either passed directly or were repaired and rerun. No blocked validation was claimed as passed.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch06 task list and mirrored Task IDs progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and incomplete because (06E) remains unchecked
+- Execution report entry: appended, including failed first run and accepted repair run
+- Review report entry: appended
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- React StrictMode may issue duplicate initial document-list GETs in development; the latest-request guard ignores stale results and renders the latest response.
+- Live validation uploaded `plan13-smoke.txt` into the configured backend environment.
+
+### Observations
+- The in-app browser was unavailable, so Chrome 149 was driven through CDP using temp-only tooling outside the repository.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to (06E)
+- Should batch be marked complete? no, because (06E) remains incomplete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff",
+  "selected_task_id": "(06D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "frontend/src/pages/DocumentListPage.tsx",
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/components/DocumentCard.tsx",
+    "frontend/src/api/documents.ts"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Development StrictMode can duplicate initial list GETs; stale responses are ignored",
+    "Live validation uploaded plan13-smoke.txt into the configured backend environment"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06E)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- Task ID: (06E)
+- Task title: Create the execution report and complete final scope review
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_13.md` > `## 4. Out of Scope`; `## 14. Agent Report Requirement`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06E)
+- Reviewed task ID: (06E)
+- Correct selection: yes
+- Notes: The latest appended execution report is the selected (06E) report.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_13_execute_agent.md`, `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`, `frontend/src/pages/DocumentListPage.tsx`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - contains the (06E) final handoff entry and prior Batch06 validation evidence.
+- `docs/review/review_13_review_agent.md`: in scope - contains Batch06 reviews, including the (06D) rejection/repair acceptance and this (06E) acceptance.
+- `docs/tasks/task_13.md`: in scope - selected (06E) checkbox updated after acceptance; Batch06 batch checkbox left unchecked.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope - accepted (06D) repair included in final scope review.
+- `frontend/src/api/client.ts` and `frontend/src/api/documents.ts`: in scope for endpoint/config review.
+- `frontend/package.json`: in scope for build/test-script review.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_13_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: (06E) report was appended and includes required final handoff fields.
+
+## Dependency Review
+- Required dependencies: (06C), (06D), (05D)
+- Dependency status: satisfied; (06C) and (06D) are accepted and checked, and (05D) was previously accepted.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Final scope review confirmed frontend-only boundary, approved backend document endpoints, no private frontend secrets, no direct provider calls, no internal indexing call, and no out-of-scope UI.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: This is a reporting/scope-review task. The report cites real build, browser, diff, endpoint, and forbidden-scope checks from the repository and local validation.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: (06E) added no runtime logic. The accepted (06D) runtime repair uses generic request IDs, not fixture-specific values.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed
+- Rerun result: reviewed output from (06E), TypeScript and Vite build passed
+- Status: passed
+- Notes: Build remains valid after (06D) repair.
+- Command/check: frontend script inspection
+- Reported result: no `test` script
+- Rerun result: reviewed `npm pkg get scripts` output showing only `dev`, `build`, and `preview`
+- Status: passed
+- Notes: Optional tests were honestly reported as not configured.
+- Command/check: forbidden frontend scope and API/config searches
+- Reported result: passed
+- Rerun result: reviewed command evidence; forbidden search returned no matches, and API/config search found only `apiClient` and `VITE_API_BASE_URL`
+- Status: passed
+- Notes: No secret, provider, internal-index, or out-of-scope UI violation found.
+- Command/check: `git diff --check`, `git status --short`, `git diff --stat`, scoped diff review
+- Reported result: passed
+- Rerun result: reviewed command output
+- Status: passed
+- Notes: Dirty set is limited to Batch06 report/review/task files and the accepted (06D) document-list repair.
+
+## Acceptance Review
+- Task acceptance: Report includes required fields, does not fake blocked live checks as passed, and explicitly confirms no out-of-scope UI or frontend secrets were added.
+- Status: satisfied
+- Evidence: (06E) report includes files, commands, build/test/manual results, known issues, out-of-scope exclusions, browser-test status, scope searches, endpoint/config review, and diff review.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch06 task list and mirrored Task IDs progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked pending A3 audit and batch commit
+- Execution report entry: appended
+- Review report entry: appended
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Frontend automated tests remain unavailable because no test runner is configured.
+- Manual validation uploaded `plan13-smoke.txt` into the configured backend environment.
+- Development StrictMode may duplicate initial document-list GETs; stale responses are ignored by the accepted request ID guard.
+
+### Observations
+- Batch06 now has every task ID accepted. A3 must audit the uncommitted Batch06 diff and README before any batch commit.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to A3 Batch06 scope audit
+- Should batch be marked complete? no, only after A3 PASS and batch commit
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff",
+  "selected_task_id": "(06E)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/pages/DocumentListPage.tsx",
+    "frontend/src/api/client.ts",
+    "frontend/src/api/documents.ts",
+    "frontend/package.json"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "No frontend test runner is configured",
+    "Manual validation uploaded plan13-smoke.txt into the configured backend environment",
+    "Development StrictMode may duplicate initial document-list GETs; stale results are ignored"
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
