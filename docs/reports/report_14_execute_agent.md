@@ -1412,3 +1412,531 @@ complete
 - next task ID: (06A)
 - can proceed: yes, after A2 accepts (05C), A3 passes, and Batch05 is committed
 - handoff notes: Run the final automated and browser validation batch.
+
+---
+
+# Task Execution Report - (06A)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch06 - Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06A) - Run required frontend automated validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 11. Required Tests`
+- `README.md` > `## Running the Project` > `### Production Frontend Build`
+- `README.md` > `## Testing and Validation`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Validation, Reporting, and Reviewer Handoff
+- Task ID: (06A)
+- Task title: Run required frontend automated validation
+
+## Completed Work
+- Inspected the actual frontend package scripts.
+- Ran the required TypeScript and Vite production build.
+- Confirmed no frontend test script is configured and did not fabricate or invoke one.
+
+## Files Created or Modified
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: `tsc --noEmit && vite build` completed with 109 modules transformed and exit code 0.
+- PowerShell package script inspection via `ConvertFrom-Json`: Passed; scripts are `dev`, `build`, and `preview`.
+- `npm test`: Not run because no `test` script exists.
+- Note: an initial package-read command referenced `frontend/package.json` while already inside `frontend/` and reported a path error; the package inspection was immediately rerun with the correct path and passed. The build in that command completed successfully.
+
+## Acceptance Check
+- Task acceptance condition: Production build passes and frontend test status is accurately reported.
+- Status: satisfied.
+- Evidence: fresh build exit code 0; explicit `NO_TEST_SCRIPT_CONFIGURED` result.
+
+## Artifacts Produced
+- Automated validation evidence for Plan 14.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Did not add or invoke a test runner because Plan 14 permits tests only when one is already configured.
+
+## Risks or Open Issues
+- None for automated validation.
+
+## Minor Issues Fixed During Execution
+- Corrected the package inspection working-directory path and reran it successfully.
+
+## Workflow Integrity Check
+- No runtime source file changed; required validation was run without inventing test infrastructure.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes, after A2 accepts (06A)
+- handoff notes: Determine whether the configured live backend, ready document data, and browser surface support happy-path validation.
+
+---
+
+# Task Execution Report - (06B)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch06 - Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06B) - Perform happy-path manual chat and evidence browser validation
+
+## Status
+blocked
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 11. Required Tests`
+- `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_14.md` > `## 5. Dependencies`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Validation, Reporting, and Reviewer Handoff
+- Task ID: (06B)
+- Task title: Perform happy-path manual chat and evidence browser validation
+
+## Completed Work
+- Started the configured FastAPI backend on `127.0.0.1:8000`.
+- Started the Vite frontend on `127.0.0.1:5173`.
+- Confirmed backend health returned `status: ok`.
+- Confirmed `/api/documents` returned real configured data, including multiple documents with status `ready`.
+- Confirmed the frontend `/chat` URL returned HTTP 200.
+- Attempted to connect to the required in-app browser for real UI interaction.
+
+## Files Created or Modified
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `GET http://127.0.0.1:8000/api/health`: Passed.
+- `GET http://127.0.0.1:8000/api/documents`: Passed; multiple ready documents were available.
+- `GET http://127.0.0.1:5173/chat`: Passed with HTTP 200.
+- In-app browser connection: Blocked; the configured browser surface was unavailable.
+- Chat form submission, visible answer/confidence/citations, evidence toggle, and direct evidence UI inspection: Not run because browser interaction was unavailable.
+
+## Acceptance Check
+- Task acceptance condition: Complete the happy-path chat/evidence workflow through real browser interaction.
+- Status: blocked.
+- Evidence: backend, frontend, and ready data exist, but no supported browser surface was available to interact with and inspect the UI.
+
+## Artifacts Produced
+- Runtime and data prerequisite evidence.
+- Explicit `BLOCKED_BY_USER_ACTION` browser-validation status.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run and required browser validation is blocked.
+
+## Key Implementation Decisions
+- Did not substitute direct API requests for the required browser workflow.
+- Did not claim answer, citation, confidence, or evidence UI behavior without visible browser evidence.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: a working in-app browser session is required to complete the happy-path UI validation.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No runtime source files changed and no fake ready document or fabricated validation result was introduced.
+
+## Notes for Next Task
+- next task ID: (06C)
+- can proceed: no
+- handoff notes: Restore or provide the in-app browser surface, then rerun (06B). The backend/frontend servers and ready document data are available.
+
+---
+
+# Task Execution Report - (06B) Resume
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch06 - Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06B) - Perform happy-path manual chat and evidence browser validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 11. Required Tests`
+- `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_14.md` > `## 5. Dependencies`
+
+## Supplemental Documents Used
+- User-provided browser screenshots in the current conversation
+
+## Selected Scope
+- Batch: Batch06 - Validation, Reporting, and Reviewer Handoff
+- Task ID: (06B)
+- Task title: Perform happy-path manual chat and evidence browser validation
+
+## Completed Work
+- Resumed the previously blocked task after the user performed the browser workflow.
+- Verified screenshot evidence showing `task5-live-test.txt` selected with status `Ready`.
+- Verified the submitted question, visible grounded answer, confidence display, and citation containing the selected file name plus quoted text.
+- Verified the expanded answer evidence area with separate verified and rejected evidence sections.
+- Verified one verified evidence item with file name, quote, page, verification reason, and simple-reasoning flag, plus an explicit empty rejected-evidence state.
+
+## Files Created or Modified
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- User browser happy-path chat submission: Passed based on supplied screenshots.
+- Ready-only document selection evidence: Passed; selected document is visibly marked `Ready`, while an uploaded/non-ready document is disabled.
+- Answer display: Passed; visible answer text was returned.
+- Confidence display: Passed; visible confidence was `100%`.
+- Citation display: Passed; citation shows `task5-live-test.txt` and a quoted source passage.
+- Evidence viewer: Passed; expanded evidence shows separate verified and rejected groups and the required verified metadata.
+- Direct `/evidence/:agentRunId` route: Not demonstrated by these screenshots; route implementation remains build-validated and direct-route browser checking remains for any additional validation opportunity.
+
+## Acceptance Check
+- Task acceptance condition: A real browser happy path returns visible answer, confidence, citations, and verified/rejected evidence for a ready document.
+- Status: satisfied.
+- Evidence: the user-provided screenshots visibly demonstrate each required happy-path UI result.
+
+## Artifacts Produced
+- User-provided browser evidence for the Plan 14 happy path.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Accepted user-provided screenshots as manual browser evidence after the automated browser surface was unavailable.
+- Limited conclusions to behavior visibly demonstrated in the screenshots.
+
+## Risks or Open Issues
+- Direct evidence URL navigation was not shown in the supplied screenshots.
+
+## Minor Issues Fixed During Execution
+- Resolved the prior browser-validation blocker through user-performed manual testing.
+
+## Workflow Integrity Check
+- No runtime source files changed and no browser result was fabricated.
+
+## Notes for Next Task
+- next task ID: (06C)
+- can proceed: yes, after A2 accepts (06B)
+- handoff notes: Validate empty question, no selection, failure behavior where feasible, mobile widths, overflow, and keyboard focus.
+
+---
+
+# Task Execution Report - (06C)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch06 - Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06C) - Perform negative, responsive, and accessibility browser checks
+
+## Status
+blocked
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 11. Required Tests`
+- `docs/plans/Plan_14.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- User-provided browser screenshots for the preceding happy-path task
+
+## Selected Scope
+- Batch: Batch06 - Validation, Reporting, and Reviewer Handoff
+- Task ID: (06C)
+- Task title: Perform negative, responsive, and accessibility browser checks
+
+## Completed Work
+- Confirmed from prior user screenshots that the desktop layout renders the selector, question form, answer, citation, and evidence groups without visible horizontal overflow.
+- Confirmed evidence grouping is communicated by section headings and counts, not color alone.
+- Identified the remaining required interactive checks that need a working browser session.
+
+## Files Created or Modified
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- Desktop happy-path visible overflow inspection: Passed based on user screenshots.
+- Verified/rejected evidence structural separation: Passed based on user screenshots.
+- Empty-question validation: Not run.
+- No-selected-document validation: Not run.
+- Backend connection failure display: Not run.
+- Evidence load failure and answer preservation: Not run.
+- Keyboard focus visibility: Not run.
+- 320px and 375px responsive checks: Not run.
+- In-app browser connection: Blocked; configured browser surface remains unavailable.
+
+## Acceptance Check
+- Task acceptance condition: Negative validation, safe failure handling, responsive layouts, overflow, and keyboard focus are manually checked.
+- Status: blocked.
+- Evidence: only desktop overflow and evidence grouping are currently demonstrated; the remaining interactive checks require user-performed browser validation.
+
+## Artifacts Produced
+- Exact manual validation checklist for resolving the blocker.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run and required browser checks remain incomplete.
+
+## Key Implementation Decisions
+- Did not infer mobile, focus, or negative-state behavior from static source code.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: user browser results are required for the remaining checks.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No runtime source files changed and incomplete checks are not reported as passed.
+
+## Notes for Next Task
+- next task ID: (06D)
+- can proceed: no
+- handoff notes: Supply results or screenshots for empty question, no selection, backend failure, 320px/375px layouts, and keyboard focus. Evidence-load failure is optional when it cannot be simulated safely, but must be reported as blocked.
+
+---
+
+# Task Execution Report - (06C) Resume
+
+## Status
+partial
+
+## Supplemental Documents Used
+- User-provided browser screenshots and focus test result in the current conversation
+
+## Completed Work
+- Verified safe backend connection failure text from the supplied screenshot.
+- Verified empty-question validation text: `Enter a question before asking about your documents.`
+- Verified no-selected-document validation text: `Select at least one ready document before asking a question.`
+- Recorded the user's keyboard-focus inspection as passed.
+
+## Tests or Validations Run
+- Empty-question validation: Passed.
+- No-selected-document validation: Passed.
+- Backend connection failure display: Passed; safe, actionable text is shown.
+- Keyboard focus visibility: Passed by user manual inspection.
+- 320px responsive/overflow check: Pending.
+- 375px responsive/overflow check: Pending.
+- Evidence-load failure and answer preservation: Not run; optional when it cannot be simulated safely.
+
+## Acceptance Check
+- Status: partially satisfied.
+- Remaining evidence: confirm no horizontal overflow and usable controls at 320px and 375px viewport widths.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Required mobile-width checks remain incomplete.
+
+## Notes for Next Task
+- next task ID: (06D)
+- can proceed: no
+- handoff notes: Report pass/fail for 320px and 375px layouts.
+
+---
+
+# Task Execution Report - (06C) Completion
+
+## Status
+complete
+
+## Supplemental Documents Used
+- User confirmation in the current conversation
+
+## Completed Work
+- Recorded the user's final responsive validation confirmation for both required mobile widths.
+- Consolidated the completed negative, responsive, and accessibility checks.
+
+## Tests or Validations Run
+- Empty-question validation: Passed with visible validation text.
+- No-selected-document validation: Passed with visible validation text.
+- Backend connection failure display: Passed with safe, actionable text.
+- Keyboard focus visibility: Passed by user manual inspection.
+- 320px responsive/overflow check: Passed by user manual inspection.
+- 375px responsive/overflow check: Passed by user manual inspection.
+- Desktop overflow and evidence grouping: Passed from prior screenshots.
+- Evidence-load failure and answer preservation: Not run because it was not safely simulated; reported accurately as an optional blocked scenario.
+
+## Acceptance Check
+- Task acceptance condition: Negative validation and safe backend error display are clear; desktop/mobile layouts avoid horizontal overflow; keyboard focus is visible.
+- Status: satisfied.
+- Evidence: user screenshots and explicit manual confirmations cover all required local checks.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Risks or Open Issues
+- Evidence-load failure isolation was not manually simulated, though the implementation was reviewed in Batch04.
+
+## Workflow Integrity Check
+- No incomplete required check is reported as passed.
+
+## Notes for Next Task
+- next task ID: (06D)
+- can proceed: yes, after A2 accepts (06C)
+- handoff notes: Produce the consolidated reviewer handoff with all automated/manual results and limitations.
+
+---
+
+# Task Execution Report - (06D)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch06 - Validation, Reporting, and Reviewer Handoff
+
+## Task
+(06D) - Write execution report and reviewer handoff
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- User-provided browser screenshots and manual validation confirmations in the current conversation
+
+## Selected Scope
+- Batch: Batch06 - Validation, Reporting, and Reviewer Handoff
+- Task ID: (06D)
+- Task title: Write execution report and reviewer handoff
+
+## Completed Work
+- Consolidated Plan 14 implementation, automated validation, manual browser validation, limitations, and scope exclusions for final review.
+- Confirmed every Plan 14 task has a traceable execution and review record through `(06C)`.
+
+## Files Created or Modified
+- `docs/reports/report_14_execute_agent.md`
+
+## Implementation Summary
+- Added typed frontend chat/evidence contracts and Axios API helpers.
+- Added ready-only document selection and guarded question input.
+- Added answer, confidence, citation, verified evidence, and rejected evidence display.
+- Added the assembled chat page, lazy evidence loading, and direct evidence viewer page.
+- Added `/chat` navigation and `/evidence/:agentRunId` routing.
+- Added responsive, wrapping, focus-visible, disabled, loading, error, and empty-state styling.
+
+## Commands and Results
+- `npm run build` from `frontend/`: Passed; TypeScript and Vite completed with 109 modules transformed.
+- Frontend tests: Not run because `frontend/package.json` has no `test` script.
+- Backend health check during manual setup: Passed.
+- Document list check during manual setup: Passed with multiple real `ready` documents.
+- Frontend `/chat` availability check: Passed with HTTP 200.
+- Scope searches for logs/debug, providers, secrets/prompts, auth/JWT, streaming, hardcoded origins, development indexing, evidence editing, and direct provider calls: Passed with no prohibited frontend matches.
+- Frontend runtime configuration check: only `VITE_API_BASE_URL` is referenced.
+
+## Manual Browser Results
+- Ready document selection: Passed.
+- Non-ready document disabled state: Passed.
+- Question submission and visible answer: Passed.
+- Confidence display: Passed.
+- Citation file name plus quote: Passed.
+- Expanded verified/rejected evidence groups: Passed.
+- Verified evidence metadata and rejected empty state: Passed.
+- Empty-question validation: Passed.
+- No-selected-document validation: Passed.
+- Backend connection failure safe display: Passed.
+- Keyboard focus visibility: Passed.
+- Desktop layout/overflow: Passed.
+- 320px responsive/overflow: Passed.
+- 375px responsive/overflow: Passed.
+
+## Known Issues and Limitations
+- Direct `/evidence/:agentRunId` browser navigation was not manually demonstrated; the route is implemented and build-validated.
+- Evidence-load failure with answer preservation was not manually simulated; the implementation was reviewed and accepted in Batch04.
+- No frontend automated test runner is configured.
+
+## Intentionally Out of Scope
+- Agent logs/debug UI and `/logs` frontend calls.
+- Streaming chat responses.
+- Full multi-session chat history.
+- Evidence editing or moderation.
+- Authentication/JWT or multi-user behavior.
+- Direct frontend calls to Supabase, Qdrant, ShopAIKey, or other providers.
+- Frontend use of the development indexing endpoint.
+- Backend API, schema, migration, retrieval, processing, or agent-workflow changes.
+
+## Tests or Validations Run
+- Report traceability inspection for execution and review entries: Passed.
+- Git history inspection for Plan 14 Batch01 through Batch05 commits: Passed.
+- Current Batch06 diff inspection: Passed; documentation/progress files only.
+- Final scope search: Passed, `SCOPE_SEARCH_NO_MATCHES`.
+
+## Acceptance Check
+- Task acceptance condition: Reviewer can trace implementation, commands, results, browser status, known issues, and excluded scope without any blocked check being reported as passed.
+- Status: satisfied.
+- Evidence: this handoff and the preceding task-specific reports distinguish completed, not configured, not demonstrated, and not simulated outcomes.
+
+## Artifacts Produced
+- Complete Plan 14 execution report and final reviewer handoff.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Preserved evidence limitations explicitly instead of broadening manual-test claims.
+
+## Risks or Open Issues
+- Manual direct evidence URL and evidence-load failure checks remain residual validation gaps.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No runtime source files changed in Batch06 and no test or browser result was fabricated.
+
+## Notes for Next Task
+- next task ID: None
+- can proceed: yes, after A2 accepts (06D)
+- handoff notes: Run A3 Batch06 scope/README audit, fresh verification, and commit `P14B6: Complete`.

@@ -24,6 +24,8 @@ Plan 14 Batch02 completed reusable frontend chat input controls. `DocumentSelect
 
 Plan 14 Batches03 through 05 completed the chat and evidence display flow. The frontend now renders answers, confidence, citations, verified/rejected evidence, the assembled ready-document chat workflow, lazy evidence loading, and a direct evidence viewer. `App.tsx` exposes `/chat` through navigation and `/evidence/:agentRunId` for direct run inspection while preserving `/upload` and `/documents`. Chat/evidence layouts include long-content wrapping, visible focus treatment, structured loading/error/empty states, and mobile single-column behavior.
 
+Plan 14 Batch06 completed frontend chat/evidence validation and reviewer handoff. The production build passed, no frontend test script is configured, and user-performed browser checks covered ready-only selection, grounded answer/confidence/citations, verified/rejected evidence display, empty-question and no-selection validation, safe backend connection errors, keyboard focus, and desktop/320px/375px overflow. Direct `/evidence/:agentRunId` navigation and evidence-load failure isolation were not manually simulated and remain documented validation gaps.
+
 ## What This Folder Does
 
 This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
@@ -550,6 +552,8 @@ npm run preview
 ```
 
 There is no frontend test script in `frontend/package.json`.
+
+Plan 14 frontend chat/evidence validation completed with a passing production build and manual browser checks for the primary chat/evidence path, negative validation, safe connection errors, focus visibility, and responsive overflow. The direct evidence URL and evidence-load failure scenario were not manually exercised.
 
 ## Development Notes for AI Agents
 

@@ -654,7 +654,7 @@ Plan 14 explicitly requires build checks, conditional frontend tests, manual cha
 
 ### Tasks
 
-- [ ] (06A): Run required frontend automated validation
+- [x] (06A): Run required frontend automated validation
   - Source of Truth: `docs/plans/Plan_14.md` > `## 11. Required Tests`; `README.md` > `## Running the Project` > `### Production Frontend Build`; `README.md` > `## Testing and Validation`
   - Source Requirements:
     - Run `cd frontend && npm run build`.
@@ -670,7 +670,7 @@ Plan 14 explicitly requires build checks, conditional frontend tests, manual cha
   - Blocked Condition: None for build unless dependency installation is missing and cannot be repaired without user action; frontend tests are not blocked when no real test command exists.
   - Files: `docs/reports/report_14_execute_agent.md` during execution reporting
 
-- [ ] (06B): Perform happy-path manual chat and evidence browser validation
+- [x] (06B): Perform happy-path manual chat and evidence browser validation
   - Source of Truth: `docs/plans/Plan_14.md` > `## 11. Required Tests`; `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_14.md` > `## 5. Dependencies`
   - Source Requirements:
     - Start backend and frontend.
@@ -688,7 +688,7 @@ Plan 14 explicitly requires build checks, conditional frontend tests, manual cha
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if no ready document, missing provider/backend credentials, missing Supabase/Qdrant data, or unavailable live backend setup prevents meaningful chat/evidence validation.
   - Files: `docs/reports/report_14_execute_agent.md` during execution reporting
 
-- [ ] (06C): Perform negative, responsive, and accessibility browser checks
+- [x] (06C): Perform negative, responsive, and accessibility browser checks
   - Source of Truth: `docs/plans/Plan_14.md` > `## 11. Required Tests`; `docs/plans/Plan_14.md` > `## 13. Failure Handling`; `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Empty question shows validation error.
@@ -706,7 +706,7 @@ Plan 14 explicitly requires build checks, conditional frontend tests, manual cha
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for checks that require unavailable backend state or user-controlled external setup; local validation checks must still run where possible.
   - Files: `docs/reports/report_14_execute_agent.md` during execution reporting
 
-- [ ] (06D): Write execution report and reviewer handoff
+- [x] (06D): Write execution report and reviewer handoff
   - Source of Truth: `docs/plans/Plan_14.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created, files modified, commands run, test results, known issues, and intentional out-of-scope exclusions.
@@ -883,10 +883,10 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] (05C): Perform frontend scope hardening before validation
 
 #### Batch06
-- [ ] (06A): Run required frontend automated validation
-- [ ] (06B): Perform happy-path manual chat and evidence browser validation
-- [ ] (06C): Perform negative, responsive, and accessibility browser checks
-- [ ] (06D): Write execution report and reviewer handoff
+- [x] (06A): Run required frontend automated validation
+- [x] (06B): Perform happy-path manual chat and evidence browser validation
+- [x] (06C): Perform negative, responsive, and accessibility browser checks
+- [x] (06D): Write execution report and reviewer handoff
 
 ## Completion Reporting Rules for Future Execution Agents
 
