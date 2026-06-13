@@ -856,49 +856,49 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ## Global Verification Checklist
 
-- [ ] `docs/plans/Plan_13.md` remained the scope authority.
-- [ ] React Router is installed without unrelated dependency additions.
-- [ ] `frontend/src/types/documents.ts` defines the approved document status and response types.
-- [ ] `uploadDocument`, `listDocuments`, and `getDocument` are implemented through the existing Axios client.
-- [ ] Upload uses `FormData`.
-- [ ] Upload progress is visible and does not fabricate a percentage when total bytes are unavailable.
-- [ ] Duplicate upload submission is disabled while a request is active.
-- [ ] `.pdf`, `.docx`, `.txt`, and `.csv` are accepted case-insensitively.
-- [ ] Unsupported extensions are rejected before upload.
-- [ ] Zero-byte files are rejected before upload.
-- [ ] Backend upload errors show safe backend text where available.
-- [ ] Backend connection failures show a clear connection message.
-- [ ] Upload success reflects the actual returned backend status.
-- [ ] Recent document feedback refreshes after a successful upload.
-- [ ] Upload page has truthful loading, success, error, and empty states.
-- [ ] Document list page fetches on load.
-- [ ] Document list page provides a manual refresh action.
-- [ ] Overlapping list refresh requests are prevented.
-- [ ] Document list displays file name, file type, created time, status, chunk count, and processing error.
-- [ ] `uploaded`, `processing`, `ready`, and `failed` have distinct readable status treatment.
-- [ ] Empty list and request failure are displayed as different states.
-- [ ] `/upload` and `/documents` routes work.
-- [ ] Root/default route reaches the actual tool UI.
-- [ ] Navigation works without full-page reload.
-- [ ] Placeholder and marketing landing content are absent.
-- [ ] Upload and list UI are usable at desktop and 320-375px mobile widths.
-- [ ] Button labels, file names, metadata, and status text do not create horizontal overflow.
-- [ ] Keyboard focus is visible for interactive controls.
-- [ ] Status is not communicated by color alone.
-- [ ] `VITE_API_BASE_URL` is the only required frontend runtime setting.
-- [ ] No Supabase, Qdrant, ShopAIKey, or other private key is exposed in frontend code.
-- [ ] No frontend call goes directly to Supabase, Qdrant, or ShopAIKey.
-- [ ] Frontend does not call `POST /api/documents/{document_id}/index`.
-- [ ] No backend API, schema, migration, storage, processing, or authentication change was added.
-- [ ] No chat, evidence viewer, agent logs UI, login/JWT, deletion, detail page, or document selection for chat was added.
-- [ ] Current backend limitation that upload may remain `uploaded` is represented honestly.
-- [ ] `npm run build` was run and passed.
-- [ ] Frontend tests were run only if a real test command exists.
-- [ ] Absence of frontend test infrastructure was reported accurately when applicable.
-- [ ] Manual browser testing status was reported.
-- [ ] TXT upload, progress, unsupported-file, list refresh, and responsive checks passed or were safely marked `BLOCKED_BY_USER_ACTION`.
-- [ ] Execution report includes files created, files modified, commands, results, known issues, out-of-scope work, and browser-test status.
-- [ ] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
+- [x] `docs/plans/Plan_13.md` remained the scope authority.
+- [x] React Router is installed without unrelated dependency additions.
+- [x] `frontend/src/types/documents.ts` defines the approved document status and response types.
+- [x] `uploadDocument`, `listDocuments`, and `getDocument` are implemented through the existing Axios client.
+- [x] Upload uses `FormData`.
+- [x] Upload progress is visible and does not fabricate a percentage when total bytes are unavailable.
+- [x] Duplicate upload submission is disabled while a request is active.
+- [x] `.pdf`, `.docx`, `.txt`, and `.csv` are accepted case-insensitively.
+- [x] Unsupported extensions are rejected before upload.
+- [x] Zero-byte files are rejected before upload.
+- [x] Backend upload errors show safe backend text where available.
+- [x] Backend connection failures show a clear connection message.
+- [x] Upload success reflects the actual returned backend status.
+- [x] Recent document feedback refreshes after a successful upload.
+- [x] Upload page has truthful loading, success, error, and empty states.
+- [x] Document list page fetches on load.
+- [x] Document list page provides a manual refresh action.
+- [x] Overlapping list refresh requests are prevented.
+- [x] Document list displays file name, file type, created time, status, chunk count, and processing error.
+- [x] `uploaded`, `processing`, `ready`, and `failed` have distinct readable status treatment.
+- [x] Empty list and request failure are displayed as different states.
+- [x] `/upload` and `/documents` routes work.
+- [x] Root/default route reaches the actual tool UI.
+- [x] Navigation works without full-page reload.
+- [x] Placeholder and marketing landing content are absent.
+- [x] Upload and list UI are usable at desktop and 320-375px mobile widths.
+- [x] Button labels, file names, metadata, and status text do not create horizontal overflow.
+- [x] Keyboard focus is visible for interactive controls.
+- [x] Status is not communicated by color alone.
+- [x] `VITE_API_BASE_URL` is the only required frontend runtime setting.
+- [x] No Supabase, Qdrant, ShopAIKey, or other private key is exposed in frontend code.
+- [x] No frontend call goes directly to Supabase, Qdrant, or ShopAIKey.
+- [x] Frontend does not call `POST /api/documents/{document_id}/index`.
+- [x] No backend API, schema, migration, storage, processing, or authentication change was added.
+- [x] No chat, evidence viewer, agent logs UI, login/JWT, deletion, detail page, or document selection for chat was added.
+- [x] Current backend limitation that upload may remain `uploaded` is represented honestly.
+- [x] `npm run build` was run and passed.
+- [x] Frontend tests were run only if a real test command exists.
+- [x] Absence of frontend test infrastructure was reported accurately when applicable.
+- [x] Manual browser testing status was reported.
+- [x] TXT upload, progress, unsupported-file, list refresh, and responsive checks passed or were safely marked `BLOCKED_BY_USER_ACTION`.
+- [x] Execution report includes files created, files modified, commands, results, known issues, out-of-scope work, and browser-test status.
+- [x] Implementation code is clean, idiomatic, typed where appropriate, and easy to understand.
 
 ## Progress Tracker
 
@@ -906,10 +906,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 - [x] Batch01 - Frontend Contracts, Routing Dependency, and Document API Client
 - [x] Batch02 - Reusable Upload and Document Display Components
-- [ ] Batch03 - Upload Page and Recent Document Feedback
-- [ ] Batch04 - Document List Page and Status Refresh
-- [ ] Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
-- [ ] Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
+- [x] Batch03 - Upload Page and Recent Document Feedback
+- [x] Batch04 - Document List Page and Status Refresh
+- [x] Batch05 - Application Routing, Navigation, Styling, and Scope Hardening
+- [x] Batch06 - Automated/Manual Validation, Reporting, and Reviewer Handoff
 
 ### Task IDs
 
