@@ -1542,3 +1542,173 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05A)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05A)
+- Task title: Add chat and evidence routes to the application shell
+- Execution report: `docs/reports/report_14_execute_agent.md`
+- Source requirements: route/navigation integration for Chat and parameterized direct evidence access
+
+## Review Evidence
+- Git status, diff stat, and diff reviewed: yes
+- Files reviewed: `frontend/src/App.tsx`, both routed page components, task file, plan sections, execution report
+- Dependencies satisfied: (04A) and (04C)
+- Navigation: `NavLink` reaches `/chat` without a full-page reload
+- Routing: `/chat` and `/evidence/:agentRunId` render the intended pages
+- Existing behavior: `/upload`, `/documents`, root redirect, and fallback redirect remain intact
+- Validation rerun: executor build passed with 109 modules transformed
+
+## Acceptance And Progress
+- Acceptance satisfied: yes
+- Checkbox updated by reviewer: yes, detailed list and Progress Tracker
+- Sibling/future task checkboxes changed: no
+- Issues: none blocking, major, or minor
+- Warning: manual browser route checks remain scheduled for Batch06
+- Next task can proceed: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "selected_batch": "Batch05 - Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05A)",
+  "git_diff_reviewed": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Manual route and navigation checks remain scheduled for Batch06."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05B)
+- Task title: Complete responsive and accessible chat/evidence styling
+- Execution report: `docs/reports/report_14_execute_agent.md`
+- Source requirements: wrapping, mobile/desktop usability, visible focus, and text/structure-based state communication
+
+## Review Evidence
+- Git status, diff stat, and diff reviewed: yes
+- Files reviewed: `frontend/src/styles.css`, chat/evidence pages and components, task file, plan sections, README, execution report
+- Dependencies satisfied: Batch02, Batch03, Batch04, and (05A)
+- Responsive behavior: bounded containers, two-column desktop workspace, single-column mobile workspace, compact 360px padding, and full-width mobile controls
+- Overflow protection: `min-width: 0`, `overflow-wrap: anywhere`, and pre-wrap rules cover page text, answers, citations, quotes, reasons, names, and controls
+- Accessibility: evidence controls have `:focus-visible`; state components retain semantic roles, labels, text, borders, and grouped structure
+- Validation rerun: `npm run build` passed with 109 modules transformed; `git diff --check` passed
+
+## Acceptance And Progress
+- Acceptance satisfied: yes
+- Checkbox updated by reviewer: yes, detailed list and Progress Tracker
+- Sibling/future task checkboxes changed: no
+- Issues: none blocking, major, or minor
+- Warning: exact-width visual checks remain scheduled for Batch06 because the in-app browser was unavailable
+- Next task can proceed: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "selected_batch": "Batch05 - Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05B)",
+  "git_diff_reviewed": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Manual responsive and focus checks remain scheduled for Batch06."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05C)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05C)
+- Task title: Perform frontend scope hardening before validation
+- Execution report: `docs/reports/report_14_execute_agent.md`
+- Source requirements: exclude logs/debug, prompts/keys, authentication, secrets, streaming, evidence editing, hardcoded origins, and backend/schema work
+
+## Review Evidence
+- Git status, diff stat, and full runtime diff reviewed: yes
+- Files reviewed: all Batch05 changed files, frontend API client/config boundary, task file, plan sections, execution report
+- Dependencies satisfied: Batch01 through (05B)
+- Prohibited term searches: no matches for logs/debug, providers, secrets/prompts, auth/JWT, streaming, or evidence-editing controls
+- Endpoint/origin search: no `/logs`, development indexing, or hardcoded HTTP origin in `frontend/src`
+- Network boundary: no direct `fetch`, Axios verb, WebSocket, or EventSource calls; API helpers continue through `apiClient`
+- Configuration: only `VITE_API_BASE_URL` is referenced
+- Repository scope: no backend, schema, migration, database, or infrastructure path changed
+- Validation rerun: exact executor searches and `git diff --check` passed
+
+## Acceptance And Progress
+- Acceptance satisfied: yes
+- Checkbox updated by reviewer: yes, detailed list and Progress Tracker
+- Sibling/future task checkboxes changed: no
+- Issues: none blocking, major, minor, or warning
+- Next task can proceed: no, A3 audit and Batch05 commit are required first
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "selected_batch": "Batch05 - Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05C)",
+  "git_diff_reviewed": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```

@@ -551,7 +551,7 @@ The feature is not complete until it is reachable through navigation/routes and 
 
 ### Tasks
 
-- [ ] (05A): Add chat and evidence routes to the application shell
+- [x] (05A): Add chat and evidence routes to the application shell
   - Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 14. Frontend Page Plan` > `## 14.3 Chat With Document Page`
   - Source Requirements:
     - `frontend/src/App.tsx` must add route/navigation for Chat and Evidence.
@@ -567,7 +567,7 @@ The feature is not complete until it is reachable through navigation/routes and 
   - Blocked Condition: None.
   - Files: `frontend/src/App.tsx`
 
-- [ ] (05B): Complete responsive and accessible chat/evidence styling
+- [x] (05B): Complete responsive and accessible chat/evidence styling
   - Source of Truth: `docs/plans/Plan_14.md` > `## 13. Failure Handling`; `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`; `README.md` > `## Main Workflows` > `### Frontend Reusable Document Components`
   - Source Requirements:
     - Long answers and quotes wrap without overflowing containers.
@@ -583,7 +583,7 @@ The feature is not complete until it is reachable through navigation/routes and 
   - Blocked Condition: None.
   - Files: `frontend/src/styles.css`
 
-- [ ] (05C): Perform frontend scope hardening before validation
+- [x] (05C): Perform frontend scope hardening before validation
   - Source of Truth: `docs/plans/Plan_14.md` > `## 4. Out of Scope`; `docs/plans/Plan_14.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Do not implement agent logs/debug UI.
@@ -847,10 +847,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 ### Batches
 
-- [ ] Batch01 - Chat and Evidence Contracts and API Clients
-- [ ] Batch02 - Ready Document Selector and Question Input Components
-- [ ] Batch03 - Answer and Evidence Display Components
-- [ ] Batch04 - Chat Page Flow and Evidence Loading
+- [x] Batch01 - Chat and Evidence Contracts and API Clients
+- [x] Batch02 - Ready Document Selector and Question Input Components
+- [x] Batch03 - Answer and Evidence Display Components
+- [x] Batch04 - Chat Page Flow and Evidence Loading
 - [ ] Batch05 - Routing, Navigation, Styling, and Scope Hardening
 - [ ] Batch06 - Validation, Reporting, and Reviewer Handoff
 
@@ -878,9 +878,9 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] (04C): Create the direct evidence viewer page
 
 #### Batch05
-- [ ] (05A): Add chat and evidence routes to the application shell
-- [ ] (05B): Complete responsive and accessible chat/evidence styling
-- [ ] (05C): Perform frontend scope hardening before validation
+- [x] (05A): Add chat and evidence routes to the application shell
+- [x] (05B): Complete responsive and accessible chat/evidence styling
+- [x] (05C): Perform frontend scope hardening before validation
 
 #### Batch06
 - [ ] (06A): Run required frontend automated validation

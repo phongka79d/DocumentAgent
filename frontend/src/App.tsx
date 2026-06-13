@@ -1,6 +1,8 @@
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 
+import { ChatPage } from "./pages/ChatPage";
 import { DocumentListPage } from "./pages/DocumentListPage";
+import { EvidenceViewerPage } from "./pages/EvidenceViewerPage";
 import { UploadDocumentPage } from "./pages/UploadDocumentPage";
 
 export function App() {
@@ -26,6 +28,14 @@ export function App() {
             >
               Documents
             </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `app-nav__link${isActive ? " app-nav__link--active" : ""}`
+              }
+              to="/chat"
+            >
+              Chat
+            </NavLink>
           </nav>
         </div>
       </header>
@@ -34,6 +44,11 @@ export function App() {
           <Route path="/" element={<Navigate to="/upload" replace />} />
           <Route path="/upload" element={<UploadDocumentPage />} />
           <Route path="/documents" element={<DocumentListPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route
+            path="/evidence/:agentRunId"
+            element={<EvidenceViewerPage />}
+          />
           <Route path="*" element={<Navigate to="/upload" replace />} />
         </Routes>
       </main>

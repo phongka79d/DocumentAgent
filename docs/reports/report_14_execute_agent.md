@@ -1172,3 +1172,243 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after A2 accepts (04C), A3 passes, and Batch04 is committed
 - handoff notes: Add `/chat` and `/evidence/:agentRunId` routes in `App.tsx`.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch05 - Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05A) - Add chat and evidence routes to the application shell
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
+- `docs/plans/Master_Plan.md` > `# 14. Frontend Page Plan` > `## 14.3 Chat With Document Page`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05A)
+- Task title: Add chat and evidence routes to the application shell
+
+## Completed Work
+- Imported the existing `ChatPage` and `EvidenceViewerPage` into the application shell.
+- Added a React Router navigation link to `/chat`.
+- Registered `/chat` and `/evidence/:agentRunId` routes.
+- Preserved the root redirect, fallback redirect, and existing upload/documents routes.
+
+## Files Created or Modified
+- `frontend/src/App.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite completed successfully with 109 modules transformed.
+- Manual route/navigation smoke check: Deferred to Batch06 as required by the task.
+
+## Acceptance Check
+- Task acceptance condition: Chat is reachable through client-side navigation, direct evidence routing is registered, and existing routes remain intact.
+- Status: satisfied by implementation.
+- Evidence: `NavLink` targets `/chat`; route table contains `/chat`, `/evidence/:agentRunId`, `/upload`, and `/documents`.
+
+## Artifacts Produced
+- Routed chat and evidence pages in `frontend/src/App.tsx`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Kept `/upload` as the root and fallback destination to preserve existing behavior.
+- Did not add evidence to primary navigation because it requires an `agent_run_id`.
+
+## Risks or Open Issues
+- Browser route and navigation checks remain scheduled for Batch06.
+
+## Minor Issues Fixed During Execution
+- Corrected contradictory pre-existing task tracker entries to the verified Batch04/current Batch05 state.
+
+## Workflow Integrity Check
+- No sibling styling, scope-hardening, backend, or configuration work was introduced.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes, after A2 accepts (05A)
+- handoff notes: Add responsive and accessible styles for the existing chat/evidence page class names.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch05 - Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05B) - Complete responsive and accessible chat/evidence styling
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
+- `README.md` > `## Main Workflows` > `### Frontend Reusable Document Components`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05B)
+- Task title: Complete responsive and accessible chat/evidence styling
+
+## Completed Work
+- Added bounded, wrapping page layouts for chat and direct evidence views.
+- Added desktop two-column and mobile single-column chat workspace layouts.
+- Added structured styling for loading, error, empty, answer-evidence, and retry states.
+- Added visible focus and disabled treatments for evidence controls.
+- Added mobile padding, full-width controls, compact headings, and reduced-motion handling.
+
+## Files Created or Modified
+- `frontend/src/styles.css`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite completed successfully with 109 modules transformed.
+- `git diff --check`: Passed.
+- Static responsive/focus inspection: Passed for the defined 560px and 360px breakpoints, wrapping rules, minimum-width constraints, and focus-visible selectors.
+- In-app browser inspection: Blocked because the configured browser surface was unavailable; full 320px/375px/desktop manual checks remain scheduled for Batch06.
+
+## Acceptance Check
+- Task acceptance condition: Chat/evidence UI remains readable and controllable at mobile and desktop widths; focus is visible; states use text and structure.
+- Status: satisfied by implementation, with manual visual confirmation deferred.
+- Evidence: page and child containers use `min-width: 0` and `overflow-wrap`; mobile rules collapse the workspace and controls; state elements retain explicit text, borders, and semantic roles from the components.
+
+## Artifacts Produced
+- Responsive and accessible chat/evidence styling in `frontend/src/styles.css`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Reused the existing 70rem page width and visual language from upload/documents pages.
+- Kept status distinctions structural and textual rather than relying on color alone.
+
+## Risks or Open Issues
+- Manual browser checks at exact target widths remain for Batch06 because the in-app browser was unavailable.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- Styling changes target existing Plan 14 class names only; no component behavior or sibling feature was introduced.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes, after A2 accepts (05B)
+- handoff notes: Run and record exact frontend scope-hardening searches.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch05 - Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05C) - Perform frontend scope hardening before validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 4. Out of Scope`
+- `docs/plans/Plan_14.md` > `## 10. Configuration and Environment Variables`
+- `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05C)
+- Task title: Perform frontend scope hardening before validation
+
+## Completed Work
+- Audited frontend source for forbidden logs/debug, provider, secret, prompt, authentication, streaming, evidence-editing, direct-network, hardcoded-origin, and development-indexing scope.
+- Confirmed `VITE_API_BASE_URL` remains the only frontend runtime environment variable.
+- Confirmed the current implementation diff contains no backend, schema, migration, database, or infrastructure files.
+- No accidental out-of-scope implementation required removal.
+
+## Files Created or Modified
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `rg -n -i "(/logs|agent.?logs|debug|internal prompt|system prompt|api[_-]?key|secret|jwt|authorization|bearer|websocket|eventsource|stream)" frontend/src`: Passed, `NO_MATCHES`.
+- `rg -n -i "(supabase|qdrant|shopaikey|openai|anthropic|gemini|cohere|pinecone|weaviate)" frontend/src`: Passed, `NO_MATCHES`.
+- `rg -n "(/api/agent-runs/.*/logs|/api/documents/.*/index|https?://)" frontend/src`: Passed, `NO_MATCHES`.
+- `rg -n -i "(edit evidence|delete evidence|approve evidence|reject evidence|moderate evidence|contenteditable|onDoubleClick)" frontend/src`: Passed, `NO_MATCHES`.
+- `rg -n "(fetch\\(|axios\\.(get|post|put|patch|delete)|new WebSocket|new EventSource)" frontend/src`: Passed, `NO_DIRECT_NETWORK_CALLS`.
+- `rg -n "VITE_[A-Z0-9_]+" frontend/src frontend/.env.example`: Passed; only `VITE_API_BASE_URL` was found.
+- `git diff --name-only` backend/schema/infra path filter: Passed, `NO_BACKEND_SCHEMA_INFRA_CHANGES`.
+- `git diff --check`: Passed.
+
+## Acceptance Check
+- Task acceptance condition: No logs/debug UI, internal prompts/keys, authentication, secrets, streaming, evidence editing, hardcoded backend origins, or backend/schema changes are introduced.
+- Status: satisfied.
+- Evidence: all exact prohibited-scope searches passed and the changed runtime files are limited to `frontend/src/App.tsx` and `frontend/src/styles.css`.
+
+## Artifacts Produced
+- Exact scope-hardening evidence for A2 and Batch06.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Treated the configured `.env.example` localhost value as documentation, not a runtime hardcoded origin; runtime code reads only `VITE_API_BASE_URL`.
+
+## Risks or Open Issues
+- None.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No runtime code changed during the audit; no forbidden scope was found.
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes, after A2 accepts (05C), A3 passes, and Batch05 is committed
+- handoff notes: Run the final automated and browser validation batch.
