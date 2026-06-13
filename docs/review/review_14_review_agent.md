@@ -1364,3 +1364,181 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Chat Page Flow and Evidence Loading
+- Task ID: (04A)
+- Task title: Create the main chat page
+- Execution report: `docs/reports/report_14_execute_agent.md`
+- Source requirements: document loading, ready-only selection, non-empty question submission, safe states, and actual answer rendering
+
+## Review Evidence
+- Git status, diff stat, and diff reviewed: yes
+- Files reviewed: `frontend/src/pages/ChatPage.tsx`, API clients, selector/input/answer components, task file, execution report
+- Dependencies satisfied: Batch01, Batch02, and Batch03 are committed
+- Request boundary: existing `listDocuments()` and `askQuestion()` only
+- Submission guard: current selection is revalidated and only selected ready IDs are sent
+- Question guard: `ChatBox` trims and blocks empty input before page submission
+- Response rendering: actual typed backend response is stored and passed to `AnswerPanel`
+- Error handling: safe API error helpers are used
+- Scope: evidence loading remains in (04B), routing remains in Batch05
+- Validation rerun: `npm run build` passed with 101 modules transformed
+
+## Acceptance And Progress
+- Acceptance satisfied: yes
+- Checkbox updated by reviewer: yes, detailed list and Progress Tracker
+- Sibling/future checkboxes changed: no
+- Issues: none blocking or major
+- Warning: browser happy-path and negative checks remain scheduled for Batch06
+- Next task can proceed: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "selected_batch": "Batch04 - Chat Page Flow and Evidence Loading",
+  "selected_task_id": "(04A)",
+  "git_diff_reviewed": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Browser happy-path and negative checks remain scheduled for Batch06."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Chat Page Flow and Evidence Loading
+- Task ID: (04B)
+- Task title: Add chat-page evidence trigger and lazy evidence loading
+- Execution report: `docs/reports/report_14_execute_agent.md`
+- Source requirements: retain returned run ID, lazy evidence load, safe evidence states, and preserve answer on evidence failure
+
+## Review Evidence
+- Git status, diff stat, and diff reviewed: yes
+- Files reviewed: `ChatPage.tsx`, evidence API helper, `EvidencePanel`, task file, execution report
+- Dependency status: satisfied, (04A), (01C), and (03B)
+- Lazy behavior: evidence API is called only on opening or explicit retry after a successful response
+- Run ownership: request uses `latestResponse.agent_run_id`
+- Stale-result protection: request IDs invalidate older evidence loads when a newer answer succeeds
+- Failure isolation: evidence errors do not clear or replace `latestResponse`
+- Scope boundary: no logs endpoint, direct route, backend change, or eager evidence fetch
+- Validation rerun: `npm run build` passed with 101 modules transformed
+
+## Acceptance And Progress
+- Acceptance satisfied: yes
+- Checkbox updated by reviewer: yes, detailed list and Progress Tracker
+- Sibling/future checkboxes changed: no
+- Issues: none blocking or major
+- Warning: browser evidence success/failure checks remain scheduled for Batch06
+- Next task can proceed: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "selected_batch": "Batch04 - Chat Page Flow and Evidence Loading",
+  "selected_task_id": "(04B)",
+  "git_diff_reviewed": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Browser evidence success and failure checks remain scheduled for Batch06."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Chat Page Flow and Evidence Loading
+- Task ID: (04C)
+- Task title: Create the direct evidence viewer page
+- Execution report: `docs/reports/report_14_execute_agent.md`
+- Source requirements: route-parameter evidence loading with safe loading/error/invalid states and verified/rejected rendering
+
+## Review Evidence
+- Git status, diff stat, and diff reviewed: yes
+- Files reviewed: `EvidenceViewerPage.tsx`, evidence API helper, `EvidencePanel`, task file, execution report
+- Dependencies satisfied: (01C) and (03B)
+- Parameter handling: missing or whitespace-only IDs enter a safe invalid state
+- API boundary: valid IDs use only `getAgentRunEvidence()`, which encodes the path parameter
+- Async safety: effect cleanup prevents stale updates after parameter change/unmount
+- Rendering: `EvidencePanel` supplies verified/rejected groups and per-group empty states
+- Scope boundary: route declaration remains in (05A); no logs, backend, or styling work added
+- Validation rerun: `npm run build` passed with 101 modules transformed
+
+## Acceptance And Progress
+- Acceptance satisfied: yes
+- Checkbox updated by reviewer: yes, detailed list and Progress Tracker
+- Sibling/future checkboxes changed: no
+- Issues: none blocking or major
+- Warning: live direct-route validation requires route integration and a valid run ID in Batch06
+- Next task can proceed: no, A3 audit and Batch04 commit are required first
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "selected_batch": "Batch04 - Chat Page Flow and Evidence Loading",
+  "selected_task_id": "(04C)",
+  "git_diff_reviewed": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live direct-route validation remains scheduled for Batch06."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```

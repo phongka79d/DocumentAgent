@@ -449,7 +449,7 @@ Plan 14 is testable only when the full page flow connects document selection, qu
 
 ### Tasks
 
-- [ ] (04A): Create the main chat page
+- [x] (04A): Create the main chat page
   - Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 9. Implementation Steps`; `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - `ChatPage.tsx` combines document selector, chat box, answer panel, and evidence trigger.
@@ -465,7 +465,7 @@ Plan 14 is testable only when the full page flow connects document selection, qu
   - Blocked Condition: None.
   - Files: `frontend/src/pages/ChatPage.tsx`
 
-- [ ] (04B): Add chat-page evidence trigger and lazy evidence loading
+- [x] (04B): Add chat-page evidence trigger and lazy evidence loading
   - Source of Truth: `docs/plans/Plan_14.md` > `## 1. Goal`; `docs/plans/Plan_14.md` > `## 9. Implementation Steps`; `docs/plans/Plan_14.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Store the last `agent_run_id` after an answer is returned.
@@ -481,7 +481,7 @@ Plan 14 is testable only when the full page flow connects document selection, qu
   - Blocked Condition: None.
   - Files: `frontend/src/pages/ChatPage.tsx`, `frontend/src/components/EvidencePanel.tsx`
 
-- [ ] (04C): Create the direct evidence viewer page
+- [x] (04C): Create the direct evidence viewer page
   - Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 9. Implementation Steps`; `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - `EvidenceViewerPage.tsx` provides direct URL access if routing supports `agent_run_id`.
@@ -873,9 +873,9 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] (03C): Add component-level accessibility and wrapping styles
 
 #### Batch04
-- [ ] (04A): Create the main chat page
-- [ ] (04B): Add chat-page evidence trigger and lazy evidence loading
-- [ ] (04C): Create the direct evidence viewer page
+- [x] (04A): Create the main chat page
+- [x] (04B): Add chat-page evidence trigger and lazy evidence loading
+- [x] (04C): Create the direct evidence viewer page
 
 #### Batch05
 - [ ] (05A): Add chat and evidence routes to the application shell

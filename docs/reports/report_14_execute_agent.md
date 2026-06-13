@@ -929,3 +929,246 @@ complete
 - next task ID: (04A)
 - can proceed: yes, after A2 accepts (03C), A3 passes, and Batch03 is committed
 - handoff notes: Batch04 can compose the styled components without adding component-level CSS.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch04 - Chat Page Flow and Evidence Loading
+
+## Task
+(04A) - Create the main chat page
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Chat Page Flow and Evidence Loading
+- Task ID: (04A)
+- Task title: Create the main chat page
+
+## Completed Work
+- Created `ChatPage.tsx` with page-owned document loading, ready-only selection, question state, chat request state, safe errors, latest response state, and answer rendering.
+- Loaded documents through the existing `listDocuments()` boundary and passed them to `DocumentSelector`.
+- Validated the current selected ready IDs immediately before calling `askQuestion()`.
+- Rendered backend answer, confidence, citations, explicit no-citations state through `AnswerPanel`, and an initial no-answer state.
+- Kept evidence loading and evidence controls out of this task because (04B) explicitly owns them.
+
+## Files Created or Modified
+- `frontend/src/pages/ChatPage.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite production build completed successfully with 101 modules transformed.
+- Frontend tests: Not run because no test script or runner exists.
+
+## Acceptance Check
+- Task acceptance condition: Chat request is sent only after a valid question and selected ready document IDs; actual response answer/confidence/citations render.
+- Status: satisfied.
+- Evidence: `ChatBox` trims and rejects empty questions; `handleSubmit()` revalidates ready selection before `askQuestion()` and stores the returned response for `AnswerPanel`.
+
+## Artifacts Produced
+- `frontend/src/pages/ChatPage.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Kept the prior answer visible if a later chat request fails, while surfacing the new safe error separately.
+- Disabled chat while documents are loading, document loading is blocked, no ready documents exist, or a request is active.
+
+## Risks or Open Issues
+- Route integration is assigned to Batch05.
+- Evidence trigger/loading is assigned to (04B).
+- Manual happy-path and negative browser checks remain scheduled for Batch06.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No dependency, architecture, or scope conflict identified.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 accepts (04A)
+- handoff notes: `latestResponse.agent_run_id` is available for lazy evidence loading.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch04 - Chat Page Flow and Evidence Loading
+
+## Task
+(04B) - Add chat-page evidence trigger and lazy evidence loading
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 1. Goal`
+- `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_14.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Chat Page Flow and Evidence Loading
+- Task ID: (04B)
+- Task title: Add chat-page evidence trigger and lazy evidence loading
+
+## Completed Work
+- Added latest-answer evidence open, loading, error, data, retry, and collapsed states to `ChatPage`.
+- Evidence is fetched only when the user opens evidence after a successful chat response.
+- Used the returned `agent_run_id` with the existing `getAgentRunEvidence()` client.
+- Rendered verified/rejected evidence through `EvidencePanel`.
+- Invalidated older evidence requests when a newer chat response arrives.
+- Preserved the displayed answer when evidence loading fails.
+
+## Files Created or Modified
+- `frontend/src/pages/ChatPage.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite production build completed successfully with 101 modules transformed.
+- Manual evidence success/failure checks: Deferred to Batch06.
+
+## Acceptance Check
+- Task acceptance condition: Evidence loads for the returned run ID, groups render separately, errors are safe, and answer remains visible on failure.
+- Status: satisfied by implementation.
+- Evidence: Evidence state is rendered after `AnswerPanel`; errors update only evidence state; retry calls the same encoded API client boundary.
+
+## Artifacts Produced
+- Lazy chat-page evidence flow in `frontend/src/pages/ChatPage.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Loaded evidence on first open rather than immediately after chat success.
+- Kept loaded evidence cached while the panel is collapsed and reset it when a newer answer succeeds.
+- Used a request ID guard to prevent stale evidence responses from replacing current-answer evidence state.
+
+## Risks or Open Issues
+- Final evidence styling for page-level controls is assigned to Batch05.
+- Manual evidence API and failure validation remains scheduled for Batch06.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No logs endpoint, backend change, or eager evidence call was introduced.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes, after A2 accepts (04B)
+- handoff notes: Direct evidence page can reuse `getAgentRunEvidence()` and `EvidencePanel`.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch04 - Chat Page Flow and Evidence Loading
+
+## Task
+(04C) - Create the direct evidence viewer page
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Chat Page Flow and Evidence Loading
+- Task ID: (04C)
+- Task title: Create the direct evidence viewer page
+
+## Completed Work
+- Created `EvidenceViewerPage.tsx` as a React Router parameter-driven page.
+- Validated that `agentRunId` is present and non-empty before requesting evidence.
+- Loaded through `getAgentRunEvidence()` and rendered verified/rejected groups through `EvidencePanel`.
+- Added safe invalid-parameter, loading, API-error, and ready states.
+- Prevented stale async state updates when the route parameter changes or the page unmounts.
+
+## Files Created or Modified
+- `frontend/src/pages/EvidenceViewerPage.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite production build completed successfully with 101 modules transformed.
+- Manual direct-route validation: Deferred to Batch06; it requires route integration and a valid `agent_run_id`.
+
+## Acceptance Check
+- Task acceptance condition: The direct evidence route component loads a valid run ID and safely handles a missing/invalid parameter.
+- Status: satisfied by implementation.
+- Evidence: `useParams()` supplies the ID, empty input enters `invalid`, valid input calls the typed API client, and `EvidencePanel` renders both evidence groups and empty states.
+
+## Artifacts Produced
+- `frontend/src/pages/EvidenceViewerPage.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Kept route declaration out of this task because Batch05 (05A) explicitly owns application routing.
+- Relied on the existing evidence API helper to safely encode the route parameter.
+
+## Risks or Open Issues
+- Direct route declaration and navigation are assigned to Batch05.
+- Live direct-route validation remains dependent on a successful agent run in Batch06.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No route, navigation, backend, logs, or unrelated styling work was introduced.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after A2 accepts (04C), A3 passes, and Batch04 is committed
+- handoff notes: Add `/chat` and `/evidence/:agentRunId` routes in `App.tsx`.
