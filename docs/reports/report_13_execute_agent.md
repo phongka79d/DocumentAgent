@@ -700,3 +700,531 @@ complete
 - next task ID: (02E)
 - can proceed: yes, after A2 review accepts `(02D)`
 - handoff notes: Later page code should call `validateSelectedFile` before upload submission and can reuse `SUPPORTED_FILE_ACCEPT` and validation messages for consistent UI behavior.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch03 - Upload Page and Recent Document Feedback
+
+## Task
+(03A) - Build upload page selection and validation state
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (03A) selected task block
+- docs/plans/Plan_13.md > ## 3. Scope
+- docs/plans/Plan_13.md > ## 6. Required Files and Folders
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+- docs/plans/Plan_13.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Upload Page and Recent Document Feedback
+- Task ID: (03A)
+- Task title: Build upload page selection and validation state
+
+## Completed Work
+- State: complete.
+- Created `frontend/src/pages/UploadDocumentPage.tsx`.
+- Composed the existing `UploadBox` into the page.
+- Added explicit selected-file, validation-error, upload-error, success-message, and upload-state handling.
+- Revalidates the selected file with `validateSelectedFile` before allowing upload submission logic to proceed.
+- Clears stale validation, upload error, and success messages when a new file is selected while leaving upload request state unchanged.
+- Kept actual upload API request lifecycle, progress handling, duplicate-submit behavior, recent-document feedback, routing, and navigation out of scope for later tasks.
+
+## Files Created or Modified
+- frontend/src/pages/UploadDocumentPage.tsx
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- `npm run build` from `frontend`: Passed.
+- Conditional component test: Not run; the frontend has no configured test script or component test runner in `frontend/package.json`.
+- Manual unsupported-file and zero-byte file checks: Not run in browser; this task creates an unmounted page and routing is explicitly reserved for a later task. The page and existing `UploadBox` both use `validateSelectedFile`, which rejects unsupported extensions and `size === 0` files before upload submission logic.
+
+## Acceptance Check
+- Task acceptance condition: Invalid files produce clear messages and no upload request; valid files enable the upload action when not already uploading.
+- Status: satisfied.
+- Evidence: `UploadDocumentPage` validates selected files with `validateSelectedFile`, blocks submission with the helper's unsupported/empty-file messages when invalid, does not call any upload API, and enables the submit button only when a valid selected file exists and `uploadState` is not `uploading`. Build passed.
+
+## Artifacts Produced
+- frontend/src/pages/UploadDocumentPage.tsx
+- Appended execution report entry in docs/reports/report_13_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run requested leaving checkbox updates to A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept `uploadState` as an inert `idle | uploading` placeholder so later upload lifecycle work can connect to the existing disabled-state boundary without implementing (03B).
+- Revalidated on submit even though `UploadBox` already validates on file selection, so the page itself prevents invalid files from reaching any future API call.
+
+## Risks or Open Issues
+- Browser manual validation is pending until routing mounts the page in a later approved task.
+- Upload request lifecycle, progress, duplicate-submit behavior, backend errors, success state population, and recent-document feedback remain intentionally unimplemented for later Batch03 tasks.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified. Dependencies `(02C)` and `(02D)` are checked complete in `docs/tasks/task_13.md`.
+- Scope was limited to `frontend/src/pages/UploadDocumentPage.tsx` and the required report append.
+- No task checkbox update, commit, routing/navigation, API upload lifecycle, recent document feedback, styles, or sibling task work was performed.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 review accepts `(03A)`
+- handoff notes: `(03B)` can connect the existing submit boundary to `uploadDocument`, set `uploadState` during the request, surface progress, and preserve the current validation gate.
+
+---
+
+# Task Execution Report - (03A) Repair
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch03 - Upload Page and Recent Document Feedback
+
+## Task
+(03A) - Build upload page selection and validation state
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (03A) selected task block
+- A2 review repair instruction for rejected `(03A)`
+- docs/plans/Plan_13.md > ## 3. Scope
+- docs/plans/Plan_13.md > ## 6. Required Files and Folders
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+- docs/plans/Plan_13.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Upload Page and Recent Document Feedback
+- Task ID: (03A)
+- Task title: Build upload page selection and validation state
+
+## Completed Work
+- State: complete.
+- Repaired the valid-to-invalid reselection bug identified by A2.
+- Added an optional `onFileReject` callback to `UploadBox` that fires when its existing validation rejects a selected or dropped file.
+- Wired `UploadDocumentPage` to handle invalid file selections by clearing `selectedFile`, setting the page-level validation message, and clearing stale upload/success messages.
+- Preserved the existing page-level submit validation gate.
+- Did not implement upload API lifecycle, progress, duplicate-submit behavior, routing, recent document feedback, or sibling task work.
+
+## Files Created or Modified
+- frontend/src/components/UploadBox.tsx
+- frontend/src/pages/UploadDocumentPage.tsx
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- `npm run build` from `frontend`: Passed.
+- Valid-to-invalid reselection verification: Passed by focused code-path review. `UploadBox` now calls `onFileReject` when `validateSelectedFile` returns invalid; `UploadDocumentPage.handleFileReject` sets `selectedFile` to `null` and sets `validationError`; `canUpload` therefore evaluates false because `selectedFile !== null` is false.
+- Conditional component test: Not run; the frontend has no configured test script or component test runner in `frontend/package.json`.
+- Manual unsupported-file and zero-byte file checks: Not run in browser; the upload page is still unmounted because routing is reserved for a later task. Static validation path uses the existing `validateSelectedFile` helper for unsupported extensions and `size === 0` files.
+
+## Acceptance Check
+- Task acceptance condition: Invalid files produce clear messages and no upload request; valid files enable the upload action when not already uploading.
+- Status: satisfied.
+- Evidence: Invalid selections now notify the page, clear stale selected-file state, set a page-level validation message, and disable the submit button. The page still makes no upload API call. `npm run build` passed.
+
+## Artifacts Produced
+- Updated `UploadBox` rejection callback contract.
+- Updated `UploadDocumentPage` invalid-selection handler.
+- Appended repair execution report entry in docs/reports/report_13_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run requested leaving checkbox updates to A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used a narrow optional callback on `UploadBox` instead of moving validation responsibility out of the component, preserving Batch02 behavior while allowing controlled page state to stay accurate.
+- Kept the callback message-based so the page can display the same clear validation text already produced by `validateSelectedFile`.
+
+## Risks or Open Issues
+- Browser-level validation remains pending until the page is mounted by a later routing task.
+- Upload request lifecycle, progress, duplicate-submit behavior, backend errors, success state population, and recent-document feedback remain intentionally unimplemented for later Batch03 tasks.
+
+## Minor Issues Fixed During Execution
+- Fixed stale selected-file state after valid-to-invalid reselection.
+
+## Workflow Integrity Check
+- No issue identified. This repair stayed within `(03A)` and A2's stated target files.
+- Existing uncommitted `docs/review/review_13_review_agent.md` changes were present and were not touched.
+- No task checkbox update, commit, routing/navigation, API upload lifecycle, progress behavior, duplicate-submit behavior, recent document feedback, styles, or sibling task work was performed.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 review accepts repaired `(03A)`
+- handoff notes: `(03B)` can connect the existing validated submit boundary to `uploadDocument`, set upload request state during the request, surface progress, and preserve the repaired invalid-selection clearing behavior.
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch03 - Upload Page and Recent Document Feedback
+
+## Task
+(03B) - Implement upload request, progress, and duplicate-submit prevention
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (03B) selected task block
+- docs/plans/Plan_13.md > ## 3. Scope
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+- docs/plans/Plan_13.md > ## 12. Acceptance Criteria
+- docs/plans/Plan_13.md > ## 13. Failure Handling
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Upload Page and Recent Document Feedback
+- Task ID: (03B)
+- Task title: Implement upload request, progress, and duplicate-submit prevention
+
+## Completed Work
+- State: complete.
+- Connected the existing validated upload form to `uploadDocument`.
+- Added active upload request state, an explicit ref guard against duplicate submit events, and disabled file replacement/submit while a request is active.
+- Rendered upload progress using the existing `DocumentUploadProgress` contract: determinate percentage when total bytes are known and an indeterminate uploading state otherwise.
+- Cleared busy/progress state in `finally` so interaction is restored after success or failure.
+- Added only minimal success/failure messages needed to make the request lifecycle visible; detailed backend/connection failure polish remains out of scope for `(03C)`.
+- Did not implement recent document feedback, list refresh, routing/navigation, or sibling/future task behavior.
+
+## Files Created or Modified
+- frontend/src/pages/UploadDocumentPage.tsx
+- frontend/src/styles.css
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- `npm run build` from `frontend`: Passed.
+- `npm pkg get scripts` from `frontend`: Passed; confirmed scripts are `dev`, `build`, and `preview` only, with no configured test command.
+- Conditional component/API tests: Not run; no frontend test script or test runner is configured in `frontend/package.json`.
+- Backend reachability check `GET http://localhost:8000/api/documents`: Blocked; unable to connect to the remote server.
+- Browser network and slow-request behavior check: Blocked for live validation only; `frontend/src/App.tsx` still renders the placeholder shell and does not mount `UploadDocumentPage` until later routing work, and the configured backend was not reachable.
+
+## Acceptance Check
+- Task acceptance condition: One active request can exist at a time; progress is visible; success/failure always clears the busy state.
+- Status: satisfied for static implementation and build; live browser/backend validation blocked.
+- Evidence: `activeUploadRef` prevents duplicate active requests, `uploadState` disables `UploadBox` and submit while uploading, `uploadDocument` is called only after `validateSelectedFile` passes, progress renders as determinate percent or indeterminate `<progress>`, and `finally` resets `activeUploadRef`, `uploadState`, and `uploadProgress`. `npm run build` passed.
+
+## Artifacts Produced
+- Functional upload submit lifecycle in `UploadDocumentPage`.
+- Focused upload progress styles in `styles.css`.
+- Appended execution report entry in docs/reports/report_13_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run requested leaving checkbox updates to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Used `activeUploadRef` in addition to disabled UI state so duplicate submit events cannot start a second request before React re-renders.
+- Kept upload failure text generic to avoid implementing `(03C)` detailed backend/connection error handling early.
+- Cleared progress after completion/failure because this task only requires progress while the upload is in flight.
+
+## Risks or Open Issues
+- Live browser upload, network inspection, and slow-request behavior remain unvalidated because the upload page is not mounted in the current app and the configured backend was unreachable.
+- Detailed upload success/backend failure/connection failure polish remains for `(03C)`.
+- Recent document feedback and refresh after upload remain for `(03D)`.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(01C)`, `(01D)`, and `(03A)` are marked complete in `docs/tasks/task_13.md`.
+- Existing uncommitted changes in `docs/review/review_13_review_agent.md`, `docs/tasks/task_13.md`, `frontend/src/components/UploadBox.tsx`, and prior report content were present and were not reverted.
+- No task checkbox update, commit, routing/navigation, recent document feedback, list refresh, or out-of-scope UI was performed.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes, after A2 review accepts `(03B)`
+- handoff notes: `(03C)` can replace the generic upload failure/success copy with the approved safe backend/connection failure handling, using the existing API error helper without changing the one-active-request lifecycle.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+`docs/tasks/task_13.md`
+
+## Report File
+`docs/reports/report_13_execute_agent.md`
+
+## Batch
+`Batch03 - Upload Page and Recent Document Feedback`
+
+## Task
+`(03C) - Show upload success, backend failures, and connection failures safely`
+
+## Status
+partial
+
+## Source of Truth Used
+- `docs/plans/Plan_13.md` > `## 8. API Design`
+- `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_13.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch03 - Upload Page and Recent Document Feedback`
+- Task ID: `(03C)`
+- Task title: `Show upload success, backend failures, and connection failures safely`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Implemented safe upload-result rendering in `UploadDocumentPage` using the backend response `file_name` and returned `status`.
+- Replaced the generic upload catch-all with the shared document API error helper so backend `detail` text and connection failures produce distinct user-visible messages without rendering raw error objects.
+- Added truthful success copy for `uploaded`, `processing`, `ready`, and `failed` backend statuses so the page does not imply processing/readiness when the backend reports only `uploaded`.
+- Added focused upload success/error styling needed to present the new states clearly.
+
+## Files Created or Modified
+- `frontend/src/pages/UploadDocumentPage.tsx`
+- `frontend/src/styles.css`
+
+## Tests or Validations Run
+- `cd frontend && npm run build`: Passed
+- Rejected-upload manual check: Blocked
+- Backend-unavailable manual check: Blocked
+- evidence or reason: Live upload validation depends on the upload page being mounted in the app and a reachable backend; the current app still renders the placeholder shell before later routing work, so the task's manual checks could not be exercised end-to-end in this run.
+
+## Acceptance Check
+- Task acceptance condition: Backend rejection, no-response connection failure, and success are visibly distinct; raw error objects and secrets are not rendered.
+- Status: partially satisfied
+- Evidence: `UploadDocumentPage` now uses `getDocumentApiError(error).message` for safe backend/connection/request messaging, renders a success state from the returned `file_name` and `status`, and includes status-specific copy that does not claim processing/readiness unless the backend actually returns those states. Live browser confirmation remains blocked.
+
+## Artifacts Produced
+- Safe user-visible upload success and error states in `frontend/src/pages/UploadDocumentPage.tsx`
+- Appended execution report entry in `docs/reports/report_13_execute_agent.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run requested leaving checkbox updates to A2 after an `ACCEPTED` review, and live validation remains blocked.
+
+## Key Implementation Decisions
+- Reused the shared `getDocumentApiError` helper instead of duplicating upload error parsing inside the page.
+- Rendered backend status explicitly with `StatusBadge` plus status-specific explanatory copy to avoid fake processing claims when the backend returns `uploaded`.
+- Kept the change scoped to upload result/error presentation and did not add recent-document refresh behavior from `(03D)`.
+
+## Risks or Open Issues
+- Manual rejected-upload and backend-unavailable checks were not executed end-to-end because the current app does not yet mount the upload page and no live backend session was exercised.
+- Generic request failures without a safe backend `detail` still intentionally collapse to the shared fallback message `The document request failed. Please try again.`
+
+## Minor Issues Fixed During Execution
+- Added minimal upload success/error styling so the new states remain readable and distinct in the existing UI.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency tasks `(01D)` and `(03B)` are marked complete in `docs/tasks/task_13.md`.
+- Existing uncommitted changes in docs and frontend files were preserved and not reverted.
+- No recent-document refresh, routing, list-page, or other sibling-task behavior was implemented.
+
+## Notes for Next Task
+- next task ID: `(03D)`
+- can proceed: yes
+- handoff notes: `(03D)` can build recent document feedback refresh on top of the new truthful success/error states. Manual live validation for `(03C)` should be revisited once routing mounts the upload page and a backend is reachable.
+
+---
+
+# Task Execution Report - (03D)
+
+## Source Task File
+`docs/tasks/task_13.md`
+
+## Report File
+`docs/reports/report_13_execute_agent.md`
+
+## Batch
+`Batch03 - Upload Page and Recent Document Feedback`
+
+## Task
+`(03D) - Add recent document feedback and refresh after upload`
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_13.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_13.md` > `## 13. Failure Handling`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch03 - Upload Page and Recent Document Feedback`
+- Task ID: `(03D)`
+- Task title: `Add recent document feedback and refresh after upload`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Added initial recent-document loading to `UploadDocumentPage` through `listDocuments()` and rendered a compact recent section beneath the upload form.
+- Kept recent-list state separate from upload state by introducing independent loading, empty, and error feedback for document fetches without overwriting upload validation, upload progress, or upload failure messages.
+- Triggered a real recent-document refetch immediately after a successful upload so the page can reflect newly uploaded backend documents when the list endpoint returns them.
+- Added focused recent-section styling for loading, empty, error, and compact document-card list states.
+
+## Files Created or Modified
+- `frontend/src/pages/UploadDocumentPage.tsx`
+- `frontend/src/styles.css`
+- `docs/reports/report_13_execute_agent.md`
+
+## Tests or Validations Run
+- `cd frontend && npm run build`: Passed
+- Frontend test runner availability check: Not run
+- Manual TXT upload and post-success list refresh check: Blocked
+- evidence or reason: `frontend/package.json` still has no real frontend test script, so conditional component/API tests are not configured. Live upload/list-refresh validation remains blocked because `UploadDocumentPage` is not mounted in `frontend/src/App.tsx` yet and no reachable backend path was exercised in this run.
+
+## Acceptance Check
+- Task acceptance condition: Successful upload triggers a real list fetch; the recent area renders loading, empty, error, or document content accurately.
+- Status: satisfied
+- Evidence: `UploadDocumentPage` now calls `listDocuments()` on mount and again after successful upload completion, tracks recent-list loading/error/ready states independently from upload state, renders an empty state when no documents are returned, and displays recent documents with `DocumentCard` when data exists.
+
+## Artifacts Produced
+- Recent-document feedback section with independent fetch states in `frontend/src/pages/UploadDocumentPage.tsx`
+- Styling for recent document loading, empty, error, and list rendering in `frontend/src/styles.css`
+- Appended execution report entry in `docs/reports/report_13_execute_agent.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run requested leaving checkbox updates to A2 after an `ACCEPTED` review. Live backend-dependent validation is also still blocked until routing mounts the page and a reachable backend is available.
+
+## Key Implementation Decisions
+- Reused the existing `listDocuments()` API boundary instead of introducing page-local fetch logic or broader document-list routing work.
+- Limited the recent-feedback section to the first three returned documents so the upload page stays compact while still surfacing immediate backend feedback.
+- Preserved separate upload and recent-list error channels so list refresh failures do not overwrite upload validation or upload API feedback.
+
+## Risks or Open Issues
+- Manual TXT upload and post-success list refresh validation were not exercised end-to-end because the upload page is still not mounted and no live backend session was used.
+- The recent section shows the first three documents returned by the backend and therefore depends on backend list ordering to surface the newest upload first.
+
+## Minor Issues Fixed During Execution
+- Added missing upload-page layout styles that keep the new recent section readable on desktop and narrow mobile widths.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency tasks `(01C)`, `(02B)`, and `(03C)` are marked complete in `docs/tasks/task_13.md`.
+- Existing uncommitted docs and frontend work were preserved and not reverted.
+- No Batch04 list-page refresh controls, routing work, or sibling-task behavior were implemented.
+
+## Notes for Next Task
+- next task ID: `(04A)`
+- can proceed: yes
+- handoff notes: Batch03 upload-page work is now in place. Reviewer should confirm the recent-document fetch remains scoped to the upload page, and live upload/list refresh validation should be revisited once Batch05 mounts the route and a backend is reachable.
+
+---
+
+# Task Execution Report - (03D) Repair
+
+## Source Task File
+`docs/tasks/task_13.md`
+
+## Report File
+`docs/reports/report_13_execute_agent.md`
+
+## Batch
+`Batch03 - Upload Page and Recent Document Feedback`
+
+## Task
+`(03D) - Add recent document feedback and refresh after upload`
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_13.md` > `## 9. Implementation Steps`
+- `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_13.md` > `## 13. Failure Handling`
+- A2 repair instruction for `(03D)` recent-documents refresh control flow
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: `Batch03 - Upload Page and Recent Document Feedback`
+- Task ID: `(03D)`
+- Task title: `Add recent document feedback and refresh after upload`
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed.
+- Repaired the recent-documents refresh flow in `UploadDocumentPage` so a successful upload cannot lose its required follow-up list fetch when another recent-documents request is already active.
+- Added queued refresh sequencing with `queuedRecentDocumentsRefreshRef`, allowing concurrent refresh requests to coalesce into one guaranteed follow-up fetch after the current `listDocuments()` call settles.
+- Kept the change scoped to recent-documents request control flow only and did not alter sibling task behavior.
+
+## Files Created or Modified
+- `frontend/src/pages/UploadDocumentPage.tsx`
+- `docs/reports/report_13_execute_agent.md`
+
+## Tests or Validations Run
+- `cd frontend && npm run build`: Passed
+- Post-success refresh sequencing code-path review: Passed
+- Manual TXT upload and post-success list refresh check: Blocked
+- evidence or reason: Live upload/list-refresh validation remains blocked because `UploadDocumentPage` is not mounted in `frontend/src/App.tsx` yet and no reachable backend path was exercised in this run. Static sequencing verification confirms that an upload-triggered refresh request made during an active initial fetch now sets a queued follow-up flag and causes a second `listDocuments()` call immediately after the in-flight request finishes.
+
+## Acceptance Check
+- Task acceptance condition: Successful upload triggers a real list fetch; the recent area renders loading, empty, error, or document content accurately.
+- Status: satisfied
+- Evidence: `loadRecentDocuments()` now loops until no queued refresh remains. When called during an active request, it records a queued follow-up instead of returning permanently. That guarantees a real second `listDocuments()` fetch after the first request settles, including the case where upload success arrives during the initial mount fetch.
+
+## Artifacts Produced
+- Repaired recent-document refresh sequencing in `frontend/src/pages/UploadDocumentPage.tsx`
+- Appended repair execution report entry in `docs/reports/report_13_execute_agent.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run requested leaving checkbox updates to A2 after an `ACCEPTED` review. Live backend-dependent validation also remains blocked until routing mounts the page and a reachable backend is available.
+
+## Key Implementation Decisions
+- Used a queued follow-up refresh flag instead of allowing overlapping list requests, preserving the compact single-flight behavior while guaranteeing the upload-triggered refresh is not skipped.
+- Reused the existing `loadRecentDocuments()` boundary so the repair stays local to the upload page and does not expand scope into Batch04 list refresh behavior.
+
+## Risks or Open Issues
+- Manual TXT upload and post-success list refresh validation were not exercised end-to-end because the upload page is still not mounted and no live backend session was used.
+- Multiple refresh requests raised while one fetch is active coalesce into one follow-up fetch rather than one request per trigger, which is sufficient for the task acceptance and A2 repair requirement.
+
+## Minor Issues Fixed During Execution
+- Fixed the skipped-refresh edge case when upload success completed during an in-flight initial recent-documents fetch.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Repair stayed inside the A2-targeted `frontend/src/pages/UploadDocumentPage.tsx` control flow and report append.
+- No task checkbox update, commit, routing work, list-page work, or sibling-task behavior was implemented.
+
+## Notes for Next Task
+- next task ID: `(03D)` review repair
+- can proceed: yes
+- handoff notes: A2 should verify the new queued refresh path. The key regression case is upload success calling `loadRecentDocuments()` while the mount-triggered `listDocuments()` request is still active.

@@ -372,7 +372,7 @@ The user needs one reliable page that turns a browser-selected file into a backe
 
 ### Tasks
 
-- [ ] (03A): Build upload page selection and validation state
+- [x] (03A): Build upload page selection and validation state
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Create `UploadDocumentPage.tsx`.
@@ -388,7 +388,7 @@ The user needs one reliable page that turns a browser-selected file into a backe
   - Blocked Condition: None.
   - Files: `frontend/src/pages/UploadDocumentPage.tsx`
 
-- [ ] (03B): Implement upload request, progress, and duplicate-submit prevention
+- [x] (03B): Implement upload request, progress, and duplicate-submit prevention
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_13.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Upload through the backend.
@@ -405,7 +405,7 @@ The user needs one reliable page that turns a browser-selected file into a backe
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live upload only when frontend/backend environment setup is unavailable.
   - Files: `frontend/src/pages/UploadDocumentPage.tsx`, `frontend/src/styles.css`
 
-- [ ] (03C): Show upload success, backend failures, and connection failures safely
+- [x] (03C): Show upload success, backend failures, and connection failures safely
   - Source of Truth: `docs/plans/Plan_13.md` > `## 8. API Design`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_13.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Show backend error text when safe.
@@ -421,7 +421,7 @@ The user needs one reliable page that turns a browser-selected file into a backe
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live backend-dependent validation.
   - Files: `frontend/src/pages/UploadDocumentPage.tsx`
 
-- [ ] (03D): Add recent document feedback and refresh after upload
+- [x] (03D): Add recent document feedback and refresh after upload
   - Source of Truth: `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_13.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Upload page combines upload and recent document feedback.
@@ -929,10 +929,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch03
 
-- [ ] (03A): Build upload page selection and validation state
-- [ ] (03B): Implement upload request, progress, and duplicate-submit prevention
-- [ ] (03C): Show upload success, backend failures, and connection failures safely
-- [ ] (03D): Add recent document feedback and refresh after upload
+- [x] (03A): Build upload page selection and validation state
+- [x] (03B): Implement upload request, progress, and duplicate-submit prevention
+- [x] (03C): Show upload success, backend failures, and connection failures safely
+- [x] (03D): Add recent document feedback and refresh after upload
 
 #### Batch04
 

@@ -11,6 +11,7 @@ export type UploadBoxProps = {
   label?: string;
   selectedFile?: File | null;
   onFileSelect: (file: File) => void;
+  onFileReject?: (message: string, file: File) => void;
 };
 
 function formatFileSize(size: number) {
@@ -31,6 +32,7 @@ export function UploadBox({
   label = "Choose a document",
   selectedFile,
   onFileSelect,
+  onFileReject,
 }: UploadBoxProps) {
   const generatedId = useId();
   const inputId = id ?? `upload-box-${generatedId}`;
@@ -51,6 +53,7 @@ export function UploadBox({
     if (!validation.isValid) {
       setValidationMessage(validation.message);
       setInternalSelectedFile(null);
+      onFileReject?.(validation.message, file);
       return;
     }
 
