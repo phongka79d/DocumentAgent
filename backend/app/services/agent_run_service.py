@@ -215,11 +215,13 @@ def get_agent_run_evidence(agent_run_id: UUID | str) -> AgentRunEvidenceResponse
 def _log_step_response(step: dict[str, Any]) -> AgentRunLogStepResponse:
     try:
         return AgentRunLogStepResponse(
+            step_name=step["step_name"],
             agent_name=step["agent_name"],
             input=step.get("input") or {},
             output=step.get("output") or {},
             status=step["status"],
             created_at=step["created_at"],
+            error_message=step.get("error_message"),
         )
     except (KeyError, TypeError, ValidationError) as exc:
         raise AgentRunStepDataError("Agent step log payload is invalid.") from exc

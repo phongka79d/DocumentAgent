@@ -100,23 +100,27 @@ def test_agent_run_evidence_response_requires_verified_and_rejected_chunks() -> 
         AgentRunEvidenceResponse.model_validate({"verified_chunks": []})
 
 
-def test_agent_run_logs_response_matches_plan_12_field_names_and_order() -> None:
+def test_agent_run_logs_response_matches_plan_15_field_names_and_order() -> None:
     response = AgentRunLogsResponse(
         agent_run_id=AGENT_RUN_ID,
         steps=[
             AgentRunLogStepResponse(
+                step_name="agent_1_retrieval",
                 agent_name="retrieval_agent",
                 input={"question": "When does probation start?"},
                 output={"candidate_count": 2},
                 status="success",
                 created_at=CREATED_AT,
+                error_message=None,
             ),
             AgentRunLogStepResponse(
+                step_name="agent_2_verification",
                 agent_name="verification_agent",
                 input={"candidate_count": 2},
                 output={"verified_chunks": [], "rejected_chunks": []},
                 status="failed",
                 created_at=CREATED_AT,
+                error_message="Verification failed safely.",
             ),
         ],
     )
@@ -125,42 +129,63 @@ def test_agent_run_logs_response_matches_plan_12_field_names_and_order() -> None
         "agent_run_id": str(AGENT_RUN_ID),
         "steps": [
             {
+                "step_name": "agent_1_retrieval",
                 "agent_name": "retrieval_agent",
                 "input": {"question": "When does probation start?"},
                 "output": {"candidate_count": 2},
                 "status": "success",
                 "created_at": "2026-06-01T10:00:00Z",
+                "error_message": None,
             },
             {
+                "step_name": "agent_2_verification",
                 "agent_name": "verification_agent",
                 "input": {"candidate_count": 2},
                 "output": {"verified_chunks": [], "rejected_chunks": []},
                 "status": "failed",
                 "created_at": "2026-06-01T10:00:00Z",
+                "error_message": "Verification failed safely.",
             },
         ],
     }
 
 
+def test_agent_run_log_step_response_requires_non_empty_step_name() -> None:
+    with pytest.raises(ValidationError):
+        AgentRunLogStepResponse(
+            step_name="   ",
+            agent_name="retrieval_agent",
+            input={},
+            output={},
+            status="success",
+            created_at=CREATED_AT,
+            error_message=None,
+        )
+
+
 def test_agent_run_log_step_response_rejects_unserializable_payloads() -> None:
     with pytest.raises(ValidationError):
         AgentRunLogStepResponse(
+            step_name="agent_1_retrieval",
             agent_name="retrieval_agent",
             input={"client": object()},
             output={},
             status="success",
             created_at=CREATED_AT,
+            error_message=None,
         )
 
 
 def test_agent_run_log_step_response_rejects_unknown_status() -> None:
     with pytest.raises(ValidationError):
         AgentRunLogStepResponse(
+            step_name="agent_1_retrieval",
             agent_name="retrieval_agent",
             input={},
             output={},
             status="running",
             created_at=CREATED_AT,
+            error_message=None,
         )
 
 
@@ -379,6 +404,7 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                 },
                 "status": "success",
                 "created_at": CREATED_AT,
+                "error_message": None,
             },
             {
                 "step_name": "agent_2_verification",
@@ -391,8 +417,9 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                     "verified_chunks": [{"chunk_id": str(CHUNK_ID)}],
                     "rejected_chunks": [],
                 },
-                "status": "success",
+                "status": "failed",
                 "created_at": verification_created_at,
+                "error_message": "Verification failed safely.",
             },
             {
                 "step_name": "agent_3_answer_self_check",
@@ -407,6 +434,7 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                 },
                 "status": "success",
                 "created_at": answer_created_at,
+                "error_message": None,
             },
         ]
     )
@@ -423,6 +451,7 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
         "agent_run_id": str(AGENT_RUN_ID),
         "steps": [
             {
+                "step_name": "agent_1_retrieval",
                 "agent_name": "retrieval_agent",
                 "input": {
                     "question": "When does probation start?",
@@ -434,8 +463,10 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                 },
                 "status": "success",
                 "created_at": "2026-06-01T10:00:00Z",
+                "error_message": None,
             },
             {
+                "step_name": "agent_2_verification",
                 "agent_name": "verification_agent",
                 "input": {
                     "candidate_count": 1,
@@ -445,10 +476,12 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                     "verified_chunks": [{"chunk_id": str(CHUNK_ID)}],
                     "rejected_chunks": [],
                 },
-                "status": "success",
+                "status": "failed",
                 "created_at": "2026-06-01T10:01:00Z",
+                "error_message": "Verification failed safely.",
             },
             {
+                "step_name": "agent_3_answer_self_check",
                 "agent_name": "answer_agent",
                 "input": {
                     "verified_count": 1,
@@ -460,6 +493,7 @@ def test_agent_run_service_fetches_ordered_logs_for_owned_run(
                 },
                 "status": "success",
                 "created_at": "2026-06-01T10:02:00Z",
+                "error_message": None,
             },
         ],
     }
@@ -763,18 +797,22 @@ def test_agent_run_logs_route_returns_ordered_json_safe_steps(
         agent_run_id=AGENT_RUN_ID,
         steps=[
             AgentRunLogStepResponse(
+                step_name="agent_1_retrieval",
                 agent_name="retrieval_agent",
                 input={"question": "When does probation start?"},
                 output={"candidate_count": 2},
                 status="success",
                 created_at=CREATED_AT,
+                error_message=None,
             ),
             AgentRunLogStepResponse(
+                step_name="agent_2_verification",
                 agent_name="verification_agent",
                 input={"candidate_count": 2},
                 output={"verified_count": 1},
-                status="success",
+                status="failed",
                 created_at=later_created_at,
+                error_message="Verification failed safely.",
             ),
         ],
     )
@@ -795,6 +833,9 @@ def test_agent_run_logs_route_returns_ordered_json_safe_steps(
         "2026-06-01T10:00:00Z",
         "2026-06-01T10:01:00Z",
     ]
+    assert response.json()["steps"][1]["error_message"] == (
+        "Verification failed safely."
+    )
     get_logs.assert_called_once_with(AGENT_RUN_ID)
 
 

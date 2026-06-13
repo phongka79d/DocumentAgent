@@ -17,18 +17,20 @@ class AgentRunEvidenceResponse(BaseModel):
 class AgentRunLogStepResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    step_name: str = Field(min_length=1)
     agent_name: str = Field(min_length=1)
     input: dict[str, JsonValue]
     output: dict[str, JsonValue]
     status: Literal["success", "failed"]
     created_at: datetime
+    error_message: str | None
 
-    @field_validator("agent_name")
+    @field_validator("step_name", "agent_name")
     @classmethod
-    def normalize_agent_name(cls, value: str) -> str:
+    def normalize_name(cls, value: str) -> str:
         normalized = value.strip()
         if not normalized:
-            raise ValueError("agent_name must not be empty")
+            raise ValueError("name must not be empty")
         return normalized
 
 

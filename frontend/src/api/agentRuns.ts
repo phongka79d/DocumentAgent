@@ -2,6 +2,7 @@ import axios from "axios";
 
 import { apiClient } from "./client";
 import type { AgentRunEvidence } from "../types/chat";
+import type { AgentRunLogsResponse } from "../types/agentRuns";
 
 export type AgentRunsApiErrorKind =
   | "backend"
@@ -17,7 +18,7 @@ const CONNECTION_ERROR_MESSAGE =
   "Unable to connect to the backend. Confirm the backend is running and try again.";
 
 const GENERIC_REQUEST_ERROR_MESSAGE =
-  "The evidence request failed. Please try again.";
+  "The agent run request failed. Please try again.";
 
 type BackendErrorBody = {
   detail?: unknown;
@@ -65,6 +66,18 @@ export function getAgentRunEvidence(
   return apiClient
     .get<AgentRunEvidence>(
       `/api/agent-runs/${encodedAgentRunId}/evidence`,
+    )
+    .then((response) => response.data);
+}
+
+export function getAgentRunLogs(
+  agentRunId: string,
+): Promise<AgentRunLogsResponse> {
+  const encodedAgentRunId = encodeURIComponent(agentRunId);
+
+  return apiClient
+    .get<AgentRunLogsResponse>(
+      `/api/agent-runs/${encodedAgentRunId}/logs`,
     )
     .then((response) => response.data);
 }
