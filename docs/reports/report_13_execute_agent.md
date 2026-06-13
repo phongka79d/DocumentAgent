@@ -1228,3 +1228,279 @@ complete
 - next task ID: `(03D)` review repair
 - can proceed: yes
 - handoff notes: A2 should verify the new queued refresh path. The key regression case is upload success calling `loadRecentDocuments()` while the mount-triggered `listDocuments()` request is still active.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch04 - Document List Page and Status Refresh
+
+## Task
+(04A) - Build document list loading and rendering
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (04A): Build document list loading and rendering
+- docs/plans/Plan_13.md > ## 3. Scope
+- docs/plans/Plan_13.md > ## 6. Required Files and Folders
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+- docs/plans/Plan_13.md > ## 12. Acceptance Criteria
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Document List Page and Status Refresh
+- Task ID: (04A)
+- Task title: Build document list loading and rendering
+
+## Completed Work
+- Status: complete.
+- Created `frontend/src/pages/DocumentListPage.tsx`.
+- Added an initial `listDocuments()` fetch lifecycle on mount.
+- Rendered every returned document through `DocumentCard`, which displays file name, type, upload time, status, chunk count, and processing errors.
+- Kept request state explicit with loading, ready, and error states.
+- Added an effect cleanup guard so resolved requests do not update state after unmount.
+- Did not add manual refresh behavior from (04C) or list-state polish beyond the minimal explicit request states needed for this task.
+
+## Files Created or Modified
+- frontend/src/pages/DocumentListPage.tsx
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed
+- Evidence: TypeScript compilation and Vite production build completed successfully.
+- Conditional component/API tests: Not run
+- Evidence or reason: `frontend/package.json` has no `test` script or configured frontend test runner, so no fabricated tests were added or invoked for this task.
+- Manual page-load check: Blocked
+- Evidence or reason: Live page-load data validation requires a reachable backend from the user. The page is also not mounted by routing until later Batch05 work, so no browser route was available for this task without implementing sibling scope.
+
+## Acceptance Check
+- Task acceptance condition: All returned documents render with required metadata and status information.
+- Status: satisfied for implemented page behavior; live backend validation blocked.
+- Evidence: `DocumentListPage` stores the returned `response.documents` and maps each item to `DocumentCard`, which already renders file name, type, created time, status, chunk count, and optional `error_message`. `npm run build` passed.
+
+## Artifacts Produced
+- frontend/src/pages/DocumentListPage.tsx
+- Appended execution report in docs/reports/report_13_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after an accepted review.
+
+## Key Implementation Decisions
+- Used a local `DocumentListRequestState` union rather than adding global state or a query library.
+- Used a mounted-request guard inside `useEffect` to avoid stale state updates after unmount.
+- Reused existing `listDocuments`, `getDocumentApiError`, `DocumentCard`, and `DocumentListItem` contracts.
+
+## Risks or Open Issues
+- Live backend data rendering was not verified because no reachable backend setup was provided for this execution.
+- The page is not routed yet; route mounting belongs to Batch05 and was intentionally not implemented here.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies `(01C)` and `(02B)` were marked complete in `docs/tasks/task_13.md` before implementation.
+- No task checkbox update, commit, manual refresh button, routing work, or sibling-task behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: (04B) can refine empty/error/loading presentation on top of the explicit states now present. (04C) can add manual refresh without replacing the initial-load lifecycle.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch04 - Document List Page and Status Refresh
+
+## Task
+(04B) - Add loading, empty, connection-error, and list-error states
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_13.md > ## 13. Failure Handling
+- docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Document List Page and Status Refresh
+- Task ID: (04B)
+- Task title: Add loading, empty, connection-error, and list-error states
+
+## Completed Work
+- State: complete.
+- Implemented distinct document list states for first load, empty successful response, connection errors, generic/backend list errors, and stale-list refresh failures.
+- Added a scoped Retry action for failed list loads. This retries list loading only and does not implement the broader manual status refresh UX assigned to (04C).
+- Preserved already loaded documents when a later retry-capable load fails, while displaying a clear error banner that the last loaded list is being shown.
+- Added responsive styles for the document list page, empty state, error state, list spacing, and mobile retry button sizing.
+
+## Files Created or Modified
+- frontend/src/pages/DocumentListPage.tsx
+- frontend/src/styles.css
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- cd frontend; npm run build: Passed
+- Evidence or reason: TypeScript compilation and Vite production build completed successfully.
+- Conditional frontend tests: Not run
+- Evidence or reason: frontend/package.json has no test script or configured frontend test runner, and Plan 13 does not require adding a test stack for conditional tests.
+- Manual empty-list check: Blocked
+- Evidence or reason: The document list page is not mounted by routing until Batch05 work, and no live backend/browser route setup was available without implementing sibling scope.
+- Manual unavailable-backend check: Blocked
+- Evidence or reason: The page is not currently routed, so a live browser connection-error flow cannot be exercised without Batch05 routing work.
+
+## Acceptance Check
+- Task acceptance condition: A request error is never displayed as an empty document collection; retry remains available.
+- Status: satisfied for implemented behavior; live manual validation blocked as noted above.
+- Evidence: Empty state renders only when the request is ready, there are no documents, and there is no request error. Request failures render an alert with either Connection error or Document list error and a Retry button. The build passed.
+
+## Artifacts Produced
+- Updated DocumentListPage state handling.
+- Updated document list page styles.
+- Appended execution report in docs/reports/report_13_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after an accepted review.
+
+## Key Implementation Decisions
+- Kept retry scoped to failed list loads to avoid implementing (04C)'s manual document status refresh button.
+- Used the existing getDocumentApiError contract to distinguish connection errors from backend/request list errors.
+- Kept successful document data visible when a later failed load has an existing list to preserve usable UI.
+
+## Risks or Open Issues
+- Manual browser checks for empty and unavailable-backend states remain blocked until routing is mounted and a suitable frontend/backend setup is available.
+- The stale-list refresh failure path is implemented defensively for retry-capable loads, but a full manual refresh trigger remains intentionally out of scope for (04B) and belongs to (04C).
+
+## Minor Issues Fixed During Execution
+- Added missing document list page layout/state styles needed for desktop and mobile usability.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (01D) and (04A) were marked complete in docs/tasks/task_13.md before implementation.
+- No task checkbox update, commit, routing work, broad manual status refresh UX, or sibling-task behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes
+- handoff notes: (04C) can add the full manual document status refresh control on top of the retry/state handling now present.
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Report File
+docs/reports/report_13_execute_agent.md
+
+## Batch
+Batch04 - Document List Page and Status Refresh
+
+## Task
+(04C) - Add manual document status refresh
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_13.md > (04C) selected task block
+- docs/plans/Plan_13.md > ## 3. Scope
+- docs/plans/Plan_13.md > ## 9. Implementation Steps
+- docs/plans/Plan_13.md > ## 12. Acceptance Criteria
+- docs/plans/Master_Plan.md > # 14. Frontend Page Plan > ## 14.2 Document List Page
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Document List Page and Status Refresh
+- Task ID: (04C)
+- Task title: Add manual document status refresh
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added a visible Refresh button to the document list header.
+- Added manual refresh behavior that re-fetches documents with listDocuments() and updates rendered document data from the backend response.
+- Added an in-flight request guard with requestInFlightRef so repeated refresh clicks do not start overlapping list requests.
+- Added disabled/busy refresh UI and a status message while document statuses are refreshing.
+- Kept retry behavior on list errors wired to the same guarded list refresh path.
+- Preserved backend status display through existing DocumentCard rendering; uploaded remains a normal stable backend status.
+- Did not add polling, processing/index calls, routing, deletion, chat, evidence, logs, auth UI, detail routes, or backend changes.
+
+## Files Created or Modified
+- frontend/src/pages/DocumentListPage.tsx
+- frontend/src/styles.css
+- docs/reports/report_13_execute_agent.md
+
+## Tests or Validations Run
+- npm run build: Passed
+- evidence or reason: Ran from frontend/. TypeScript compilation and Vite production build completed successfully.
+- Conditional component test: Not run
+- evidence or reason: frontend/package.json has no configured test script or frontend test runner; no test command was fabricated.
+- Manual network/status refresh check: Not run
+- evidence or reason: The document list page is not mounted by routing until Batch05 work, and no live backend/browser route setup was available without implementing sibling scope. The implementation was validated by build and source review.
+- Scope/source check: Passed
+- evidence or reason: rg on frontend/src/pages/DocumentListPage.tsx found only listDocuments() calls and no processing/index, polling, deletion, chat, evidence, auth, or backend-side behavior.
+
+## Acceptance Check
+- Task acceptance condition: Refresh issues exactly one list request at a time and updates the rendered data; uploaded remains a valid stable state.
+- Status: satisfied
+- Evidence: refreshDocuments() returns early when requestInFlightRef.current is true, sets the guard before calling listDocuments(), clears it in finally, disables Refresh while a list request is active, and updates setDocuments(response.documents) after the list request resolves. Status rendering remains delegated to DocumentCard with the backend document object unchanged, so uploaded remains displayed as returned by the backend.
+
+## Artifacts Produced
+- User-controlled list/status refresh in frontend/src/pages/DocumentListPage.tsx.
+- Refresh button styling in frontend/src/styles.css.
+- Appended execution report in docs/reports/report_13_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are left to A2 after an accepted review.
+
+## Key Implementation Decisions
+- Used the existing listDocuments() API client only; no new endpoint or processing/index call was introduced.
+- Used a ref guard for same-tick duplicate-click protection and UI disabled state for visible refresh prevention.
+- Kept failed refreshes non-destructive when a stale list exists by preserving the previous list and showing the existing error UI.
+
+## Risks or Open Issues
+- Live observation of status transitions remains unavailable in this task because upload processing is backend-side and outside this plan; documents may remain uploaded.
+- Manual browser/network refresh verification remains for a later routed/browser validation task because Batch05 routing is not implemented in this task scope.
+
+## Minor Issues Fixed During Execution
+- None beyond the selected manual refresh behavior and required refresh button styling.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies (04A) and (04B) were marked complete in docs/tasks/task_13.md before implementation.
+- No task checkbox update, commit, sibling task, routing/navigation work, backend change, polling, processing/index call, deletion, detail route, chat/evidence/log/auth UI, or Batch05 work was performed.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes
+- handoff notes: Manual refresh is implemented on the list page, but browser route verification still depends on Batch05 mounting routes/navigation.

@@ -428,9 +428,134 @@ select {
   background: #fff4f2;
 }
 
+.document-list-page {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 70rem);
+  margin: 0 auto;
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.document-list-page__header {
+  display: flex;
+  gap: 0.5rem;
+  align-items: start;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.document-list-page__header h1 {
+  margin: 0;
+}
+
+.document-list-page__eyebrow {
+  margin: 0;
+  color: #356ac3;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.document-list-page__refresh {
+  flex: 0 0 auto;
+  border: 1px solid #356ac3;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.95rem;
+  cursor: pointer;
+  color: #ffffff;
+  background: #356ac3;
+  font-weight: 700;
+}
+
+.document-list-page__refresh:disabled {
+  cursor: not-allowed;
+  border-color: #98a2b3;
+  background: #98a2b3;
+}
+
+.document-list-page__list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.document-list-page__message,
+.document-list-page__empty,
+.document-list-page__error {
+  margin: 0;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.document-list-page__message,
+.document-list-page__empty {
+  color: #24324a;
+  background: #f5f7fb;
+}
+
+.document-list-page__empty {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.document-list-page__empty-title,
+.document-list-page__empty-copy,
+.document-list-page__error-title,
+.document-list-page__error-copy {
+  margin: 0;
+}
+
+.document-list-page__empty-title,
+.document-list-page__error-title {
+  font-weight: 700;
+}
+
+.document-list-page__empty-copy,
+.document-list-page__error-copy {
+  color: #516074;
+}
+
+.document-list-page__error {
+  display: grid;
+  gap: 0.65rem;
+  border-left: 0.25rem solid #d92d20;
+  color: #8f1b13;
+  background: #fff4f2;
+}
+
+.document-list-page__error-copy {
+  color: #8f1b13;
+}
+
+.document-list-page__error button {
+  justify-self: start;
+  border: 1px solid #b42318;
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  color: #ffffff;
+  background: #b42318;
+  font-weight: 700;
+}
+
 @media (max-width: 560px) {
   .upload-page {
     padding: 1rem;
+  }
+
+  .document-list-page {
+    padding: 1rem;
+  }
+
+  .document-list-page__header {
+    display: grid;
+  }
+
+  .document-list-page__refresh {
+    width: 100%;
   }
 
   .upload-page__form,
@@ -456,5 +581,9 @@ select {
 
   .document-card .status-badge {
     justify-self: start;
+  }
+
+  .document-list-page__error button {
+    width: 100%;
   }
 }

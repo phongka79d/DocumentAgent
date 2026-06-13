@@ -2594,3 +2594,569 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Document List Page and Status Refresh
+- Task ID: (04A)
+- Task title: Build document list loading and rendering
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_13.md > ## 3. Scope; ## 6. Required Files and Folders; ## 9. Implementation Steps; ## 12. Acceptance Criteria
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: Reviewed the latest matching (04A) execution report only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_13_execute_agent.md; docs/tasks/task_13.md after reviewer checkbox update; frontend/src/pages/DocumentListPage.tsx as untracked implementation file
+- untracked files: frontend/src/pages/DocumentListPage.tsx
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - selected execution report and appended (04A) entry reviewed.
+- `docs/tasks/task_13.md`: in scope - selected task requirements, dependencies, and checkbox state reviewed and updated for (04A) only.
+- `docs/plans/Plan_13.md`: in scope - cited sections 3, 6, 9, and 12 reviewed.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope - new page implements initial load and renders returned documents.
+- `frontend/src/components/DocumentCard.tsx`: in scope - dependency used to verify required metadata/status/error rendering.
+- `frontend/src/api/documents.ts`: in scope - dependency used to verify `listDocuments()` and safe error handling.
+- `frontend/src/types/documents.ts`: in scope - dependency used to verify document item contract.
+- `frontend/package.json`: in scope - checked scripts and confirmed no configured frontend test script.
+
+## Reported Files Cross-Check
+- file from execution report: frontend/src/pages/DocumentListPage.tsx
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New untracked file exists and contains the task implementation.
+- file from execution report: docs/reports/report_13_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is present and appended.
+
+## Dependency Review
+- Required dependencies: (01C), (02B)
+- Dependency status: satisfied; task tracker shows both accepted/checked and required files exist.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Uses existing `listDocuments()` API boundary, existing `DocumentCard`, typed `DocumentListItem`, and backend-only API client path. Does not add routing, refresh controls, provider calls, indexing calls, or global state.
+- Failed: None.
+- Uncertain: Live backend rendering was not observed because route mounting and live backend validation are later/environment-dependent work.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `useEffect` calls `listDocuments()` on mount, stores `response.documents`, renders each item with `DocumentCard`, and uses cleanup guard before async state updates.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture IDs, sample documents, provider calls, or fabricated document data are present in `DocumentListPage.tsx`.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` and Vite build completed successfully with 29 modules transformed.
+- Status: passed
+- Notes: This is the practical automated validation available for 04A.
+- Command/check: configured frontend tests
+- Reported result: Not run; no test script configured
+- Rerun result: Confirmed `frontend/package.json` has no `test` script.
+- Status: not configured
+- Notes: Conditional tests are not required without a real runner.
+- Command/check: manual page-load/live data check
+- Reported result: Blocked
+- Rerun result: Not rerun; page routing is intentionally deferred to Batch05 and live backend setup was not provided.
+- Status: blocked by environment/later routing scope
+- Notes: Allowed by the task's live-data blocked condition and does not block static acceptance of 04A.
+
+## Acceptance Review
+- Task acceptance: All returned documents render with required metadata and status information.
+- Status: satisfied
+- Evidence: `DocumentListPage` maps every `response.documents` item to `DocumentCard`; `DocumentCard` renders file name, file type, created time, status badge, chunk count, and optional processing error.
+
+## Progress Tracking
+- Selected task checkbox: was unchecked before review; now checked in the task block and progress tracker for (04A) only.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch04 remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended.
+- Other: Sibling tasks (04B), (04C), and later tasks remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The report honestly marks manual live validation blocked and does not claim tests were fabricated.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live page-load/data rendering remains for later routing and backend-backed manual validation.
+
+### Observations
+- The implementation already includes minimal loading/error/empty branches, but fuller state polish and retry behavior remain correctly scoped to (04B), and manual refresh remains scoped to (04C).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (04A) is accepted in Batch04.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch04 - Document List Page and Status Refresh",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/pages/DocumentListPage.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "manual page-load/live data check blocked because routing is deferred to Batch05 and live backend setup was not provided"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live page-load/data rendering remains for later routing and backend-backed manual validation."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Document List Page and Status Refresh
+- Task ID: (04B)
+- Task title: Add loading, empty, connection-error, and list-error states
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_13.md > ## 13. Failure Handling; docs/plans/Plan_13.md > ## 15. Reviewer Checklist
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: Reviewed the latest matching (04B) execution report only, not the whole Batch04.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_13_execute_agent.md; docs/review/review_13_review_agent.md; docs/tasks/task_13.md; frontend/src/styles.css; frontend/src/pages/DocumentListPage.tsx as untracked
+- untracked files: frontend/src/pages/DocumentListPage.tsx
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - selected (04B) execution entry reviewed; prior (04A) report entry distinguished as already accepted uncommitted work.
+- `docs/review/review_13_review_agent.md`: in scope - existing prior review entries inspected before appending this report.
+- `docs/tasks/task_13.md`: in scope - selected task, dependencies, and progress tracker reviewed; only (04B) was updated after acceptance.
+- `docs/plans/Plan_13.md`: in scope - cited failure-handling and reviewer-checklist sections reviewed.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope - selected implementation reviewed for loading, empty, connection-error, list-error, stale-list error, and retry behavior.
+- `frontend/src/styles.css`: in scope - selected list-state and responsive styles reviewed.
+- `frontend/src/api/documents.ts`: in scope - dependency reviewed for safe API error classification.
+- `frontend/src/components/DocumentCard.tsx`: in scope - dependency reviewed to distinguish list rendering from list-state work.
+- `frontend/package.json`: in scope - scripts reviewed; no configured frontend test script exists.
+
+## Reported Files Cross-Check
+- file from execution report: frontend/src/pages/DocumentListPage.tsx
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New untracked page file contains the selected list-state implementation.
+- file from execution report: frontend/src/styles.css
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds document-list layout, message, empty, error, retry-button, and mobile styles.
+- file from execution report: docs/reports/report_13_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry is present and appended.
+
+## Dependency Review
+- Required dependencies: (01D), (04A)
+- Dependency status: satisfied; task tracker shows both accepted/checked, and required files/helpers exist.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Uses the existing `listDocuments()` API boundary and `getDocumentApiError()` contract; does not add routing, polling, provider calls, internal index calls, backend changes, or a visible manual status refresh control.
+- Failed: None.
+- Uncertain: Live browser empty and unavailable-backend checks remain deferred because the document list page is not routed until Batch05 and no live backend route setup was available.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The page distinguishes initial loading, ready empty response, blocking request error, connection error title, generic/backend list error title, retry loading, and stale-list error messaging without sample data or fixed success values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture IDs, sample documents, hardcoded backend URLs, provider calls, or fabricated list contents are present in the selected implementation.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` and Vite production build completed successfully with 29 modules transformed.
+- Status: passed
+- Notes: This is the practical automated validation available for (04B).
+- Command/check: configured frontend tests
+- Reported result: Not run; no test script configured
+- Rerun result: Confirmed `frontend/package.json` has no `test` script.
+- Status: not configured
+- Notes: Conditional tests are not required without a real runner.
+- Command/check: manual empty-list check
+- Reported result: Blocked
+- Rerun result: Not rerun; route mounting is deferred to Batch05 and no live backend/browser setup was available.
+- Status: blocked by environment/later routing scope
+- Notes: Reported honestly and allowed for live backend-dependent checks.
+- Command/check: manual unavailable-backend check
+- Reported result: Blocked
+- Rerun result: Not rerun; route mounting is deferred to Batch05 and no live backend/browser setup was available.
+- Status: blocked by environment/later routing scope
+- Notes: Static implementation clearly renders a connection-error branch from the shared API error helper.
+- Command/check: forbidden frontend boundary search
+- Reported result: Not specifically reported for (04B)
+- Rerun result: Passed; targeted `rg` found no forbidden provider, secret, indexing, chat, evidence, logs, auth, deletion, or marketing strings in frontend runtime code.
+- Status: passed
+- Notes: Matches Plan 13 reviewer checklist for scope and backend-only API boundaries.
+
+## Acceptance Review
+- Task acceptance: A request error is never displayed as an empty document collection; retry remains available.
+- Status: satisfied
+- Evidence: Empty state requires `requestState === "ready"`, no documents, and no `requestError`; failed requests render an alert with either `Connection error` or `Document list error` and a `Retry` button. The retry action reissues `listDocuments()` only after an error state, so it is acceptable for (04B) and does not prematurely implement (04C)'s visible manual status refresh requirement.
+
+## Progress Tracking
+- Selected task checkbox: was unchecked before review; now checked in the task block and progress tracker for (04B) only.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch04 remains unchecked because (04C) is not accepted.
+- Execution report entry: appended and accurate.
+- Review report entry: appended.
+- Other: Sibling/future tasks, including (04C), remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The report honestly marks live manual checks blocked and separates Retry from the future manual status refresh UX.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live empty-list and backend-unavailable browser checks remain for later route mounting and backend-backed manual validation.
+
+### Observations
+- The stale-list failure branch is defensive until (04C) adds a normal manual refresh trigger; this does not expand scope because no always-visible refresh/status control was added.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, (04C) is still unchecked and unreviewed.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch04 - Document List Page and Status Refresh",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/styles.css",
+    "frontend/src/pages/DocumentListPage.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "manual empty-list check blocked because routing is deferred to Batch05 and no live backend/browser setup was available",
+    "manual unavailable-backend check blocked because routing is deferred to Batch05 and no live backend/browser setup was available"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live empty-list and backend-unavailable browser checks remain for later route mounting and backend-backed manual validation."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_13.md
+
+## Execution Report Reviewed
+docs/reports/report_13_execute_agent.md
+
+## Review Report File
+docs/review/review_13_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Document List Page and Status Refresh
+- Task ID: (04C)
+- Task title: Add manual document status refresh
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_13.md > (04C) selected task block; docs/plans/Plan_13.md > ## 3. Scope; docs/plans/Plan_13.md > ## 9. Implementation Steps; docs/plans/Plan_13.md > ## 12. Acceptance Criteria; docs/plans/Master_Plan.md > # 14. Frontend Page Plan > ## 14.2 Document List Page
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: Reviewed the latest matching (04C) execution report only, while distinguishing prior accepted uncommitted (04A) and (04B) Batch04 changes.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: docs/reports/report_13_execute_agent.md; docs/review/review_13_review_agent.md; docs/tasks/task_13.md; frontend/src/styles.css; frontend/src/pages/DocumentListPage.tsx as untracked
+- untracked files: frontend/src/pages/DocumentListPage.tsx
+
+## Files Reviewed
+- `docs/reports/report_13_execute_agent.md`: in scope - latest (04C) execution entry reviewed; earlier (04A) and (04B) entries treated as prior accepted uncommitted Batch04 evidence.
+- `docs/review/review_13_review_agent.md`: in scope - existing prior review entries inspected before appending this report.
+- `docs/tasks/task_13.md`: in scope - selected (04C) requirements, dependencies, and progress tracker reviewed; only (04C) was updated after acceptance.
+- `docs/plans/Plan_13.md`: in scope - cited scope, implementation-step, acceptance, and reviewer-checklist requirements reviewed for refresh behavior and scope boundaries.
+- `docs/plans/Master_Plan.md`: in scope - cited document list page refresh-status expectation reviewed, with chat/deletion expectations excluded by Plan 13 scope.
+- `frontend/src/pages/DocumentListPage.tsx`: in scope - selected refresh implementation reviewed for visible control, backend list fetch, rendered-data update, overlap prevention, and stale-list behavior.
+- `frontend/src/styles.css`: in scope - selected refresh button, refresh/status message, list-state, and responsive styles reviewed; includes prior accepted Batch04 style work.
+- `frontend/src/api/documents.ts`: in scope - dependency reviewed to verify refresh uses `listDocuments()` and the configured API boundary only.
+- `frontend/src/components/DocumentCard.tsx`: in scope - dependency reviewed to verify backend status is rendered from the returned document object.
+- `frontend/src/types/documents.ts`: in scope - dependency reviewed to verify `uploaded` remains part of the approved status union.
+- `frontend/package.json`: in scope - scripts reviewed; no configured frontend test script exists.
+
+## Reported Files Cross-Check
+- file from execution report: frontend/src/pages/DocumentListPage.tsx
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Untracked page file contains the manual refresh implementation.
+- file from execution report: frontend/src/styles.css
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Styles include the visible refresh button and list-state presentation; file also contains prior accepted Batch04 style changes.
+- file from execution report: docs/reports/report_13_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report entry for (04C) is present and appended after (04A)/(04B).
+
+## Dependency Review
+- Required dependencies: (04A), (04B)
+- Dependency status: satisfied; both tasks are accepted/checked in `docs/tasks/task_13.md`, and their implementation remains present in the working tree.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Refresh uses the existing `listDocuments()` frontend API boundary, which calls `GET /api/documents` through `apiClient`; rendered status data remains the backend response passed through `DocumentCard`; `uploaded` remains a valid stable state from the shared `DocumentStatus` union.
+- Passed: Overlap prevention is implemented with `requestInFlightRef` plus disabled refresh/retry UI while a list request is active.
+- Passed: Targeted search found no polling, processing/index endpoint call, deletion, chat, evidence, logs, auth UI, backend changes, direct provider calls, or frontend secret usage in the selected implementation area.
+- Failed: None.
+- Uncertain: Live browser/network refresh behavior was not observed because the document list page is not mounted until Batch05 and no live backend/browser setup was used for this review.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `refreshDocuments()` exits early when `requestInFlightRef.current` is true, sets the guard before awaiting `listDocuments()`, updates `setDocuments(response.documents)` from the backend list response, clears the guard in `finally`, disables the Refresh button while loading/refreshing, and renders a refresh status message.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture document IDs, sample list contents, hardcoded backend URLs, fake statuses, or fixed success values are present. Status display is driven by returned document objects and the shared `DocumentStatus` type.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` and Vite production build completed successfully with 29 modules transformed.
+- Status: passed
+- Notes: This is the practical automated validation available for (04C).
+- Command/check: configured frontend tests
+- Reported result: Not run; no configured test script or frontend test runner
+- Rerun result: Confirmed `frontend/package.json` has no `test` script.
+- Status: not configured
+- Notes: Conditional component tests are not required without a real runner.
+- Command/check: manual network/status refresh check
+- Reported result: Not run
+- Rerun result: Not rerun; route mounting is deferred to Batch05 and no live backend/browser route setup was available without implementing sibling scope.
+- Status: not run / deferred to later routed manual validation
+- Notes: The task allows live status transitions to remain unavailable because processing is backend-side; the implementation was validated by source review and build.
+- Command/check: scope/source search for refresh boundaries
+- Reported result: Passed
+- Rerun result: Passed; targeted `rg` found only `listDocuments()` calls for list fetching and no polling, processing/index, deletion, chat, evidence, logs, auth, provider, or backend-side behavior in the selected implementation area.
+- Status: passed
+- Notes: Search results contained only allowed status-display strings such as `processing` in CSS/status labels and `processing-error` display.
+
+## Acceptance Review
+- Task acceptance: Refresh issues exactly one list request at a time and updates the rendered data; `uploaded` remains a valid stable state.
+- Status: satisfied
+- Evidence: `refreshDocuments()` uses `requestInFlightRef` to prevent overlapping requests, calls `listDocuments()` for the backend list, updates `documents` with `response.documents`, and leaves status rendering delegated to `DocumentCard` from the backend document object. `DocumentStatus` includes `uploaded`, and no processing/index call or polling was added.
+
+## Progress Tracking
+- Selected task checkbox: was unchecked before review; now checked in the selected task block and progress tracker for (04C) only.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch04 batch checkbox remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended.
+- Other: No future task checkbox was updated. Since (04C) is the final Batch04 task and (04A)/(04B) were already accepted, all Batch04 task IDs are now checked, but the batch checkbox was not changed by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. The report correctly states build passed, conditional tests were not configured, manual network/status refresh was not run, refresh uses `listDocuments()`, rendered data is updated from the backend response, and no polling/index/processing call was added.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live browser/network refresh verification remains for later routing and backend-backed manual validation.
+
+### Observations
+- The implementation preserves stale documents on refresh failure and shows an error banner, which aligns with the existing (04B) list-error behavior.
+- `frontend/src/pages/DocumentListPage.tsx` is still untracked, so the eventual batch commit must include it.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch04 task IDs are now accepted; the batch checkbox was not updated by this review.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_13.md",
+  "execution_report_reviewed": "docs/reports/report_13_execute_agent.md",
+  "review_report_file": "docs/review/review_13_review_agent.md",
+  "selected_batch": "Batch04 - Document List Page and Status Refresh",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_13_execute_agent.md",
+    "docs/review/review_13_review_agent.md",
+    "docs/tasks/task_13.md",
+    "frontend/src/styles.css",
+    "frontend/src/pages/DocumentListPage.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "manual network/status refresh check not run because routing is deferred to Batch05 and no live backend/browser setup was available"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live browser/network refresh verification remains for later routing and backend-backed manual validation."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```

@@ -492,7 +492,7 @@ The upload page provides immediate feedback, but users also need a dedicated loc
 
 ### Tasks
 
-- [ ] (04A): Build document list loading and rendering
+- [x] (04A): Build document list loading and rendering
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Create `DocumentListPage.tsx`.
@@ -508,7 +508,7 @@ The upload page provides immediate feedback, but users also need a dedicated loc
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live data validation if backend setup is unavailable.
   - Files: `frontend/src/pages/DocumentListPage.tsx`
 
-- [ ] (04B): Add loading, empty, connection-error, and list-error states
+- [x] (04B): Add loading, empty, connection-error, and list-error states
   - Source of Truth: `docs/plans/Plan_13.md` > `## 13. Failure Handling`; `docs/plans/Plan_13.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Empty document list shows an empty state.
@@ -524,7 +524,7 @@ The upload page provides immediate feedback, but users also need a dedicated loc
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for live backend-dependent checks.
   - Files: `frontend/src/pages/DocumentListPage.tsx`, `frontend/src/styles.css`
 
-- [ ] (04C): Add manual document status refresh
+- [x] (04C): Add manual document status refresh
   - Source of Truth: `docs/plans/Plan_13.md` > `## 3. Scope`; `docs/plans/Plan_13.md` > `## 9. Implementation Steps`; `docs/plans/Plan_13.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `# 14. Frontend Page Plan` > `## 14.2 Document List Page`
   - Source Requirements:
     - Provide a refresh action.
@@ -936,9 +936,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch04
 
-- [ ] (04A): Build document list loading and rendering
-- [ ] (04B): Add loading, empty, connection-error, and list-error states
-- [ ] (04C): Add manual document status refresh
+- [x] (04A): Build document list loading and rendering
+- [x] (04B): Add loading, empty, connection-error, and list-error states
+- [x] (04C): Add manual document status refresh
 
 #### Batch05
 
