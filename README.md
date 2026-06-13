@@ -447,6 +447,10 @@ React Router is mounted through `BrowserRouter`. `App.tsx` exposes `/upload` and
 
 `frontend/src/components/ChatBox.tsx` provides a reusable controlled question form. It blocks empty or whitespace-only questions before submit callbacks run, passes trimmed questions to callers, and supports loading/disabled submit state for later `askQuestion()` integration.
 
+`frontend/src/components/AnswerPanel.tsx` renders answer text, percentage confidence or an unavailable state, file-name-plus-quote citations, and an explicit no-citations state without exposing internal chunk IDs.
+
+`frontend/src/components/EvidencePanel.tsx` renders read-only verified and rejected evidence in separate labeled sections. It includes the approved optional page, verification reason, simple-reasoning, and rejection-reason metadata, with responsive long-content wrapping shared through `frontend/src/styles.css`.
+
 `frontend/src/pages/UploadDocumentPage.tsx` now combines validated file selection, upload progress, safe upload success/error feedback, and a compact recent-documents section that refreshes through `listDocuments()` after successful uploads.
 
 `frontend/src/pages/DocumentListPage.tsx` fetches documents on page load, renders returned items through `DocumentCard`, distinguishes loading, empty, connection-error, list-error, and stale-list refresh-failure states, and provides a guarded manual Refresh action that re-fetches `GET /api/documents` without polling or calling processing/index endpoints.
@@ -588,5 +592,5 @@ Validation before claiming completion:
 - Agent 1, Agent 2, and Agent 3 runtime callables, validation, evidence safety, self-check behavior, and step logging are implemented. `backend/app/agents/graph.py` executes Agent 1 -> Agent 2 -> Agent 3, owns the `agent_runs` lifecycle, returns Agent 3 answer fields, marks created runs failed on Agent 1/2/3 failures, and preserves the insufficient-evidence path. `POST /api/chat/ask` now provides route-level error mapping, pre-workflow request and selected-document validation, owned-session protections, and user/assistant message persistence around that workflow.
 - `backend/app/schemas/chat.py` and `backend/app/schemas/agent_runs.py` define the mounted chat, evidence, and logs API contracts. `backend/app/api/chat.py` and `backend/app/api/agent_runs.py` expose those contracts through the production application.
 - The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
-- The frontend now mounts routed upload and document list screens with compact navigation and responsive/accessibility styling. Chat and evidence API contracts/clients plus reusable ready-document selector and chat input controls exist, while assembled chat, retrieval, evidence, and agent-log UI remain planned.
+- The frontend now mounts routed upload and document list screens with compact navigation and responsive/accessibility styling. Chat and evidence API contracts/clients plus reusable ready-document selector, chat input, answer display, and verified/rejected evidence display components exist, while assembled chat, retrieval, evidence routes, and agent-log UI remain planned.
 - No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.

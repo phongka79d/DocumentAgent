@@ -483,6 +483,202 @@ button {
   opacity: 0.8;
 }
 
+.answer-panel,
+.evidence-panel,
+.evidence-panel__group,
+.answer-panel__citations {
+  min-width: 0;
+}
+
+.answer-panel {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  border: 1px solid #d8deea;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(23 32 51 / 0.06);
+}
+
+.answer-panel__header,
+.evidence-panel__group-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.answer-panel__header h2,
+.answer-panel__citations h3,
+.evidence-panel__group-header h2 {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #172033;
+  line-height: 1.25;
+}
+
+.answer-panel__header h2,
+.evidence-panel__group-header h2 {
+  font-size: 1.2rem;
+}
+
+.answer-panel__citations h3 {
+  font-size: 1rem;
+}
+
+.answer-panel__confidence {
+  flex: 0 0 auto;
+  margin: 0;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  color: #1d4f91;
+  background: #eaf2ff;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.answer-panel__confidence-label {
+  font-weight: 800;
+}
+
+.answer-panel__text,
+.answer-panel__citation-file,
+.answer-panel__citation-quote,
+.answer-panel__empty-citations,
+.evidence-panel__file,
+.evidence-panel__quote,
+.evidence-panel__empty,
+.evidence-panel__detail dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.answer-panel__text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.answer-panel__citations {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.answer-panel__citation-list,
+.evidence-panel__list {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.answer-panel__citation,
+.evidence-panel__item {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  border: 1px solid #d8deea;
+  border-radius: 0.5rem;
+  padding: 0.9rem;
+  background: #f9fafc;
+}
+
+.answer-panel__citation-file,
+.evidence-panel__file {
+  margin: 0;
+  color: #24324a;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.answer-panel__citation-quote,
+.evidence-panel__quote {
+  margin: 0;
+  border-left: 0.2rem solid #9ab8e8;
+  padding-left: 0.75rem;
+  white-space: pre-wrap;
+  color: #516074;
+  line-height: 1.55;
+}
+
+.answer-panel__empty-citations,
+.evidence-panel__empty {
+  margin: 0;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1rem;
+  color: #516074;
+  background: #f5f7fb;
+  line-height: 1.45;
+}
+
+.evidence-panel {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+.evidence-panel__group {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid #d8deea;
+  border-left-width: 0.3rem;
+  border-radius: 0.5rem;
+  padding: 1.1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(23 32 51 / 0.06);
+}
+
+.evidence-panel__group--verified {
+  border-left-color: #198754;
+}
+
+.evidence-panel__group--rejected {
+  border-left-color: #d92d20;
+}
+
+.evidence-panel__count {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: #24324a;
+  background: #e8ecf3;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.evidence-panel__details {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.evidence-panel__detail {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.evidence-panel__detail dt {
+  color: #667085;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.evidence-panel__detail dd {
+  margin: 0;
+  color: #24324a;
+  line-height: 1.45;
+}
+
 .upload-box {
   display: grid;
   gap: 0.75rem;
@@ -987,6 +1183,18 @@ button {
     width: 100%;
   }
 
+  .answer-panel__header,
+  .evidence-panel__group-header,
+  .evidence-panel__detail {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .answer-panel__confidence,
+  .evidence-panel__count {
+    justify-self: start;
+  }
+
   .document-list-page__error button {
     width: 100%;
   }
@@ -1003,7 +1211,9 @@ button {
   .upload-page__form,
   .upload-page__recent,
   .upload-box__dropzone,
-  .chat-box__textarea {
+  .chat-box__textarea,
+  .answer-panel,
+  .evidence-panel__group {
     padding: 0.75rem;
   }
 

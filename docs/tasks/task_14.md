@@ -348,7 +348,7 @@ Answer and evidence rendering need clear formatting and separation before page-l
 
 ### Tasks
 
-- [ ] (03A): Build the answer display component
+- [x] (03A): Build the answer display component
   - Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`; `docs/plans/Master_Plan.md` > `# 18. Quality Rules` > `## 18.3 Citation Rule`
   - Source Requirements:
     - `AnswerPanel.tsx` displays final answer, confidence, and citations.
@@ -364,7 +364,7 @@ Answer and evidence rendering need clear formatting and separation before page-l
   - Blocked Condition: None.
   - Files: `frontend/src/components/AnswerPanel.tsx`
 
-- [ ] (03B): Build the evidence display component
+- [x] (03B): Build the evidence display component
   - Source of Truth: `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_14.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 14. Frontend Page Plan` > `## 14.4 Evidence Viewer`
   - Source Requirements:
     - `EvidencePanel.tsx` displays verified and rejected chunks.
@@ -380,7 +380,7 @@ Answer and evidence rendering need clear formatting and separation before page-l
   - Blocked Condition: None.
   - Files: `frontend/src/components/EvidencePanel.tsx`
 
-- [ ] (03C): Add component-level accessibility and wrapping styles
+- [x] (03C): Add component-level accessibility and wrapping styles
   - Source of Truth: `docs/plans/Plan_14.md` > `## 13. Failure Handling`; `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`; `README.md` > `## Main Workflows` > `### Frontend Reusable Document Components`
   - Source Requirements:
     - Long answers and quotes must wrap without overflowing containers.
@@ -868,9 +868,9 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] (02C): Build the reusable chat input component
 
 #### Batch03
-- [ ] (03A): Build the answer display component
-- [ ] (03B): Build the evidence display component
-- [ ] (03C): Add component-level accessibility and wrapping styles
+- [x] (03A): Build the answer display component
+- [x] (03B): Build the evidence display component
+- [x] (03C): Add component-level accessibility and wrapping styles
 
 #### Batch04
 - [ ] (04A): Create the main chat page

@@ -620,3 +620,312 @@ complete
 - next task ID: (03A)
 - can proceed: yes, after A2 accepts (02C) and A3 passes/commits Batch02
 - handoff notes: `ChatBox` exposes trimmed question submission and can be composed with `DocumentSelector` in Batch04.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch03 - Answer and Evidence Display Components
+
+## Task
+(03A) - Build the answer display component
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Master_Plan.md` > `# 18. Quality Rules` > `## 18.3 Citation Rule`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Answer and Evidence Display Components
+- Task ID: (03A)
+- Task title: Build the answer display component
+
+## Completed Work
+- Complete.
+- Created a reusable `AnswerPanel` that renders answer text, numeric or unavailable confidence, citations, and an explicit no-citations state.
+- Citation rendering exposes only file name and quote and does not render internal chunk IDs.
+- Added semantic headings, list markup, and block quotes for accessible page composition.
+
+## Files Created or Modified
+- `frontend/src/components/AnswerPanel.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript `tsc --noEmit` and Vite production build completed successfully with 101 modules transformed.
+- Frontend tests: Not run because `frontend/package.json` has no test script or test runner.
+
+## Acceptance Check
+- Task acceptance condition: Answer, confidence, and citations are readable; citations show only `file_name` and `quote`; long text wraps; missing citations are visible.
+- Status: satisfied for the component scope.
+- Evidence: `AnswerPanel` renders typed answer/confidence/citation props and an explicit `No citations were returned for this answer.` state. Component-level wrapping styles remain assigned to (03C).
+
+## Artifacts Produced
+- `frontend/src/components/AnswerPanel.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2 after acceptance.
+
+## Key Implementation Decisions
+- Rendered confidence as a rounded percentage because the approved API contract represents confidence as a fractional numeric value.
+- Kept styling class hooks in the component while leaving CSS implementation to the explicitly scoped (03C) task.
+
+## Risks or Open Issues
+- Manual happy-path, missing-citation, and narrow-width checks remain scheduled for Batch06.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified for (03A).
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 accepts (03A)
+- handoff notes: `EvidencePanel` can follow the semantic section/list pattern without changing `AnswerPanel`.
+
+---
+
+# Task Execution Report - (03A) Repair
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch03 - Answer and Evidence Display Components
+
+## Task
+(03A) - Build the answer display component
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Master_Plan.md` > `# 18. Quality Rules` > `## 18.3 Citation Rule`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Answer and Evidence Display Components
+- Task ID: (03A)
+- Task title: Build the answer display component
+
+## Completed Work
+- Repaired the reusable panel's heading associations to use React-generated unique IDs.
+- Multiple `AnswerPanel` instances can now be rendered without duplicate document IDs.
+
+## Files Created or Modified
+- `frontend/src/components/AnswerPanel.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite production build completed successfully with 101 modules transformed.
+
+## Acceptance Check
+- Task acceptance condition: Answer, confidence, and citations are readable and accessible in a reusable component.
+- Status: satisfied.
+- Evidence: `useId()` now provides unique answer and citation heading IDs for `aria-labelledby`.
+
+## Artifacts Produced
+- Repaired `frontend/src/components/AnswerPanel.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update remains reserved for A2.
+
+## Key Implementation Decisions
+- Used React `useId()` to preserve stable server/client-safe accessibility associations.
+
+## Risks or Open Issues
+- Manual visual checks remain scheduled for Batch06.
+
+## Minor Issues Fixed During Execution
+- Removed duplicate-ID risk from reusable component instances.
+
+## Workflow Integrity Check
+- Repair stayed within (03A) scope.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 acceptance
+- handoff notes: None.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch03 - Answer and Evidence Display Components
+
+## Task
+(03B) - Build the evidence display component
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_14.md` > `## 9. Implementation Steps`
+- `docs/plans/Master_Plan.md` > `# 14. Frontend Page Plan` > `## 14.4 Evidence Viewer`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Answer and Evidence Display Components
+- Task ID: (03B)
+- Task title: Build the evidence display component
+
+## Completed Work
+- Created `EvidencePanel` with separate verified and rejected evidence sections.
+- Verified evidence renders file name, quote, optional page number, optional verification reason, and optional simple-reasoning support.
+- Rejected evidence renders file name, quote, and rejection reason.
+- Added explicit empty states, semantic read-only markup, group counts, and unique accessible heading associations.
+
+## Files Created or Modified
+- `frontend/src/components/EvidencePanel.tsx`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite production build completed successfully with 101 modules transformed.
+- Frontend tests: Not run because no test script or test runner is configured.
+
+## Acceptance Check
+- Task acceptance condition: Verified and rejected evidence are separate, status-labeled, read-only, and readable at mobile and desktop widths.
+- Status: satisfied for component structure; styling and manual viewport checks remain assigned to (03C) and Batch06.
+- Evidence: Distinct verified/rejected sections and typed field rendering exist with no editing controls.
+
+## Artifacts Produced
+- `frontend/src/components/EvidencePanel.tsx`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Accepted the complete `AgentRunEvidence` object as one prop so chat and direct evidence pages can reuse the same component.
+- Used optional field guards so absent page and verification metadata do not create empty labels.
+
+## Risks or Open Issues
+- Manual visual and responsive validation remains scheduled for Batch06.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No dependency, scope, or architecture issue identified.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes, after A2 accepts (03B)
+- handoff notes: (03C) should style the existing `answer-panel` and `evidence-panel` class hooks.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_14.md
+
+## Report File
+docs/reports/report_14_execute_agent.md
+
+## Batch
+Batch03 - Answer and Evidence Display Components
+
+## Task
+(03C) - Add component-level accessibility and wrapping styles
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_14.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_14.md` > `## 15. Reviewer Checklist`
+- `README.md` > `## Main Workflows` > `### Frontend Reusable Document Components`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Answer and Evidence Display Components
+- Task ID: (03C)
+- Task title: Add component-level accessibility and wrapping styles
+
+## Completed Work
+- Added answer, citation, verified-evidence, rejected-evidence, empty-state, count, and metadata styles using the existing plain CSS system.
+- Added `min-width: 0`, `overflow-wrap: anywhere`, and `white-space: pre-wrap` where long answers, file names, quotes, and reasons can overflow.
+- Added labeled structural separation for verified and rejected groups using borders plus visible headings, preserving non-color status communication.
+- Added narrow-width stacking and reduced padding at existing 560px and 360px breakpoints.
+- Preserved existing visible focus and disabled styling for document selection and chat input controls.
+
+## Files Created or Modified
+- `frontend/src/styles.css`
+- `docs/reports/report_14_execute_agent.md`
+
+## Tests or Validations Run
+- `npm run build` from `frontend/`: Passed.
+- Evidence: TypeScript and Vite production build completed successfully with 101 modules transformed.
+- Manual responsive/focus checks: Deferred to Batch06 as required by the task file.
+
+## Acceptance Check
+- Task acceptance condition: Long content does not create horizontal overflow at 320px minimum width and interactive controls retain visible focus.
+- Status: satisfied by CSS implementation; browser confirmation remains scheduled for Batch06.
+- Evidence: Flexible grids collapse to one column, content containers allow shrinking, long text wraps, and existing control focus rules remain present.
+
+## Artifacts Produced
+- Responsive answer/evidence styles in `frontend/src/styles.css`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox update is reserved for A2.
+
+## Key Implementation Decisions
+- Reused existing colors, spacing, border radii, breakpoints, and BEM-style class naming.
+- Used text headings and section structure in addition to color to identify evidence status.
+
+## Risks or Open Issues
+- Final browser-based 320px, 375px, desktop, keyboard-focus, and long-content validation remains in Batch06.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No new styling framework or out-of-scope application/page behavior was introduced.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes, after A2 accepts (03C), A3 passes, and Batch03 is committed
+- handoff notes: Batch04 can compose the styled components without adding component-level CSS.
