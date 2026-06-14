@@ -39,6 +39,20 @@ def deletion_function_sql(sql: str) -> str:
     return match.group(0)
 
 
+def create_agent_run_function_sql(sql: str) -> str:
+    match = re.search(
+        r"create\s+or\s+replace\s+function\s+"
+        r"public\.create_owned_agent_run\s*\(\s*"
+        r"p_session_id\s+uuid\s*,\s*p_user_id\s+text\s*,\s*"
+        r"p_question\s+text\s*,\s*p_selected_document_ids\s+text\[\]\s*\)"
+        r".*?\$\$;(?:\s|$)",
+        sql,
+        re.DOTALL,
+    )
+    assert match, "create_owned_agent_run(uuid, text, text, text[]) must exist"
+    return match.group(0)
+
+
 def test_deletion_logs_is_independent_and_constrains_status() -> None:
     table_sql = deletion_logs_table_sql(migration_sql())
 
@@ -95,6 +109,7 @@ def test_delete_function_uses_safe_security_definer_contract() -> None:
     assert "security definer" in function_sql
     assert re.search(r"set\s+search_path\s*=\s*pg_catalog(?:\s|$)", function_sql)
     assert "for update" in function_sql
+    assert "pg_advisory_xact_lock" in function_sql
     assert "create or replace function public.delete_owned_document_cascade" in sql
     for role in ("public", "anon", "authenticated"):
         assert re.search(
@@ -166,3 +181,31 @@ def test_delete_function_inserts_atomic_success_log() -> None:
     assert "'success'" in function_sql
     assert "deleted_storage_file" in function_sql
     assert "deleted_qdrant_points" in function_sql
+
+
+def test_create_agent_run_function_validates_documents_under_same_lock() -> None:
+    sql = migration_sql()
+    function_sql = create_agent_run_function_sql(sql)
+
+    assert "security definer" in function_sql
+    assert re.search(r"set\s+search_path\s*=\s*pg_catalog(?:\s|$)", function_sql)
+    assert "pg_advisory_xact_lock" in function_sql
+    assert "p_selected_document_ids" in function_sql
+    assert "raise exception 'selected document not found.'" in function_sql
+    assert "insert into public.agent_runs" in function_sql
+
+    for role in ("public", "anon", "authenticated"):
+        assert re.search(
+            rf"revoke\s+execute\s+on\s+function\s+"
+            rf"public\.create_owned_agent_run\s*\("
+            rf"\s*uuid\s*,\s*text\s*,\s*text\s*,\s*text\[\]\s*\)"
+            rf"\s+from\s+{role}\s*;",
+            sql,
+        )
+    assert re.search(
+        r"grant\s+execute\s+on\s+function\s+"
+        r"public\.create_owned_agent_run\s*\("
+        r"\s*uuid\s*,\s*text\s*,\s*text\s*,\s*text\[\]\s*\)"
+        r"\s+to\s+service_role\s*;",
+        sql,
+    )

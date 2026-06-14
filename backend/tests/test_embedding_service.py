@@ -392,6 +392,76 @@ def test_index_document_chunks_records_qdrant_failure_without_updating_point_id(
     ]
 
 
+def test_index_document_chunks_removes_vector_when_point_update_fails_after_upsert(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+    chunks = _chunk_rows()[:1]
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: chunks,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "create_embedding",
+        lambda text: calls.append(("embedding", text)) or [1.0, 2.0, 3.0],
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "ensure_collection",
+        lambda vector_size: calls.append(("ensure_collection", vector_size)),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        lambda point_id, vector, payload: calls.append(("upsert", point_id))
+        or point_id,
+    )
+
+    def fail_update_point_id(
+        received_document_id: str,
+        chunk_id: str,
+        point_id: str,
+    ):
+        calls.append(("update_point", received_document_id, chunk_id, point_id))
+        raise RuntimeError("document chunk qdrant point update failed")
+
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        fail_update_point_id,
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "delete_document_vectors",
+        lambda received_document_id: calls.append(
+            ("delete_vectors", received_document_id)
+        )
+        or True,
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 0
+    assert result.failed_count == 1
+    assert result.errors[0].chunk_id == CHUNK_ONE_ID
+    assert "qdrant point update failed" in result.errors[0].message
+    assert calls == [
+        ("embedding", "First chunk content."),
+        ("ensure_collection", 3),
+        ("upsert", str(CHUNK_ONE_ID)),
+        ("update_point", DOCUMENT_ID_TEXT, str(CHUNK_ONE_ID), str(CHUNK_ONE_ID)),
+        ("delete_vectors", DOCUMENT_ID_TEXT),
+    ]
+
+
 def test_index_document_chunks_records_collection_setup_failure_without_updating_point_id(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

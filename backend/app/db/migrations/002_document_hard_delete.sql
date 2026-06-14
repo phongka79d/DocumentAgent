@@ -63,6 +63,8 @@ declare
   v_deleted_chat_messages integer := 0;
   v_deleted_chat_sessions integer := 0;
 begin
+  perform pg_advisory_xact_lock(hashtextextended(p_document_id::text, 0));
+
   select d.file_name
     into v_file_name
     from public.documents as d
@@ -223,3 +225,102 @@ revoke execute on function public.delete_owned_document_cascade(uuid, text) from
 revoke execute on function public.delete_owned_document_cascade(uuid, text) from anon;
 revoke execute on function public.delete_owned_document_cascade(uuid, text) from authenticated;
 grant execute on function public.delete_owned_document_cascade(uuid, text) to service_role;
+
+create or replace function public.create_owned_agent_run(
+  p_session_id uuid,
+  p_user_id text,
+  p_question text,
+  p_selected_document_ids text[]
+)
+returns table (
+  id uuid,
+  session_id uuid,
+  user_id text,
+  question text,
+  selected_document_ids jsonb,
+  status text,
+  final_answer text,
+  confidence double precision,
+  created_at timestamptz,
+  updated_at timestamptz,
+  error_message text
+)
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare
+  v_document_id text;
+  v_owned_document_count integer := 0;
+begin
+  if p_selected_document_ids is null or cardinality(p_selected_document_ids) = 0 then
+    raise exception 'selected document not found.';
+  end if;
+
+  for v_document_id in
+    select distinct selected_document_id
+      from unnest(p_selected_document_ids) as selected_document_id
+     order by selected_document_id
+  loop
+    perform pg_advisory_xact_lock(hashtextextended(v_document_id, 0));
+  end loop;
+
+  select count(*)::integer
+    into v_owned_document_count
+    from public.documents as d
+   where d.user_id = p_user_id
+     and d.id::text = any(p_selected_document_ids);
+
+  if v_owned_document_count <> cardinality(p_selected_document_ids) then
+    raise exception 'selected document not found.';
+  end if;
+
+  if p_session_id is not null and not exists (
+    select 1
+      from public.chat_sessions as cs
+     where cs.id = p_session_id
+       and cs.user_id = p_user_id
+  ) then
+    raise exception 'chat session not found.';
+  end if;
+
+  return query
+  insert into public.agent_runs (
+    session_id,
+    user_id,
+    question,
+    selected_document_ids,
+    status,
+    final_answer,
+    confidence,
+    error_message
+  )
+  values (
+    p_session_id,
+    p_user_id,
+    p_question,
+    to_jsonb(p_selected_document_ids),
+    'running',
+    null,
+    null,
+    null
+  )
+  returning
+    agent_runs.id,
+    agent_runs.session_id,
+    agent_runs.user_id,
+    agent_runs.question,
+    agent_runs.selected_document_ids,
+    agent_runs.status,
+    agent_runs.final_answer,
+    agent_runs.confidence,
+    agent_runs.created_at,
+    agent_runs.updated_at,
+    agent_runs.error_message;
+end;
+$$;
+
+revoke execute on function public.create_owned_agent_run(uuid, text, text, text[]) from public;
+revoke execute on function public.create_owned_agent_run(uuid, text, text, text[]) from anon;
+revoke execute on function public.create_owned_agent_run(uuid, text, text, text[]) from authenticated;
+grant execute on function public.create_owned_agent_run(uuid, text, text, text[]) to service_role;

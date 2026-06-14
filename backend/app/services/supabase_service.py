@@ -420,19 +420,20 @@ def create_agent_run(
     selected_document_ids: list[str],
 ) -> dict:
     client = get_supabase_client()
-    row = {
-        "session_id": session_id,
-        "user_id": _get_single_user_id(),
-        "question": question,
-        "selected_document_ids": selected_document_ids,
-        "status": "running",
-        "final_answer": None,
-        "confidence": None,
-        "error_message": None,
-    }
 
     try:
-        response = client.table("agent_runs").insert(row).execute()
+        response = (
+            client.rpc(
+                "create_owned_agent_run",
+                {
+                    "p_session_id": session_id,
+                    "p_user_id": _get_single_user_id(),
+                    "p_question": question,
+                    "p_selected_document_ids": selected_document_ids,
+                },
+            )
+            .execute()
+        )
     except Exception as exc:
         _raise_supabase_query_error("agent run insert", exc)
 

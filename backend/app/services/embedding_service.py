@@ -3,6 +3,7 @@ from uuid import UUID
 from app.schemas.embeddings import ChunkIndexingError, DocumentIndexingResult
 from app.services.qdrant_service import (
     build_chunk_payload,
+    delete_document_vectors,
     ensure_collection,
     upsert_chunk_vector,
 )
@@ -87,7 +88,14 @@ def _index_one_chunk(
         vector=vector,
         payload=payload,
     )
-    update_chunk_qdrant_point_id(str(document_id), chunk_id_text, point_id)
+    try:
+        update_chunk_qdrant_point_id(str(document_id), chunk_id_text, point_id)
+    except Exception as exc:
+        try:
+            delete_document_vectors(str(document_id))
+        except Exception:
+            pass
+        raise exc
 
     return point_id, collection_ready
 

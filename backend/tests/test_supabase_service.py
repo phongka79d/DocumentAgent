@@ -568,10 +568,9 @@ def test_create_agent_run_inserts_running_single_user_row(
         "selected_document_ids": ["document-id"],
         "status": "running",
     }
-    query = Mock()
-    query.insert.return_value = query
-    query.execute.return_value = SimpleNamespace(data=[row])
-    client = SimpleNamespace(table=Mock(return_value=query))
+    rpc_query = Mock()
+    rpc_query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(rpc=Mock(return_value=rpc_query))
     monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
     monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
 
@@ -582,39 +581,43 @@ def test_create_agent_run_inserts_running_single_user_row(
     )
 
     assert result == row
-    client.table.assert_called_once_with("agent_runs")
-    query.insert.assert_called_once_with(
+    client.rpc.assert_called_once_with(
+        "create_owned_agent_run",
         {
-            "session_id": "session-id",
-            "user_id": "single_user",
-            "question": "When can I start?",
-            "selected_document_ids": ["document-id"],
-            "status": "running",
-            "final_answer": None,
-            "confidence": None,
-            "error_message": None,
-        }
+            "p_session_id": "session-id",
+            "p_user_id": "single_user",
+            "p_question": "When can I start?",
+            "p_selected_document_ids": ["document-id"],
+        },
     )
-    query.execute.assert_called_once_with()
+    rpc_query.execute.assert_called_once_with()
 
 
 def test_create_agent_run_allows_omitted_session_id(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    query = Mock()
-    query.insert.return_value = query
-    query.execute.return_value = SimpleNamespace(data=[{"id": "run-id"}])
-    client = SimpleNamespace(table=Mock(return_value=query))
+    rpc_query = Mock()
+    rpc_query.execute.return_value = SimpleNamespace(data=[{"id": "run-id"}])
+    client = SimpleNamespace(rpc=Mock(return_value=rpc_query))
     monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
     monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
 
     supabase_service.create_agent_run(
         session_id=None,
         question="Question?",
-        selected_document_ids=[],
+        selected_document_ids=["document-id"],
     )
 
-    assert query.insert.call_args.args[0]["session_id"] is None
+    client.rpc.assert_called_once_with(
+        "create_owned_agent_run",
+        {
+            "p_session_id": None,
+            "p_user_id": "single_user",
+            "p_question": "Question?",
+            "p_selected_document_ids": ["document-id"],
+        },
+    )
+    rpc_query.execute.assert_called_once_with()
 
 
 def test_update_agent_run_success_filters_single_user_and_run_id(
