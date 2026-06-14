@@ -31,6 +31,13 @@ Accept a candidate only when it directly answers the question or provides
 necessary evidence such as a date, period, condition, definition, ambiguity
 resolution, or clear support for simple reasoning.
 
+For interpretive questions about what a person means, says, thinks, feels, or
+why they act, accept source text that contains the person's relevant statement,
+surrounding context, or clearly stated feelings. Do not reject such evidence
+only because it does not explicitly explain the interpretation in analytical
+language; Agent 3 may perform simple interpretation when the quote and context
+clearly support it.
+
 Reject a candidate when it is only loosely related, duplicated, contradicted by
 stronger evidence, unclear, missing needed date or condition context, from the
 wrong document, or not useful as answerable evidence.
