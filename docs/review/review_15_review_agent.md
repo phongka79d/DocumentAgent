@@ -3299,3 +3299,737 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06A)
+- Task title: Run mandatory automated validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_15.md` > `## 11. Required Tests`; `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`; `README.md` > `## Testing and Validation`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: Latest matching report entry is the appended `(06A)` automated validation report.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`; reviewer update adds `docs/tasks/task_15.md`; this appended review updates `docs/review/review_15_review_agent.md`
+- untracked files: none observed before review append
+
+## Files Reviewed
+- `docs/reports/report_15_execute_agent.md`: in scope - `(06A)` execution evidence appended only; no `(06B)`, `(06C)`, or `(06D)` work claimed.
+- `docs/tasks/task_15.md`: in scope - selected task requirements and progress tracker reviewed; only `(06A)` checkboxes updated after acceptance.
+- `frontend/package.json`: in scope - scripts reviewed; no `test` script exists.
+- `docs/plans/Plan_15.md`: in scope - required tests and acceptance criteria reviewed.
+- `README.md`: in scope - testing and validation guidance reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(06A)` is reporting-only execution; no runtime files were modified.
+
+## Dependency Review
+- Required dependencies: Batch01 through Batch05 complete; configured backend/frontend dependencies.
+- Dependency status: satisfied for automated validation.
+- Missing or invalid dependency: none for `(06A)`.
+
+## Architecture Alignment
+- Passed: Automated validation only; no runtime architecture changes; no browser/manual validation started.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Task is validation/reporting only. Backend tests and frontend build were rerun successfully by reviewer.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No runtime source changes were made for `(06A)`.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_agent_runs_api.py -v` from `backend/`
+- Reported result: passed, 30 tests collected and 30 passed
+- Rerun result: passed, 30 tests passed in 1.69s
+- Status: satisfied
+- Notes: This honestly handles the reported PowerShell `&&` command issue by using an equivalent backend working-directory run.
+
+- Command/check: inspect `frontend/package.json`
+- Reported result: scripts are `dev`, `build`, and `preview`; no `test` script
+- Rerun result: confirmed no `test` script
+- Status: satisfied
+- Notes: Frontend tests correctly not run as not configured.
+
+- Command/check: focused frontend test discovery under `frontend/src`
+- Reported result: no focused test/spec files found
+- Rerun result: `rg --files frontend\src | rg "(test|spec)\.(ts|tsx|js|jsx)$"` returned no matches
+- Status: satisfied
+- Notes: Discovery is not a test run and was reported as such.
+
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed; Vite transformed 116 modules and produced dist assets
+- Rerun result: passed; `tsc --noEmit && vite build` completed, 116 modules transformed
+- Status: satisfied
+- Notes: Frontend production build actually passed.
+
+## Acceptance Review
+- Task acceptance: Targeted backend tests pass; frontend build passes; frontend test status is truthfully reported as passed, failed, or not configured.
+- Status: satisfied
+- Evidence: Reviewer reran backend targeted tests and frontend build successfully; no test script exists in `frontend/package.json`.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before acceptance; updated to checked in both the task entry and progress tracker by reviewer.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked, correctly not updated.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at physical end of `docs/review/review_15_review_agent.md`.
+- Other: `(06B)`, `(06C)`, and `(06D)` remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The literal `cd backend && ...` command failure is acceptable because the report explicitly records the PowerShell parser issue and records an equivalent successful run from `backend/`.
+- Browser/manual validation remains correctly deferred to `(06B)` and `(06C)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(06A)` is accepted and `(06B)`, `(06C)`, and `(06D)` remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch06 - Automated and Manual Validation, Reporting, and Handoff",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/tasks/task_15.md",
+    "docs/review/review_15_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (06B)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06B)
+- Task title: Perform real happy-path Agent Logs browser validation
+- Task status reported by executor: originally blocked; latest `(06B)` validation addendum reports complete
+- Source of Truth: `docs/plans/Plan_15.md` sections 1, 11, 12, and 14
+- Supplemental documents: `docs/reports/report_12_execute_agent.md` for real-run provenance; user evidence summarized in the `(06B)` addendum
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06B)
+- Reviewed task ID: (06B)
+- Correct selection: yes
+- Notes: Reviewed the original blocked `(06B)` report together with the later matching validation addendum.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_15_execute_agent.md`: in scope - original API/browser-blocker report and user-evidence addendum.
+- `docs/tasks/task_15.md`: in scope - `(06B)` requirements and only its two checkboxes updated.
+- `docs/plans/Plan_15.md`: in scope - sections 1, 11, 12, and 14.
+- `docs/reports/report_12_execute_agent.md`: in scope - provenance for the real run.
+- `docs/review/review_15_review_agent.md`: in scope - this review appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(06B)` was validation/reporting only; no runtime source change was claimed.
+
+## Dependency Review
+- Required dependencies: `(06A)`, running backend/frontend, and a known three-step run.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Existing mounted logs API and real persisted run were used; browser evidence covered the existing debug UI; no new runtime behavior was introduced.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Run `34d20637-92fe-4a31-8136-7a1b7c98f415` has documented real chat creation and three chronological persisted steps; browser evidence was explicitly attributed to the user.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: A documented real run ID was reused for validation; no runtime source was modified.
+
+## Validations Reviewed
+- Command/check: Mounted logs API for the real run.
+- Reported result: matching ID, three chronological successful steps, required Agent 1/2/3 fields, and object-valued raw input/output.
+- Rerun result: not rerun; report and provenance evidence reviewed.
+- Status: satisfied.
+- Notes: This is agent/API evidence, not browser evidence.
+
+- Command/check: Direct Agent Logs page screenshots.
+- Reported result: all three specialized panels and raw input/output were visible.
+- Rerun result: user-provided evidence reviewed through the addendum summary.
+- Status: satisfied.
+- Notes: Correctly attributed to the user; the agent did not claim personal browser use.
+
+- Command/check: Chat `Inspect agent logs` navigation and resulting run URL.
+- Reported result: user confirmed `i verified all complete` after explicit same-ID instructions.
+- Rerun result: not rerun.
+- Status: satisfied.
+- Notes: Combined with the fixed real run ID, this supports the same-ID workflow.
+
+## Acceptance Review
+- Task acceptance: A developer can inspect every persisted step; required specialized panels and raw JSON are visible; chat-to-logs navigation uses the same `agent_run_id`.
+- Status: satisfied.
+- Evidence: Agent/API evidence proves real-run provenance, order, and payload fields; user browser evidence proves direct-page rendering, all three panels/raw JSON, and chat navigation to the matching run.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked in both the task entry and progress tracker after acceptance.
+- Checkbox updated by reviewer: yes.
+- Batch status: remains unchecked.
+- Execution report entry: original blocked report plus appended completion addendum.
+- Review report entry: appended at physical end.
+- Other: `(06C)` and `(06D)` remain unchecked.
+
+## Report Accuracy
+- Accurate.
+- Mismatches: none. The original report remains an honest record of the agent's browser limitation; the addendum separately records later user-provided browser evidence.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Browser interaction was user-performed rather than reviewer-rerun, but provenance is explicit and the supplied evidence covers the required browser-only checks.
+
+### Observations
+- Run provenance is accurately reported as real, not mocked.
+- Scope is limited to `(06B)`; no `(06C)` or `(06D)` claim is present.
+
+## Decision
+- Accept selected task? yes.
+- Repair required? no.
+- Can next task proceed? yes, to `(06C)`.
+- Should batch be marked complete? no.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch06 - Automated and Manual Validation, Reporting, and Handoff",
+  "selected_task_id": "(06B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/tasks/task_15.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/plans/Plan_15.md",
+    "docs/reports/report_12_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Browser interaction was user-performed and explicitly attributed, not rerun by the reviewer."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06C)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06C)
+- Task title: Perform negative, failed-run, malformed-data, and responsive checks
+- Task status reported by executor: partial, with three live-data scenarios explicitly `BLOCKED_BY_USER_ACTION`
+- Source of Truth: `docs/plans/Plan_15.md` sections 11, 13, and 15
+- Supplemental documents: user-provided manual validation evidence stated in the request and execution report
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06C)
+- Reviewed task ID: (06C)
+- Correct selection: yes
+- Notes: The final matching entry is the appended `(06C)` execution report; no `(06D)` report or addendum follows it.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_15_execute_agent.md`: in scope - `(06C)` validation evidence and blocked live-fixture scenarios.
+- `docs/tasks/task_15.md`: in scope - `(06C)` requirements, blocked condition, and the two selected-task checkboxes.
+- `docs/plans/Plan_15.md`: in scope - sections 11, 13, and 15.
+- `backend/tests/test_agent_runs_api.py`: in scope - failed-step, empty-step, 404, controlled-failure, and unexpected-failure coverage.
+- `frontend/src/pages/AgentLogsPage.tsx`: in scope - UUID validation, safe errors, and empty response state.
+- `frontend/src/components/AgentLogViewer.tsx`: in scope - failed-step error, specialized-panel fallback, native step buttons, and raw input/output.
+- `frontend/src/components/RetrievalScoreTable.tsx`: in scope - malformed candidate handling and contained table output.
+- `frontend/src/components/VerificationResultPanel.tsx`: in scope - malformed structured-data handling.
+- `frontend/src/components/JsonViewer.tsx`: in scope - defensive raw-value formatting.
+- `frontend/src/styles.css`: in scope - focus-visible, responsive, wrapping, and internal overflow behavior.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(06C)` is validation/reporting only; no runtime implementation change was claimed or found for this task.
+
+## Dependency Review
+- Required dependencies: Batch01 through Batch05, browser access, and prior Batch06 validation.
+- Dependency status: satisfied; `(06A)` and `(06B)` are accepted, and user browser evidence covers all safely reproducible manual checks.
+- Missing or invalid dependency: safe failed-run, empty-step, and malformed-output live IDs/fixtures were unavailable, which is explicitly permitted by `(06C)`'s blocked condition when accurately reported.
+
+## Architecture Alignment
+- Passed: Existing API/UI behavior was validated without mutating persisted run data or adding fixtures, endpoints, or runtime behavior.
+- Failed: none.
+- Uncertain: live rendering for the three unavailable fixture scenarios remains unobserved and is explicitly blocked, not passed.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Existing backend tests and frontend source implement the relevant states; browser-only successes are attributed to the user, and unavailable live scenarios are not represented as successful.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No runtime source was changed for `(06C)` and no fabricated run IDs or fixture data were introduced.
+
+## Validations Reviewed
+- Command/check: `backend/.venv/Scripts/python.exe -m pytest tests/test_agent_runs_api.py -q` from `backend/`
+- Reported result: 30 passed
+- Rerun result: 30 passed in 1.62s, with one dependency deprecation warning
+- Status: satisfied
+- Notes: Covers failed-step serialization, empty steps, safe 404, controlled backend failures, and secret-safe unexpected failures.
+
+- Command/check: blank ID, malformed UUID, valid not-found UUID, backend connection failure, keyboard selection/focus, 320px/375px/desktop layouts, and long table/JSON containment
+- Reported result: passed through user-provided browser evidence
+- Rerun result: not rerun by reviewer
+- Status: satisfied
+- Notes: The execution report clearly attributes these seven checks to the user rather than the agent.
+
+- Command/check: failed-step, empty-step, and malformed/unknown structured-output live browser scenarios
+- Reported result: `BLOCKED_BY_USER_ACTION`
+- Rerun result: not available; no safe IDs/fixtures were supplied
+- Status: allowed blocked validation
+- Notes: Automated API/source evidence was completed, and no live success was claimed.
+
+- Command/check: relevant frontend source and CSS inspection
+- Reported result: passed
+- Rerun result: confirmed invalid-ID preflight validation, safe not-found/backend states, empty response UI, failed-step error rendering, structured-panel fallback, always-visible raw input/output, native keyboard-operable buttons, focus-visible styling, responsive breakpoints, and contained JSON/table overflow
+- Status: satisfied
+- Notes: All locally reproducible validation was completed.
+
+## Acceptance Review
+- Task acceptance: Local validation blocks invalid requests; safe backend errors render; failed status/error is visible; empty/malformed data does not crash; raw JSON remains available; no page-level overflow occurs.
+- Status: satisfied under the task's explicit blocked-condition/reporting rules.
+- Evidence: User evidence covers all reproducible browser scenarios; backend tests and source inspection cover failed, empty, and malformed behavior; unavailable live fixtures are accurately retained as blocked rather than passed.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked in both the task entry and progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked.
+- Execution report entry: appended and accurate.
+- Review report entry: appended at physical end.
+- Other: `(06D)` remains unchecked and no `(06D)` work was started.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none. The executor's `partial` label is conservative; the evidence and explicit blocked condition permit acceptance while preserving the three live-validation gaps.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live-browser behavior for failed-step, empty-step, and malformed/unknown output was not directly observed because no safe fixtures were available.
+
+### Observations
+- User and agent evidence are explicitly distinguished.
+- No unavailable scenario is falsely reported as passed.
+- The blocked fixture scenarios do not invalidate acceptance under the selected task's explicit blocked condition.
+- No `(06D)` execution entry or implementation change exists.
+
+## Decision
+- Accept selected task? yes.
+- Repair required? no.
+- Can next task proceed? yes, to `(06D)`.
+- Should batch be marked complete? no.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch06 - Automated and Manual Validation, Reporting, and Handoff",
+  "selected_task_id": "(06C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/tasks/task_15.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/plans/Plan_15.md",
+    "backend/tests/test_agent_runs_api.py",
+    "frontend/src/pages/AgentLogsPage.tsx",
+    "frontend/src/components/AgentLogViewer.tsx",
+    "frontend/src/components/RetrievalScoreTable.tsx",
+    "frontend/src/components/VerificationResultPanel.tsx",
+    "frontend/src/components/JsonViewer.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live failed-step browser check: no safe run ID or fixture supplied",
+    "Live empty-step browser check: no safe run ID or fixture supplied",
+    "Live malformed/unknown-output browser check: no safe run ID or fixture supplied"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Three live fixture scenarios remain explicitly BLOCKED_BY_USER_ACTION and were not reported as passed."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06D)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06D)
+- Task title: Write the execution report and reviewer handoff
+- Task status reported by executor: complete; overall Plan 15 validation remains partial because `(06C)` retains three blocked live-fixture scenarios
+- Source of Truth: `docs/plans/Plan_15.md` sections 14 and 15; `docs/tasks/task_15.md` completion reporting rules
+- Supplemental documents: prior `(06A)`, `(06B)`, `(06C)`, and `(05C)` execution evidence; prior accepted reviews; `docs/reports/report_12_execute_agent.md` for real-run provenance
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06D)
+- Reviewed task ID: (06D)
+- Correct selection: yes
+- Notes: The consolidated `(06D)` entry is the final execution entry at EOF.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_15_execute_agent.md`: in scope - consolidated handoff and prior validation evidence.
+- `docs/tasks/task_15.md`: in scope - `(06D)` contract and exactly its two checkboxes updated after acceptance.
+- `docs/plans/Plan_15.md`: in scope - sections 14 and 15.
+- `docs/review/review_15_review_agent.md`: in scope - prior `(06A)` through `(06C)` reviews and this EOF append.
+- `docs/reports/report_12_execute_agent.md`: in scope - provenance for real run `34d20637-92fe-4a31-8136-7a1b7c98f415`.
+- Plan 15 runtime files listed by `(06D)`: in scope - existence and task-by-task report traceability cross-checked; `(06D)` claims no runtime edits of its own.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The report separately identifies all Plan 15 changed files and the sole file modified during `(06D)`.
+
+## Dependency Review
+- Required dependencies: `(06A)`, `(06B)`, `(06C)`, and the scope audit.
+- Dependency status: satisfied for handoff. `(06A)` and `(06B)` are complete; `(06C)` is accepted as partial with its permitted blocked scenarios; `(05C)` supplies scope/secret evidence.
+- Missing or invalid dependency: none for documentation task `(06D)`.
+
+## Architecture Alignment
+- Passed: Contract alignment is explained as exposing persisted fields through the existing endpoint; no new endpoint, migration, write path, provider call, admin surface, mutation, polling, auth, or observability tooling is claimed.
+- Failed: none.
+- Uncertain: Direct live-browser behavior remains unobserved for the three unavailable fixtures and is accurately retained as blocked.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The report discloses a real, non-mocked run with prior live provenance, attributes browser checks to the user, attributes API/source checks to the agent, and does not convert unavailable fixtures into success claims.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The fixed UUID is a documented persisted validation run, not runtime logic; no production source changed during `(06D)`.
+
+## Validations Reviewed
+- Command/check: `pytest tests/test_agent_runs_api.py -v` from `backend/`
+- Reported result: 30 passed in 5.24s after an accurately reported PowerShell `&&` invocation failure.
+- Rerun result: not rerun for documentation-only `(06D)`; prior `(06A)` and `(06C)` reports/reviews supply passing evidence.
+- Status: satisfied.
+- Notes: The report also records the `(06C)` 30-test rerun and its coverage relevance.
+
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed; 116 modules transformed and output artifacts named.
+- Rerun result: not rerun for documentation-only `(06D)`; prior accepted `(06A)` evidence reviewed.
+- Status: satisfied.
+- Notes: Frontend tests are correctly reported as not configured and not run.
+
+- Command/check: real-run API and browser validation
+- Reported result: API inspection passed for the real three-step run; happy-path and reproducible resilience browser checks passed through user-provided evidence.
+- Rerun result: not rerun.
+- Status: satisfied with provenance disclosure.
+- Notes: Agent API/source evidence and user browser evidence are explicitly distinguished.
+
+- Command/check: live failed-step, empty-step, and malformed/unknown-output fixtures
+- Reported result: `BLOCKED_BY_USER_ACTION`, not passed.
+- Rerun result: unavailable; no safe fixture IDs were supplied or found.
+- Status: allowed blocked validation retained from `(06C)`.
+- Notes: These remain residual gaps in the consolidated task status, acceptance traceability, known issues, reviewer notes, and handoff.
+
+- Command/check: scope, secret, endpoint, raw-fallback, and score-field evidence
+- Reported result: passed through `(05C)` exact searches, source inspection, API evidence, and user browser evidence where applicable.
+- Rerun result: not rerun; exact prior commands/results and relevant source evidence reviewed.
+- Status: satisfied.
+- Notes: Exact score names are listed; raw input/output remains independent of specialized parsing; no secret or provider exposure is claimed.
+
+## Acceptance Review
+- Task acceptance: Every claimed acceptance criterion is traceable to a test, browser result, API/source inspection, or explicit blocked status; no blocked scenario is reported as passed.
+- Status: satisfied.
+- Evidence: The handoff includes files, commands/results, known issues, exclusions, real-run provenance, contract-alignment rationale, evidence ownership, scope/secret/raw-fallback/score-field evidence, task status, residual blocked fixtures, and reviewer traceability.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review; checked in both the task entry and progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked; not updated by this review.
+- Execution report entry: appended at EOF and complete.
+- Review report entry: appended at physical EOF.
+- Other: No sibling task, global checklist, or batch checkbox was modified.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The report correctly distinguishes `(06D)` completion from overall partial validation caused by `(06C)`'s three blocked live scenarios.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live browser evidence for failed-step, empty-step, and malformed/unknown-output fixtures remains unavailable and must not be treated as passed in later summaries.
+
+### Observations
+- The report's real-run UUID has traceable prior live provenance in `report_12_execute_agent.md`.
+- User browser evidence is not misrepresented as agent-operated browser evidence.
+- The documentation-only task changed only its execution report before review.
+
+## Decision
+- Accept selected task? yes.
+- Repair required? no.
+- Can next task proceed? yes, to orchestrator/A3 batch handling.
+- Should batch be marked complete? no; the orchestrator handles Batch06 completion after A3.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch06 - Automated and Manual Validation, Reporting, and Handoff",
+  "selected_task_id": "(06D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/tasks/task_15.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/plans/Plan_15.md",
+    "docs/reports/report_12_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live failed-step browser check: no safe run ID or fixture supplied",
+    "Live empty-step browser check: no safe run ID or fixture supplied",
+    "Live malformed/unknown-output browser check: no safe run ID or fixture supplied"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Three live fixture scenarios remain explicitly BLOCKED_BY_USER_ACTION and are not passed."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

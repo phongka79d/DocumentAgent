@@ -36,6 +36,8 @@ Plan 15 Batch04 completed the Agent Logs page lookup and chat integration. `Agen
 
 Plan 15 Batch05 completed Agent Logs routing, navigation, styling, and scope hardening. The primary navigation now includes an `Agent Logs` link, the debug workspace has responsive and overflow-contained styling for long JSON, tables, statuses, errors, and selected steps, and the recorded scope audit confirmed the page remains a one-run, read-only debug view without backend-only secrets, direct provider calls, admin browsing, mutations, polling, graph visualization, or observability-dashboard expansion.
 
+Plan 15 Batch06 completed automated validation, real-run happy-path browser validation, negative/responsive checks, and the reviewer handoff. The targeted backend agent-run tests passed 30/30, the frontend production build passed, and frontend tests remain not configured. Validation used real run `34d20637-92fe-4a31-8136-7a1b7c98f415`; user-provided browser evidence covered the Agent 1/2/3 panels, raw JSON, chat-to-logs navigation, invalid and not-found IDs, safe connection errors, keyboard operation, responsive layouts, and overflow containment. Live failed-step, empty-step, and malformed/unknown-output fixture checks remain explicitly `BLOCKED_BY_USER_ACTION` and are not recorded as passed.
+
 ## What This Folder Does
 
 This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
@@ -569,6 +571,8 @@ npm run preview
 There is no frontend test script in `frontend/package.json`.
 
 Plan 14 frontend chat/evidence validation completed with a passing production build and manual browser checks for the primary chat/evidence path, negative validation, safe connection errors, focus visibility, and responsive overflow. The direct evidence URL and evidence-load failure scenario were not manually exercised.
+
+Plan 15 Agent Logs validation completed with 30/30 targeted backend tests and a passing frontend production build; no frontend test script is configured. Real-run and user-provided browser evidence covered the happy path and reproducible negative/responsive checks. Live failed-step, empty-step, and malformed/unknown-output fixture scenarios remain `BLOCKED_BY_USER_ACTION`.
 
 ## Development Notes for AI Agents
 

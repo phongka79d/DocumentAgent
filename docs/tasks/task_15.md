@@ -718,7 +718,7 @@ Plan 15 explicitly requires build/test commands, real or mocked run disclosure, 
 
 ### Tasks
 
-- [ ] (06A): Run mandatory automated validation
+- [x] (06A): Run mandatory automated validation
   - Source of Truth: `docs/plans/Plan_15.md` > `## 11. Required Tests`; `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`; `README.md` > `## Testing and Validation`
   - Source Requirements:
     - Run the frontend production build.
@@ -734,7 +734,7 @@ Plan 15 explicitly requires build/test commands, real or mocked run disclosure, 
   - Blocked Condition: None unless dependencies cannot be installed or accessed without user-controlled setup; missing frontend test infrastructure is not a blocker.
   - Files: `docs/reports/report_15_execute_agent.md` during execution reporting
 
-- [ ] (06B): Perform real happy-path Agent Logs browser validation
+- [x] (06B): Perform real happy-path Agent Logs browser validation
   - Source of Truth: `docs/plans/Plan_15.md` > `## 1. Goal`; `docs/plans/Plan_15.md` > `## 11. Required Tests`; `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`; `docs/plans/Plan_15.md` > `## 14. Agent Report Requirement`
   - Source Requirements:
     - Open a known run ID and inspect all persisted steps.
@@ -750,7 +750,7 @@ Plan 15 explicitly requires build/test commands, real or mocked run disclosure, 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if no suitable run exists, provider/backend credentials or ready document data are unavailable, or the required browser surface is unavailable.
   - Files: `docs/reports/report_15_execute_agent.md` during execution reporting
 
-- [ ] (06C): Perform negative, failed-run, malformed-data, and responsive checks
+- [x] (06C): Perform negative, failed-run, malformed-data, and responsive checks
   - Source of Truth: `docs/plans/Plan_15.md` > `## 11. Required Tests`; `docs/plans/Plan_15.md` > `## 13. Failure Handling`; `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Invalid ID shows validation or not-found feedback.
@@ -768,7 +768,7 @@ Plan 15 explicitly requires build/test commands, real or mocked run disclosure, 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only for failed/empty/malformed live scenarios requiring unavailable user-controlled data or browser access; all locally reproducible validation must still run.
   - Files: `docs/reports/report_15_execute_agent.md` during execution reporting
 
-- [ ] (06D): Write the execution report and reviewer handoff
+- [x] (06D): Write the execution report and reviewer handoff
   - Source of Truth: `docs/plans/Plan_15.md` > `## 14. Agent Report Requirement`; `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Report files created/modified, commands, tests, known issues, and intentional exclusions.
@@ -932,7 +932,7 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] Batch03 - Agent Step List and Detail Viewer
 - [x] Batch04 - Logs Page Lookup and Chat Integration
 - [x] Batch05 - Routing, Navigation, Styling, and Scope Hardening
-- [ ] Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- [x] Batch06 - Automated and Manual Validation, Reporting, and Handoff
 
 ### Task IDs
 
@@ -969,10 +969,10 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch06
 
-- [ ] (06A): Run mandatory automated validation
-- [ ] (06B): Perform real happy-path Agent Logs browser validation
-- [ ] (06C): Perform negative, failed-run, malformed-data, and responsive checks
-- [ ] (06D): Write the execution report and reviewer handoff
+- [x] (06A): Run mandatory automated validation
+- [x] (06B): Perform real happy-path Agent Logs browser validation
+- [x] (06C): Perform negative, failed-run, malformed-data, and responsive checks
+- [x] (06D): Write the execution report and reviewer handoff
 
 ## Completion Reporting Rules for Future Execution Agents
 

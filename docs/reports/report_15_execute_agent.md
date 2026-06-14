@@ -1582,3 +1582,508 @@ complete
 - next task ID: (06A)
 - can proceed: yes
 - handoff notes: Scope audit found no accidental expansion and made no runtime edits. Batch06 can run automated validation next, including targeted backend tests and frontend build per the task file.
+---
+
+# Task Execution Report - (06A)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch06 - Automated and Manual Validation, Reporting, and Handoff
+
+## Task
+(06A) - Run mandatory automated validation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_15.md` > `## 11. Required Tests`
+- `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`
+- `README.md` > `## Testing and Validation`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06A)
+- Task title: Run mandatory automated validation
+
+## Completed Work
+- Completed the automated validation task.
+- Ran targeted backend agent-run API validation.
+- Inspected `frontend/package.json` for available scripts.
+- Ran the frontend production build.
+- Checked for existing focused frontend test files under `frontend/src`.
+- Did not run `npm test` because no real `test` script exists.
+- Did not run focused frontend tests because no existing frontend test infrastructure or focused test files were present.
+
+## Files Created or Modified
+- `docs/reports/report_15_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend && pytest tests/test_agent_runs_api.py -v`: Failed in this PowerShell version.
+- Evidence or reason: PowerShell parser error: `The token '&&' is not a valid statement separator in this version.`
+- `pytest tests/test_agent_runs_api.py -v` from `backend/`: Passed.
+- Evidence or reason: 30 tests collected; 30 passed in 5.24s. The passing tests included Plan 15 logs contract coverage such as `test_agent_run_logs_response_matches_plan_15_field_names_and_order`, safe error mapping, ordered JSON-safe log steps, missing-run 404 mapping, controlled failure mapping, and unexpected lookup failure handling.
+- Inspect `frontend/package.json`: Passed.
+- Evidence or reason: Scripts present are `dev`, `build`, and `preview`; no `test` script exists. Dependencies remain React, React DOM, React Router DOM, Axios, TypeScript, Vite, and the React Vite plugin/types.
+- Existing focused frontend test discovery under `frontend/src`: Not run as tests; infrastructure check completed.
+- Evidence or reason: `rg --files src | rg "(test|spec)\.(ts|tsx|js|jsx)$"` returned no matching files, so no focused frontend tests were available under existing infrastructure.
+- `cd frontend && npm run build`: Passed using PowerShell-compatible execution from `frontend/` as `npm run build`.
+- Evidence or reason: `tsc --noEmit && vite build` completed successfully; Vite transformed 116 modules and built `dist/index.html`, `dist/assets/index-QceNKQ79.css`, and `dist/assets/index-CkaspeSC.js`.
+- `cd frontend && npm test`: Not run.
+- Evidence or reason: No real `test` script exists in `frontend/package.json`; missing frontend test infrastructure is not a blocker for this task.
+
+## Acceptance Check
+- Task acceptance condition: Targeted backend tests pass; frontend build passes; frontend test status is truthfully reported as passed, failed, or not configured.
+- Status: satisfied.
+- Evidence: Backend targeted validation passed with 30/30 tests. Frontend production build passed. Frontend tests were accurately reported as not configured because `frontend/package.json` has no `test` script and no focused test files were found under `frontend/src`.
+
+## Artifacts Produced
+- Appended automated validation evidence in `docs/reports/report_15_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to update checkboxes or commit.
+
+## Key Implementation Decisions
+- Used PowerShell-compatible command execution after the literal `&&` command failed in this shell, while preserving and reporting the exact failure.
+- Treated missing frontend test infrastructure as not configured, not blocked, per task instructions.
+- Did not start (06B), (06C), or (06D); no browser/manual validation or reviewer handoff consolidation was performed.
+
+## Risks or Open Issues
+- Browser/manual validation remains for (06B) and (06C) and was not started during this task.
+- A known real or safely mocked run ID is still needed for later happy-path/manual validation tasks, outside this (06A) scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies Batch01 through Batch05 are marked complete in the task file. Scope stayed within `(06A)`, and no task checkboxes, batch status, commits, runtime source files, or manual validation tasks were changed.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes
+- handoff notes: Automated validation is complete. Next task should perform real happy-path Agent Logs browser validation only when a suitable run ID and required runtime setup are available; if unavailable, report the required user action accurately.
+
+---
+
+# Task Execution Report - (06B)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch06 - Automated and Manual Validation, Reporting, and Handoff
+
+## Task
+(06B) - Perform real happy-path Agent Logs browser validation
+
+## Status
+blocked
+
+## Source of Truth Used
+- `docs/plans/Plan_15.md` > `## 1. Goal`
+- `docs/plans/Plan_15.md` > `## 11. Required Tests`
+- `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`
+- `docs/plans/Plan_15.md` > `## 14. Agent Report Requirement`
+
+## Supplemental Documents Used
+- `README.md` for local backend/frontend commands and mounted endpoint locations.
+- `docs/reports/report_12_execute_agent.md` for provenance of the existing real successful run.
+
+## Selected Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06B)
+- Task title: Perform real happy-path Agent Logs browser validation
+
+## Completed Work
+- Status: `BLOCKED_BY_USER_ACTION` because the required in-app `iab` browser surface was unavailable after the mandated browser-client bootstrap, troubleshooting guidance check, and a final retry.
+- Confirmed the frontend was already running at `http://127.0.0.1:5173` under the repository Vite command.
+- Started the backend with the repository virtual environment and Uvicorn in a hidden background window at `http://127.0.0.1:8000`.
+- Confirmed the mounted backend health endpoint returned `status=ok`.
+- Reused existing real successful run `34d20637-92fe-4a31-8136-7a1b7c98f415`, whose original live chat/API creation and three-step persistence are documented in `docs/reports/report_12_execute_agent.md`.
+- Queried the mounted live logs API for that run and safely inspected field names, types, counts, statuses, timestamps, and run-ID equality without recording document text, answers, raw payload contents, credentials, or secrets.
+- Confirmed the API returned three chronological successful steps: `agent_1_retrieval`, `agent_2_verification`, and `agent_3_answer_self_check`.
+- Confirmed Agent 1 had one candidate and exposed all six required score fields: `semantic_similarity`, `graph_relevance`, `keyword_overlap`, `metadata_match`, `recency_or_position_score`, and `final_score`.
+- Confirmed Agent 2 exposed separate verified/rejected collections, `missing_information`, and `confidence`; this run had one verified item, zero rejected items, `missing_information=false`, and confidence `1.0`.
+- Confirmed Agent 3 exposed a non-empty final answer, `self_check_result`, and confidence `1.0`; self-check fields were `is_ready`, `has_citation`, `has_unsupported_claims`, and `uses_only_verified_chunks`.
+- Confirmed every step exposed object-valued raw input/output, success status, timestamp, and nullable `error_message`.
+- Inspected the frontend source only as a non-browser fallback and confirmed the chat link is derived from `latestResponse.agent_run_id` and routes to the encoded `/agent-logs/{agent_run_id}` path. This source inspection does not count as browser validation.
+- Did not use standalone Playwright, another browser server, or fabricated browser evidence.
+
+## Files Created or Modified
+- `docs/reports/report_15_execute_agent.md`
+
+## Tests or Validations Run
+- Local listener/process inspection: Passed.
+- Evidence or reason: Vite was listening on `127.0.0.1:5173`; the backend was subsequently listening on `127.0.0.1:8000`.
+- Hidden backend start using `backend/.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000`: Passed.
+- Evidence or reason: Uvicorn completed application startup and mounted the backend on port 8000.
+- `GET http://127.0.0.1:8000/api/health`: Passed.
+- Evidence or reason: returned `status=ok`.
+- `GET http://127.0.0.1:8000/api/agent-runs/34d20637-92fe-4a31-8136-7a1b7c98f415/logs`: Passed.
+- Evidence or reason: returned HTTP-success data with the matching run ID and three chronological successful persisted steps containing the required Plan 15 fields. Payload content was not copied into this report.
+- Agent 1 API field comparison: Passed for API-side evidence.
+- Evidence or reason: one candidate exposed all six required score-field names.
+- Agent 2 API field comparison: Passed for API-side evidence.
+- Evidence or reason: verified/rejected arrays, missing-information flag, and confidence were present.
+- Agent 3 API field comparison: Passed for API-side evidence.
+- Evidence or reason: final answer, `self_check_result`, four self-check fields, and confidence were present.
+- Raw input/output API inspection: Passed for API-side evidence.
+- Evidence or reason: all three steps returned object-valued input and output.
+- Required browser-client setup and `iab` acquisition: Blocked.
+- Evidence or reason: both the initial acquisition and final retry returned `Browser is not available: iab`; the prescribed API troubleshooting guidance provided no additional recovery path for an unavailable named browser.
+- Direct URL browser loading: Blocked.
+- Evidence or reason: the required in-app browser surface was unavailable.
+- Input lookup browser validation: Blocked.
+- Evidence or reason: the required in-app browser surface was unavailable.
+- Visible Agent 1/2/3 panels and raw JSON comparison with API: Blocked.
+- Evidence or reason: API-side fields were verified, but no browser surface existed to inspect visible rendering.
+- Chat `Inspect agent logs` link navigation and same-run-ID browser comparison: Blocked.
+- Evidence or reason: source routing was inspected, but the required browser interaction could not be performed.
+- Screenshots: Not run.
+- Evidence or reason: no browser tab was available; no screenshot evidence was fabricated.
+
+## Acceptance Check
+- Task acceptance condition: A developer can inspect every persisted step; all required specialized panels and raw JSON are visible; chat-to-logs navigation uses the same `agent_run_id`.
+- Status: blocked.
+- Evidence: The real run and complete API payload contract were available through the mounted backend, but the required browser surface was unavailable, so visible panels, direct route loading, input lookup, raw JSON rendering, and chat-link navigation could not be validated.
+
+## Artifacts Produced
+- Appended this `(06B)` execution report with server provenance, real-run provenance, safe API evidence, and the exact browser blocker.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to update task checkboxes or commit; browser acceptance was also blocked.
+
+## Key Implementation Decisions
+- Reused a documented real persisted run rather than fabricating an ID or creating unnecessary production data.
+- Kept live API inspection to safe metadata, field names, types, counts, statuses, and booleans; did not expose raw document content, final answer text, environment values, or secrets.
+- Did not substitute standalone Playwright or another browser-control mechanism for the mandatory in-app `iab` browser.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: the Codex in-app `iab` browser surface must be made available before `(06B)` browser acceptance can be completed.
+- API availability and data quality are not blockers: the mounted backend is healthy and the real run still has all three required persisted steps.
+- Browser-visible parity with the API remains unverified, including direct route load, input lookup, specialized panels, raw input/output, and chat-link same-ID navigation.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No source-of-truth conflict identified.
+- Dependency `(06A)` is marked complete.
+- Execution stayed within `(06B)`; `(06C)` and `(06D)` were not started.
+- No runtime code, task checkbox, batch status, persisted run data, or commit was changed.
+
+## Notes for Next Task
+- next task ID: (06B) rerun after browser availability; do not advance to `(06C)` as part of this execution.
+- can proceed: no
+- handoff notes: Make the in-app `iab` browser available, then rerun `(06B)` against real run `34d20637-92fe-4a31-8136-7a1b7c98f415`. Validate `/agent-logs/{id}` direct loading, base-page input lookup, all three visible specialized panels and raw JSON, and the chat `Inspect agent logs` link resolving to the identical run ID. The backend and real persisted data were available during this attempt.
+
+---
+
+# Task Execution Validation Addendum - (06B)
+
+## Status
+complete
+
+## Validation Evidence
+- Run type: real.
+- Safe run ID: `34d20637-92fe-4a31-8136-7a1b7c98f415`.
+- Agent-run API evidence: The mounted logs API returned the matching run ID and three chronological successful persisted steps. It confirmed Agent 1 score fields, Agent 2 verification fields, Agent 3 answer/self-check fields, and object-valued raw input/output for every step.
+- User-provided browser evidence: Screenshots of the direct Agent Logs page showed all three chronological successful steps. They showed the Agent 1 specialized score table, Agent 2 specialized verification panel, Agent 3 final answer/self-check panel, and raw input/output for each step.
+- User-provided navigation evidence: After being instructed to validate the Chat `Inspect agent logs` link and compare the resulting Agent Logs URL, the user confirmed, `i verified all complete`. This establishes that chat-to-logs navigation used the same real run ID.
+- The agent did not personally perform the browser interaction, and this addendum does not claim that the in-app browser became available.
+
+## Acceptance Check
+- Task acceptance condition: A developer can inspect every persisted step; all required specialized panels and raw JSON are visible; chat-to-logs navigation uses the same `agent_run_id`.
+- Status: satisfied by the combined agent-run API evidence and user-provided browser evidence.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to modify task checkboxes.
+
+## Scope
+- Only `(06B)` was completed by this addendum. No runtime code was modified, no commit was created, and no other task was started.
+
+---
+
+# Task Execution Report - (06C)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch06 - Automated and Manual Validation, Reporting, and Handoff
+
+## Task
+(06C) - Perform negative, failed-run, malformed-data, and responsive checks
+
+## Status
+partial
+
+## Source of Truth Used
+- `docs/plans/Plan_15.md` > `## 11. Required Tests`
+- `docs/plans/Plan_15.md` > `## 13. Failure Handling`
+- `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06C)
+- Task title: Perform negative, failed-run, malformed-data, and responsive checks
+
+## Completed Work
+- Partial. Completed every locally reproducible automated, API, and source check without mutating persisted run data.
+- Recorded the user's browser confirmation, `All i confirm work!`, only for the seven scenarios in the supplied manual checklist.
+- Verified blank and malformed UUID validation, a valid not-found UUID, safe backend connection failure handling, keyboard step selection/focus, 320px/375px/desktop layouts, and contained long JSON/table behavior through user-provided browser evidence.
+- Confirmed focused backend tests safely cover a failed step with `error_message`, an empty logs response, safe 404 mapping, and safe backend/dependency failures.
+- Confirmed source handling for empty steps, failed-step error display, unknown/malformed structured data fallback, always-visible raw input/output, keyboard focus styling, and contained responsive overflow.
+- Did not create, edit, or corrupt production run data to manufacture failed, empty, unknown, or malformed live runs.
+
+## Files Created or Modified
+- `docs/reports/report_15_execute_agent.md`
+
+## Tests or Validations Run
+- `pytest tests/test_agent_runs_api.py -q` from `backend/`: Passed.
+- Evidence or reason: 30 tests passed in 1.84s. Focused coverage includes failed-step serialization with `error_message`, an empty `steps` response, safe missing-run 404 mapping, safe controlled/unexpected 500 mapping, and secret-safe dependency errors.
+- Agent source inspection of `AgentLogsPage.tsx`: Passed.
+- Evidence or reason: blank and malformed UUIDs are rejected before `getAgentRunLogs`; valid responses with zero steps enter the `empty-response` state and render `No persisted steps`; 404 and connection/backend failures render safe alert text.
+- Agent source inspection of `AgentLogViewer.tsx` and specialized panels: Passed.
+- Evidence or reason: failed steps visibly render status and nullable `error_message`; unknown steps remain selectable; malformed recognized output displays a safe structured-data message; raw input and raw output remain rendered for every selected step.
+- Agent source/CSS inspection for accessibility and overflow: Passed.
+- Evidence or reason: step controls are native buttons with selected state, visible `:focus-visible` styling, responsive breakpoints, width containment, wrapping, and internal JSON/table scrolling.
+- Required in-app `iab` browser acquisition: Blocked.
+- Evidence or reason: the mandated browser surface returned `Browser is not available: iab` after bootstrap, troubleshooting guidance, and retry. No standalone Playwright substitute was used.
+- User-provided browser check - blank ID local validation/no request: Passed.
+- User-provided browser check - malformed UUID local validation/no request: Passed.
+- User-provided browser check - valid not-found UUID clear message: Passed.
+- User-provided browser check - backend stopped safe connection error without stack trace, then restarted: Passed.
+- User-provided browser check - keyboard Tab plus Enter/Space selection with visible focus and selected state: Passed.
+- User-provided browser check - 320px, 375px, and desktop layouts without page-level horizontal overflow: Passed.
+- User-provided browser check - long table/JSON content contained by wrapping or internal scrolling: Passed.
+- Live failed step with `error_message`: Blocked (`BLOCKED_BY_USER_ACTION`).
+- Evidence or reason: no safe existing failed-run ID or user-supplied fixture was available for browser validation; automated API contract and source behavior passed.
+- Live run with empty steps: Blocked (`BLOCKED_BY_USER_ACTION`).
+- Evidence or reason: no safe existing empty-step run ID or user-supplied fixture was available for browser validation; automated empty-response contract and source behavior passed.
+- Live unknown/malformed structured output with raw fallback: Blocked (`BLOCKED_BY_USER_ACTION`).
+- Evidence or reason: no safe existing malformed/unknown run ID or user-supplied fixture was available for browser validation; defensive source behavior passed.
+
+## Acceptance Check
+- Task acceptance condition: Local validation blocks invalid requests; safe backend errors render; failed status/error is visible; empty/malformed data does not crash; raw JSON remains available; no page-level overflow occurs.
+- Status: partially satisfied.
+- Evidence: User-provided browser evidence passed invalid/not-found/connection, keyboard, responsive, and long-content checks. Automated API and source evidence passed failed-step, empty-step, malformed fallback, and raw JSON contracts. Live-browser validation of failed-step, empty-step, and malformed/unknown persisted data remains `BLOCKED_BY_USER_ACTION` because no safe fixtures were supplied or found.
+
+## Artifacts Produced
+- Appended `(06C)` negative/resilience validation evidence with explicit provenance for agent-run checks, user-provided browser checks, and blocked live-data scenarios.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to update checkboxes, start `(06D)`, or commit.
+
+## Key Implementation Decisions
+- Treated the task as partial rather than complete because three required live-browser data scenarios lacked safe fixtures, despite passing automated API and source evidence.
+- Accepted the user's browser confirmation only for the seven explicitly listed checks and did not extend it to failed-run, empty-step, or malformed-output scenarios.
+- Preserved real persisted run data and made no runtime changes.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: browser validation still needs a safe failed-step run containing `error_message`, a safe run with zero persisted steps, and a safe unknown/malformed structured-output run.
+- The required in-app `iab` browser remained unavailable to the agent; browser results in this report are explicitly user-provided.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No source-of-truth conflict identified.
+- Dependencies Batch01 through Batch05 and `(06A)` are marked complete; `(06B)` has a completion addendum.
+- Execution stayed within `(06C)` only. `(06D)` was not started.
+- No runtime code, task checkbox, batch status, persisted run data, or commit was changed.
+
+## Notes for Next Task
+- next task ID: (06D)
+- can proceed: yes, with the three live-data browser gaps retained as explicit blocked validation rather than passed evidence
+- handoff notes: Consolidate this report without claiming live failed-step, empty-step, or malformed-output browser success. The user confirmed only the seven listed negative, keyboard, responsive, and overflow checks.
+
+---
+
+# Task Execution Report - (06D)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch06 - Automated and Manual Validation, Reporting, and Handoff
+
+## Task
+(06D) - Write the execution report and reviewer handoff
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_15.md` > `## 14. Agent Report Requirement`
+- `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`
+- `docs/tasks/task_15.md` > `## Completion Reporting Rules for Future Execution Agents`
+
+## Supplemental Documents Used
+- `docs/reports/report_15_execute_agent.md` prior task reports and validation addenda
+- `frontend/package.json` for current frontend script confirmation
+
+## Selected Scope
+- Batch: Batch06 - Automated and Manual Validation, Reporting, and Handoff
+- Task ID: (06D)
+- Task title: Write the execution report and reviewer handoff
+
+## Consolidated Task Status
+- Completed task IDs: `(01A)`, `(01B)`, `(01C)`, `(02A)`, `(02B)`, `(02C)`, `(02D)`, `(03A)`, `(03B)`, `(03C)`, `(04A)`, `(04B)`, `(04C)`, `(05A)`, `(05B)`, `(05C)`, `(06A)`, `(06B)`, `(06D)`.
+- Partial task IDs: `(06C)` because live-browser fixtures for failed-step, empty-step, and unknown/malformed structured output were unavailable.
+- Blocked task IDs: none as a final task status. The original blocked `(06B)` attempt was superseded by its completion addendum after API evidence and user-confirmed browser evidence were supplied.
+- Blocked validation scenarios retained: live failed step with `error_message`, live run with zero persisted steps, and live unknown/malformed structured output with raw fallback. These are `BLOCKED_BY_USER_ACTION` and are not reported as passed.
+- Overall Plan 15 validation status: partial because `(06C)` retains the three blocked live-fixture scenarios; this does not block completion of the documentation-only `(06D)` handoff.
+
+## Completed Work
+- Consolidated Plan 15 implementation, automated validation, API inspection, user-provided browser evidence, scope-audit evidence, known issues, residual gaps, and reviewer notes.
+- Reviewed completeness against Plan 15 sections 14 and 15 and the task completion-reporting template.
+- Preserved evidence provenance and distinguished agent-run commands/source inspection from user-confirmed browser results.
+- Made no runtime source change, task-checkbox change, batch-status change, persisted-data change, or commit.
+
+## Files Created or Modified Across Plan 15
+- `backend/app/schemas/agent_runs.py`
+- `backend/app/services/agent_run_service.py`
+- `backend/tests/test_agent_runs_api.py`
+- `frontend/src/types/agentRuns.ts`
+- `frontend/src/api/agentRuns.ts`
+- `frontend/src/components/JsonViewer.tsx`
+- `frontend/src/components/RetrievalScoreTable.tsx`
+- `frontend/src/components/VerificationResultPanel.tsx`
+- `frontend/src/components/SelfCheckPanel.tsx`
+- `frontend/src/components/AgentLogViewer.tsx`
+- `frontend/src/pages/AgentLogsPage.tsx`
+- `frontend/src/pages/ChatPage.tsx`
+- `frontend/src/App.tsx`
+- `frontend/src/styles.css`
+- `docs/reports/report_15_execute_agent.md`
+
+## Files Modified During (06D)
+- `docs/reports/report_15_execute_agent.md`
+
+## Exact Command and Validation Results
+- `cd backend && pytest tests/test_agent_runs_api.py -v`: Failed before execution because this PowerShell version rejected `&&` as a statement separator. This shell-command failure is recorded and was not treated as a test failure.
+- `pytest tests/test_agent_runs_api.py -v` from `backend/`: Passed, 30 collected and 30 passed in 5.24s. Coverage included the aligned Plan 15 response fields/order, failed-step `error_message`, JSON-safe ordered steps, safe 404 mapping, controlled failures, and unexpected lookup failures.
+- `pytest tests/test_agent_runs_api.py -q` from `backend/` during `(06C)`: Passed, 30 passed in 1.84s. This reconfirmed failed-step serialization, empty-step response behavior, and safe error mapping.
+- `npm run build` from `frontend/`: Passed. `tsc --noEmit && vite build` transformed 116 modules and produced `dist/index.html`, `dist/assets/index-QceNKQ79.css`, and `dist/assets/index-CkaspeSC.js`.
+- Frontend tests: Not configured and not run. `frontend/package.json` contains `dev`, `build`, and `preview` scripts only; `rg --files src | rg "(test|spec)\.(ts|tsx|js|jsx)$"` found no focused frontend test files.
+- Mounted logs API request for real run `34d20637-92fe-4a31-8136-7a1b7c98f415`: Passed. It returned the matching run ID and three chronological successful steps with required metadata, recognized Agent 1/2/3 fields, and object-valued raw input/output.
+- Plan 15 scope/secret/endpoint searches recorded under `(05C)`: Passed. No new run-list endpoint, admin browser, mutation API/control, polling/streaming, auth/JWT, graph/observability tooling, frontend provider/Supabase/Qdrant calls, backend-only secret display, unapproved environment access, or hardcoded origin was found.
+- `git diff --check` checks recorded throughout implementation: Passed for the scoped files; only existing line-ending warnings were noted where applicable.
+
+## Browser and User Results
+- Run type: real, not mocked.
+- Safe real run ID provenance: `34d20637-92fe-4a31-8136-7a1b7c98f415`, reused from the existing live chat/API run documented by prior project execution evidence; no run ID was fabricated and no persisted data was mutated.
+- `(06B)` user-provided screenshots: Passed for the direct Agent Logs page, three chronological successful steps, Agent 1 retrieval score table, Agent 2 verification panel, Agent 3 final answer/self-check panel, and raw input/output for each step.
+- `(06B)` user-provided navigation confirmation: Passed. The user confirmed the Chat `Inspect agent logs` workflow and same-run navigation after being instructed to compare the resulting URL/run ID.
+- `(06C)` user-confirmed browser checks passed for blank ID blocking, malformed UUID blocking, valid not-found feedback, safe backend connection failure, keyboard selection/focus, 320px layout, 375px layout, desktop layout, and contained long JSON/table overflow.
+- The agent did not personally control the in-app browser; browser acceptance evidence is explicitly user-provided and is not represented as agent-operated browser evidence.
+- Live failed-step, empty-step, and malformed/unknown-output browser checks: Blocked, not passed, because no safe fixtures were available.
+
+## Contract-Alignment Rationale
+- Plan 15 requires each step to expose `step_name` and nullable `error_message`, but the existing Plan 12 response boundary omitted those already-persisted fields.
+- The backend change therefore aligned the existing `GET /api/agent-runs/{agent_run_id}/logs` response schema and service mapping rather than adding an endpoint, table, migration, write path, or agent behavior.
+- Focused backend tests trace this claim by proving the complete response contract, ordered steps, failed-step error serialization, ownership/error behavior, and 30/30 passing results.
+- The frontend uses the existing `apiClient`, encodes the run ID, preserves backend order, treats input/output as `unknown`, and keeps raw JSON visible independently of specialized parsing.
+
+## Acceptance and Evidence Traceability
+- Complete logs response fields and failed-step error contract: satisfied by schema/service/API source inspection and 30/30 backend tests.
+- Frontend typed API boundary and production compilation: satisfied by source inspection and passing `npm run build`.
+- Known-run lookup, three ordered agent steps, statuses/timestamps, specialized Agent 1/2/3 panels, and raw input/output: satisfied by mounted API inspection plus user-provided `(06B)` screenshots.
+- Retrieval score field accuracy: satisfied by source/scope inspection and user-provided Agent 1 panel evidence for the persisted score fields `semantic_similarity`, `graph_relevance`, `keyword_overlap`, `metadata_match`, `recency_or_position_score`, and `final_score`.
+- Chat-to-logs same-run navigation: satisfied by user confirmation tied to the real run ID workflow.
+- Blank/malformed IDs, not-found, safe connection error, keyboard operation, responsive widths, and overflow containment: satisfied by user-provided `(06C)` browser confirmation and supporting source/CSS inspection.
+- Failed-step visible error behavior: automated API contract and source behavior satisfied; live-browser fixture remains blocked.
+- Empty-step behavior: automated API contract and page source behavior satisfied; live-browser fixture remains blocked.
+- Unknown/malformed structured output with raw fallback: source inspection satisfied; live-browser fixture remains blocked.
+- Secret safety, debug-only scope, read-only one-run lookup, and architecture alignment: satisfied by `(05C)` exact search commands, dependency inspection, and API/page source inspection.
+
+## Known Issues and Residual Validation Gaps
+- `BLOCKED_BY_USER_ACTION`: no safe live failed-run fixture containing a failed step and `error_message` was supplied or found.
+- `BLOCKED_BY_USER_ACTION`: no safe live run with zero persisted steps was supplied or found.
+- `BLOCKED_BY_USER_ACTION`: no safe live run with unknown/malformed structured output was supplied or found.
+- The in-app `iab` browser remained unavailable to the agent, so all successful browser claims rely on clearly attributed user evidence.
+- No frontend automated test suite exists. Build, backend tests, API inspection, source inspection, and manual browser evidence are the available validation layers.
+
+## Intentional Scope Exclusions
+- No new logs endpoint, run-list/admin browser, database migration/table, persistence write path, run editing/deletion/retry/replay, authentication/JWT, cross-run search/export/comparison, graph visualization, polling/streaming, or production observability integration.
+- No direct frontend call to Supabase, Qdrant, ShopAIKey, or another provider.
+- No hardcoded backend origin, backend secret/environment display, prompt display, stack trace, or raw exception display.
+- No frontend test framework or dependency was added solely for Plan 15.
+- No production data was changed to manufacture failed, empty, or malformed live fixtures.
+
+## Reviewer Notes Against Plan 15 Section 15
+- Scope followed: supported by the `(05C)` scoped diff and search evidence.
+- Out-of-scope work absent: supported by no new endpoint/package/backend write-path changes and the explicit scope searches.
+- Tests actually run: backend 30/30 and frontend production build passed; frontend tests are accurately reported as not configured.
+- Acceptance criteria: implementation and happy-path criteria are traceable to tests, API inspection, source inspection, or user browser evidence; the three live-fixture resilience scenarios remain explicitly blocked.
+- No hardcoded secrets: supported by secret/environment/provider searches and source inspection.
+- No fake success: real run provenance is disclosed, user browser evidence is attributed, agent browser unavailability is disclosed, and blocked fixtures are not marked passed.
+- Architecture alignment: existing FastAPI endpoint/service boundary, React/TypeScript/Vite/Axios client, `VITE_API_BASE_URL`, single-run read-only debug workflow, and backend-only service credentials remain intact.
+- Debug focus: page inspects one known run and has no admin or mutation surface.
+- Raw fallback: source inspection confirms raw input/output remain rendered for every selected step even when specialized parsing cannot recognize a payload; live malformed fixture remains blocked.
+- Score fields: source inspection confirms exact Agent 1 persisted score names; the real-run Agent 1 table was user-confirmed in browser evidence.
+
+## Acceptance Check
+- Task acceptance condition: Every claimed acceptance criterion is traceable to a test, browser result, API/source inspection, or explicit blocked status; no blocked scenario is reported as passed.
+- Status: satisfied for `(06D)`.
+- Evidence: This consolidated handoff supplies provenance for every acceptance statement and retains `(06C)` as partial with three explicit `BLOCKED_BY_USER_ACTION` live-fixture gaps.
+
+## Artifacts Produced
+- Final consolidated Plan 15 execution and reviewer handoff appended to `docs/reports/report_15_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly prohibited task-checkbox and batch-status edits.
+
+## Key Implementation Decisions
+- Marked the documentation-only `(06D)` complete while reporting overall Plan 15 validation as partial.
+- Treated the `(06B)` completion addendum as superseding its earlier blocked attempt without deleting historical evidence.
+- Did not infer browser success for any scenario beyond the user's explicit confirmations.
+
+## Risks or Open Issues
+- Reviewer acceptance should preserve `(06C)` as partial unless safe live fixtures are later provided and browser-validated.
+- Existing unrelated working-tree changes in `docs/review/review_15_review_agent.md` and `docs/tasks/task_15.md` were preserved and not modified by this task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No contradictory evidence was found that required `(06D)` itself to be blocked.
+- The report openly retains contradictory historical state for the initial `(06B)` blocked attempt and its later completion addendum, with the addendum identified as the final task status.
+- Dependencies `(06A)` and `(06B)` are complete; `(06C)` is partial with explicit blocked scenarios, which the `(06D)` task specifically requires the handoff to report rather than conceal.
+- Execution stayed within `(06D)` only. No runtime source, task checkbox, batch status, persisted run, review file, or commit was changed.
+
+## Notes for Next Task
+- next task ID: reviewer handoff; no further execution task is started here
+- can proceed: yes
+- handoff notes: Review Plan 15 with `(06C)` retained as partial. Do not accept claims of live failed-step, empty-step, or malformed-output browser validation unless safe fixtures and direct evidence are added later.
