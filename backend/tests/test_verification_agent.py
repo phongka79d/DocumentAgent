@@ -1338,6 +1338,69 @@ def test_verification_agent_final_output_serializes_with_exact_top_level_keys(
     ]
 
 
+def test_verification_agent_rescues_high_overlap_interpretive_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    content = (
+        "It was much pleasanter at home, thought poor Alice, when one wasn't "
+        "always growing larger and smaller. I almost wish I hadn't gone down "
+        "that rabbit-hole--and yet--and yet--it's rather curious, you know, "
+        "this sort of life!"
+    )
+    candidate = _candidate_payload() | {
+        "file_name": "alice-in-wonderland.txt",
+        "content": content,
+        "semantic_similarity": 0.62,
+        "keyword_overlap": 0.7,
+        "final_score": 0.76,
+        "retrieval_reason": "Matched Alice and rabbit-hole terms.",
+    }
+
+    def fake_chat_completion(messages, response_format=None):
+        return json.dumps(
+            {
+                "verified_chunks": [],
+                "rejected_chunks": [
+                    {
+                        "chunk_id": CANDIDATE_CHUNK_ID,
+                        "document_id": CANDIDATE_DOCUMENT_ID,
+                        "file_name": "alice-in-wonderland.txt",
+                        "quote": content,
+                        "rejection_reason": (
+                            "The chunk does not directly explain what Alice means."
+                        ),
+                    }
+                ],
+                "missing_information": True,
+                "confidence": 0.2,
+            }
+        )
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": (
+                "What does Alice mean when she says she almost wishes she had "
+                "not gone down the rabbit-hole?"
+            ),
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert output.confidence > 0.2
+    assert len(output.verified_chunks) == 1
+    assert output.verified_chunks[0].file_name == "alice-in-wonderland.txt"
+    assert "rabbit-hole" in output.verified_chunks[0].quote
+    assert output.verified_chunks[0].supports_simple_reasoning is True
+
+
 def test_verification_prompt_contains_required_output_shape() -> None:
     prompt = VERIFICATION_AGENT_SYSTEM_PROMPT
 
