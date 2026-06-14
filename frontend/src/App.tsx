@@ -1,6 +1,7 @@
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 
 import { ChatPage } from "./pages/ChatPage";
+import { AgentLogsPage } from "./pages/AgentLogsPage";
 import { DocumentListPage } from "./pages/DocumentListPage";
 import { EvidenceViewerPage } from "./pages/EvidenceViewerPage";
 import { UploadDocumentPage } from "./pages/UploadDocumentPage";
@@ -45,6 +46,11 @@ export function App() {
           <Route path="/upload" element={<UploadDocumentPage />} />
           <Route path="/documents" element={<DocumentListPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/agent-logs" element={<AgentLogsPage />} />
+          <Route
+            path="/agent-logs/:agentRunId"
+            element={<AgentLogsPage />}
+          />
           <Route
             path="/evidence/:agentRunId"
             element={<EvidenceViewerPage />}

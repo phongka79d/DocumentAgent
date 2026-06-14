@@ -511,7 +511,7 @@ Plan 15 must work both when a developer already knows a run ID and when a run ha
 
 ### Tasks
 
-- [ ] (04A): Build the Agent Logs page lookup and load state machine
+- [x] (04A): Build the Agent Logs page lookup and load state machine
   - Source of Truth: `docs/plans/Plan_15.md` > `## 1. Goal`; `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_15.md` > `## 8. API Design`; `docs/plans/Plan_15.md` > `## 13. Failure Handling`
   - Source Requirements:
     - Provide an agent run ID input.
@@ -527,7 +527,7 @@ Plan 15 must work both when a developer already knows a run ID and when a run ha
   - Blocked Condition: None.
   - Files: `frontend/src/pages/AgentLogsPage.tsx`, `frontend/src/api/agentRuns.ts`, `frontend/src/types/agentRuns.ts`
 
-- [ ] (04B): Support direct route parameter loading and shareable run URLs
+- [x] (04B): Support direct route parameter loading and shareable run URLs
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Support an ID input or links from chat results.
@@ -543,7 +543,7 @@ Plan 15 must work both when a developer already knows a run ID and when a run ha
   - Blocked Condition: None.
   - Files: `frontend/src/pages/AgentLogsPage.tsx`, `frontend/src/App.tsx`
 
-- [ ] (04C): Link the latest chat answer to its agent logs
+- [x] (04C): Link the latest chat answer to its agent logs
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 5. Dependencies`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Add links from chat results when Plan 14 components are present.
@@ -930,7 +930,7 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] Batch01 - Existing Logs Contract and Frontend API Boundary
 - [x] Batch02 - Raw JSON and Specialized Step Panels
 - [x] Batch03 - Agent Step List and Detail Viewer
-- [ ] Batch04 - Logs Page Lookup and Chat Integration
+- [x] Batch04 - Logs Page Lookup and Chat Integration
 - [ ] Batch05 - Routing, Navigation, Styling, and Scope Hardening
 - [ ] Batch06 - Automated and Manual Validation, Reporting, and Handoff
 
@@ -957,9 +957,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch04
 
-- [ ] (04A): Build the Agent Logs page lookup and load state machine
-- [ ] (04B): Support direct route parameter loading and shareable run URLs
-- [ ] (04C): Link the latest chat answer to its agent logs
+- [x] (04A): Build the Agent Logs page lookup and load state machine
+- [x] (04B): Support direct route parameter loading and shareable run URLs
+- [x] (04C): Link the latest chat answer to its agent logs
 
 #### Batch05
 

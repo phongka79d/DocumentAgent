@@ -12,6 +12,7 @@ export type AgentRunsApiErrorKind =
 export type AgentRunsApiError = {
   kind: AgentRunsApiErrorKind;
   message: string;
+  status?: number;
 };
 
 const CONNECTION_ERROR_MESSAGE =
@@ -32,12 +33,14 @@ export function getAgentRunsApiError(error: unknown): AgentRunsApiError {
     };
   }
 
-  const detail = error.response?.data?.detail;
+  const response = error.response;
+  const detail = response?.data?.detail;
 
-  if (typeof detail === "string" && detail.trim().length > 0) {
+  if (response && typeof detail === "string" && detail.trim().length > 0) {
     return {
       kind: "backend",
       message: detail,
+      status: response.status,
     };
   }
 
@@ -45,6 +48,14 @@ export function getAgentRunsApiError(error: unknown): AgentRunsApiError {
     return {
       kind: "connection",
       message: CONNECTION_ERROR_MESSAGE,
+    };
+  }
+
+  if (response) {
+    return {
+      kind: "request",
+      message: GENERIC_REQUEST_ERROR_MESSAGE,
+      status: response.status,
     };
   }
 

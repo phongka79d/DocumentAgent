@@ -1648,6 +1648,27 @@ button {
   line-height: 1.25;
 }
 
+.chat-page__answer-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.chat-page__agent-logs-link {
+  flex: 0 1 auto;
+  border: 1px solid #356ac3;
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  overflow-wrap: anywhere;
+  color: #1d4f91;
+  background: #f1f6ff;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
 .chat-page__evidence-toggle,
 .chat-page__evidence-error button {
   flex: 0 0 auto;
@@ -1662,12 +1683,18 @@ button {
 }
 
 .chat-page__evidence-toggle:hover,
+.chat-page__agent-logs-link:hover,
 .chat-page__evidence-error button:hover:not(:disabled) {
   border-color: #2d5da9;
+}
+
+.chat-page__evidence-toggle:hover,
+.chat-page__evidence-error button:hover:not(:disabled) {
   background: #2d5da9;
 }
 
 .chat-page__evidence-toggle:focus-visible,
+.chat-page__agent-logs-link:focus-visible,
 .chat-page__evidence-error button:focus-visible {
   outline: 0.2rem solid #172033;
   outline-offset: 0.15rem;

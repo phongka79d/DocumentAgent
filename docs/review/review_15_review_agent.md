@@ -1887,3 +1887,798 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Logs Page Lookup and Chat Integration
+- Task ID: (04A)
+- Task title: Build the Agent Logs page lookup and load state machine
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_15.md` > `## 1. Goal`; `## 3. Scope`; `## 6. Required Files and Folders`; `## 8. API Design`; `## 13. Failure Handling`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: Reviewed only the latest (04A) execution report entry and did not review (04B)/(04C).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/tasks/task_15.md`, `frontend/src/api/agentRuns.ts`, untracked `frontend/src/pages/AgentLogsPage.tsx`
+- untracked files: `frontend/src/pages/AgentLogsPage.tsx`
+
+## Files Reviewed
+- `docs/tasks/task_15.md`: in scope - verified (04A) source requirements and updated only the two (04A) checkboxes after acceptance.
+- `docs/reports/report_15_execute_agent.md`: in scope - latest (04A) execution report was appended and matched repository evidence.
+- `docs/plans/Plan_15.md`: in scope - reviewed sections 1, 3, 6, 8, and 13.
+- `frontend/src/pages/AgentLogsPage.tsx`: in scope - new lookup page and request state machine.
+- `frontend/src/api/agentRuns.ts`: in scope - status metadata added to existing safe API error parsing; logs helper preserved.
+- `frontend/src/types/agentRuns.ts`: in scope - dependency type contract reviewed; not touched by this task.
+- `frontend/src/components/AgentLogViewer.tsx`: in scope - dependency viewer reviewed to verify page render boundary.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/pages/AgentLogsPage.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New untracked page file implements the direct lookup state machine.
+- file from execution report: `frontend/src/api/agentRuns.ts`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Optional HTTP status metadata supports not-found distinction without changing request paths.
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Append-only execution report entry.
+
+## Dependency Review
+- Required dependencies: (01C), Batch03
+- Dependency status: satisfied; task tracker shows Batch01 through Batch03 complete, `getAgentRunLogs` exists, and `AgentLogViewer` exists.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Uses existing `getAgentRunLogs`/`apiClient` boundary, validates before request, remains route-agnostic for (04A), preserves existing evidence helper, and does not add backend APIs or direct provider calls.
+- Failed: None.
+- Uncertain: Browser/manual valid, invalid, not-found, backend failure, and mounted-page checks remain scheduled for Batch06 because the page is not routed yet.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `AgentLogsPage` trims and validates input before calling `getAgentRunLogs`, tracks idle/loading/success/empty-response/not-found/error states, prevents submit while loading, guards responses with a request id, and renders `AgentLogViewer` only when `loadState === "success"` with a response.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture run IDs, hardcoded backend origins, secrets, fake responses, or sample-only success paths were found. The fixed UUID regex is validation logic, not a run-specific value.
+
+## Validations Reviewed
+- Command/check: `cd frontend && npm run build`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit && vite build` completed successfully with 109 modules transformed.
+- Status: passed
+- Notes: Frontend has no `test` script in `frontend/package.json`; not running frontend tests is accurately reported. Manual checks are deferred by the task file to Batch06.
+
+## Acceptance Review
+- Task acceptance: No request is sent for blank/invalid IDs.
+- Status: satisfied
+- Evidence: `validateAgentRunId` returns before `getAgentRunLogs` for blank or malformed values.
+- Task acceptance: Valid IDs load the requested run.
+- Status: satisfied
+- Evidence: Valid submitted IDs call `getAgentRunLogs(trimmedAgentRunId)`.
+- Task acceptance: Duplicate submit is prevented.
+- Status: satisfied
+- Evidence: Submit handler returns when `loadState === "loading"`; input and submit button are disabled while loading.
+- Task acceptance: Stale responses cannot overwrite current lookup.
+- Status: satisfied
+- Evidence: Each valid request increments `latestRequestIdRef`; success and catch paths both return without state updates if the request id is stale.
+- Task acceptance: Not-found/backend/connection messages are safe and distinguished.
+- Status: satisfied
+- Evidence: `getAgentRunsApiError` keeps backend safe `detail`, distinguishes connection failures, carries HTTP status, and the page maps `status === 404` to `not-found` while other failures render `error`.
+- Task acceptance: Empty responses show truthful state.
+- Status: satisfied
+- Evidence: Successful responses with `steps.length === 0` enter `empty-response` and state that the backend returned an empty steps array.
+- Task acceptance: `AgentLogViewer` renders only for successful non-empty response as implemented/required.
+- Status: satisfied
+- Evidence: `success` is assigned only for non-empty steps and the component is rendered only when `loadState === "success" && logsResponse`.
+- Task acceptance: Scope did not mount routes or add chat links.
+- Status: satisfied
+- Evidence: `App.tsx`, `ChatPage.tsx`, and `AnswerPanel.tsx` are not changed; search found no new mounted agent logs route or chat link.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review, checked after acceptance in both the task entry and progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked.
+- Execution report entry: present and append-only.
+- Review report entry: appended at EOF.
+- Other: (04B) and (04C) remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Browser/manual valid, invalid, not-found, backend failure, and mounted-route checks remain deferred to Batch06 as specified.
+- The UUID validator is strict to canonical RFC4122 versions 1-5, which fits typical generated v4 run IDs. If the backend later emits UUIDv6/UUIDv7/UUIDv8 values, this gate should be broadened in a future task.
+
+### Observations
+- `AgentLogsPage.tsx` is currently untracked, so `git diff --stat` does not list its content even though it was reviewed directly from the working tree.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (04A) is accepted; (04B) and (04C) remain incomplete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch04 - Logs Page Lookup and Chat Integration",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/tasks/task_15.md",
+    "frontend/src/api/agentRuns.ts",
+    "frontend/src/pages/AgentLogsPage.tsx",
+    "frontend/src/types/agentRuns.ts",
+    "frontend/src/components/AgentLogViewer.tsx",
+    "docs/plans/Plan_15.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Browser/manual checks remain deferred to Batch06 as specified.",
+    "UUID validation is strict to RFC4122 versions 1-5; broaden later if backend emits UUIDv6/UUIDv7/UUIDv8."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch04 - Logs Page Lookup and Chat Integration
+- Task ID: (04B)
+- Task title: Support direct route parameter loading and shareable run URLs
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`
+- Supplemental documents: none
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: Latest matching execution report begins at `docs/reports/report_15_execute_agent.md:974`.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`, `frontend/src/App.tsx`, `frontend/src/api/agentRuns.ts`
+- untracked files: `frontend/src/pages/AgentLogsPage.tsx`
+
+## Files Reviewed
+- `docs/tasks/task_15.md`: in scope - (04B) task entry and progress tracker reviewed.
+- `docs/reports/report_15_execute_agent.md`: in scope - latest (04B) execution report reviewed.
+- `docs/review/review_15_review_agent.md`: in scope - prior tail inspected before append.
+- `docs/plans/Plan_15.md`: in scope - sections 3, 9, and 12 reviewed.
+- `frontend/src/pages/AgentLogsPage.tsx`: in scope - route param, validation, navigation, and request-state logic reviewed.
+- `frontend/src/App.tsx`: in scope - required base and parameterized route mounting reviewed.
+- `frontend/src/api/agentRuns.ts`: in scope from dependency state - 404 status metadata used by page reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/pages/AgentLogsPage.tsx`
+- present in git/repo: yes, untracked
+- matches task scope: yes
+- notes: Contains the reviewed route-param implementation.
+- file from execution report: `frontend/src/App.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds only `/agent-logs` and `/agent-logs/:agentRunId` routes, no primary navigation link.
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Append-only task report entry present.
+
+## Dependency Review
+- Required dependencies: (04A)
+- Dependency status: satisfied; (04A) is checked in both task locations from the prior accepted review.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Uses React Router `useParams`, client route mounting, existing typed API helper, local UUID validation, and no chat-link or primary-navigation scope expansion.
+- Failed: Route-change request-state handling can skip a new valid route load and allow an older in-flight response to populate the page under a newer URL.
+- Uncertain: Browser interaction was blocked in the execution report; this is acceptable for manual Batch06 checks but does not mitigate the source-level stale route issue.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: Direct route parsing, local validation, route navigation, and route mounting exist, but changed-param correctness is incomplete.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No hardcoded backend origin, provider calls, run IDs, secrets, or fabricated chat links were found in the reviewed files.
+
+## Validations Reviewed
+- Command/check: `cd frontend; npm run build`
+- Reported result: passed, 116 modules built
+- Rerun result: passed, `tsc --noEmit && vite build`, 116 modules transformed
+- Status: passed
+- Notes: Build confirms type/compile health only.
+- Command/check: `Invoke-WebRequest` SPA route smoke checks
+- Reported result: passed for base, invalid, and valid-looking route URLs
+- Rerun result: not rerun
+- Status: limited
+- Notes: HTTP 200 from Vite proves route fallback only, not request-loop or stale-response behavior.
+- Command/check: In-app Browser route interaction
+- Reported result: blocked, `Browser is not available: iab`
+- Rerun result: not rerun
+- Status: blocked
+- Notes: Manual route interaction is deferred, but the source review found a blocking behavior issue.
+
+## Acceptance Review
+- Task acceptance: Opening a valid direct URL loads exactly once.
+- Status: partially satisfied
+- Evidence: Initial valid route loads through the route effect, but changed-param handling during loading can prevent the new route from loading.
+- Task acceptance: Submitting a new ID updates the URL and data.
+- Status: partially satisfied
+- Evidence: Non-loading submissions navigate to `/agent-logs/{encoded-id}`; same-route refresh and route-load behavior are present.
+- Task acceptance: Returning to the base route gives a clean lookup state.
+- Status: satisfied
+- Evidence: Undefined route param branch clears input, validation, errors, response, load state, and invalidates in-flight requests.
+- Task acceptance: Invalid route values validate without a backend call.
+- Status: satisfied
+- Evidence: Invalid route param branch validates locally, increments the request guard, clears data, and returns before loading.
+- Task acceptance: Keep route and input synchronized without request loops or stale data.
+- Status: not satisfied
+- Evidence: `loadAgentRunLogs` returns early while loading at `frontend/src/pages/AgentLogsPage.tsx:50`, while the route effect marks the new route as auto-loaded before calling it at `frontend/src/pages/AgentLogsPage.tsx:124`-`125`.
+
+## Progress Tracking
+- Selected task checkbox: unchecked in task entry and progress tracker
+- Checkbox updated by reviewer: no
+- Batch status: Batch04 remains unchecked
+- Execution report entry: present and append-only
+- Review report entry: appended by reviewer
+- Other: Prior accepted (04A) checkbox changes are present; no (04B), (04C), or Batch04 checkbox was changed.
+
+## Report Accuracy
+- partial
+- Mismatches:
+  - The report claims valid direct URL and changed-param behavior are satisfied by implementation. Source review shows a changed-param race where a new valid route during an in-flight request is skipped and the stale response may overwrite the page.
+  - The report's route smoke checks prove only SPA route serving, not auto-load behavior, request-loop prevention, or stale-response safety.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `frontend/src/pages/AgentLogsPage.tsx:50` blocks `loadAgentRunLogs` whenever `loadState === "loading"`. In the route effect, a new valid route param is recorded as auto-loaded at `frontend/src/pages/AgentLogsPage.tsx:124` before calling the loader at line 125. If the user navigates from `/agent-logs/{id1}` to `/agent-logs/{id2}` while `{id1}` is still loading, the loader returns without incrementing `latestRequestIdRef`, `{id1}` is still allowed to set state, and `{id2}` is treated as already auto-loaded. This violates (04B)'s changed-param, stale-overwrite, and URL/data synchronization requirements.
+
+### Minor
+- None
+
+### Warnings
+- Browser interaction validation remains blocked in this environment and is still needed in Batch06.
+- `frontend/src/pages/AgentLogsPage.tsx` is untracked, so reviewers must include untracked files when inspecting the implementation.
+
+### Observations
+- `/agent-logs` and `/agent-logs/:agentRunId` are mounted without adding primary navigation, which stays within (04B) and avoids (05A) scope.
+- Invalid route params and base-route cleanup invalidate in-flight requests correctly.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `frontend/src/pages/AgentLogsPage.tsx`
+- change: Separate duplicate form-submit prevention from route-param loading. A valid route-param change must always start a new request, increment the request guard, clear old response/error state, and invalidate any older in-flight request even if `loadState` is currently `loading`.
+- change: Do not set `lastAutoLoadedRouteIdRef.current` until the new route load is actually started, or remove that guard in favor of a request key that cannot mark a skipped load as complete.
+- change: Preserve the local invalid-route and base-route branches so they continue to increment the request guard and avoid backend calls.
+- validation: Re-run `cd frontend && npm run build`.
+- validation: Add or manually verify a changed-param scenario: start loading valid UUID A, navigate to valid UUID B before A resolves, confirm A cannot populate the page under B and B is requested/loaded.
+- validation: Verify `/agent-logs` clears to empty lookup state, `/agent-logs/not-a-uuid` does not call `getAgentRunLogs`, and submitted valid IDs navigate to `/agent-logs/{encodeURIComponent(id)}`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch04 - Logs Page Lookup and Chat Integration",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/tasks/task_15.md",
+    "frontend/src/App.tsx",
+    "frontend/src/api/agentRuns.ts",
+    "frontend/src/pages/AgentLogsPage.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "In-app Browser route interaction unavailable: Browser is not available: iab"
+  ],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "Valid route-param changes during an in-flight request can skip the new load and allow stale data from the old request to populate the newer URL."
+  ],
+  "warnings": [
+    "Browser/manual checks remain deferred to Batch06 because the Browser surface was unavailable.",
+    "frontend/src/pages/AgentLogsPage.tsx is untracked and must be included in review/commit scope."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B) Repair
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Logs Page Lookup and Chat Integration
+- Task ID: (04B)
+- Task title: Support direct route parameter loading and shareable run URLs
+- Task status reported by executor: complete repair
+- Source of Truth: `docs/tasks/task_15.md` > Batch04 > (04B); prior A2 repair instruction for in-flight route-param changes and stale responses
+- Supplemental documents: prior (04B) review in `docs/review/review_15_review_agent.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B) repair
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: Reviewed the latest `# Task Execution Report - (04B) Repair` entry appended after the rejected (04B) report.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`, `frontend/src/App.tsx`, `frontend/src/api/agentRuns.ts`
+- untracked files: `frontend/src/pages/AgentLogsPage.tsx`
+
+## Files Reviewed
+- `docs/reports/report_15_execute_agent.md`: in scope - latest (04B) repair report reviewed.
+- `docs/review/review_15_review_agent.md`: in scope - prior rejected (04B) review and EOF inspected before append.
+- `docs/tasks/task_15.md`: in scope - (04B) task entry and progress tracker reviewed and updated only after acceptance.
+- `frontend/src/pages/AgentLogsPage.tsx`: in scope - repaired loader, route effect, stale guards, base route reset, invalid route validation, and submit behavior reviewed.
+- `frontend/src/App.tsx`: in scope - route mounting remains limited to `/agent-logs` and `/agent-logs/:agentRunId`.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/pages/AgentLogsPage.tsx`
+- present in git/repo: yes, untracked
+- matches task scope: yes
+- notes: Contains the focused repair; the loader no longer returns early during loading.
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest repair report is append-only.
+
+## Dependency Review
+- Required dependencies: (04A)
+- Dependency status: satisfied; (04A) was already accepted and remains checked.
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Route param loading now supersedes in-flight requests by starting a new load and incrementing `latestRequestIdRef`; stale success/error handlers return without mutating state; invalid/base route branches still invalidate in-flight requests without backend calls.
+- Failed: none
+- Uncertain: Browser interaction remains deferred/unavailable, but source and build evidence are sufficient for the repaired rejection.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `loadAgentRunLogs` validates, increments request id, clears old state, calls `getAgentRunLogs`, and guards both success and error handlers against stale request ids.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No hardcoded backend origin, run ID fixture, provider call, chat-link work, primary navigation work, or secret exposure found in the repair scope.
+
+## Validations Reviewed
+- Command/check: Lightweight RED source smoke before repair
+- Reported result: failed as expected
+- Rerun result: not rerun
+- Status: reviewed
+- Notes: Report accurately describes the pre-repair defect.
+- Command/check: Lightweight route-param in-flight source smoke after repair
+- Reported result: passed
+- Rerun result: source-inspected equivalent behavior
+- Status: passed by inspection
+- Notes: `loadAgentRunLogs` has no `loadState === "loading"` guard; only `handleSubmit` retains duplicate-submit prevention.
+- Command/check: `cd frontend && npm run build`
+- Reported result: passed
+- Rerun result: passed; `tsc --noEmit && vite build`, 116 modules transformed
+- Status: passed
+- Notes: Confirms repaired source compiles.
+
+## Acceptance Review
+- Task acceptance: Route parameter changes during an in-flight request always schedule/start the new route-param load.
+- Status: satisfied
+- Evidence: `frontend/src/pages/AgentLogsPage.tsx:49` defines the shared loader without the prior loading early return; the route effect calls it for new valid route IDs at lines 116-121.
+- Task acceptance: Stale responses from previous route params or submitted IDs cannot populate newer URL/state.
+- Status: satisfied
+- Evidence: Each load increments `latestRequestIdRef` at line 61; success and error paths compare the captured request id at lines 71 and 80 before mutating state.
+- Task acceptance: Preserve `/agent-logs` clean reset and invalid route validation without backend calls.
+- Status: satisfied
+- Evidence: Base and invalid route branches increment `latestRequestIdRef`, clear stale state, and return before load/backend calls.
+- Task acceptance: Avoid request loops and duplicate calls for the same normalized route ID.
+- Status: satisfied
+- Evidence: The route effect still returns when `lastAutoLoadedRouteIdRef.current === trimmedRouteAgentRunId`.
+- Task acceptance: Stay in (04B) scope.
+- Status: satisfied
+- Evidence: No (04C) chat link, Batch05 primary navigation link, styling expansion, run browser, polling, or unrelated implementation was added.
+
+## Progress Tracking
+- Selected task checkbox: checked in the task entry and progress tracker
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked
+- Execution report entry: present and append-only
+- Review report entry: appended by reviewer
+- Other: (04C) remains unchecked; no commit performed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found for the repair report
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- `frontend/src/pages/AgentLogsPage.tsx` remains untracked, so it must be included when this work is later staged/committed.
+- Browser interaction was not rerun because the available browser surface was previously unavailable; full manual route checks remain scheduled for Batch06.
+
+### Observations
+- The duplicate-submit loading guard remains only in `handleSubmit`, which is compatible with the repair because route changes now use the route-capable loader directly.
+- Route mounting in `App.tsx` remains limited to what (04B) requires and does not add primary navigation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch04 - Logs Page Lookup and Chat Integration",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/tasks/task_15.md",
+    "frontend/src/App.tsx",
+    "frontend/src/pages/AgentLogsPage.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Browser interaction unavailable/deferred from repair pass"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "frontend/src/pages/AgentLogsPage.tsx remains untracked and must be included in later staging/commit scope.",
+    "Browser/manual route checks remain scheduled for Batch06."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Logs Page Lookup and Chat Integration
+- Task ID: (04C)
+- Task title: Link the latest chat answer to its agent logs
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `## 5. Dependencies`; `## 9. Implementation Steps`; `## 12. Acceptance Criteria`; selected `(04C)` task entry in `docs/tasks/task_15.md`
+- Supplemental documents: none
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The final matching execution report entry is `Task Execution Report - (04C)`.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`, `frontend/src/App.tsx`, `frontend/src/api/agentRuns.ts`, `frontend/src/pages/ChatPage.tsx`, `frontend/src/styles.css`
+- untracked files: `frontend/src/pages/AgentLogsPage.tsx`
+
+## Files Reviewed
+- `docs/tasks/task_15.md`: in scope - selected `(04C)` source requirements and both `(04C)` tracker checkboxes reviewed; only `(04C)` was updated by this review.
+- `docs/reports/report_15_execute_agent.md`: in scope - latest `(04C)` execution report reviewed and cross-checked.
+- `frontend/src/pages/ChatPage.tsx`: in scope - contains the chat-to-logs link and no separate agent-run-id state.
+- `frontend/src/styles.css`: in scope - adds local answer action row/link styling only.
+- `frontend/src/components/AnswerPanel.tsx`: in scope for compatibility - answer/citation rendering unchanged.
+- `frontend/src/types/chat.ts`: in scope for contract check - `AskQuestionResponse.agent_run_id` is a string.
+- `frontend/src/App.tsx`: in scope for route compatibility - `/agent-logs/:agentRunId` route exists from `(04B)`; no primary navigation change for `(04C)`.
+- `frontend/src/pages/AgentLogsPage.tsx`: in scope for route compatibility - direct route can consume the encoded path produced by ChatPage.
+- `frontend/src/api/agentRuns.ts`: dependency context - existing evidence/logs API helpers preserved; not changed by `(04C)` review.
+- `docs/plans/Plan_15.md`: in scope - sections 3, 5, 9, and 12 reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/pages/ChatPage.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds React Router `Link`, derives the destination from current `latestResponse.agent_run_id`, and places the link beside the evidence action.
+- file from execution report: `frontend/src/styles.css`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds scoped styles for the answer action row and logs link; no global navigation styling.
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Append-only execution report entry present.
+
+## Dependency Review
+- Required dependencies: Plan 12 logs API; Plan 14 chat integration; accepted `(04B)` route support for `/agent-logs/:agentRunId`.
+- Dependency status: satisfied for `(04C)` review.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Uses React Router `Link`; keeps routing target on `/agent-logs/{encoded-id}`; derives from current successful chat response; preserves evidence API flow and AnswerPanel props.
+- Failed: none.
+- Uncertain: no live browser chat submission was performed; Batch06 owns full manual chat-to-logs validation.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `latestAgentLogsPath` is computed from `latestResponse?.agent_run_id.trim()` and rendered as `<Link to={latestAgentLogsPath}>Inspect agent logs</Link>` only when non-null.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixed run IDs or fabricated fallback IDs exist; `/agent-logs/` is the required route prefix and the dynamic segment is `encodeURIComponent` of the current response ID.
+
+## Validations Reviewed
+- Command/check: `npm run build` from `frontend/`
+- Reported result: passed
+- Rerun result: passed; TypeScript no-emit and Vite production build completed with 116 modules transformed.
+- Status: passed
+- Notes: Build output was generated under frontend dist as expected/ignored.
+- Command/check: `git diff --check -- frontend/src/pages/ChatPage.tsx frontend/src/styles.css`
+- Reported result: passed with CRLF warnings only
+- Rerun result: passed with CRLF normalization warnings only
+- Status: passed
+- Notes: no whitespace errors reported.
+- Command/check: `rg -n "Inspect agent logs|agent-logs/|latestAgentLogsPath|agent_run_id" frontend/src/pages/ChatPage.tsx frontend/src/styles.css`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: one rendered `Inspect agent logs` label; path computation uses current `latestResponse.agent_run_id`.
+
+## Acceptance Review
+- Task acceptance: Add `Inspect agent logs` link/button for `latestResponse.agent_run_id` using React Router navigation.
+- Status: satisfied
+- Evidence: `ChatPage.tsx` imports `Link` and renders it with `to={latestAgentLogsPath}`.
+- Task acceptance: Place it near answer/evidence actions.
+- Status: satisfied
+- Evidence: link is in `chat-page__answer-actions` beside the evidence toggle.
+- Task acceptance: Update with the latest response and be absent before a successful answer.
+- Status: satisfied
+- Evidence: the link is under `{latestResponse ? ... : empty}` and derives directly from current `latestResponse`; blank trimmed IDs render no link.
+- Task acceptance: Link to matching encoded run URL with no fabricated or stale ID.
+- Status: satisfied
+- Evidence: destination is `/agent-logs/${encodeURIComponent(latestResponse.agent_run_id.trim())}` with no independent ID state.
+- Task acceptance: Existing answer/citation/evidence behavior remains intact.
+- Status: satisfied
+- Evidence: `AnswerPanel` props are unchanged; evidence toggle/load/retry paths still use `latestResponse.agent_run_id` as before.
+
+## Progress Tracking
+- Selected task checkbox: checked in both `(04C)` locations by reviewer after acceptance
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still unchecked; orchestrator handles Batch04 completion after A3
+- Execution report entry: present and append-only
+- Review report entry: appended at EOF
+- Other: pre-existing `(04A)` and `(04B)` checkbox changes were preserved, not modified by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material for `(04C)`.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- `frontend/src/pages/AgentLogsPage.tsx` remains untracked from prior Batch04 route/page work and must be included by the eventual commit owner.
+- Full live browser chat-to-logs validation remains scheduled for Batch06; `(04C)` validation is build plus source/diff inspection.
+
+### Observations
+- Scope excludes Batch05 primary navigation; `App.tsx` still has no Agent Logs nav item, which is consistent with the requested `(04C)` review boundary.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, orchestrator handles batch completion after A3
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch04 - Logs Page Lookup and Chat Integration",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/tasks/task_15.md",
+    "frontend/src/App.tsx",
+    "frontend/src/api/agentRuns.ts",
+    "frontend/src/pages/AgentLogsPage.tsx",
+    "frontend/src/pages/ChatPage.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "frontend/src/pages/AgentLogsPage.tsx remains untracked from prior Batch04 work and must be included by the eventual commit owner.",
+    "Full live browser chat-to-logs validation remains scheduled for Batch06."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

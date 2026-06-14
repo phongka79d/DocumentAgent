@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   getAgentRunEvidence,
@@ -170,6 +171,9 @@ export function ChatPage() {
   const hasReadyDocuments = selection.validation.hasReadyDocuments;
   const isChatDisabled =
     isDocumentLoading || isDocumentLoadBlocked || !hasReadyDocuments;
+  const latestAgentLogsPath = latestResponse?.agent_run_id.trim()
+    ? `/agent-logs/${encodeURIComponent(latestResponse.agent_run_id.trim())}`
+    : null;
 
   return (
     <section className="chat-page" aria-labelledby="chat-page-title">
@@ -220,14 +224,24 @@ export function ChatPage() {
           >
             <div className="chat-page__evidence-header">
               <h2 id="chat-page-evidence-title">Answer evidence</h2>
-              <button
-                className="chat-page__evidence-toggle"
-                type="button"
-                aria-expanded={isEvidenceOpen}
-                onClick={handleEvidenceToggle}
-              >
-                {isEvidenceOpen ? "Hide evidence" : "View evidence"}
-              </button>
+              <div className="chat-page__answer-actions">
+                {latestAgentLogsPath ? (
+                  <Link
+                    className="chat-page__agent-logs-link"
+                    to={latestAgentLogsPath}
+                  >
+                    Inspect agent logs
+                  </Link>
+                ) : null}
+                <button
+                  className="chat-page__evidence-toggle"
+                  type="button"
+                  aria-expanded={isEvidenceOpen}
+                  onClick={handleEvidenceToggle}
+                >
+                  {isEvidenceOpen ? "Hide evidence" : "View evidence"}
+                </button>
+              </div>
             </div>
 
             {isEvidenceOpen ? (
