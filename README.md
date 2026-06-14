@@ -30,6 +30,8 @@ Plan 15 Batch01 completed the existing logs contract and frontend API boundary. 
 
 Plan 15 Batch02 completed the standalone agent-step debug display components. The frontend now has a safe read-only raw JSON viewer, an Agent 1 retrieval score table that preserves persisted candidate order and score fields, an Agent 2 verified/rejected evidence panel with defensive malformed states, and an Agent 3 answer/self-check panel that supports current `self_check_result` logs plus the `self_check` compatibility key. Selected-step dispatch, page integration, routing, and navigation remain planned for later Plan 15 batches.
 
+Plan 15 Batch03 completed the reusable agent step list and detail viewer. `AgentLogViewer` preserves persisted step order, supports keyboard-operable selection, shows status, timestamps, and errors, dispatches recognized successful steps to the Agent 1/2/3 panels, and always exposes raw input/output. It also handles empty, unknown, failed, malformed, long-content, narrow-screen, and multiple-instance accessibility states. Agent Logs page integration, lookup, routing, and navigation remain planned for later Plan 15 batches.
+
 ## What This Folder Does
 
 This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
@@ -460,7 +462,7 @@ React Router is mounted through `BrowserRouter`. `App.tsx` exposes `/upload`, `/
 
 `frontend/src/components/EvidencePanel.tsx` renders read-only verified and rejected evidence in separate labeled sections. It includes the approved optional page, verification reason, simple-reasoning, and rejection-reason metadata, with responsive long-content wrapping shared through `frontend/src/styles.css`.
 
-`frontend/src/components/JsonViewer.tsx`, `RetrievalScoreTable.tsx`, `VerificationResultPanel.tsx`, and `SelfCheckPanel.tsx` provide the standalone Plan 15 debug displays for raw step JSON and recognized Agent 1, Agent 2, and Agent 3 outputs. They defensively handle missing or malformed persisted values, preserve numeric zero and false booleans, and use scoped overflow-safe styles; they are not yet wired into an Agent Logs page.
+`frontend/src/components/JsonViewer.tsx`, `RetrievalScoreTable.tsx`, `VerificationResultPanel.tsx`, and `SelfCheckPanel.tsx` provide the standalone Plan 15 debug displays for raw step JSON and recognized Agent 1, Agent 2, and Agent 3 outputs. `AgentLogViewer.tsx` composes them into an ordered selectable step workspace with metadata, failure details, raw input/output, empty-state handling, readable timestamps, responsive containment, and accessible focus/selection semantics. The reusable viewer is complete but is not yet mounted in an Agent Logs page.
 
 `frontend/src/pages/ChatPage.tsx` assembles ready-document loading and selection, guarded question submission through `askQuestion()`, answer/confidence/citation rendering, and lazy evidence loading for the latest returned `agent_run_id`. Evidence failures remain isolated from the displayed answer.
 

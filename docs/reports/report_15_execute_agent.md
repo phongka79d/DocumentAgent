@@ -608,3 +608,267 @@ complete
 - next task ID: (03A)
 - can proceed: yes, after review and acceptance of (02D)
 - handoff notes: Batch03 may compose this panel with the raw JSON viewer through recognized-step dispatch; preserve this component's current-key precedence and neutral malformed states.
+
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch03 - Agent Step List and Detail Viewer
+
+## Task
+(03A) - Build the ordered agent step list and selection state
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_15.md sections 3, 6, 9, and 12
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Agent Step List and Detail Viewer
+- Task ID: (03A)
+- Task title: Build the ordered agent step list and selection state
+
+## Completed Work
+- Completed (03A) only.
+- Created `AgentLogViewer` with an ordered list that renders every supplied step without sorting or filtering.
+- Rendered each step as a native selectable button showing agent name, step name, explicit Success/Failed text, raw timestamp, selected state, and an Error present indicator when `error_message` is present.
+- Tracked selection with both the server-list index and the selected step object, so duplicate and unknown step names remain independently selectable.
+- Selected the first available step by default and reset selection to the first step whenever a new steps array arrives.
+- Added only task-scoped list, selected, status, error, hover, and focus styles.
+- Did not implement selected-step details, recognized-step dispatch, raw JSON composition, empty-state behavior, or timestamp formatting reserved for (03B)/(03C).
+
+## Files Created or Modified
+- frontend/src/components/AgentLogViewer.tsx
+- frontend/src/styles.css
+- docs/reports/report_15_execute_agent.md
+
+## Tests or Validations Run
+- `cd frontend; npm run build`: Passed; TypeScript no-emit compilation and Vite production build completed with 109 modules transformed.
+- `git diff --check -- frontend/src/components/AgentLogViewer.tsx frontend/src/styles.css`: Passed; no whitespace errors.
+- Focused source and scope inspection: Passed; confirmed server-order mapping, native button controls, index-plus-step selection, first-step default/reset, explicit status/error text, and absence of (03B)/(03C) behavior.
+- Frontend component tests: Not run; `frontend/package.json` has no test script or configured test runner, and tests are conditional for this task.
+
+## Acceptance Check
+- Task acceptance condition: Every response step is visible in original order; selected state, success/failed text, timestamp, and error presence are clear; duplicate/unknown steps remain selectable.
+- Status: satisfied
+- Evidence: The component maps `steps` directly in supplied order, uses independent native buttons for every list position, identifies selection using index plus step reference, visibly labels selection/status/error presence, and passed the production compile.
+
+## Artifacts Produced
+- Ordered, keyboard-operable AgentLogViewer step navigation.
+- Task-scoped `.agent-log-viewer*` styles.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly prohibited task checkbox updates; review/coordination owns progress changes.
+
+## Key Implementation Decisions
+- Used the list index together with the exact step object for selection identity instead of `step_name`, preserving duplicate and unknown entries.
+- Reset selection from the `steps` array identity and defensively derive the first active selection during a response transition, avoiding a stale selected marker.
+- Kept timestamps raw in `<time dateTime>` for this task because readable formatting with raw-value preservation belongs to (03C).
+
+## Risks or Open Issues
+- Keyboard and real-log interaction checks remain deferred to Batch06 as required.
+- Selected-step details and empty-step presentation are intentionally absent until (03B) and (03C).
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified. Batch01 and Batch02 dependencies are marked complete, no user action was required, and changes remained within the user-owned files and append-only report entry.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after review and acceptance of (03A)
+- handoff notes: Reuse the existing `activeSelection` state for detail rendering; preserve index-plus-step identity and keep raw JSON visible for every selected step.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch03 - Agent Step List and Detail Viewer
+
+## Task
+(03B) - Build the selected-step detail panel and recognized-step dispatch
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_15.md sections 3, 7, 9, 13, and 15
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Agent Step List and Detail Viewer
+- Task ID: (03B)
+- Task title: Build the selected-step detail panel and recognized-step dispatch
+
+## Completed Work
+- Completed (03B) only while preserving (03A)'s ordered list and index-plus-step selection behavior.
+- Added a selected-step detail panel with explicit agent name, step name, success/failed status, raw timestamp, and nullable error message rendering.
+- Dispatched successful recognized steps by `step_name` to `RetrievalScoreTable`, `VerificationResultPanel`, or `SelfCheckPanel`.
+- Added a documented compatibility fallback for legacy unknown step names using the established `retrieval_agent`, `verification_agent`, and `answer_agent` names; recognized `step_name` values remain authoritative.
+- Rendered separately labeled `Raw input` and `Raw output` `JsonViewer` instances for every selected step, including failed and unknown steps.
+- Kept structured panels off failed steps so their metadata, safe error, and raw payloads remain the primary failure view.
+- Isolated specialized panel rendering in an error boundary so an unexpected structured-panel render failure shows an inline fallback and cannot suppress the raw viewers.
+- Added task-scoped selected-detail, metadata, error, structured-fallback, raw-data, and two-column viewer styles.
+- Did not add (03C) empty-state, readable timestamp formatting, narrow-screen behavior, or broader accessibility/responsive completion.
+
+## Files Created or Modified
+- frontend/src/components/AgentLogViewer.tsx
+- frontend/src/styles.css
+- docs/reports/report_15_execute_agent.md
+
+## Tests or Validations Run
+- `cd frontend; npm run build` initial run: Failed; TypeScript correctly reported that `activeSelection` could be null in the structured-panel reset key.
+- `cd frontend; npm run build` after the scoped nullability fix: Passed; TypeScript no-emit compilation and Vite production build completed with 109 modules transformed.
+- `git diff --check -- frontend/src/components/AgentLogViewer.tsx frontend/src/styles.css`: Passed; no whitespace errors. Git emitted only the existing LF-to-CRLF working-copy warning for `styles.css`.
+- Focused source contract check: Passed; confirmed all three recognized `step_name` dispatch cases, documented legacy `agent_name` fallback, status/timestamp/error detail, separately labeled raw viewers, and the structured-panel error boundary.
+- Frontend component tests: Not run; `frontend/package.json` has no test script or configured test runner, and tests are conditional for this task.
+- Real/fixture Agent 1, Agent 2, Agent 3, unknown, failed, and malformed browser checks: Not run; the task assigns these checks to Batch06.
+
+## Acceptance Check
+- Task acceptance condition: Recognized successful steps show their structured panel plus raw input/output; failed and unknown steps show metadata/errors plus raw input/output; a specialized parser failure cannot blank the detail panel.
+- Status: satisfied
+- Evidence: Successful recognized steps resolve from authoritative `step_name` values and render the matching Batch02 panel before two raw viewers. Failed steps skip structured dispatch but retain status, timestamp, optional error, and both raw viewers. Unknown steps retain metadata and both raw viewers. The structured panel is wrapped by an error boundary while raw viewers remain outside it, and the production build passes.
+
+## Artifacts Produced
+- Selected-step detail experience composed with all Batch02 structured and raw viewer components.
+- Defensive recognized-step resolver with documented legacy agent-name compatibility.
+- Structured-panel render failure fallback that preserves raw inspection.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly prohibited task checkbox updates; review/coordination owns progress changes.
+
+## Key Implementation Decisions
+- Used `step_name` as the primary and authoritative dispatch key; the `agent_name` mapping is consulted only when the step name is unknown.
+- Rendered specialized panels only for successful steps because the selected-task acceptance explicitly requires failed steps to show metadata/errors and raw payloads, without assuming success-shaped output.
+- Placed raw viewers outside the structured-panel error boundary so a component rendering exception cannot blank or hide persisted input/output.
+- Preserved raw timestamps for (03B); readable formatting while retaining raw values remains assigned to (03C).
+
+## Risks or Open Issues
+- Manual browser validation with real and malformed fixtures remains deferred to Batch06 as specified.
+- Empty-step handling, responsive stacking, final overflow checks, and timestamp formatting remain intentionally deferred to (03C).
+
+## Minor Issues Fixed During Execution
+- Corrected a strict TypeScript nullability issue in the structured-panel reset key found by the first build attempt.
+
+## Workflow Integrity Check
+- No issue identified. Accepted (03A) behavior was preserved, Batch02 components were present and imported directly, no user action was required, no task checkbox was changed, and runtime edits stayed within the two user-owned frontend files.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes, after review and acceptance of (03B)
+- handoff notes: Add the explicit zero-step state, readable timestamp formatting, responsive list/detail stacking, and final accessibility/overflow behavior without changing the recognized dispatch or raw-viewer guarantees.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch03 - Agent Step List and Detail Viewer
+
+## Task
+(03C) - Add viewer empty-state, formatting, and accessibility behavior
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_15.md > ## 11. Required Tests
+- docs/plans/Plan_15.md > ## 13. Failure Handling
+- docs/plans/Plan_15.md > ## 15. Reviewer Checklist
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Agent Step List and Detail Viewer
+- Task ID: (03C)
+- Task title: Add viewer empty-state, formatting, and accessibility behavior
+
+## Completed Work
+- Completed (03C) only while preserving the accepted (03A) ordered selection behavior and (03B) detail, structured-panel dispatch, and raw-viewer guarantees.
+- Added a dedicated zero-step status with a clear heading and explanatory text; no step navigation or broken detail selection renders when the array is empty.
+- Added readable locale-aware timestamps with invalid-value fallback while retaining each original timestamp in the semantic `dateTime` attribute and raw-value tooltip.
+- Added visible `Status: Success` and `Status: Failed` text, polite detail/structured-fallback announcements, and an alert role for persisted step errors so state is not communicated by color alone.
+- Added instance-unique heading/detail IDs, labeled navigation and detail regions, and button-to-detail `aria-controls` relationships.
+- Strengthened keyboard focus visibility, including selected controls and forced-colors mode.
+- Added responsive list/detail stacking, narrow metadata/header stacking, minimum-width containment, wrapping, and existing contained JSON/table scrolling support for long content.
+
+## Files Created or Modified
+- frontend/src/components/AgentLogViewer.tsx
+- frontend/src/styles.css
+- docs/reports/report_15_execute_agent.md
+
+## Tests or Validations Run
+- `cd frontend; npm run build`: Passed; TypeScript no-emit compilation and Vite production build completed with 109 modules transformed.
+- `git diff --check -- frontend/src/styles.css`: Passed; no whitespace errors. Git emitted only the existing LF-to-CRLF working-copy warning.
+- Trailing-whitespace scan for `frontend/src/components/AgentLogViewer.tsx`: Passed; no matches.
+- Scoped source contract audit for empty state, readable/raw timestamps, explicit status text, error/live announcements, unique IDs, focus-visible rules, responsive stacking, and long-content containment: Passed; all checks returned true.
+- Frontend component tests: Not run; `frontend/package.json` has no test script or configured test runner.
+- Manual browser keyboard, empty-fixture, and overflow checks: Not run; the selected task assigns these manual checks to Batch06 and the viewer is not mounted until Batch04/Batch05 integration.
+
+## Acceptance Check
+- Task acceptance condition: Zero steps does not render a broken selection panel; keyboard focus is visible; status is not color-only; long content stays within the workspace at desktop and narrow widths.
+- Status: satisfied
+- Evidence: The empty branch returns before navigation/detail rendering; step controls have explicit focus-visible and forced-colors rules; both list and detail statuses include visible status labels and errors are announced structurally; the desktop grid uses `minmax(0, 1fr)` with width containment and long-value wrapping, while the viewer and metadata stack at narrow breakpoints and JSON/tables retain contained scrolling.
+
+## Artifacts Produced
+- Accessible zero-step viewer state.
+- Reusable readable timestamp renderer preserving raw timestamp data.
+- Responsive, overflow-contained agent step workspace styling.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: The user explicitly prohibited checkbox updates; review/coordination owns progress changes.
+
+## Key Implementation Decisions
+- Used `Intl.DateTimeFormat` for readable local timestamps and preserved the backend value in the standard `dateTime` attribute plus a raw-value tooltip rather than mutating response data.
+- Kept native buttons and the existing index-plus-step selection model, adding semantics around them without changing accepted selection behavior.
+- Avoided outer overflow clipping because it could hide keyboard focus outlines; containment relies on zero-minimum grid tracks, wrapping, and child scroll regions.
+- Used `useId` so multiple viewer instances would not create duplicate accessibility IDs.
+
+## Risks or Open Issues
+- Browser-level keyboard, 320px/375px, real long-payload, and empty-run fixture validation remains scheduled for Batch06 as required by the task file.
+
+## Minor Issues Fixed During Execution
+- Removed an initial outer overflow-clipping rule after diff review because it could clip visible focus outlines at the workspace boundary.
+- Replaced static accessibility IDs with instance-unique IDs to preserve valid relationships if the reusable viewer is rendered more than once.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies (03A) and (03B) were marked complete and accepted; runtime edits remained within the two task-owned frontend files; no Batch04 page, route, API, or chat integration work was added; existing user and agent edits were preserved.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes, after review and acceptance of (03C)
+- handoff notes: Mount this completed viewer inside the Batch04 lookup/load state machine without changing its selection, dispatch, raw-data, empty-state, timestamp, or accessibility contracts.

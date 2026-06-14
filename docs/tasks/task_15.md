@@ -408,7 +408,7 @@ Developers need to move through every persisted step and correlate identity, sta
 
 ### Tasks
 
-- [ ] (03A): Build the ordered agent step list and selection state
+- [x] (03A): Build the ordered agent step list and selection state
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Plan_15.md` > `## 12. Acceptance Criteria`
   - Source Requirements:
     - Show agent name, step name, status, timestamp, and error indicator.
@@ -423,7 +423,7 @@ Developers need to move through every persisted step and correlate identity, sta
   - Blocked Condition: None.
   - Files: `frontend/src/components/AgentLogViewer.tsx`, `frontend/src/styles.css`
 
-- [ ] (03B): Build the selected-step detail panel and recognized-step dispatch
+- [x] (03B): Build the selected-step detail panel and recognized-step dispatch
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 7. Data Model / Schema Changes`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Plan_15.md` > `## 13. Failure Handling`; `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Show specialized panels for recognized steps.
@@ -439,7 +439,7 @@ Developers need to move through every persisted step and correlate identity, sta
   - Blocked Condition: None.
   - Files: `frontend/src/components/AgentLogViewer.tsx`, Batch02 component imports, `frontend/src/styles.css`
 
-- [ ] (03C): Add viewer empty-state, formatting, and accessibility behavior
+- [x] (03C): Add viewer empty-state, formatting, and accessibility behavior
   - Source of Truth: `docs/plans/Plan_15.md` > `## 11. Required Tests`; `docs/plans/Plan_15.md` > `## 13. Failure Handling`; `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Empty steps show an empty state.
@@ -929,7 +929,7 @@ Optional future tracks are outside the mandatory dependency chain.
 
 - [x] Batch01 - Existing Logs Contract and Frontend API Boundary
 - [x] Batch02 - Raw JSON and Specialized Step Panels
-- [ ] Batch03 - Agent Step List and Detail Viewer
+- [x] Batch03 - Agent Step List and Detail Viewer
 - [ ] Batch04 - Logs Page Lookup and Chat Integration
 - [ ] Batch05 - Routing, Navigation, Styling, and Scope Hardening
 - [ ] Batch06 - Automated and Manual Validation, Reporting, and Handoff
@@ -951,9 +951,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch03
 
-- [ ] (03A): Build the ordered agent step list and selection state
-- [ ] (03B): Build the selected-step detail panel and recognized-step dispatch
-- [ ] (03C): Add viewer empty-state, formatting, and accessibility behavior
+- [x] (03A): Build the ordered agent step list and selection state
+- [x] (03B): Build the selected-step detail panel and recognized-step dispatch
+- [x] (03C): Add viewer empty-state, formatting, and accessibility behavior
 
 #### Batch04
 
