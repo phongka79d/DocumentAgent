@@ -330,7 +330,12 @@ def _validate_rpc_deletion_row(
     row: dict[str, Any],
 ) -> DocumentDeleteResponse:
     validated = DocumentDeleteRpcSuccessRow.model_validate(row)
-    if validated.document_id != document_id or validated.deleted is not True:
+    if (
+        validated.document_id != document_id
+        or validated.deleted is not True
+        or validated.deleted_qdrant_points is not True
+        or validated.deleted_storage_file is not True
+    ):
         raise ValueError("Deletion response did not match the requested document.")
     return _delete_response_from_row(document_id, validated)
 
@@ -340,7 +345,11 @@ def _validate_audit_deletion_row(
     row: dict[str, Any],
 ) -> DocumentDeleteResponse:
     validated = DocumentDeleteAuditSuccessRow.model_validate(row)
-    if validated.document_id != document_id:
+    if (
+        validated.document_id != document_id
+        or validated.deleted_qdrant_points is not True
+        or validated.deleted_storage_file is not True
+    ):
         raise ValueError("Deletion audit did not match the requested document.")
     return _delete_response_from_row(document_id, validated)
 
@@ -454,4 +463,18 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
             "Details were suppressed for safety.",
             document_id,
         )
-        raise DocumentDeletionError(SAFE_DOCUMENT_DELETION_MESSAGE) from exc
+        reconciled_response = _reconcile_successful_deletion(
+            user_id=user_id,
+            document_id=document_id,
+        )
+        if reconciled_response is not None:
+            return reconciled_response
+        _raise_deletion_failure(
+            user_id=user_id,
+            document_id=document_id,
+            file_name=file_name,
+            failure_stage="database",
+            deleted_qdrant_points=deleted_qdrant_points,
+            deleted_storage_file=deleted_storage_file,
+            cause=exc,
+        )

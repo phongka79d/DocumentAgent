@@ -51,6 +51,13 @@ def _cascade_row() -> dict:
     }
 
 
+def _successful_audit_row() -> dict:
+    return {
+        **{key: value for key, value in _cascade_row().items() if key != "deleted"},
+        "status": "success",
+    }
+
+
 def _install_success_adapters(monkeypatch, *, cascade_row=None):
     events: list[str] = []
     get_metadata = Mock(side_effect=lambda *_: events.append("preflight") or _document_row())
@@ -336,14 +343,18 @@ def test_database_failure_retry_repeats_external_deletes_and_then_succeeds(
         {**_cascade_row(), "deleted_storage_file": 1},
         {**_cascade_row(), "deleted_chunks": -1},
         {**_cascade_row(), "deleted": False},
+        {**_cascade_row(), "deleted_qdrant_points": False},
+        {**_cascade_row(), "deleted_storage_file": False},
     ],
 )
-def test_malformed_rpc_success_row_raises_safe_error_without_failed_audit(
+def test_malformed_rpc_success_row_without_audit_records_database_failure(
     monkeypatch,
     caplog,
     malformed_row,
 ) -> None:
-    _, _, _, _, cascade, audit, _ = _install_success_adapters(monkeypatch)
+    _, _, _, _, cascade, audit, successful_audit = _install_success_adapters(
+        monkeypatch
+    )
     cascade.side_effect = None
     cascade.return_value = malformed_row
 
@@ -354,13 +365,18 @@ def test_malformed_rpc_success_row_raises_safe_error_without_failed_audit(
 
     assert str(exc_info.value) == SAFE_MESSAGE
     assert "validation error" not in caplog.text.lower()
-    audit.assert_not_called()
+    successful_audit.assert_called_once_with("single_user", str(DOCUMENT_ID))
+    assert audit.call_args.args[0]["failure_stage"] == "database"
+    assert audit.call_args.args[0]["deleted_qdrant_points"] is True
+    assert audit.call_args.args[0]["deleted_storage_file"] is True
 
 
 def test_rpc_success_row_rejects_mismatched_document_id(monkeypatch) -> None:
     row = _cascade_row()
     row["document_id"] = "55555555-5555-4555-8555-555555555555"
-    _, _, _, _, cascade, audit, _ = _install_success_adapters(monkeypatch)
+    _, _, _, _, cascade, audit, successful_audit = _install_success_adapters(
+        monkeypatch
+    )
     cascade.side_effect = None
     cascade.return_value = row
 
@@ -368,6 +384,35 @@ def test_rpc_success_row_rejects_mismatched_document_id(monkeypatch) -> None:
         document_service.delete_document(DOCUMENT_ID)
 
     assert str(exc_info.value) == SAFE_MESSAGE
+    successful_audit.assert_called_once_with("single_user", str(DOCUMENT_ID))
+    assert audit.call_args.args[0]["failure_stage"] == "database"
+
+
+@pytest.mark.parametrize(
+    "malformed_row",
+    [
+        {"document_id": str(DOCUMENT_ID)},
+        {**_cascade_row(), "deleted_qdrant_points": False},
+        {**_cascade_row(), "deleted_storage_file": False},
+    ],
+)
+def test_malformed_rpc_success_row_reconciles_valid_success_audit(
+    monkeypatch,
+    malformed_row,
+) -> None:
+    _, _, _, _, cascade, audit, successful_audit = _install_success_adapters(
+        monkeypatch
+    )
+    cascade.side_effect = None
+    cascade.return_value = malformed_row
+    successful_audit.return_value = _successful_audit_row()
+
+    response = document_service.delete_document(DOCUMENT_ID)
+
+    assert response.deleted is True
+    assert response.deleted_qdrant_points is True
+    assert response.deleted_storage_file is True
+    successful_audit.assert_called_once_with("single_user", str(DOCUMENT_ID))
     audit.assert_not_called()
 
 
@@ -382,10 +427,7 @@ def test_rpc_transport_error_reconciles_committed_success(monkeypatch) -> None:
         successful_audit,
     ) = _install_success_adapters(monkeypatch)
     cascade.side_effect = SupabaseConnectionError("rpc response secret")
-    successful_audit.return_value = {
-        **{key: value for key, value in _cascade_row().items() if key != "deleted"},
-        "status": "success",
-    }
+    successful_audit.return_value = _successful_audit_row()
 
     response = document_service.delete_document(DOCUMENT_ID)
 
