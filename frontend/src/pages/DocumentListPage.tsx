@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
-import { getDocumentApiError, listDocuments } from "../api/documents";
+import {
+  deleteDocument,
+  getDocumentApiError,
+  getDocumentApiErrorMessage,
+  listDocuments,
+} from "../api/documents";
 import { DocumentCard } from "../components/DocumentCard";
 import type { DocumentListItem } from "../types/documents";
 
@@ -17,6 +22,12 @@ export function DocumentListPage() {
     useState<DocumentListRequestState>("loading");
   const [requestError, setRequestError] = useState<DocumentListErrorState>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(
+    null,
+  );
+  const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
+  const deletingDocumentIdRef = useRef<string | null>(null);
+  const deletedDocumentIdsRef = useRef(new Set<string>());
   const requestInFlightRef = useRef(false);
   const latestRequestIdRef = useRef(0);
 
@@ -37,7 +48,11 @@ export function DocumentListPage() {
           return;
         }
 
-        setDocuments(response.documents);
+        setDocuments(
+          response.documents.filter(
+            (document) => !deletedDocumentIdsRef.current.has(document.id),
+          ),
+        );
         setRequestState("ready");
       } catch (error) {
         if (!isCurrentRequest || latestRequestIdRef.current !== requestId) {
@@ -100,7 +115,11 @@ export function DocumentListPage() {
         return;
       }
 
-      setDocuments(response.documents);
+      setDocuments(
+        response.documents.filter(
+          (document) => !deletedDocumentIdsRef.current.has(document.id),
+        ),
+      );
       setRequestState("ready");
     } catch (error) {
       if (latestRequestIdRef.current !== requestId) {
@@ -119,6 +138,45 @@ export function DocumentListPage() {
         requestInFlightRef.current = false;
         setIsRefreshing(false);
       }
+    }
+  }
+
+  async function handleDelete(document: DocumentListItem) {
+    if (deletingDocumentIdRef.current !== null) {
+      setDeleteErrors((currentDeleteErrors) => ({
+        ...currentDeleteErrors,
+        [document.id]: "Another document deletion is already in progress.",
+      }));
+      throw new Error("Another document deletion is already in progress.");
+    }
+
+    deletingDocumentIdRef.current = document.id;
+    setDeletingDocumentId(document.id);
+    setDeleteErrors((currentDeleteErrors) => ({
+      ...currentDeleteErrors,
+      [document.id]: "",
+    }));
+
+    try {
+      const response = await deleteDocument(document.id);
+
+      if (!response.deleted || response.document_id !== document.id) {
+        throw new Error("Unexpected document deletion response.");
+      }
+
+      deletedDocumentIdsRef.current.add(document.id);
+      setDocuments((currentDocuments) =>
+        currentDocuments.filter((item) => item.id !== document.id),
+      );
+    } catch (error) {
+      setDeleteErrors((currentDeleteErrors) => ({
+        ...currentDeleteErrors,
+        [document.id]: getDocumentApiErrorMessage(error),
+      }));
+      throw error;
+    } finally {
+      deletingDocumentIdRef.current = null;
+      setDeletingDocumentId(null);
     }
   }
 
@@ -183,7 +241,13 @@ export function DocumentListPage() {
       {hasDocuments ? (
         <div className="document-list-page__list">
           {documents.map((document) => (
-            <DocumentCard key={document.id} document={document} />
+            <DocumentCard
+              key={document.id}
+              document={document}
+              isDeleting={deletingDocumentId === document.id}
+              deleteError={deleteErrors[document.id] || null}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       ) : null}
