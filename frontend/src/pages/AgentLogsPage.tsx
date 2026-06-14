@@ -7,6 +7,7 @@ import {
   getAgentRunsApiErrorMessage,
 } from "../api/agentRuns";
 import { AgentLogViewer } from "../components/AgentLogViewer";
+import { DeletionLogsPanel } from "../components/DeletionLogsPanel";
 import type { AgentRunLogsResponse } from "../types/agentRuns";
 
 type AgentLogsLoadState =
@@ -244,6 +245,8 @@ export function AgentLogsPage() {
       {loadState === "success" && logsResponse ? (
         <AgentLogViewer steps={logsResponse.steps} />
       ) : null}
+
+      <DeletionLogsPanel />
     </section>
   );
 }
