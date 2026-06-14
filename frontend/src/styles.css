@@ -284,23 +284,20 @@ button {
 }
 
 .delete-document-dialog {
-  width: min(100% - 2rem, 34rem);
-  max-height: min(42rem, calc(100vh - 2rem));
-  border: 0;
-  border-radius: 0.75rem;
-  padding: 0;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
   color: #172033;
-  background: transparent;
-  overflow: visible;
-}
-
-.delete-document-dialog::backdrop {
   background: rgb(23 32 51 / 0.58);
 }
 
 .delete-document-dialog__panel {
   display: grid;
   gap: 1rem;
+  width: min(100%, 34rem);
   max-height: min(42rem, calc(100vh - 2rem));
   overflow: auto;
   border: 1px solid #d8deea;

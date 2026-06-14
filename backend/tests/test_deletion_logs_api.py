@@ -180,6 +180,26 @@ def test_list_deletion_logs_reports_no_more_when_lookahead_is_absent(
     assert result.has_more is False
 
 
+def test_list_deletion_logs_omits_private_supabase_fields_before_validation(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        deletion_log_service,
+        "get_settings",
+        lambda: SimpleNamespace(single_user_id="owner"),
+    )
+    monkeypatch.setattr(
+        deletion_log_service,
+        "fetch_deletion_logs",
+        Mock(return_value=[_row(user_id="owner")]),
+    )
+
+    result = deletion_log_service.list_deletion_logs(status="success", limit=20, offset=0)
+
+    assert len(result.logs) == 1
+    assert "user_id" not in result.logs[0].model_dump(mode="json")
+
+
 def test_list_deletion_logs_preserves_newest_first_adapter_order_when_trimming(
     monkeypatch,
 ) -> None:

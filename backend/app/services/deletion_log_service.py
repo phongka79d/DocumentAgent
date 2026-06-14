@@ -21,6 +21,14 @@ class DeletionLogServiceError(RuntimeError):
         super().__init__(self.public_message)
 
 
+def _to_public_log_row(row: dict) -> dict:
+    return {
+        field_name: row[field_name]
+        for field_name in DeletionLogResponse.model_fields
+        if field_name in row
+    }
+
+
 def list_deletion_logs(
     *,
     status: DeletionLogStatus | None,
@@ -30,7 +38,10 @@ def list_deletion_logs(
     try:
         user_id = get_settings().single_user_id
         rows = fetch_deletion_logs(user_id, status, limit + 1, offset)
-        logs = [DeletionLogResponse.model_validate(row) for row in rows[:limit]]
+        logs = [
+            DeletionLogResponse.model_validate(_to_public_log_row(row))
+            for row in rows[:limit]
+        ]
         return DeletionLogListResponse(
             logs=logs,
             limit=limit,

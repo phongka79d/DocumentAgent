@@ -1,5 +1,3 @@
-import { useEffect, useRef } from "react";
-
 import type { DocumentListItem } from "../types/documents";
 
 type DeleteDocumentDialogProps = {
@@ -17,50 +15,16 @@ export function DeleteDocumentDialog({
   onConfirm,
   onClose,
 }: DeleteDocumentDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const titleId = `delete-document-${document.id}-title`;
   const descriptionId = `delete-document-${document.id}-description`;
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-
-    if (dialog && !dialog.open) {
-      dialog.showModal();
-    }
-  }, []);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-
-    return () => {
-      if (dialog?.open) {
-        dialog.close();
-      }
-    };
-  }, []);
-
-  function handleCancel(event: React.SyntheticEvent<HTMLDialogElement>) {
+  function handleBackdropClick(event: React.PointerEvent<HTMLDivElement>) {
     if (isDeleting) {
       event.preventDefault();
       return;
     }
 
-    onClose();
-  }
-
-  function handlePointerDown(event: React.PointerEvent<HTMLDialogElement>) {
-    if (isDeleting) {
-      event.preventDefault();
-      return;
-    }
-
-    if (event.target === dialogRef.current) {
-      onClose();
-    }
-  }
-
-  function handleClose() {
-    if (!isDeleting) {
+    if (event.target === event.currentTarget) {
       onClose();
     }
   }
@@ -70,15 +34,14 @@ export function DeleteDocumentDialog({
   }
 
   return (
-    <dialog
-      ref={dialogRef}
+    <div
       className="delete-document-dialog"
+      role="dialog"
+      aria-modal="true"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
       aria-busy={isDeleting}
-      onCancel={handleCancel}
-      onClose={handleClose}
-      onPointerDown={handlePointerDown}
+      onPointerDown={handleBackdropClick}
     >
       <div className="delete-document-dialog__panel">
         <header className="delete-document-dialog__header">
@@ -130,6 +93,6 @@ export function DeleteDocumentDialog({
           </button>
         </div>
       </div>
-    </dialog>
+    </div>
   );
 }

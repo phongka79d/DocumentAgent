@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 from uuid import UUID
 
 from fastapi.testclient import TestClient
@@ -44,6 +44,39 @@ def test_upload_supported_file_returns_document_metadata(monkeypatch) -> None:
     }
     upload_mock.assert_awaited_once()
     assert upload_mock.await_args.args[0].filename == "contract.pdf"
+
+
+def test_upload_supported_file_schedules_processing_and_indexing(monkeypatch) -> None:
+    upload_mock = AsyncMock(
+        return_value=DocumentUploadResponse(
+            document_id=DOCUMENT_ID,
+            file_name="contract.pdf",
+            status="uploaded",
+        )
+    )
+    process_mock = Mock()
+    index_mock = Mock()
+    monkeypatch.setattr(
+        "app.api.documents.document_service.upload_document",
+        upload_mock,
+    )
+    monkeypatch.setattr(
+        "app.api.documents.document_processing_service.process_document",
+        process_mock,
+    )
+    monkeypatch.setattr(
+        "app.api.documents.embedding_service.index_document_chunks",
+        index_mock,
+    )
+
+    response = client.post(
+        "/api/documents/upload",
+        files={"file": ("contract.pdf", b"%PDF-1.4 content", "application/pdf")},
+    )
+
+    assert response.status_code == 200
+    process_mock.assert_called_once_with(DOCUMENT_ID)
+    index_mock.assert_called_once_with(DOCUMENT_ID)
 
 
 def test_upload_unsupported_file_type_returns_400(monkeypatch) -> None:
