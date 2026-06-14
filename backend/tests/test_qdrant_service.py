@@ -566,7 +566,7 @@ def test_delete_document_vectors_filters_configured_user_and_document(
     ]
 
 
-def test_delete_document_vectors_maps_missing_config_to_setup_error(
+def test_delete_document_vectors_maps_missing_config_to_safe_delete_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
@@ -580,10 +580,11 @@ def test_delete_document_vectors_maps_missing_config_to_setup_error(
         ),
     )
 
-    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+    with pytest.raises(qdrant_service.QdrantDeleteError) as exc_info:
         qdrant_service.delete_document_vectors("document-id")
 
-    assert str(exc_info.value) == "Missing QDRANT_COLLECTION."
+    assert str(exc_info.value) == "Qdrant document vector deletion failed."
+    assert "QDRANT_COLLECTION" not in str(exc_info.value)
 
 
 def test_delete_document_vectors_maps_provider_failure_to_safe_error_and_log(
@@ -611,7 +612,7 @@ def test_delete_document_vectors_maps_provider_failure_to_safe_error_and_log(
     assert "qdrant-secret-token" not in caplog.text
 
 
-def test_delete_document_vectors_preserves_client_setup_error(
+def test_delete_document_vectors_maps_client_setup_error_to_safe_delete_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     settings = _settings()
@@ -623,7 +624,8 @@ def test_delete_document_vectors_preserves_client_setup_error(
         Mock(side_effect=qdrant_service.QdrantSetupError("Safe setup failure.")),
     )
 
-    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+    with pytest.raises(qdrant_service.QdrantDeleteError) as exc_info:
         qdrant_service.delete_document_vectors("document-id")
 
-    assert str(exc_info.value) == "Safe setup failure."
+    assert str(exc_info.value) == "Qdrant document vector deletion failed."
+    assert "Safe setup failure" not in str(exc_info.value)

@@ -217,7 +217,11 @@ def delete_document_vectors(document_id: UUID | str) -> bool:
         settings = get_settings()
         qdrant_settings = settings.require_qdrant_settings()
     except RuntimeError as exc:
-        raise QdrantSetupError(str(exc)) from exc
+        logger.error(
+            "Qdrant document vector deletion failed. "
+            "Configuration details were suppressed for safety."
+        )
+        raise QdrantDeleteError("Qdrant document vector deletion failed.") from exc
 
     points_selector = FilterSelector(
         filter=Filter(
@@ -240,8 +244,12 @@ def delete_document_vectors(document_id: UUID | str) -> bool:
             points_selector=points_selector,
             wait=True,
         )
-    except QdrantSetupError:
-        raise
+    except QdrantSetupError as exc:
+        logger.error(
+            "Qdrant document vector deletion failed. "
+            "Configuration details were suppressed for safety."
+        )
+        raise QdrantDeleteError("Qdrant document vector deletion failed.") from exc
     except Exception as exc:
         logger.error(
             "Qdrant document vector deletion failed. "

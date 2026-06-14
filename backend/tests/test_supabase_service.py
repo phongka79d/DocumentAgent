@@ -1588,6 +1588,38 @@ def test_insert_deletion_log_inserts_row_and_returns_first_result(
     query.execute.assert_called_once_with()
 
 
+def test_insert_deletion_log_preserves_exact_failed_audit_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {
+        "user_id": "single_user",
+        "document_id": "document-id",
+        "file_name": "failed-file.txt",
+        "status": "failed",
+        "failure_stage": "qdrant",
+        "error_message": "Document vector deletion failed.",
+        "deleted_storage_file": False,
+        "deleted_qdrant_points": False,
+        "deleted_chunks": 0,
+        "deleted_entities": 0,
+        "deleted_relationships": 0,
+        "deleted_agent_runs": 0,
+        "deleted_agent_steps": 0,
+        "deleted_chat_messages": 0,
+        "deleted_chat_sessions": 0,
+    }
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[{"id": "log-id", **row}])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_deletion_log(row)
+
+    assert result == {"id": "log-id", **row}
+    query.insert.assert_called_once_with(row)
+
+
 def test_list_deletion_logs_omits_status_and_uses_descending_inclusive_range(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
