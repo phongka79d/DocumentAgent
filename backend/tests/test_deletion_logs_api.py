@@ -14,6 +14,7 @@ from pydantic import ValidationError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.schemas.deletion_logs import (
+    SAFE_DELETION_ERROR_MESSAGE,
     DeletionLogListResponse,
     DeletionLogResponse,
     DeletionLogStatus,
@@ -101,6 +102,43 @@ def test_deletion_log_response_rejects_malformed_values(
 def test_deletion_log_response_rejects_private_or_unknown_fields() -> None:
     with pytest.raises(ValidationError):
         DeletionLogResponse.model_validate(_row(user_id="single_user"))
+
+
+def test_failed_deletion_log_normalizes_unsafe_stored_error_text() -> None:
+    item = DeletionLogResponse.model_validate(
+        _row(
+            status="failed",
+            failure_stage="database",
+            error_message="postgres password=secret internal traceback",
+        )
+    )
+
+    assert item.error_message == SAFE_DELETION_ERROR_MESSAGE
+    assert "password" not in item.model_dump_json()
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"status": "failed", "failure_stage": None, "error_message": "raw"},
+        {"status": "failed", "failure_stage": "network", "error_message": "raw"},
+        {
+            "status": "success",
+            "failure_stage": "storage",
+            "error_message": None,
+        },
+        {
+            "status": "success",
+            "failure_stage": None,
+            "error_message": "raw",
+        },
+    ],
+)
+def test_deletion_log_response_rejects_invalid_status_consistency(
+    overrides: dict,
+) -> None:
+    with pytest.raises(ValidationError):
+        DeletionLogResponse.model_validate(_row(**overrides))
 
 
 def test_deletion_log_status_is_exported_from_schema() -> None:
@@ -201,6 +239,68 @@ def test_list_deletion_logs_wraps_dependency_and_validation_failures(
     assert "password" not in str(exc_info.value)
 
 
+def test_list_deletion_logs_normalizes_unsafe_stored_error(monkeypatch) -> None:
+    monkeypatch.setattr(
+        deletion_log_service,
+        "get_settings",
+        lambda: SimpleNamespace(single_user_id="owner"),
+    )
+    monkeypatch.setattr(
+        deletion_log_service,
+        "fetch_deletion_logs",
+        Mock(
+            return_value=[
+                _row(
+                    status="failed",
+                    failure_stage="qdrant",
+                    error_message="provider token and traceback",
+                )
+            ]
+        ),
+    )
+
+    result = deletion_log_service.list_deletion_logs(
+        status="failed",
+        limit=20,
+        offset=0,
+    )
+
+    assert result.logs[0].error_message == SAFE_DELETION_ERROR_MESSAGE
+
+
+def test_list_deletion_logs_rejects_malformed_failure_stage_safely(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        deletion_log_service,
+        "get_settings",
+        lambda: SimpleNamespace(single_user_id="owner"),
+    )
+    monkeypatch.setattr(
+        deletion_log_service,
+        "fetch_deletion_logs",
+        Mock(
+            return_value=[
+                _row(
+                    status="failed",
+                    failure_stage="provider-secret-stage",
+                    error_message="provider token",
+                )
+            ]
+        ),
+    )
+
+    with pytest.raises(deletion_log_service.DeletionLogServiceError) as exc_info:
+        deletion_log_service.list_deletion_logs(
+            status="failed",
+            limit=20,
+            offset=0,
+        )
+
+    assert str(exc_info.value) == "Deletion logs are temporarily unavailable."
+    assert "provider" not in str(exc_info.value)
+
+
 def test_get_deletion_logs_returns_filtered_public_response(monkeypatch) -> None:
     service = Mock(
         return_value=DeletionLogListResponse(
@@ -278,18 +378,11 @@ def test_get_deletion_logs_rejects_invalid_parameters(query: str) -> None:
     assert response.status_code == 422
 
 
-@pytest.mark.parametrize(
-    "failure",
-    [
-        deletion_log_service.DeletionLogServiceError(),
-        RuntimeError("database password leaked"),
-    ],
-)
-def test_get_deletion_logs_returns_safe_500(monkeypatch, failure: Exception) -> None:
+def test_get_deletion_logs_returns_safe_500_for_service_error(monkeypatch) -> None:
     monkeypatch.setattr(
         deletion_log_service,
         "list_deletion_logs",
-        Mock(side_effect=failure),
+        Mock(side_effect=deletion_log_service.DeletionLogServiceError()),
     )
 
     response = _client().get("/api/deletion-logs")
@@ -298,6 +391,27 @@ def test_get_deletion_logs_returns_safe_500(monkeypatch, failure: Exception) -> 
     assert response.json() == {
         "detail": "Deletion logs are temporarily unavailable."
     }
+
+
+def test_get_deletion_logs_logs_unexpected_exception_and_returns_safe_500(
+    monkeypatch,
+) -> None:
+    logger = Mock()
+    monkeypatch.setattr(deletion_log_service, "list_deletion_logs", Mock(
+        side_effect=RuntimeError("database password leaked")
+    ))
+    deletion_logs_api = import_module("app.api.deletion_logs")
+    monkeypatch.setattr(deletion_logs_api, "logger", logger, raising=False)
+
+    response = _client().get("/api/deletion-logs")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": "Deletion logs are temporarily unavailable."
+    }
+    logger.exception.assert_called_once_with(
+        "Unexpected deletion log API failure"
+    )
 
 
 def test_production_app_registers_deletion_logs_route() -> None:
