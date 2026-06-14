@@ -32,13 +32,18 @@ export function DocumentCard({
   document,
   isDeleting = false,
   deleteError = null,
-  onDelete = async () => undefined,
+  onDelete,
 }: DocumentCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const uploadTime = formatUploadTime(document.created_at);
   const hasProcessingError = Boolean(document.error_message?.trim());
+  const canDelete = onDelete !== undefined;
 
   async function handleDelete() {
+    if (!onDelete) {
+      return;
+    }
+
     await onDelete(document);
   }
 
@@ -72,16 +77,18 @@ export function DocumentCard({
         </div>
         <div className="document-card__actions">
           <StatusBadge status={document.status} />
-          <button
-            className="document-card__delete"
-            type="button"
-            disabled={isDeleting}
-            onClick={() => {
-              setIsDeleteDialogOpen(true);
-            }}
-          >
-            Delete
-          </button>
+          {canDelete ? (
+            <button
+              className="document-card__delete"
+              type="button"
+              disabled={isDeleting}
+              onClick={() => {
+                setIsDeleteDialogOpen(true);
+              }}
+            >
+              Delete
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -91,7 +98,7 @@ export function DocumentCard({
         </p>
       ) : null}
 
-      {isDeleteDialogOpen ? (
+      {canDelete && isDeleteDialogOpen ? (
         <DeleteDocumentDialog
           document={document}
           isDeleting={isDeleting}

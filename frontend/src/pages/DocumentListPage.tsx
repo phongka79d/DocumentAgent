@@ -30,6 +30,12 @@ export function DocumentListPage() {
   const deletedDocumentIdsRef = useRef(new Set<string>());
   const requestInFlightRef = useRef(false);
   const latestRequestIdRef = useRef(0);
+  const documentsRef = useRef<DocumentListItem[]>([]);
+
+  function setVisibleDocuments(nextDocuments: DocumentListItem[]) {
+    documentsRef.current = nextDocuments;
+    setDocuments(nextDocuments);
+  }
 
   useEffect(() => {
     let isCurrentRequest = true;
@@ -48,11 +54,11 @@ export function DocumentListPage() {
           return;
         }
 
-        setDocuments(
-          response.documents.filter(
-            (document) => !deletedDocumentIdsRef.current.has(document.id),
-          ),
-        );
+      setVisibleDocuments(
+        response.documents.filter(
+          (document) => !deletedDocumentIdsRef.current.has(document.id),
+        ),
+      );
         setRequestState("ready");
       } catch (error) {
         if (!isCurrentRequest || latestRequestIdRef.current !== requestId) {
@@ -66,7 +72,7 @@ export function DocumentListPage() {
           message: apiError.message,
         });
         setRequestState((currentRequestState) =>
-          currentRequestState === "ready" && documents.length > 0
+          currentRequestState === "ready" && documentsRef.current.length > 0
             ? "ready"
             : "error",
         );
@@ -105,7 +111,7 @@ export function DocumentListPage() {
     latestRequestIdRef.current = requestId;
     requestInFlightRef.current = true;
     setIsRefreshing(true);
-    setRequestState(hasDocuments ? "ready" : "loading");
+    setRequestState(documentsRef.current.length > 0 ? "ready" : "loading");
     setRequestError(null);
 
     try {
@@ -115,11 +121,11 @@ export function DocumentListPage() {
         return;
       }
 
-      setDocuments(
-        response.documents.filter(
-          (document) => !deletedDocumentIdsRef.current.has(document.id),
-        ),
-      );
+        setVisibleDocuments(
+          response.documents.filter(
+            (document) => !deletedDocumentIdsRef.current.has(document.id),
+          ),
+        );
       setRequestState("ready");
     } catch (error) {
       if (latestRequestIdRef.current !== requestId) {
@@ -132,7 +138,7 @@ export function DocumentListPage() {
         kind: apiError.kind,
         message: apiError.message,
       });
-      setRequestState(hasDocuments ? "ready" : "error");
+      setRequestState(documentsRef.current.length > 0 ? "ready" : "error");
     } finally {
       if (latestRequestIdRef.current === requestId) {
         requestInFlightRef.current = false;
@@ -165,9 +171,10 @@ export function DocumentListPage() {
       }
 
       deletedDocumentIdsRef.current.add(document.id);
-      setDocuments((currentDocuments) =>
-        currentDocuments.filter((item) => item.id !== document.id),
+      const nextDocuments = documentsRef.current.filter(
+        (item) => item.id !== document.id,
       );
+      setVisibleDocuments(nextDocuments);
     } catch (error) {
       setDeleteErrors((currentDeleteErrors) => ({
         ...currentDeleteErrors,
