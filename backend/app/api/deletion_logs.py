@@ -35,7 +35,10 @@ def get_deletion_logs(
             detail=exc.public_message,
         ) from exc
     except Exception as exc:
-        logger.exception("Unexpected deletion log API failure")
+        logger.error(
+            "Unexpected deletion log API failure: %s",
+            type(exc).__name__,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=deletion_log_service.SAFE_DELETION_LOG_MESSAGE,

@@ -409,8 +409,9 @@ def test_get_deletion_logs_logs_unexpected_exception_and_returns_safe_500(
     assert response.json() == {
         "detail": "Deletion logs are temporarily unavailable."
     }
-    logger.exception.assert_called_once_with(
-        "Unexpected deletion log API failure"
+    logger.error.assert_called_once_with(
+        "Unexpected deletion log API failure: %s",
+        "RuntimeError",
     )
 
 
