@@ -74,41 +74,6 @@ _CLAIM_HELPER_VERB_PATTERN = re.compile(
     r"should)\b",
     re.IGNORECASE,
 )
-_INTERPRETIVE_QUESTION_PATTERN = re.compile(
-    r"\b(?:mean|means|meaning|say|says|said|think|thinks|thought|feel|feels|"
-    r"felt|why|vì sao|vi sao|ý gì|y gi|nghĩ gì|nghi gi|nói gì|noi gi)\b",
-    re.IGNORECASE,
-)
-_QUESTION_STOPWORDS = {
-    "a",
-    "an",
-    "and",
-    "are",
-    "does",
-    "had",
-    "has",
-    "have",
-    "he",
-    "her",
-    "him",
-    "his",
-    "is",
-    "it",
-    "not",
-    "she",
-    "that",
-    "the",
-    "they",
-    "this",
-    "to",
-    "was",
-    "what",
-    "when",
-    "where",
-    "who",
-    "why",
-    "with",
-}
 
 
 class VerificationAgentError(RuntimeError):
@@ -334,92 +299,6 @@ def _filter_duplicate_verified_chunks(
             "rejected_chunks": rejected_chunks,
         }
     )
-
-
-def _question_terms(question: str) -> set[str]:
-    return {
-        term
-        for term in re.findall(r"[a-z0-9]+", question.lower())
-        if len(term) > 2 and term not in _QUESTION_STOPWORDS
-    }
-
-
-def _sentence_like_excerpts(content: str) -> list[str]:
-    normalized = _normalize_quote_text(content)
-    return [
-        excerpt.strip()
-        for excerpt in re.split(r"(?<=[.!?])\s+", normalized)
-        if excerpt.strip()
-    ]
-
-
-def _best_quote_for_question(content: str, question: str) -> str:
-    terms = _question_terms(question)
-    excerpts = _sentence_like_excerpts(content)
-    if not excerpts:
-        return content.strip()
-
-    best_excerpt = max(
-        excerpts,
-        key=lambda excerpt: len(_question_terms(excerpt) & terms),
-    )
-    if len(best_excerpt) <= 700:
-        return best_excerpt
-
-    return best_excerpt[:700].rsplit(" ", 1)[0].strip()
-
-
-def _rescue_interpretive_evidence(
-    verification_output: VerificationAgentOutput,
-    input_data: VerificationAgentInput,
-) -> VerificationAgentOutput:
-    if verification_output.verified_chunks:
-        return verification_output
-    if not _INTERPRETIVE_QUESTION_PATTERN.search(input_data.question):
-        return verification_output
-
-    candidates_by_score = sorted(
-        input_data.candidates,
-        key=lambda candidate: candidate.final_score,
-        reverse=True,
-    )
-    for candidate in candidates_by_score:
-        if candidate.final_score < 0.5 or candidate.keyword_overlap < 0.45:
-            continue
-        if not candidate.content:
-            continue
-
-        quote = _best_quote_for_question(candidate.content, input_data.question)
-        if not quote:
-            continue
-
-        rescued_chunk = VerifiedChunk(
-            chunk_id=candidate.chunk_id,
-            document_id=candidate.document_id,
-            file_name=candidate.file_name,
-            quote=quote,
-            page_number=candidate.page_number,
-            verification_reason=(
-                "Candidate contains high-overlap source text that supports a "
-                "simple interpretation of the question."
-            ),
-            supports_simple_reasoning=True,
-        )
-        rejected_chunks = [
-            chunk
-            for chunk in verification_output.rejected_chunks
-            if chunk.chunk_id != candidate.chunk_id
-        ]
-        return verification_output.model_copy(
-            update={
-                "verified_chunks": [rescued_chunk],
-                "rejected_chunks": rejected_chunks,
-                "missing_information": False,
-                "confidence": max(verification_output.confidence, 0.55),
-            }
-        )
-
-    return verification_output
 
 
 def _normalize_date_match(match: re.Match[str]) -> str:
@@ -680,12 +559,8 @@ def run_verification_agent(
             quote_validated_output,
             validated_input,
         )
-        rescued_output = _rescue_interpretive_evidence(
-            duplicate_filtered_output,
-            validated_input,
-        )
         post_processed_output = _apply_missing_information_adjustments(
-            rescued_output
+            duplicate_filtered_output
         )
         finalized_output = _finalize_verification_output(post_processed_output)
     except _VerificationAgentFailure as exc:
