@@ -55,7 +55,8 @@ def test_deletion_logs_has_required_indexes() -> None:
     sql = migration_sql()
 
     assert re.search(
-        r"create\s+index.*on\s+deletion_logs\s*\(\s*user_id\s*,\s*created_at\s*\)",
+        r"create\s+index.*on\s+deletion_logs\s*"
+        r"\(\s*user_id\s*,\s*created_at\s+desc\s*\)",
         sql,
         re.DOTALL,
     )

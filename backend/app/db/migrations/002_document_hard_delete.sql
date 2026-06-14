@@ -19,7 +19,7 @@ create table if not exists deletion_logs (
 );
 
 create index if not exists idx_deletion_logs_user_created_at
-  on deletion_logs(user_id, created_at);
+  on deletion_logs(user_id, created_at desc);
 create index if not exists idx_deletion_logs_user_status
   on deletion_logs(user_id, status);
 
