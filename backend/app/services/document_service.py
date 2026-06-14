@@ -25,7 +25,7 @@ from app.utils.file_validation import sanitize_filename, validate_upload_file
 
 
 logger = logging.getLogger(__name__)
-SAFE_DOCUMENT_DELETION_MESSAGE = "Document deletion failed."
+SAFE_DOCUMENT_DELETION_MESSAGE = "Document deletion failed. Please try again."
 
 
 class DocumentServiceError(RuntimeError):

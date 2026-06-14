@@ -16,7 +16,7 @@ from app.services import document_service
 
 DOCUMENT_ID = UUID("44444444-4444-4444-8444-444444444444")
 STORAGE_PATH = f"documents/single_user/{DOCUMENT_ID}/sample.txt"
-SAFE_MESSAGE = "Document deletion failed."
+SAFE_MESSAGE = "Document deletion failed. Please try again."
 
 
 def _settings() -> SimpleNamespace:
@@ -215,6 +215,96 @@ def test_partial_progress_is_recorded_and_retry_repeats_idempotent_adapters(
             "deleted_chat_sessions": 0,
         }
     )
+
+
+def test_database_failure_retry_repeats_external_deletes_and_then_succeeds(
+    monkeypatch,
+    caplog,
+) -> None:
+    events: list[str] = []
+    provider_secret = "database-provider-secret"
+    get_metadata = Mock(
+        side_effect=lambda *_: events.append("preflight") or _document_row()
+    )
+    delete_vectors = Mock(side_effect=lambda *_: events.append("qdrant") or True)
+    remove_file = Mock(side_effect=lambda *_: events.append("storage") or True)
+    cascade_results = iter([RuntimeError(provider_secret), _cascade_row()])
+
+    def cascade(*_args):
+        events.append("database")
+        result = next(cascade_results)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    cascade_mock = Mock(side_effect=cascade)
+    audit = Mock()
+    monkeypatch.setattr(document_service, "get_settings", _settings)
+    monkeypatch.setattr(document_service, "get_document_metadata", get_metadata)
+    monkeypatch.setattr(document_service, "delete_document_vectors", delete_vectors)
+    monkeypatch.setattr(document_service, "remove_document_file", remove_file)
+    monkeypatch.setattr(
+        document_service, "delete_owned_document_cascade", cascade_mock
+    )
+    monkeypatch.setattr(document_service, "insert_deletion_log", audit)
+
+    with caplog.at_level(logging.ERROR), pytest.raises(
+        document_service.DocumentDeletionError
+    ) as exc_info:
+        document_service.delete_document(DOCUMENT_ID)
+    response = document_service.delete_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == SAFE_MESSAGE
+    assert provider_secret not in caplog.text
+    assert events == [
+        "preflight",
+        "qdrant",
+        "storage",
+        "database",
+        "preflight",
+        "qdrant",
+        "storage",
+        "database",
+    ]
+    assert get_metadata.call_count == 2
+    assert delete_vectors.call_args_list == [call(DOCUMENT_ID), call(DOCUMENT_ID)]
+    assert remove_file.call_args_list == [call(STORAGE_PATH), call(STORAGE_PATH)]
+    assert cascade_mock.call_args_list == [
+        call(str(DOCUMENT_ID), "single_user"),
+        call(str(DOCUMENT_ID), "single_user"),
+    ]
+    audit.assert_called_once_with(
+        {
+            "user_id": "single_user",
+            "document_id": str(DOCUMENT_ID),
+            "file_name": "sample.txt",
+            "status": "failed",
+            "failure_stage": "database",
+            "error_message": SAFE_MESSAGE,
+            "deleted_storage_file": True,
+            "deleted_qdrant_points": True,
+            "deleted_chunks": 0,
+            "deleted_entities": 0,
+            "deleted_relationships": 0,
+            "deleted_agent_runs": 0,
+            "deleted_agent_steps": 0,
+            "deleted_chat_messages": 0,
+            "deleted_chat_sessions": 0,
+        }
+    )
+    assert response.model_dump(mode="json") == {
+        "document_id": str(DOCUMENT_ID),
+        "deleted": True,
+        "deleted_agent_runs": 2,
+        "deleted_agent_steps": 6,
+        "deleted_chat_messages": 7,
+        "deleted_chat_sessions": 1,
+        "deleted_chunks": 3,
+        "deleted_entities": 4,
+        "deleted_relationships": 5,
+        "deleted_qdrant_points": True,
+        "deleted_storage_file": True,
+    }
 
 
 def test_cascade_none_after_preflight_maps_to_not_found(monkeypatch) -> None:
