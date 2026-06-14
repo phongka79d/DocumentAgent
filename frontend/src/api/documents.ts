@@ -2,6 +2,7 @@ import axios, { type AxiosProgressEvent } from "axios";
 
 import { apiClient } from "./client";
 import type {
+  DocumentDeleteResponse,
   DocumentDetailResponse,
   DocumentListResponse,
   DocumentUploadResponse,
@@ -120,5 +121,15 @@ export function getDocument(
 
   return apiClient
     .get<DocumentDetailResponse>(`/api/documents/${encodedDocumentId}`)
+    .then((response) => response.data);
+}
+
+export function deleteDocument(
+  documentId: string,
+): Promise<DocumentDeleteResponse> {
+  const encodedDocumentId = encodeURIComponent(documentId);
+
+  return apiClient
+    .delete<DocumentDeleteResponse>(`/api/documents/${encodedDocumentId}`)
     .then((response) => response.data);
 }

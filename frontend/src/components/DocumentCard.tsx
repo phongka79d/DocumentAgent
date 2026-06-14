@@ -1,8 +1,14 @@
+import { useState } from "react";
+
+import { DeleteDocumentDialog } from "./DeleteDocumentDialog";
 import { StatusBadge } from "./StatusBadge";
 import type { DocumentListItem } from "../types/documents";
 
 type DocumentCardProps = {
   document: DocumentListItem;
+  isDeleting?: boolean;
+  deleteError?: string | null;
+  onDelete?: (document: DocumentListItem) => Promise<void>;
 };
 
 function formatUploadTime(createdAt: string) {
@@ -22,9 +28,19 @@ function formatChunkCount(chunkCount: number) {
   return `${chunkCount.toLocaleString()} ${chunkCount === 1 ? "chunk" : "chunks"}`;
 }
 
-export function DocumentCard({ document }: DocumentCardProps) {
+export function DocumentCard({
+  document,
+  isDeleting = false,
+  deleteError = null,
+  onDelete = async () => undefined,
+}: DocumentCardProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const uploadTime = formatUploadTime(document.created_at);
   const hasProcessingError = Boolean(document.error_message?.trim());
+
+  async function handleDelete() {
+    await onDelete(document);
+  }
 
   return (
     <article className="document-card" aria-labelledby={`document-${document.id}`}>
@@ -54,13 +70,39 @@ export function DocumentCard({ document }: DocumentCardProps) {
             </div>
           </dl>
         </div>
-        <StatusBadge status={document.status} />
+        <div className="document-card__actions">
+          <StatusBadge status={document.status} />
+          <button
+            className="document-card__delete"
+            type="button"
+            disabled={isDeleting}
+            onClick={() => {
+              setIsDeleteDialogOpen(true);
+            }}
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       {hasProcessingError ? (
         <p className="document-card__processing-error">
           <strong>Processing error:</strong> {document.error_message}
         </p>
+      ) : null}
+
+      {isDeleteDialogOpen ? (
+        <DeleteDocumentDialog
+          document={document}
+          isDeleting={isDeleting}
+          errorMessage={deleteError}
+          onConfirm={handleDelete}
+          onClose={() => {
+            if (!isDeleting) {
+              setIsDeleteDialogOpen(false);
+            }
+          }}
+        />
       ) : null}
     </article>
   );

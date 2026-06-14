@@ -40,3 +40,17 @@ export type DocumentDetailResponse = DocumentListItem & {
   updated_at: string;
   chunks: DocumentChunk[];
 };
+
+export type DocumentDeleteResponse = {
+  document_id: string;
+  deleted: true;
+  deleted_agent_runs: number;
+  deleted_agent_steps: number;
+  deleted_chat_messages: number;
+  deleted_chat_sessions: number;
+  deleted_chunks: number;
+  deleted_entities: number;
+  deleted_relationships: number;
+  deleted_qdrant_points: boolean;
+  deleted_storage_file: boolean;
+};

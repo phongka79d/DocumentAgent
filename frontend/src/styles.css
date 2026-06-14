@@ -185,6 +185,16 @@ button {
   gap: 0.65rem;
 }
 
+.document-card__actions {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .document-card__name {
   min-width: 0;
   margin: 0;
@@ -236,6 +246,205 @@ button {
   background: #fff4f2;
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+.document-card__delete {
+  border: 1px solid #b42318;
+  border-radius: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+  color: #ffffff;
+  background: #b42318;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.25;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.document-card__delete:hover:not(:disabled) {
+  border-color: #8f1b13;
+  background: #8f1b13;
+}
+
+.document-card__delete:focus-visible {
+  outline: 0.2rem solid #172033;
+  outline-offset: 0.15rem;
+  box-shadow: 0 0 0 0.2rem #ffffff;
+}
+
+.document-card__delete:disabled {
+  cursor: not-allowed;
+  border-color: #98a2b3;
+  color: #ffffff;
+  background: #98a2b3;
+  opacity: 0.8;
+}
+
+.delete-document-dialog {
+  width: min(100% - 2rem, 34rem);
+  max-height: min(42rem, calc(100vh - 2rem));
+  border: 0;
+  border-radius: 0.75rem;
+  padding: 0;
+  color: #172033;
+  background: transparent;
+  overflow: visible;
+}
+
+.delete-document-dialog::backdrop {
+  background: rgb(23 32 51 / 0.58);
+}
+
+.delete-document-dialog__panel {
+  display: grid;
+  gap: 1rem;
+  max-height: min(42rem, calc(100vh - 2rem));
+  overflow: auto;
+  border: 1px solid #d8deea;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 1.5rem 3rem rgb(23 32 51 / 0.22);
+}
+
+.delete-document-dialog__header {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.delete-document-dialog__eyebrow,
+.delete-document-dialog__header h2,
+.delete-document-dialog__body p,
+.delete-document-dialog__warning p,
+.delete-document-dialog__warning ul,
+.delete-document-dialog__error {
+  margin: 0;
+}
+
+.delete-document-dialog__eyebrow {
+  color: #b42318;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.delete-document-dialog__header h2 {
+  overflow-wrap: anywhere;
+  color: #172033;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.delete-document-dialog__body {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+  color: #24324a;
+  line-height: 1.5;
+}
+
+.delete-document-dialog__body strong {
+  overflow-wrap: anywhere;
+}
+
+.delete-document-dialog__warning {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid #efb4ad;
+  border-left: 0.25rem solid #d92d20;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1rem;
+  color: #8f1b13;
+  background: #fff4f2;
+}
+
+.delete-document-dialog__warning-title {
+  font-weight: 800;
+}
+
+.delete-document-dialog__warning ul {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 1.25rem;
+}
+
+.delete-document-dialog__warning li {
+  overflow-wrap: anywhere;
+}
+
+.delete-document-dialog__error {
+  border: 1px solid #efb4ad;
+  border-left: 0.25rem solid #d92d20;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1rem;
+  overflow-wrap: anywhere;
+  color: #8f1b13;
+  background: #fff4f2;
+  line-height: 1.45;
+}
+
+.delete-document-dialog__actions {
+  display: flex;
+  min-width: 0;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.delete-document-dialog__cancel,
+.delete-document-dialog__delete {
+  border-radius: 0.4rem;
+  padding: 0.65rem 0.95rem;
+  cursor: pointer;
+  font-weight: 800;
+  line-height: 1.25;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.delete-document-dialog__cancel {
+  border: 1px solid #aeb8ca;
+  color: #24324a;
+  background: #ffffff;
+}
+
+.delete-document-dialog__cancel:hover:not(:disabled) {
+  border-color: #667085;
+  background: #f5f7fb;
+}
+
+.delete-document-dialog__delete {
+  border: 1px solid #b42318;
+  color: #ffffff;
+  background: #b42318;
+}
+
+.delete-document-dialog__delete:hover:not(:disabled) {
+  border-color: #8f1b13;
+  background: #8f1b13;
+}
+
+.delete-document-dialog__cancel:focus-visible,
+.delete-document-dialog__delete:focus-visible {
+  outline: 0.2rem solid #172033;
+  outline-offset: 0.15rem;
+  box-shadow: 0 0 0 0.2rem #ffffff;
+}
+
+.delete-document-dialog__cancel:disabled,
+.delete-document-dialog__delete:disabled {
+  cursor: not-allowed;
+  border-color: #98a2b3;
+  color: #ffffff;
+  background: #98a2b3;
+  opacity: 0.8;
 }
 
 .document-selector {
