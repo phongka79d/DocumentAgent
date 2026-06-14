@@ -194,6 +194,7 @@ export function AgentLogViewer({ steps }: AgentLogViewerProps) {
                     isSelected ? " agent-log-viewer__step-control--selected" : ""
                   }`}
                   aria-pressed={isSelected}
+                  aria-current={isSelected ? "step" : undefined}
                   aria-controls={detailId}
                   onClick={() => setSelectedStep({ index, step })}
                 >

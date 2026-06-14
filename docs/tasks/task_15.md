@@ -615,7 +615,7 @@ The feature is incomplete until it is reachable, usable at narrow widths, safe a
 
 ### Tasks
 
-- [ ] (05A): Mount Agent Logs routes and primary navigation
+- [x] (05A): Mount Agent Logs routes and primary navigation
   - Source of Truth: `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 16. Suggested Project Structure`
   - Source Requirements:
     - Add route and navigation for Agent Logs.
@@ -630,7 +630,7 @@ The feature is incomplete until it is reachable, usable at narrow widths, safe a
   - Blocked Condition: None.
   - Files: `frontend/src/App.tsx`
 
-- [ ] (05B): Complete responsive, overflow-safe, and accessible debug styling
+- [x] (05B): Complete responsive, overflow-safe, and accessible debug styling
   - Source of Truth: `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Plan_15.md` > `## 11. Required Tests`; `docs/plans/Plan_15.md` > `## 13. Failure Handling`; `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`
   - Source Requirements:
     - Long JSON and quotes must not overflow the page.
@@ -646,7 +646,7 @@ The feature is incomplete until it is reachable, usable at narrow widths, safe a
   - Blocked Condition: None.
   - Files: `frontend/src/styles.css`, Agent Logs page/components only when markup adjustments are required
 
-- [ ] (05C): Perform Plan 15 secret, endpoint, and scope hardening
+- [x] (05C): Perform Plan 15 secret, endpoint, and scope hardening
   - Source of Truth: `docs/plans/Plan_15.md` > `## 2. Why This Plan Exists`; `docs/plans/Plan_15.md` > `## 4. Out of Scope`; `docs/plans/Plan_15.md` > `## 10. Configuration and Environment Variables`; `docs/plans/Plan_15.md` > `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `# 21. Non-Goals for MVP`
   - Source Requirements:
     - Do not expose backend environment variables or secrets.
@@ -931,7 +931,7 @@ Optional future tracks are outside the mandatory dependency chain.
 - [x] Batch02 - Raw JSON and Specialized Step Panels
 - [x] Batch03 - Agent Step List and Detail Viewer
 - [x] Batch04 - Logs Page Lookup and Chat Integration
-- [ ] Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- [x] Batch05 - Routing, Navigation, Styling, and Scope Hardening
 - [ ] Batch06 - Automated and Manual Validation, Reporting, and Handoff
 
 ### Task IDs
@@ -963,9 +963,9 @@ Optional future tracks are outside the mandatory dependency chain.
 
 #### Batch05
 
-- [ ] (05A): Mount Agent Logs routes and primary navigation
-- [ ] (05B): Complete responsive, overflow-safe, and accessible debug styling
-- [ ] (05C): Perform Plan 15 secret, endpoint, and scope hardening
+- [x] (05A): Mount Agent Logs routes and primary navigation
+- [x] (05B): Complete responsive, overflow-safe, and accessible debug styling
+- [x] (05C): Perform Plan 15 secret, endpoint, and scope hardening
 
 #### Batch06
 

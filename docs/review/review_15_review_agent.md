@@ -2682,3 +2682,620 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05A)
+- Task title: Mount Agent Logs routes and primary navigation
+- Task status reported by executor: complete
+- Source of Truth: `docs/tasks/task_15.md` > `## Mandatory Batch05 - Routing, Navigation, Styling, and Scope Hardening` > `(05A)`; `docs/plans/Plan_15.md` > `## 3. Scope`; `docs/plans/Plan_15.md` > `## 6. Required Files and Folders`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `docs/plans/Master_Plan.md` > `# 16. Suggested Project Structure`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is `# Task Execution Report - (05A)` and matches the requested Batch05 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_15_execute_agent.md`
+  - `docs/tasks/task_15.md`
+  - `frontend/src/App.tsx`
+- untracked files: None shown by `git status --short`.
+
+## Files Reviewed
+- `docs/reports/report_15_execute_agent.md`: in scope - append-only execution report for (05A) reviewed.
+- `docs/tasks/task_15.md`: in scope - reviewer updated only the two (05A) checkboxes after acceptance; Batch05, (05B), and (05C) remain unchecked.
+- `frontend/src/App.tsx`: in scope - primary navigation and route table reviewed.
+- `docs/plans/Plan_15.md`: in scope - cited scope, required files, and implementation step sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited suggested project structure section reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/App.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff adds only the Agent Logs `NavLink`; existing Agent Logs routes were already mounted and remain present.
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report entry is append-only and accurately describes the implementation and validation evidence.
+
+## Dependency Review
+- Required dependencies: (04B), completed Batch01 through Batch04 for existing Agent Logs page and direct routes.
+- Dependency status: satisfied for this review; task tracker shows Batch04 tasks checked, and existing `/agent-logs` routes are present in `App.tsx`.
+- Missing or invalid dependency: None found for (05A).
+
+## Architecture Alignment
+- Passed: Navigation uses React Router `NavLink` in the existing primary navigation; active state class pattern matches existing nav links; routes stay inside the existing `Routes` shell; root and unknown routes still redirect to `/upload`.
+- Failed: None.
+- Uncertain: No live browser click test was performed; full manual route/navigation checks remain scheduled for Batch06, but this does not block (05A) because the production build and static route evidence are sufficient for this narrow mount/navigation task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `frontend/src/App.tsx` imports and mounts `AgentLogsPage`, contains `/agent-logs` and `/agent-logs/:agentRunId`, and adds a real `NavLink to="/agent-logs"` using the existing active-class callback.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The only literal added is the approved route path `/agent-logs` and label `Agent Logs`; no backend origin, secret, fabricated run ID, or unrelated debug data was introduced.
+
+## Validations Reviewed
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed
+- Rerun result: Passed; `tsc --noEmit` completed and Vite built 116 modules successfully.
+- Status: passed
+- Notes: Rerun confirms TypeScript and production bundle validity after the navigation change.
+- Command/check: Focused route/nav literal inspection of `frontend/src/App.tsx`
+- Reported result: Passed
+- Rerun result: Passed by source inspection.
+- Status: passed
+- Notes: Confirmed `to="/agent-logs"`, `/agent-logs`, `/agent-logs/:agentRunId`, `/upload`, `/documents`, `/chat`, `/evidence/:agentRunId`, `/`, and `*` behavior remain present.
+- Command/check: `git diff --stat`, `git diff`, and `git status --short`
+- Reported result: Diff limited to App route/nav plus report.
+- Rerun result: After reviewer checkbox update, diff includes only the execution report, the two accepted 05A checkbox changes, and `frontend/src/App.tsx`.
+- Status: passed
+- Notes: Scope remains limited to (05A) plus required review progress tracking.
+
+## Acceptance Review
+- Task acceptance: Navigation uses client-side routing.
+- Status: satisfied
+- Evidence: `Agent Logs` uses React Router `NavLink` with `to="/agent-logs"`.
+- Task acceptance: Base and direct routes render.
+- Status: satisfied
+- Evidence: `<Route path="/agent-logs" element={<AgentLogsPage />} />` and `<Route path="/agent-logs/:agentRunId" element={<AgentLogsPage />} />` remain mounted.
+- Task acceptance: Existing routes still work.
+- Status: satisfied
+- Evidence: `/upload`, `/documents`, `/chat`, and `/evidence/:agentRunId` route declarations remain unchanged; build passed.
+- Task acceptance: Unknown routes do not accidentally expose a run.
+- Status: satisfied
+- Evidence: wildcard route remains `<Route path="*" element={<Navigate to="/upload" replace />} />`.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the task entry and progress tracker by this reviewer after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked, as required.
+- Execution report entry: present and append-only.
+- Review report entry: appended to physical end of `docs/review/review_15_review_agent.md`.
+- Other: (05B), (05C), and Batch06 entries remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found. The report accurately notes that browser route-click validation was not performed and that validation was limited to build/static checks.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Full live route/navigation browser checks remain scheduled for Batch06; no browser click validation was claimed for (05A).
+
+### Observations
+- `/agent-logs` and `/agent-logs/:agentRunId` were already mounted before this task, so the only runtime code change needed for (05A) was the primary navigation entry.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (05A) is accepted; (05B) and (05C) remain incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch05 - Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/tasks/task_15.md",
+    "frontend/src/App.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Full live route/navigation browser checks remain scheduled for Batch06; no browser click validation was claimed for (05A)."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05B)
+- Task title: Complete responsive, overflow-safe, and accessible debug styling
+- Task status reported by executor: complete
+- Source of Truth: `docs/tasks/task_15.md` > `(05B)`; `docs/plans/Plan_15.md` > `## 9. Implementation Steps`; `## 11. Required Tests`; `## 13. Failure Handling`; `## 15. Reviewer Checklist`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: The latest matching `(05B)` execution report was reviewed. Later task IDs were not reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`, `frontend/src/App.tsx`, `frontend/src/components/AgentLogViewer.tsx`, `frontend/src/styles.css`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_15.md`: in scope - selected `(05B)` task entry, dependencies, validation placement, and progress tracker checked; only `(05B)` checkboxes were updated by this review after acceptance.
+- `docs/reports/report_15_execute_agent.md`: in scope - latest `(05B)` execution report was reviewed; report also contains the prior `(05A)` append.
+- `docs/review/review_15_review_agent.md`: in scope - existing physical end inspected before appending this review.
+- `frontend/src/styles.css`: in scope - primary `(05B)` styling changes reviewed for responsive layout, contained scrolling, long-token wrapping, focus, selected state, panels, cards, and tables.
+- `frontend/src/components/AgentLogViewer.tsx`: in scope - markup adjustment reviewed; selected step now exposes `aria-current="step"` while preserving existing selection behavior.
+- `frontend/src/pages/AgentLogsPage.tsx`: in scope - existing page markup/classes reviewed because `(05B)` styles page shell, form, loading, empty, validation, and error panels.
+- `frontend/src/App.tsx`: out of scope for `(05B)` - diff is prior accepted `(05A)` navigation work and was not counted as `(05B)` implementation.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/styles.css`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains scoped Agent Logs page/viewer styles plus table/JSON/card wrapping hardening.
+- file from execution report: `frontend/src/components/AgentLogViewer.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the reported `aria-current` selected-step marker only.
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest `(05B)` report is append-only and accurately reports deferred manual checks.
+
+## Dependency Review
+- Required dependencies: Batch02 through `(05A)`.
+- Dependency status: satisfied for this review; task tracker shows prior Batch02, Batch03, Batch04, and `(05A)` complete.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Uses existing React components and plain CSS in `frontend/src/styles.css`; no new library, design-system migration, behavior change, endpoint, polling, mutation, admin browser, or direct provider call was introduced by `(05B)`.
+- Failed: none.
+- Uncertain: Actual browser overflow/keyboard/zoom behavior remains to be validated in Batch06 as the task file specifies.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: CSS implements page shell, form, load/error/empty panels, desktop and narrow viewer grids, JSON/table scroll containers, long-token wrapping, touch-sized controls, focus styles, selected styling, and readable structured panel text. `AgentLogViewer` adds real selected-step accessibility markup.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Styling uses fixed class rules only; no fixture IDs, sample payloads, backend origins, or success values were added.
+
+## Validations Reviewed
+- Command/check: `cd frontend && npm run build`
+- Reported result: passed
+- Rerun result: passed; TypeScript no-emit and Vite production build completed with 116 modules transformed.
+- Status: passed
+- Notes: Rerun by reviewer from `frontend/`.
+- Command/check: `rg -n "agent-logs-page|agent-log-viewer|json-viewer__scroll|retrieval-score-table__scroll|aria-current|word-break|overflow" frontend/src`
+- Reported result: passed
+- Rerun result: passed; expected CSS and markup hooks were present.
+- Status: passed
+- Notes: Confirms static evidence for scoped page/viewer styling, scroll containment, long-token handling, and selected-step accessibility.
+- Command/check: `rg -n "Supabase|QDRANT|SHOPAIKEY|SERVICE_ROLE|VITE_API_BASE_URL|http://|https://|poll|mutation|delete|admin|jwt|observability|graph" frontend/src/pages/AgentLogsPage.tsx frontend/src/components/AgentLogViewer.tsx frontend/src/styles.css`
+- Reported result: no matches
+- Rerun result: no matches; `rg` exited 1 because no matching text was found.
+- Status: passed
+- Notes: This was a scoped sanity check only; full `(05C)` scope/secret audit remains separate and was not treated as complete.
+- Command/check: `git diff --check -- frontend/src/styles.css frontend/src/components/AgentLogViewer.tsx`
+- Reported result: passed
+- Rerun result: passed with only LF-to-CRLF warnings.
+- Status: passed
+- Notes: No whitespace errors.
+- Command/check: Manual responsive/browser checks at 320px, 375px, desktop, keyboard, zoom, and long-content behavior
+- Reported result: deferred to Batch06, not passed
+- Rerun result: not run
+- Status: not applicable for `(05B)` acceptance
+- Notes: The execution report does not falsely claim these checks passed, and the selected task lists this validation under Batch06.
+
+## Acceptance Review
+- Task acceptance: Long JSON and quotes must not overflow the page.
+- Status: satisfied by implementation/static evidence
+- Evidence: `.json-viewer__scroll` has contained overflow; `.json-viewer__content` uses `white-space: pre-wrap`, `overflow-wrap: anywhere`, and `word-break: break-word`; page/viewer containers use `min-width: 0` and max-width constraints.
+- Task acceptance: Step list/detail and status/error information must remain readable.
+- Status: satisfied by implementation/static evidence
+- Evidence: list/detail layout, status labels with visible text, error indicator text, detail error panel, metadata cards, and line-height/wrapping rules are present.
+- Task acceptance: Desktop and narrow behavior.
+- Status: satisfied by implementation/static evidence
+- Evidence: desktop list/detail grid is defined; `@media (max-width: 860px)` switches viewer to single-column; `@media (max-width: 560px)` and `@media (max-width: 360px)` reduce padding and stack controls.
+- Task acceptance: Contained table/JSON scrolling and long-token handling.
+- Status: satisfied by implementation/static evidence
+- Evidence: JSON and retrieval table scroll wrappers constrain overflow; table cells, cards, quotes, self-check text, and error text have wrapping/word-break rules.
+- Task acceptance: Focus, selected state, status/error text, loading/empty panels, readable tables/cards, and touch-friendly controls.
+- Status: satisfied by implementation/static evidence
+- Evidence: focus-visible styles exist for lookup submit and step controls; selected state includes visible `Selected` text and `aria-current="step"`; status/error strings are rendered as text; Agent Logs page message/validation/error/empty panels are styled; controls have at least `2.75rem` min-height.
+- Task acceptance: No page-level horizontal overflow at 320px, 375px, or desktop widths.
+- Status: satisfied for `(05B)` static implementation; live proof deferred
+- Evidence: CSS addresses the known overflow vectors, and the report explicitly defers browser verification to Batch06 without claiming it passed.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the task entry and progress tracker by this reviewer after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked, as required, because `(05C)` is still incomplete.
+- Execution report entry: present and append-only.
+- Review report entry: appended to physical end of `docs/review/review_15_review_agent.md`.
+- Other: `(05C)` and Batch06 entries remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found. The report accurately states browser/manual responsive checks were deferred and not passed in `(05B)`.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live browser responsive, keyboard, zoom, and long-content validation remains scheduled for Batch06 and must not be treated as already passed.
+- Full `(05C)` secret/endpoint/scope audit remains incomplete; the scoped no-match search in `(05B)` is not a substitute for `(05C)`.
+
+### Observations
+- `frontend/src/App.tsx` remains modified from accepted `(05A)`, but no `(05B)` implementation depends on or changes it.
+- The task report's `partially satisfied` wording is acceptable because it distinguishes implemented styling from deferred Batch06 manual proof.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete; `(05C)` remains unchecked.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch05 - Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/tasks/task_15.md",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AgentLogViewer.tsx",
+    "frontend/src/pages/AgentLogsPage.tsx",
+    "frontend/src/styles.css"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live browser responsive, keyboard, zoom, and long-content validation remains scheduled for Batch06 and must not be treated as already passed.",
+    "Full (05C) secret/endpoint/scope audit remains incomplete; the scoped no-match search in (05B) is not a substitute for (05C)."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05C)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Execution Report Reviewed
+docs/reports/report_15_execute_agent.md
+
+## Review Report File
+docs/review/review_15_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05C)
+- Task title: Perform Plan 15 secret, endpoint, and scope hardening
+- Task status reported by executor: complete
+- Source of Truth: `docs/tasks/task_15.md` > `(05C)`; `docs/plans/Plan_15.md` > `## 4. Out of Scope`; `## 10. Configuration and Environment Variables`; `## 12. Acceptance Criteria`; `## 15. Reviewer Checklist`; `docs/plans/Master_Plan.md` > `# 15. Environment Variables`; `# 21. Non-Goals for MVP`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05C)
+- Reviewed task ID: (05C)
+- Correct selection: yes
+- Notes: The latest matching `(05C)` execution report was reviewed. Batch06 entries were not present and were not reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`, `frontend/src/App.tsx`, `frontend/src/components/AgentLogViewer.tsx`, `frontend/src/styles.css`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_15.md`: in scope - selected `(05C)` task entry, dependencies, scope requirements, Batch06 exclusion, and progress tracker checked; only `(05C)` checkboxes were updated by this review after acceptance.
+- `docs/reports/report_15_execute_agent.md`: in scope - latest `(05C)` execution report reviewed for exact scope-search commands/results and honest build status.
+- `docs/review/review_15_review_agent.md`: in scope - existing physical end inspected before appending this review.
+- `docs/plans/Plan_15.md`: in scope - cited out-of-scope, env, acceptance, and reviewer checklist sections reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited environment variable and MVP non-goal sections reviewed.
+- `frontend/src/api/agentRuns.ts`: in scope - verified existing API helper uses `apiClient`, encodes the run ID, and calls only `GET /api/agent-runs/{id}/logs` for logs.
+- `frontend/src/pages/AgentLogsPage.tsx`: in scope - verified one-run UUID lookup, route loading, stale-response guard, read-only UI, and no run-list/mutation/polling behavior.
+- `frontend/package.json`: in scope - verified no package/library additions for graph, observability, auth, polling, or data fetching.
+- `frontend/src/App.tsx`: in scope for prior accepted `(05A)`, reviewed as active diff context; no `(05C)` runtime edit.
+- `frontend/src/components/AgentLogViewer.tsx`: in scope for prior accepted `(05B)`, reviewed as active diff context; no `(05C)` runtime edit.
+- `frontend/src/styles.css`: in scope for prior accepted `(05B)`, reviewed as active diff context; no `(05C)` runtime edit.
+- `backend/app/schemas/agent_runs.py`: in scope for audit - no active diff.
+- `backend/app/services/agent_run_service.py`: in scope for audit - no active diff.
+- `backend/tests/test_agent_runs_api.py`: in scope for audit - no active diff.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_15_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(05C)` was a report-only audit task and the report entry is append-only.
+
+## Dependency Review
+- Required dependencies: Batch01 through `(05B)`.
+- Dependency status: satisfied for this review; task tracker shows Batch01 through `(05B)` checked before this review.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Scope audit preserved the existing logs endpoint, existing Axios API boundary, `VITE_API_BASE_URL` as the frontend-safe env, backend-only secret boundary, debug-only one-run lookup, and read-only behavior.
+- Failed: none.
+- Uncertain: none for `(05C)`; browser/manual validation remains explicitly assigned to Batch06.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `(05C)` correctly performs and records an audit rather than adding runtime code. Source inspection confirms `getAgentRunLogs` is the only Agent Logs data request path and `AgentLogsPage` provides only UUID lookup, route navigation, loading/error/empty states, and read-only step inspection.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Rerun diff searches found no hardcoded origin, backend-only env names, secret names, provider calls, prompt/env display, auth/JWT, polling, graph/observability tooling, package changes, new run-list endpoints, or unrelated backend changes. Existing route literals and approved Agent 1 `graph_relevance` field are expected.
+
+## Validations Reviewed
+- Command/check: `git diff --name-only`
+- Reported result: passed
+- Rerun result: passed; active changed paths were report/review/task docs plus `frontend/src/App.tsx`, `frontend/src/components/AgentLogViewer.tsx`, and `frontend/src/styles.css`.
+- Status: passed
+- Notes: No active backend runtime/test diff or package diff appeared.
+- Command/check: `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg --pcre2 -n "(GET|POST|PUT|PATCH|DELETE|/api/agent-runs(?!/\{?agent_run_id\}?/logs)|agent-runs\?|runs\b|listRuns|runList|browse|admin)"`
+- Reported result: no matches
+- Rerun result: no matches; `rg` exited 1 with only Git LF/CRLF warnings.
+- Status: passed
+- Notes: No new run-list endpoint, admin browser, or extra request method in the scoped active diff.
+- Command/check: provider/Supabase/Qdrant/ShopAIKey diff search
+- Reported result: no matches
+- Rerun result: no matches; `rg` exited 1 with only Git LF/CRLF warnings.
+- Status: passed
+- Notes: No direct frontend provider or vector/storage calls introduced.
+- Command/check: backend-only env/secret diff search
+- Reported result: no matches
+- Rerun result: no matches; `rg` exited 1 with only Git LF/CRLF warnings.
+- Status: passed
+- Notes: No unapproved frontend env access or secret names in active scoped diff.
+- Command/check: prompt/environment display, auth/JWT, polling, graph/observability, and hardcoded-origin diff searches
+- Reported result: no matches
+- Rerun result: no matches for each category; `rg` exited 1 with only Git LF/CRLF warnings.
+- Status: passed
+- Notes: These categories remain outside Plan 15 scope and were not introduced.
+- Command/check: `rg -n "(POST|PUT|PATCH|DELETE|delete|remove|edit|update|retry|replay|rerun|cancel|mutat|onClick|onSubmit|button)" frontend/src/pages/AgentLogsPage.tsx frontend/src/components/AgentLogViewer.tsx frontend/src/api/agentRuns.ts`
+- Reported result: only expected lookup/selection controls
+- Rerun result: only `handleSubmit`, the lookup submit button, and step-selection buttons matched.
+- Status: passed
+- Notes: No delete/edit/update/retry/replay/rerun/cancel mutation control or mutation request method found.
+- Command/check: `rg -n "(reactflow|cytoscape|d3|vis-network|mermaid|sentry|datadog|newrelic|opentelemetry|prometheus|observability|telemetry|graph)" frontend/package.json frontend/src`
+- Reported result: only approved `graph_relevance` field match
+- Rerun result: only `frontend/src/components/RetrievalScoreTable.tsx` matched `graph_relevance`.
+- Status: passed
+- Notes: No graph visualization or observability dependency/tooling added.
+- Command/check: `git diff -- frontend/package.json frontend/package-lock.json package.json package-lock.json`
+- Reported result: no output
+- Rerun result: no output.
+- Status: passed
+- Notes: No package changes.
+- Command/check: `cd frontend && npm run build`
+- Reported result: not run
+- Rerun result: not run
+- Status: not applicable for `(05C)`
+- Notes: No runtime source change was made in `(05C)`; the report does not falsely claim a build. Build remains assigned to Batch06.
+
+## Acceptance Review
+- Task acceptance: Runtime changes are limited to the existing logs response alignment and approved frontend files.
+- Status: satisfied
+- Evidence: Active runtime diff contains only prior accepted frontend route/navigation/styling/accessibility files; approved backend contract files have no active diff.
+- Task acceptance: Page loads one known run only and remains read-only.
+- Status: satisfied
+- Evidence: `AgentLogsPage` validates one UUID, loads through `getAgentRunLogs`, navigates to one encoded `/agent-logs/{id}` route, and exposes no run list or mutation controls.
+- Task acceptance: Record exact scope-search commands and results in execution report.
+- Status: satisfied
+- Evidence: `(05C)` report includes the exact `git diff`, `rg`, `Get-Content`, and package diff commands with results, including the explicit `npm run build` not-run reason.
+- Task acceptance: Exclude Batch06 validation/reporting.
+- Status: satisfied
+- Evidence: Report states Batch06 was not started, browser/manual validation remains for Batch06, and no Batch06 task checkbox was changed.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the task entry and progress tracker by this reviewer after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch05 remains unchecked, as required; orchestrator handles batch completion after A3.
+- Execution report entry: present and append-only.
+- Review report entry: appended to physical end of `docs/review/review_15_review_agent.md`.
+- Other: Batch06 entries remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found. The report honestly states no runtime edits and no build run for `(05C)`.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Browser/manual validation and frontend build remain scheduled for Batch06 and should not be treated as completed by `(05C)`.
+
+### Observations
+- Existing backend Supabase/service references are allowed backend infrastructure and not active `(05C)` scope expansion.
+- Active `docs/review/review_15_review_agent.md` changes include prior A2 review appends; they were preserved.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no by A2; all Batch05 task IDs are now checked, but orchestrator must handle Batch05 completion after A3 per user instruction.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_15.md",
+  "execution_report_reviewed": "docs/reports/report_15_execute_agent.md",
+  "review_report_file": "docs/review/review_15_review_agent.md",
+  "selected_batch": "Batch05 - Routing, Navigation, Styling, and Scope Hardening",
+  "selected_task_id": "(05C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_15_execute_agent.md",
+    "docs/review/review_15_review_agent.md",
+    "docs/tasks/task_15.md",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AgentLogViewer.tsx",
+    "frontend/src/styles.css",
+    "frontend/src/api/agentRuns.ts",
+    "frontend/src/pages/AgentLogsPage.tsx",
+    "frontend/package.json"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Browser/manual validation and frontend build remain scheduled for Batch06 and should not be treated as completed by (05C)."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

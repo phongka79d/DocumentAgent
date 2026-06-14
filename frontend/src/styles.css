@@ -483,6 +483,202 @@ button {
   opacity: 0.8;
 }
 
+.agent-logs-page {
+  display: grid;
+  gap: 1.25rem;
+  width: min(100%, 70rem);
+  min-width: 0;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.agent-logs-page__header {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.agent-logs-page__header h1,
+.agent-logs-page__header p,
+.agent-logs-page__lookup,
+.agent-logs-page__label,
+.agent-logs-page__hint,
+.agent-logs-page__message,
+.agent-logs-page__validation,
+.agent-logs-page__error,
+.agent-logs-page__empty,
+.agent-logs-page__empty h2,
+.agent-logs-page__empty p {
+  margin: 0;
+}
+
+.agent-logs-page__header h1 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #172033;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.agent-logs-page__header p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #516074;
+  line-height: 1.5;
+}
+
+.agent-logs-page__header .agent-logs-page__eyebrow {
+  color: #356ac3;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agent-logs-page__lookup {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  border: 1px solid #d8deea;
+  border-radius: 0.5rem;
+  padding: 1.1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(23 32 51 / 0.06);
+}
+
+.agent-logs-page__lookup[aria-busy="true"] {
+  border-color: #9ab8e8;
+}
+
+.agent-logs-page__label {
+  color: #172033;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.agent-logs-page__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.agent-logs-page__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid #aeb8ca;
+  border-radius: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  color: #172033;
+  background: #ffffff;
+  line-height: 1.35;
+}
+
+.agent-logs-page__input:focus {
+  border-color: #356ac3;
+  outline: 0.2rem solid rgb(53 106 195 / 0.18);
+  outline-offset: 0.05rem;
+}
+
+.agent-logs-page__input:disabled {
+  cursor: not-allowed;
+  color: #667085;
+  background: #f5f7fb;
+}
+
+.agent-logs-page__submit {
+  min-height: 2.75rem;
+  border: 1px solid #356ac3;
+  border-radius: 0.4rem;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  color: #ffffff;
+  background: #356ac3;
+  font-weight: 700;
+  line-height: 1.25;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.agent-logs-page__submit:hover:not(:disabled) {
+  border-color: #2d5da9;
+  background: #2d5da9;
+}
+
+.agent-logs-page__submit:focus-visible {
+  outline: 0.2rem solid #172033;
+  outline-offset: 0.15rem;
+  box-shadow: 0 0 0 0.2rem #ffffff;
+}
+
+.agent-logs-page__submit:disabled {
+  cursor: not-allowed;
+  border-color: #98a2b3;
+  background: #98a2b3;
+  color: #ffffff;
+  opacity: 0.8;
+}
+
+.agent-logs-page__hint {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #667085;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.agent-logs-page__message,
+.agent-logs-page__validation,
+.agent-logs-page__error,
+.agent-logs-page__empty {
+  min-width: 0;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1rem;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.agent-logs-page__message,
+.agent-logs-page__empty {
+  color: #24324a;
+  background: #f5f7fb;
+}
+
+.agent-logs-page__validation {
+  border: 1px solid #f2c46d;
+  border-left: 0.25rem solid #d99025;
+  color: #7a4105;
+  background: #fff8e8;
+}
+
+.agent-logs-page__error {
+  border: 1px solid #efb4ad;
+  border-left: 0.25rem solid #d92d20;
+  color: #8f1b13;
+  background: #fff4f2;
+}
+
+.agent-logs-page__empty {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.agent-logs-page__empty h2 {
+  color: #172033;
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.agent-logs-page__empty p {
+  color: #516074;
+  line-height: 1.5;
+}
+
 .answer-panel,
 .evidence-panel,
 .evidence-panel__group,
@@ -506,9 +702,10 @@ button {
 }
 
 .json-viewer__scroll {
+  width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  overflow: auto;
   border: 1px solid #d8deea;
   border-radius: 0.5rem;
   background: #f5f7fb;
@@ -519,6 +716,7 @@ button {
   margin: 0;
   padding: 0.9rem;
   overflow-wrap: anywhere;
+  word-break: break-word;
   white-space: pre-wrap;
   color: #24324a;
   font-family:
@@ -538,7 +736,7 @@ button {
 
 .agent-log-viewer {
   display: grid;
-  grid-template-columns: minmax(14rem, 0.38fr) minmax(0, 1fr);
+  grid-template-columns: minmax(15rem, 0.36fr) minmax(0, 1fr);
   align-items: start;
   gap: 1rem;
   max-width: 100%;
@@ -609,6 +807,7 @@ button {
   gap: 0.55rem;
   width: 100%;
   min-width: 0;
+  min-height: 2.75rem;
   border: 1px solid #d8deea;
   border-radius: 0.5rem;
   padding: 0.85rem;
@@ -680,6 +879,8 @@ button {
 .agent-log-viewer__selected-indicator,
 .agent-log-viewer__status,
 .agent-log-viewer__error-indicator {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   border-radius: 999px;
   padding: 0.2rem 0.5rem;
   font-size: 0.75rem;
@@ -813,6 +1014,8 @@ button {
 
 .agent-log-viewer__detail-error p,
 .agent-log-viewer__structured-error {
+  overflow-wrap: anywhere;
+  word-break: break-word;
   white-space: pre-wrap;
   line-height: 1.5;
 }
@@ -833,6 +1036,23 @@ button {
 }
 
 @media (max-width: 560px) {
+  .agent-logs-page {
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .agent-logs-page__lookup {
+    padding: 1rem;
+  }
+
+  .agent-logs-page__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .agent-logs-page__submit {
+    width: 100%;
+  }
+
   .agent-log-viewer__detail,
   .agent-log-viewer__empty {
     padding: 0.85rem;
@@ -846,6 +1066,20 @@ button {
 
   .agent-log-viewer__detail-header .agent-log-viewer__status {
     justify-self: start;
+  }
+
+  .json-viewer__content {
+    padding: 0.75rem;
+    font-size: 0.78rem;
+  }
+
+  .retrieval-score-table table {
+    min-width: 48rem;
+  }
+
+  .retrieval-score-table th,
+  .retrieval-score-table td {
+    padding: 0.6rem;
   }
 }
 
@@ -883,6 +1117,7 @@ button {
 }
 
 .retrieval-score-table__scroll {
+  width: 100%;
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
@@ -893,7 +1128,7 @@ button {
 
 .retrieval-score-table table {
   width: 100%;
-  min-width: 70rem;
+  min-width: 58rem;
   border-collapse: collapse;
   text-align: left;
 }
@@ -903,6 +1138,7 @@ button {
   border-bottom: 1px solid #d8deea;
   padding: 0.7rem 0.8rem;
   overflow-wrap: anywhere;
+  word-break: break-word;
   vertical-align: top;
 }
 
@@ -1085,6 +1321,7 @@ button {
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
+  word-break: break-word;
   color: #24324a;
   line-height: 1.4;
 }
@@ -1094,6 +1331,7 @@ button {
   border-left: 0.2rem solid #9ab8e8;
   padding-left: 0.75rem;
   overflow-wrap: anywhere;
+  word-break: break-word;
   white-space: pre-wrap;
   color: #516074;
   line-height: 1.5;
@@ -1212,6 +1450,7 @@ button {
 .self-check-panel__draft-details dd {
   min-width: 0;
   overflow-wrap: anywhere;
+  word-break: break-word;
   white-space: pre-wrap;
   color: #24324a;
   line-height: 1.55;
@@ -1316,6 +1555,7 @@ button {
 .self-check-panel__citation-quote {
   border-left: 0.2rem solid #9ab8e8;
   padding-left: 0.75rem;
+  word-break: break-word;
   white-space: pre-wrap;
   color: #516074;
   line-height: 1.5;
@@ -2230,6 +2470,7 @@ button {
   }
 
   .chat-page,
+  .agent-logs-page,
   .evidence-viewer-page {
     gap: 1rem;
     padding: 1rem;
@@ -2279,6 +2520,7 @@ button {
   .upload-page,
   .document-list-page,
   .chat-page,
+  .agent-logs-page,
   .evidence-viewer-page {
     padding-right: 0.75rem;
     padding-left: 0.75rem;
@@ -2290,6 +2532,19 @@ button {
   .chat-box__textarea,
   .answer-panel,
   .evidence-panel__group,
+  .agent-logs-page__lookup,
+  .agent-logs-page__message,
+  .agent-logs-page__validation,
+  .agent-logs-page__error,
+  .agent-logs-page__empty,
+  .agent-log-viewer__detail,
+  .agent-log-viewer__empty,
+  .verification-result-panel__group,
+  .verification-result-panel__item,
+  .self-check-panel__answer,
+  .self-check-panel__draft,
+  .self-check-panel__checks,
+  .self-check-panel__citations,
   .chat-page__workspace > .document-selector,
   .chat-page__workspace > .chat-box,
   .chat-page__evidence {
@@ -2299,6 +2554,7 @@ button {
   .upload-page__header h1,
   .document-list-page__header h1,
   .chat-page__header h1,
+  .agent-logs-page__header h1,
   .evidence-viewer-page__header h1 {
     font-size: 1.5rem;
   }
@@ -2320,6 +2576,7 @@ button {
   .upload-page__form button,
   .document-list-page__refresh,
   .chat-box__submit,
+  .agent-logs-page__submit,
   .chat-page__evidence-toggle {
     transition: none;
   }

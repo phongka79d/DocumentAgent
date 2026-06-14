@@ -1276,3 +1276,309 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after review accepts `(04C)`
 - handoff notes: The chat page now links successful answers to `/agent-logs/<encoded-agent-run-id>`; `(05A)` can handle primary navigation without reworking this chat action.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch05 - Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05A) - Mount Agent Logs routes and primary navigation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_15.md` > `## Mandatory Batch05 - Routing, Navigation, Styling, and Scope Hardening` > `(05A)`
+- `docs/plans/Plan_15.md` > `## 3. Scope`
+- `docs/plans/Plan_15.md` > `## 6. Required Files and Folders`
+- `docs/plans/Plan_15.md` > `## 9. Implementation Steps`
+- `docs/plans/Master_Plan.md` > `# 16. Suggested Project Structure`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05A)
+- Task title: Mount Agent Logs routes and primary navigation
+
+## Completed Work
+- Complete.
+- Verified `/agent-logs` and `/agent-logs/:agentRunId` were already mounted from prior Batch04 work.
+- Added an `Agent Logs` `NavLink` to the existing primary navigation in `frontend/src/App.tsx`.
+- Preserved `/upload`, `/documents`, `/chat`, `/evidence/:agentRunId`, root redirect, and wildcard redirect behavior.
+
+## Files Created or Modified
+- `frontend/src/App.tsx`
+- `docs/reports/report_15_execute_agent.md`
+
+## Tests or Validations Run
+- `cd frontend; npm run build`: Passed
+- Evidence: TypeScript `tsc --noEmit` and Vite production build completed successfully; 116 modules transformed and `dist/` assets emitted.
+- Focused route/nav literal check with `Select-String` against `frontend/src/App.tsx`: Passed
+- Evidence: confirmed `to="/agent-logs"`, `/agent-logs`, `/agent-logs/:agentRunId`, `/upload`, `/documents`, `/chat`, `/evidence/:agentRunId`, `/`, and `*` route entries remain present.
+- `git diff -- frontend/src/App.tsx`: Passed
+- Evidence: diff shows only the new `Agent Logs` `NavLink` was added to `App.tsx`.
+- Initial focused `rg` check: Failed
+- Evidence: PowerShell quoting produced an `rg` regex parse error; rerun with `Select-String -SimpleMatch` passed.
+
+## Acceptance Check
+- Task acceptance condition: Navigation uses client-side routing.
+- Status: satisfied
+- Evidence: Added a React Router `NavLink` to `/agent-logs` in the existing primary navigation.
+- Task acceptance condition: Base and direct routes render.
+- Status: satisfied
+- Evidence: Existing `<Route path="/agent-logs" element={<AgentLogsPage />} />` and `<Route path="/agent-logs/:agentRunId" element={<AgentLogsPage />} />` remain mounted in `App.tsx`.
+- Task acceptance condition: Existing routes still work.
+- Status: satisfied
+- Evidence: Focused route check confirmed `/upload`, `/documents`, `/chat`, and `/evidence/:agentRunId` remain present; build passed.
+- Task acceptance condition: Unknown routes do not accidentally expose a run.
+- Status: satisfied
+- Evidence: Wildcard route remains `<Route path="*" element={<Navigate to="/upload" replace />} />`, so unknown routes redirect to upload rather than rendering `AgentLogsPage`.
+
+## Artifacts Produced
+- Agent Logs primary navigation entry.
+- Appended execution report entry.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to update checkboxes or commit.
+
+## Key Implementation Decisions
+- Reused the existing `NavLink` active-class pattern to preserve frontend app structure and client-side navigation behavior.
+- Did not alter already-mounted Agent Logs routes from Batch04.
+- Did not perform Batch05 responsive styling or scope audit work.
+
+## Risks or Open Issues
+- No live browser route-click validation was performed in this task; validation was limited to production build, focused static route/nav checks, and diff inspection.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified. Dependency `(04B)` was treated as accepted per the user request, and the task tracker shows `(04B)` checked. Scope stayed within `(05A)` and did not update checkboxes or commit.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: `Agent Logs` is now reachable from primary navigation; `/agent-logs` and `/agent-logs/:agentRunId` were already mounted and preserved.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch05 - Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05B) - Complete responsive, overflow-safe, and accessible debug styling
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_15.md` > `(05B): Complete responsive, overflow-safe, and accessible debug styling`
+- `docs/plans/Plan_15.md` sections cited by the task: `## 9. Implementation Steps`, `## 11. Required Tests`, `## 13. Failure Handling`, `## 15. Reviewer Checklist`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05B)
+- Task title: Complete responsive, overflow-safe, and accessible debug styling
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Added Agent Logs page shell, header, lookup form, validation/error/loading/empty panel, and compact control styling in the existing plain CSS language.
+- Hardened Agent Logs debug workspace layout for desktop list/detail and narrow single-column behavior.
+- Added contained JSON/table scrolling, long-token wrapping, compact mobile padding, touch-friendly control heights, visible focus states, readable status/error panels, and readable card/table text handling.
+- Added `aria-current="step"` to the selected step control so selection is exposed structurally in addition to visible text and styling.
+- Did not implement (05C), did not audit secrets/scope broadly, did not add features, and did not change runtime data behavior.
+
+## Files Created or Modified
+- `frontend/src/styles.css`
+- `frontend/src/components/AgentLogViewer.tsx`
+- `docs/reports/report_15_execute_agent.md`
+
+## Tests or Validations Run
+- `cd frontend && npm run build`: Passed.
+- Evidence: TypeScript no-emit and Vite production build completed; output included transformed modules and built `dist/index.html`, CSS, and JS assets.
+- `rg -n "agent-logs-page|agent-log-viewer|json-viewer__scroll|retrieval-score-table__scroll|aria-current|word-break|overflow" frontend/src`: Passed.
+- Evidence: Confirmed scoped CSS/source hooks for Agent Logs page, viewer layout, contained JSON/table scrolling, long-token wrapping, and selected-step accessibility marker.
+- `rg -n "Supabase|QDRANT|SHOPAIKEY|SERVICE_ROLE|VITE_API_BASE_URL|http://|https://|poll|mutation|delete|admin|jwt|observability|graph" frontend/src/pages/AgentLogsPage.tsx frontend/src/components/AgentLogViewer.tsx frontend/src/styles.css`: Passed.
+- Evidence: No matches in the scoped files changed for this task; command exited with no output.
+- `git diff --check -- frontend/src/styles.css frontend/src/components/AgentLogViewer.tsx`: Passed.
+- Evidence: No whitespace errors; Git only warned that LF will be replaced by CRLF when touched.
+- Manual responsive/browser checks at 320px, 375px, and desktop: Deferred to Batch06, not passed in this task.
+- Evidence or reason: Browser/manual validation is assigned to Batch06 by the selected task validation, and no browser validation was performed here.
+
+## Acceptance Check
+- Task acceptance condition: No page-level horizontal overflow at 320px, 375px, or desktop widths; JSON/table overflow is contained; controls remain usable; status and selection are not color-only.
+- Status: partially satisfied.
+- Evidence: CSS now provides min-width-safe page/viewer grids, narrow single-column breakpoints, contained `.json-viewer__scroll` and `.retrieval-score-table__scroll`, long-token `overflow-wrap`/`word-break` handling, touch-sized lookup and step buttons, visible focus rules, visible status/error text, a visible `Selected` label, and `aria-current="step"`. Live browser overflow checks are deferred to Batch06 and are not claimed as passed.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_15_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to update checkboxes or commit.
+
+## Key Implementation Decisions
+- Kept changes in plain CSS and existing component markup; no design-system, framework, or behavior changes were introduced.
+- Added only one markup adjustment, `aria-current`, because it improves selected-step accessibility without changing data flow or interaction behavior.
+- Treated manual responsive checks as Batch06 validation and reported them as deferred, not passed.
+
+## Risks or Open Issues
+- Browser/manual responsive validation at 320px, 375px, desktop, keyboard navigation, zoom, and long-content inspection remains open for Batch06.
+
+## Minor Issues Fixed During Execution
+- Agent Logs page previously had no dedicated page/form/message styling; added scoped styles so loading, empty, validation, and error states are readable and consistent.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies Batch02 through accepted (05A) are marked checked in the task file. Scope stayed within `(05B)`, and `(05C)` was not performed.
+
+## Notes for Next Task
+- next task ID: (05C)
+- can proceed: yes
+- handoff notes: Agent Logs styling is implemented and frontend build passes. Batch06 must still perform real browser responsive/keyboard/manual checks and should not treat them as already passed.
+
+---
+
+# Task Execution Report - (05C)
+
+## Source Task File
+docs/tasks/task_15.md
+
+## Report File
+docs/reports/report_15_execute_agent.md
+
+## Batch
+Batch05 - Routing, Navigation, Styling, and Scope Hardening
+
+## Task
+(05C) - Perform Plan 15 secret, endpoint, and scope hardening
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_15.md` > `(05C): Perform Plan 15 secret, endpoint, and scope hardening`
+- `docs/plans/Plan_15.md` sections cited by the task: `## 4. Out of Scope`, `## 10. Configuration and Environment Variables`, `## 12. Acceptance Criteria`, `## 15. Reviewer Checklist`
+- `docs/plans/Master_Plan.md` sections cited by the task: `# 15. Environment Variables`, `# 21. Non-Goals for MVP`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Routing, Navigation, Styling, and Scope Hardening
+- Task ID: (05C)
+- Task title: Perform Plan 15 secret, endpoint, and scope hardening
+
+## Completed Work
+- State whether the task is complete, partial, blocked, or failed: complete.
+- Audited the completed Plan 15 implementation scope for accidental endpoint, secret, provider, auth, mutation, polling, graph/observability, hardcoded-origin, and unrelated backend expansion.
+- Found no accidental scope expansion requiring runtime edits.
+- Confirmed current visible runtime diff is limited to approved frontend route/navigation/styling/accessibility files for Batch05 and contains no active changes in the approved backend contract files.
+- Confirmed the Agent Logs page loads one known UUID run through the existing logs API helper and remains read-only: one submit action, one route navigation, one `getAgentRunLogs` call, no mutation controls.
+- Did not start Batch06 validation/reporting.
+
+## Files Created or Modified
+- `docs/reports/report_15_execute_agent.md`
+
+## Tests or Validations Run
+- `git diff --name-only`: Passed.
+- Evidence: Modified paths were `docs/reports/report_15_execute_agent.md`, `docs/review/review_15_review_agent.md`, `docs/tasks/task_15.md`, `frontend/src/App.tsx`, `frontend/src/components/AgentLogViewer.tsx`, and `frontend/src/styles.css`. No unexpected runtime backend file appeared in the active diff.
+- `git diff --stat`: Passed.
+- Evidence: Active diff showed documentation/report/task changes plus approved frontend files; no backend runtime/test diff was present.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src`: Passed.
+- Evidence: Runtime diff showed only `frontend/src/App.tsx`, `frontend/src/components/AgentLogViewer.tsx`, and `frontend/src/styles.css`; no backend diff and no unrelated runtime file diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg --pcre2 -n "(GET|POST|PUT|PATCH|DELETE|/api/agent-runs(?!/\{?agent_run_id\}?/logs)|agent-runs\?|runs\b|listRuns|runList|browse|admin)"`: Passed.
+- Evidence: No matches. No new run-list endpoint, admin browser, or extra request method appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg -n "(Supabase|supabase|Qdrant|qdrant|ShopAIKey|SHOPAIKEY|provider|openai|anthropic|gemini|llm|retrieval_agent|verification_agent|answer_agent)"`: Passed.
+- Evidence: No matches. No direct provider/Supabase/Qdrant/ShopAIKey calls appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg --pcre2 -n "(SUPABASE|QDRANT|SHOPAIKEY|SERVICE_ROLE|SECRET|PRIVATE|API_KEY|DATABASE_URL|BACKEND|ENV|process\.env|import\.meta\.env\.(?!VITE_API_BASE_URL))"`: Passed.
+- Evidence: No matches. No backend-only env names, secret names, or unapproved frontend env access appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg -n "(prompt|system_prompt|developer_prompt|environment|env dump|stack trace|traceback|exception|raw error)"`: Passed.
+- Evidence: No matches. No prompt/environment display, stack trace display, or raw backend exception display appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg -n "(auth|jwt|JWT|token|login|logout|permission|role|session)"`: Passed.
+- Evidence: No matches. No auth/JWT/session scope appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg -n "(mutat|delete|remove|edit|update|retry|replay|rerun|cancel|POST|PUT|PATCH|DELETE|button.*Delete|onDelete|onSubmit)"`: Passed.
+- Evidence: No matches. No run mutation, delete/edit/retry/replay controls, or mutation request methods appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg -n "(poll|polling|setInterval|setTimeout|refreshInterval|websocket|EventSource|stream)"`: Passed.
+- Evidence: No matches. No polling, streaming, or live update mechanism appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg -n "(graph|Graph|observability|telemetry|metrics|trace|tracing|datadog|sentry|newrelic|opentelemetry|prometheus)"`: Passed.
+- Evidence: No matches. No graph visualization or observability library/tooling appeared in the active scoped diff.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py frontend/src | rg -n "(http://|https://|localhost|127\.0\.0\.1|0\.0\.0\.0|apiBase|baseURL)"`: Passed.
+- Evidence: No matches. No hardcoded origin or alternate API base appeared in the active scoped diff.
+- `rg -n "(Supabase|supabase|Qdrant|qdrant|ShopAIKey|SHOPAIKEY|SUPABASE|QDRANT|SERVICE_ROLE|API_KEY|SECRET|PRIVATE|process\.env|prompt|system_prompt|developer_prompt|JWT|jwt|auth|setInterval|polling|observability|telemetry|datadog|sentry|newrelic|opentelemetry|prometheus|http://|https://|localhost|127\.0\.0\.1)" frontend/src backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py`: Passed.
+- Evidence: Matches were limited to existing backend service/test references in `backend/app/services/agent_run_service.py` and `backend/tests/test_agent_runs_api.py`, including existing Supabase service usage and safe-error tests. No frontend secret/provider/origin/polling/auth/observability matches were returned.
+- `rg -n "agent-runs|agent-logs|apiClient|axios|getAgentRunLogs|VITE_API_BASE_URL|encodeURIComponent|post|put|patch|delete|setInterval|poll|Supabase|Qdrant|SHOPAIKEY|http://|https://|localhost|127\.0\.0\.1" frontend/src/api frontend/src/pages frontend/src/components frontend/src/App.tsx`: Passed.
+- Evidence: Agent Logs references were limited to `/agent-logs`, encoded route/link IDs, `getAgentRunLogs`, existing `apiClient`, and the existing `/api/agent-runs/{id}/logs` helper. Existing non-Plan 15 upload/chat/evidence helpers still use their pre-existing API calls. No frontend Supabase/Qdrant/ShopAIKey/hardcoded origin/polling match appeared.
+- `rg -n "(reactflow|cytoscape|d3|vis-network|mermaid|sentry|datadog|newrelic|opentelemetry|prometheus|observability|telemetry|graph)" frontend/package.json frontend/src`: Passed.
+- Evidence: Only `frontend/src/components/RetrievalScoreTable.tsx` matched `graph_relevance`, the approved Agent 1 score field. No graph/observability dependency or library use appeared.
+- `rg -n "(POST|PUT|PATCH|DELETE|delete|remove|edit|update|retry|replay|rerun|cancel|mutat|onClick|onSubmit|button)" frontend/src/pages/AgentLogsPage.tsx frontend/src/components/AgentLogViewer.tsx frontend/src/api/agentRuns.ts`: Passed.
+- Evidence: Matches were only the Agent Logs lookup form submit button and step-selection buttons. No delete/edit/update/retry/replay/rerun/cancel mutation control or mutation request method appeared.
+- `Get-Content -Raw frontend/src/api/agentRuns.ts`: Passed.
+- Evidence: `getAgentRunLogs` uses existing `apiClient`, encodes `agentRunId`, and calls only `/api/agent-runs/${encodedAgentRunId}/logs` with GET.
+- `Get-Content -Raw frontend/src/pages/AgentLogsPage.tsx`: Passed.
+- Evidence: The page validates a non-empty UUID, loads the route/submitted single run through `getAgentRunLogs`, guards stale responses, and exposes only a read-only lookup/step inspection UI.
+- `Get-Content -Raw frontend/package.json`: Passed.
+- Evidence: Dependencies remain React, React DOM, React Router, Axios, Vite, TypeScript, and React plugin/types; no graph, observability, polling, auth, or state/data-fetching library was added.
+- `git diff -- backend/app/schemas/agent_runs.py backend/app/services/agent_run_service.py backend/tests/test_agent_runs_api.py`: Passed.
+- Evidence: No output. No active unrelated backend change was present in the approved backend contract/test files.
+- `git diff -- frontend/package.json frontend/package-lock.json package.json package-lock.json`: Passed.
+- Evidence: No output. No package/library changes were present.
+- `cd frontend && npm run build`: Not run.
+- Evidence or reason: This (05C) execution made no runtime source changes; the selected task only required recording exact scope-search commands/results unless a real scope issue was found.
+
+## Acceptance Check
+- Task acceptance condition: Runtime changes are limited to the existing logs response alignment and approved frontend files; the page loads one known run only and remains read-only.
+- Status: satisfied.
+- Evidence: Active scoped runtime diff contains no backend changes and only approved frontend route/navigation/styling/accessibility files. Source inspection shows Agent Logs uses the existing encoded `GET /api/agent-runs/{agent_run_id}/logs` helper, validates one UUID run ID, has no run list, no mutation controls, no polling, no auth/JWT, no direct provider/Supabase/Qdrant calls from the frontend, no hardcoded origin, and no graph/observability library.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_15_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to update checkboxes or commit.
+
+## Key Implementation Decisions
+- No runtime edits were made because the audit found no real scope issue.
+- Treated existing backend Supabase service/test references as allowed Plan 12/15 backend infrastructure, not accidental Plan 15 scope expansion, because no active backend diff was present and the frontend does not call those services directly.
+- Did not run `npm run build` because this execution changed only the report file; build remains assigned to Batch06 unless a runtime change is made during (05C).
+
+## Risks or Open Issues
+- Browser/manual validation remains for Batch06 and was not started here.
+- Existing working tree includes prior documentation/review/task changes not made by this execution; they were preserved.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. Dependencies Batch01 through (05B) are marked checked in the task file. Scope stayed within `(05C)`, and Batch06 validation/reporting was not started.
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes
+- handoff notes: Scope audit found no accidental expansion and made no runtime edits. Batch06 can run automated validation next, including targeted backend tests and frontend build per the task file.

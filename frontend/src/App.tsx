@@ -37,6 +37,14 @@ export function App() {
             >
               Chat
             </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `app-nav__link${isActive ? " app-nav__link--active" : ""}`
+              }
+              to="/agent-logs"
+            >
+              Agent Logs
+            </NavLink>
           </nav>
         </div>
       </header>

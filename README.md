@@ -34,6 +34,8 @@ Plan 15 Batch03 completed the reusable agent step list and detail viewer. `Agent
 
 Plan 15 Batch04 completed the Agent Logs page lookup and chat integration. `AgentLogsPage` is mounted at `/agent-logs` and `/agent-logs/:agentRunId`, validates UUID input before fetching, handles loading, not-found, backend-error, empty, and stale-response states, and renders `AgentLogViewer` for successful non-empty log responses. The chat page now shows an `Inspect agent logs` link for the latest successful `agent_run_id`, targeting the matching encoded `/agent-logs/{agentRunId}` URL without changing answer, citation, or evidence behavior.
 
+Plan 15 Batch05 completed Agent Logs routing, navigation, styling, and scope hardening. The primary navigation now includes an `Agent Logs` link, the debug workspace has responsive and overflow-contained styling for long JSON, tables, statuses, errors, and selected steps, and the recorded scope audit confirmed the page remains a one-run, read-only debug view without backend-only secrets, direct provider calls, admin browsing, mutations, polling, graph visualization, or observability-dashboard expansion.
+
 ## What This Folder Does
 
 This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
@@ -446,7 +448,7 @@ The frontend document API boundary is implemented in `frontend/src/api/documents
 
 Upload progress is normalized so callers can distinguish computable percentages from unknown totals. Document API errors expose safe display messages for backend `detail` text, backend connection failures, and generic request failures.
 
-React Router is mounted through `BrowserRouter`. `App.tsx` exposes `/upload`, `/documents`, `/chat`, `/evidence/:agentRunId`, `/agent-logs`, and `/agent-logs/:agentRunId`; root and unknown paths redirect to `/upload`. Primary navigation links to Upload, Documents, and Chat without full-page reloads.
+React Router is mounted through `BrowserRouter`. `App.tsx` exposes `/upload`, `/documents`, `/chat`, `/evidence/:agentRunId`, `/agent-logs`, and `/agent-logs/:agentRunId`; root and unknown paths redirect to `/upload`. Primary navigation links to Upload, Documents, Chat, and Agent Logs without full-page reloads.
 
 ### Frontend Reusable Document Components
 
