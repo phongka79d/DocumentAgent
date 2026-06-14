@@ -17,7 +17,8 @@ def migration_sql() -> str:
 
 def deletion_logs_table_sql(sql: str) -> str:
     match = re.search(
-        r"create\s+table\s+(?:if\s+not\s+exists\s+)?deletion_logs\s*\((.*?)\)\s*;",
+        r"create\s+table\s+(?:if\s+not\s+exists\s+)?"
+        r"public\.deletion_logs\s*\((.*?)\)\s*;",
         sql,
         re.DOTALL,
     )
@@ -28,7 +29,7 @@ def deletion_logs_table_sql(sql: str) -> str:
 def deletion_function_sql(sql: str) -> str:
     match = re.search(
         r"create\s+or\s+replace\s+function\s+"
-        r"delete_owned_document_cascade\s*\(\s*"
+        r"public\.delete_owned_document_cascade\s*\(\s*"
         r"p_document_id\s+uuid\s*,\s*p_user_id\s+text\s*\)"
         r".*?\$\$;(?:\s|$)",
         sql,
@@ -51,31 +52,85 @@ def test_deletion_logs_is_independent_and_constrains_status() -> None:
     assert "on delete cascade" not in table_sql
 
 
+def test_deletion_logs_constrains_all_deleted_counts_to_nonnegative() -> None:
+    table_sql = deletion_logs_table_sql(migration_sql())
+
+    for column in (
+        "deleted_chunks",
+        "deleted_entities",
+        "deleted_relationships",
+        "deleted_agent_runs",
+        "deleted_agent_steps",
+        "deleted_chat_messages",
+        "deleted_chat_sessions",
+    ):
+        assert re.search(
+            rf"{column}\s+integer\s+not\s+null\s+default\s+0\s+"
+            rf"check\s*\(\s*{column}\s*>=\s*0\s*\)",
+            table_sql,
+        ), f"{column} must have a nonnegative CHECK constraint"
+
+
 def test_deletion_logs_has_required_indexes() -> None:
     sql = migration_sql()
 
     assert re.search(
-        r"create\s+index.*on\s+deletion_logs\s*"
+        r"create\s+index.*on\s+public\.deletion_logs\s*"
         r"\(\s*user_id\s*,\s*created_at\s+desc\s*\)",
         sql,
         re.DOTALL,
     )
     assert re.search(
-        r"create\s+index.*on\s+deletion_logs\s*\(\s*user_id\s*,\s*status\s*\)",
+        r"create\s+index.*on\s+public\.deletion_logs\s*"
+        r"\(\s*user_id\s*,\s*status\s*\)",
         sql,
         re.DOTALL,
     )
 
 
 def test_delete_function_uses_safe_security_definer_contract() -> None:
-    function_sql = deletion_function_sql(migration_sql())
+    sql = migration_sql()
+    function_sql = deletion_function_sql(sql)
 
     assert "security definer" in function_sql
     assert re.search(r"set\s+search_path\s*=\s*pg_catalog(?:\s|$)", function_sql)
     assert "for update" in function_sql
-    assert "revoke execute on function delete_owned_document_cascade" in migration_sql()
-    assert "grant execute on function delete_owned_document_cascade" in migration_sql()
-    assert "to service_role" in migration_sql()
+    assert "create or replace function public.delete_owned_document_cascade" in sql
+    for role in ("public", "anon", "authenticated"):
+        assert re.search(
+            rf"revoke\s+execute\s+on\s+function\s+"
+            rf"public\.delete_owned_document_cascade\s*\(\s*uuid\s*,\s*text\s*\)"
+            rf"\s+from\s+{role}\s*;",
+            sql,
+        )
+    assert re.search(
+        r"grant\s+execute\s+on\s+function\s+"
+        r"public\.delete_owned_document_cascade\s*\(\s*uuid\s*,\s*text\s*\)"
+        r"\s+to\s+service_role\s*;",
+        sql,
+    )
+
+
+def test_deletion_logs_is_service_role_only_without_frontend_policies() -> None:
+    sql = migration_sql()
+
+    assert "alter table public.deletion_logs enable row level security;" in sql
+    for role in ("anon", "authenticated"):
+        assert re.search(
+            rf"revoke\s+all\s+privileges\s+on\s+table\s+"
+            rf"public\.deletion_logs\s+from\s+{role}\s*;",
+            sql,
+        )
+    assert re.search(
+        r"grant\s+select\s*,\s*insert\s+on\s+table\s+"
+        r"public\.deletion_logs\s+to\s+service_role\s*;",
+        sql,
+    )
+    assert not re.search(
+        r"create\s+policy\b.*\bon\s+public\.deletion_logs\b",
+        sql,
+        re.DOTALL,
+    )
 
 
 def test_delete_function_collects_all_runs_by_json_containment() -> None:

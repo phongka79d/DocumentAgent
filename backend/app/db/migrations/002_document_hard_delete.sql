@@ -1,4 +1,4 @@
-create table if not exists deletion_logs (
+create table if not exists public.deletion_logs (
   id uuid primary key default gen_random_uuid(),
   user_id text not null,
   document_id uuid not null,
@@ -8,22 +8,27 @@ create table if not exists deletion_logs (
   error_message text,
   deleted_storage_file boolean not null default false,
   deleted_qdrant_points boolean not null default false,
-  deleted_chunks integer not null default 0,
-  deleted_entities integer not null default 0,
-  deleted_relationships integer not null default 0,
-  deleted_agent_runs integer not null default 0,
-  deleted_agent_steps integer not null default 0,
-  deleted_chat_messages integer not null default 0,
-  deleted_chat_sessions integer not null default 0,
+  deleted_chunks integer not null default 0 check (deleted_chunks >= 0),
+  deleted_entities integer not null default 0 check (deleted_entities >= 0),
+  deleted_relationships integer not null default 0 check (deleted_relationships >= 0),
+  deleted_agent_runs integer not null default 0 check (deleted_agent_runs >= 0),
+  deleted_agent_steps integer not null default 0 check (deleted_agent_steps >= 0),
+  deleted_chat_messages integer not null default 0 check (deleted_chat_messages >= 0),
+  deleted_chat_sessions integer not null default 0 check (deleted_chat_sessions >= 0),
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_deletion_logs_user_created_at
-  on deletion_logs(user_id, created_at desc);
+  on public.deletion_logs(user_id, created_at desc);
 create index if not exists idx_deletion_logs_user_status
-  on deletion_logs(user_id, status);
+  on public.deletion_logs(user_id, status);
 
-create or replace function delete_owned_document_cascade(
+alter table public.deletion_logs enable row level security;
+revoke all privileges on table public.deletion_logs from anon;
+revoke all privileges on table public.deletion_logs from authenticated;
+grant select, insert on table public.deletion_logs to service_role;
+
+create or replace function public.delete_owned_document_cascade(
   p_document_id uuid,
   p_user_id text
 )
@@ -214,5 +219,7 @@ begin
 end;
 $$;
 
-revoke execute on function delete_owned_document_cascade(uuid, text) from public;
-grant execute on function delete_owned_document_cascade(uuid, text) to service_role;
+revoke execute on function public.delete_owned_document_cascade(uuid, text) from public;
+revoke execute on function public.delete_owned_document_cascade(uuid, text) from anon;
+revoke execute on function public.delete_owned_document_cascade(uuid, text) from authenticated;
+grant execute on function public.delete_owned_document_cascade(uuid, text) to service_role;
