@@ -97,7 +97,7 @@ def test_delete_document_orders_operations_and_maps_exact_counts(monkeypatch) ->
 
     response = document_service.delete_document(DOCUMENT_ID)
 
-    assert events == ["preflight", "qdrant", "storage", "database"]
+    assert events == ["preflight", "qdrant", "storage", "database", "qdrant"]
     assert response.model_dump(mode="json") == {
         "document_id": str(DOCUMENT_ID),
         "deleted": True,
@@ -112,7 +112,7 @@ def test_delete_document_orders_operations_and_maps_exact_counts(monkeypatch) ->
         "deleted_storage_file": True,
     }
     get_metadata.assert_called_once_with(str(DOCUMENT_ID), "single_user")
-    delete_vectors.assert_called_once_with(DOCUMENT_ID)
+    assert delete_vectors.call_args_list == [call(DOCUMENT_ID), call(DOCUMENT_ID)]
     remove_file.assert_called_once_with(STORAGE_PATH)
     cascade.assert_called_once_with(str(DOCUMENT_ID), "single_user")
     audit.assert_not_called()
@@ -219,7 +219,7 @@ def test_partial_progress_is_recorded_and_retry_repeats_idempotent_adapters(
     response = document_service.delete_document(DOCUMENT_ID)
 
     assert response.deleted is True
-    assert delete_vectors.call_count == 2
+    assert delete_vectors.call_count == 3
     assert remove_file.call_count == 2
     cascade.assert_called_once_with(str(DOCUMENT_ID), "single_user")
     assert audit.call_args_list[0] == call(
@@ -294,9 +294,14 @@ def test_database_failure_retry_repeats_external_deletes_and_then_succeeds(
         "qdrant",
         "storage",
         "database",
+        "qdrant",
     ]
     assert get_metadata.call_count == 2
-    assert delete_vectors.call_args_list == [call(DOCUMENT_ID), call(DOCUMENT_ID)]
+    assert delete_vectors.call_args_list == [
+        call(DOCUMENT_ID),
+        call(DOCUMENT_ID),
+        call(DOCUMENT_ID),
+    ]
     assert remove_file.call_args_list == [call(STORAGE_PATH), call(STORAGE_PATH)]
     assert cascade_mock.call_args_list == [
         call(str(DOCUMENT_ID), "single_user"),
@@ -432,11 +437,25 @@ def test_rpc_transport_error_reconciles_committed_success(monkeypatch) -> None:
     response = document_service.delete_document(DOCUMENT_ID)
 
     assert response.deleted is True
-    assert events == ["preflight", "qdrant", "storage"]
-    delete_vectors.assert_called_once_with(DOCUMENT_ID)
+    assert events == ["preflight", "qdrant", "storage", "qdrant"]
+    assert delete_vectors.call_args_list == [call(DOCUMENT_ID), call(DOCUMENT_ID)]
     remove_file.assert_called_once_with(STORAGE_PATH)
     successful_audit.assert_called_once_with("single_user", str(DOCUMENT_ID))
     audit.assert_not_called()
+
+
+def test_final_qdrant_sweep_failure_returns_safe_deletion_error(monkeypatch) -> None:
+    _, _, delete_vectors, _, _, audit, _ = _install_success_adapters(monkeypatch)
+    delete_vectors.side_effect = [True, QdrantDeleteError("late qdrant secret")]
+
+    with pytest.raises(document_service.DocumentDeletionError) as exc_info:
+        document_service.delete_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == SAFE_MESSAGE
+    assert delete_vectors.call_args_list == [call(DOCUMENT_ID), call(DOCUMENT_ID)]
+    assert audit.call_args.args[0]["failure_stage"] == "qdrant"
+    assert audit.call_args.args[0]["deleted_qdrant_points"] is True
+    assert audit.call_args.args[0]["deleted_storage_file"] is True
 
 
 def test_rpc_transport_error_without_success_audit_preserves_database_failure(

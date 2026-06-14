@@ -383,6 +383,27 @@ def _reconcile_successful_deletion(
         return None
 
 
+def _finalize_qdrant_deletion(
+    *,
+    user_id: str,
+    document_id: UUID,
+    file_name: str,
+    deleted_storage_file: bool,
+) -> None:
+    try:
+        delete_document_vectors(document_id)
+    except QdrantDeleteError as exc:
+        _raise_deletion_failure(
+            user_id=user_id,
+            document_id=document_id,
+            file_name=file_name,
+            failure_stage="qdrant",
+            deleted_qdrant_points=True,
+            deleted_storage_file=deleted_storage_file,
+            cause=exc,
+        )
+
+
 def delete_document(document_id: UUID) -> DocumentDeleteResponse:
     settings = get_settings()
     user_id = settings.single_user_id
@@ -441,6 +462,12 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
             document_id=document_id,
         )
         if reconciled_response is not None:
+            _finalize_qdrant_deletion(
+                user_id=user_id,
+                document_id=document_id,
+                file_name=file_name,
+                deleted_storage_file=deleted_storage_file,
+            )
             return reconciled_response
         _raise_deletion_failure(
             user_id=user_id,
@@ -456,7 +483,14 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
         raise DocumentNotFoundError("Document not found.")
 
     try:
-        return _validate_rpc_deletion_row(document_id, deletion_row)
+        response = _validate_rpc_deletion_row(document_id, deletion_row)
+        _finalize_qdrant_deletion(
+            user_id=user_id,
+            document_id=document_id,
+            file_name=file_name,
+            deleted_storage_file=deleted_storage_file,
+        )
+        return response
     except (ValidationError, ValueError) as exc:
         logger.error(
             "Document deletion returned an invalid success row for document_id=%s. "
@@ -468,6 +502,12 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
             document_id=document_id,
         )
         if reconciled_response is not None:
+            _finalize_qdrant_deletion(
+                user_id=user_id,
+                document_id=document_id,
+                file_name=file_name,
+                deleted_storage_file=deleted_storage_file,
+            )
             return reconciled_response
         _raise_deletion_failure(
             user_id=user_id,
