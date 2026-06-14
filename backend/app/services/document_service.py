@@ -2,19 +2,24 @@ import logging
 from typing import Any
 from uuid import UUID, uuid4
 
+from pydantic import ValidationError
+
 from app.core.config import get_settings
 from app.schemas.documents import (
+    DocumentDeleteAuditSuccessRow,
     DocumentDeleteResponse,
+    DocumentDeleteRpcSuccessRow,
     DocumentDetailResponse,
     DocumentListItem,
     DocumentListResponse,
     DocumentUploadResponse,
 )
-from app.services.qdrant_service import delete_document_vectors
+from app.services.qdrant_service import QdrantDeleteError, delete_document_vectors
 from app.services.supabase_service import (
     SupabaseConnectionError,
     delete_owned_document_cascade,
     get_document_metadata,
+    get_successful_deletion_log,
     insert_deletion_log,
     insert_document_metadata,
     list_document_metadata,
@@ -266,7 +271,7 @@ def _record_failed_deletion(
                 deleted_storage_file=deleted_storage_file,
             )
         )
-    except Exception:
+    except SupabaseConnectionError:
         logger.error(
             "Failed to record document deletion audit for document_id=%s. "
             "Provider details were suppressed for safety.",
@@ -303,21 +308,70 @@ def _raise_deletion_failure(
 
 def _delete_response_from_row(
     document_id: UUID,
-    row: dict[str, Any],
+    row: DocumentDeleteRpcSuccessRow | DocumentDeleteAuditSuccessRow,
 ) -> DocumentDeleteResponse:
     return DocumentDeleteResponse(
         document_id=document_id,
         deleted=True,
-        deleted_agent_runs=int(row.get("deleted_agent_runs", 0)),
-        deleted_agent_steps=int(row.get("deleted_agent_steps", 0)),
-        deleted_chat_messages=int(row.get("deleted_chat_messages", 0)),
-        deleted_chat_sessions=int(row.get("deleted_chat_sessions", 0)),
-        deleted_chunks=int(row.get("deleted_chunks", 0)),
-        deleted_entities=int(row.get("deleted_entities", 0)),
-        deleted_relationships=int(row.get("deleted_relationships", 0)),
-        deleted_qdrant_points=bool(row.get("deleted_qdrant_points")),
-        deleted_storage_file=bool(row.get("deleted_storage_file")),
+        deleted_agent_runs=row.deleted_agent_runs,
+        deleted_agent_steps=row.deleted_agent_steps,
+        deleted_chat_messages=row.deleted_chat_messages,
+        deleted_chat_sessions=row.deleted_chat_sessions,
+        deleted_chunks=row.deleted_chunks,
+        deleted_entities=row.deleted_entities,
+        deleted_relationships=row.deleted_relationships,
+        deleted_qdrant_points=row.deleted_qdrant_points,
+        deleted_storage_file=row.deleted_storage_file,
     )
+
+
+def _validate_rpc_deletion_row(
+    document_id: UUID,
+    row: dict[str, Any],
+) -> DocumentDeleteResponse:
+    validated = DocumentDeleteRpcSuccessRow.model_validate(row)
+    if validated.document_id != document_id or validated.deleted is not True:
+        raise ValueError("Deletion response did not match the requested document.")
+    return _delete_response_from_row(document_id, validated)
+
+
+def _validate_audit_deletion_row(
+    document_id: UUID,
+    row: dict[str, Any],
+) -> DocumentDeleteResponse:
+    validated = DocumentDeleteAuditSuccessRow.model_validate(row)
+    if validated.document_id != document_id:
+        raise ValueError("Deletion audit did not match the requested document.")
+    return _delete_response_from_row(document_id, validated)
+
+
+def _reconcile_successful_deletion(
+    *,
+    user_id: str,
+    document_id: UUID,
+) -> DocumentDeleteResponse | None:
+    try:
+        row = get_successful_deletion_log(user_id, str(document_id))
+    except SupabaseConnectionError:
+        logger.error(
+            "Document deletion reconciliation lookup failed for document_id=%s. "
+            "Provider details were suppressed for safety.",
+            document_id,
+        )
+        return None
+
+    if row is None:
+        return None
+
+    try:
+        return _validate_audit_deletion_row(document_id, row)
+    except (ValidationError, ValueError):
+        logger.error(
+            "Document deletion reconciliation returned an invalid success row "
+            "for document_id=%s. Details were suppressed for safety.",
+            document_id,
+        )
+        return None
 
 
 def delete_document(document_id: UUID) -> DocumentDeleteResponse:
@@ -326,7 +380,7 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
 
     try:
         document = get_document_metadata(str(document_id), user_id)
-    except Exception as exc:
+    except SupabaseConnectionError as exc:
         logger.error(
             "Document deletion preflight failed for document_id=%s. "
             "Provider details were suppressed for safety.",
@@ -345,7 +399,7 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
     try:
         delete_document_vectors(document_id)
         deleted_qdrant_points = True
-    except Exception as exc:
+    except QdrantDeleteError as exc:
         _raise_deletion_failure(
             user_id=user_id,
             document_id=document_id,
@@ -359,7 +413,7 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
     try:
         remove_document_file(storage_path)
         deleted_storage_file = True
-    except Exception as exc:
+    except SupabaseConnectionError as exc:
         _raise_deletion_failure(
             user_id=user_id,
             document_id=document_id,
@@ -372,7 +426,13 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
 
     try:
         deletion_row = delete_owned_document_cascade(str(document_id), user_id)
-    except Exception as exc:
+    except SupabaseConnectionError as exc:
+        reconciled_response = _reconcile_successful_deletion(
+            user_id=user_id,
+            document_id=document_id,
+        )
+        if reconciled_response is not None:
+            return reconciled_response
         _raise_deletion_failure(
             user_id=user_id,
             document_id=document_id,
@@ -386,4 +446,12 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
     if deletion_row is None:
         raise DocumentNotFoundError("Document not found.")
 
-    return _delete_response_from_row(document_id, deletion_row)
+    try:
+        return _validate_rpc_deletion_row(document_id, deletion_row)
+    except (ValidationError, ValueError) as exc:
+        logger.error(
+            "Document deletion returned an invalid success row for document_id=%s. "
+            "Details were suppressed for safety.",
+            document_id,
+        )
+        raise DocumentDeletionError(SAFE_DOCUMENT_DELETION_MESSAGE) from exc

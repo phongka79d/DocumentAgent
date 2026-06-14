@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -1618,6 +1618,72 @@ def test_insert_deletion_log_preserves_exact_failed_audit_shape(
 
     assert result == {"id": "log-id", **row}
     query.insert.assert_called_once_with(row)
+
+
+def test_get_successful_deletion_log_scopes_and_returns_newest_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"id": "log-id", "status": "success"}
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.limit.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.get_successful_deletion_log(
+        "single_user", "document-id"
+    )
+
+    assert result == row
+    client.table.assert_called_once_with("deletion_logs")
+    query.select.assert_called_once_with("*")
+    assert query.eq.call_args_list == [
+        call("user_id", "single_user"),
+        call("document_id", "document-id"),
+        call("status", "success"),
+    ]
+    query.order.assert_called_once_with("created_at", desc=True)
+    query.limit.assert_called_once_with(1)
+
+
+def test_get_successful_deletion_log_returns_none_when_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.limit.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    assert (
+        supabase_service.get_successful_deletion_log("single_user", "document-id")
+        is None
+    )
+
+
+def test_get_successful_deletion_log_reports_safe_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.limit.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.get_successful_deletion_log("single_user", "document-id")
+
+    assert "deletion success reconciliation" in str(exc_info.value)
+    assert "database secret" not in str(exc_info.value)
 
 
 def test_list_deletion_logs_omits_status_and_uses_descending_inclusive_range(

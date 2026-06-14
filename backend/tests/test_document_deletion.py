@@ -12,6 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.main import app
 from app.services import document_service
+from app.services.qdrant_service import QdrantDeleteError
+from app.services.supabase_service import SupabaseConnectionError
 
 
 DOCUMENT_ID = UUID("44444444-4444-4444-8444-444444444444")
@@ -59,6 +61,7 @@ def _install_success_adapters(monkeypatch, *, cascade_row=None):
         or (_cascade_row() if cascade_row is None else cascade_row)
     )
     audit = Mock()
+    successful_audit = Mock(return_value=None)
 
     monkeypatch.setattr(document_service, "get_settings", _settings)
     monkeypatch.setattr(document_service, "get_document_metadata", get_metadata)
@@ -66,11 +69,22 @@ def _install_success_adapters(monkeypatch, *, cascade_row=None):
     monkeypatch.setattr(document_service, "remove_document_file", remove_file)
     monkeypatch.setattr(document_service, "delete_owned_document_cascade", cascade)
     monkeypatch.setattr(document_service, "insert_deletion_log", audit)
-    return events, get_metadata, delete_vectors, remove_file, cascade, audit
+    monkeypatch.setattr(
+        document_service, "get_successful_deletion_log", successful_audit
+    )
+    return (
+        events,
+        get_metadata,
+        delete_vectors,
+        remove_file,
+        cascade,
+        audit,
+        successful_audit,
+    )
 
 
 def test_delete_document_orders_operations_and_maps_exact_counts(monkeypatch) -> None:
-    events, get_metadata, delete_vectors, remove_file, cascade, audit = (
+    events, get_metadata, delete_vectors, remove_file, cascade, audit, _ = (
         _install_success_adapters(monkeypatch)
     )
 
@@ -98,7 +112,7 @@ def test_delete_document_orders_operations_and_maps_exact_counts(monkeypatch) ->
 
 
 def test_delete_document_preflight_miss_has_no_external_calls(monkeypatch) -> None:
-    _, get_metadata, delete_vectors, remove_file, cascade, audit = (
+    _, get_metadata, delete_vectors, remove_file, cascade, audit, _ = (
         _install_success_adapters(monkeypatch)
     )
     get_metadata.return_value = None
@@ -129,12 +143,17 @@ def test_delete_document_stage_failure_writes_safe_audit(
     expected_qdrant,
     expected_storage,
 ) -> None:
-    _, _, _, _, _, audit = _install_success_adapters(monkeypatch)
+    _, _, _, _, _, audit, _ = _install_success_adapters(monkeypatch)
     provider_secret = "provider-secret-detail"
+    adapter_error = (
+        QdrantDeleteError(provider_secret)
+        if failing_adapter == "delete_document_vectors"
+        else SupabaseConnectionError(provider_secret)
+    )
     monkeypatch.setattr(
         document_service,
         failing_adapter,
-        Mock(side_effect=RuntimeError(provider_secret)),
+        Mock(side_effect=adapter_error),
     )
 
     with caplog.at_level(logging.ERROR), pytest.raises(
@@ -166,13 +185,13 @@ def test_delete_document_stage_failure_writes_safe_audit(
 
 
 def test_failed_audit_write_preserves_original_deletion_error(monkeypatch) -> None:
-    _, _, _, _, _, audit = _install_success_adapters(monkeypatch)
+    _, _, _, _, _, audit, _ = _install_success_adapters(monkeypatch)
     monkeypatch.setattr(
         document_service,
         "remove_document_file",
-        Mock(side_effect=RuntimeError("storage provider detail")),
+        Mock(side_effect=SupabaseConnectionError("storage provider detail")),
     )
-    audit.side_effect = RuntimeError("audit provider detail")
+    audit.side_effect = SupabaseConnectionError("audit provider detail")
 
     with pytest.raises(document_service.DocumentDeletionError) as exc_info:
         document_service.delete_document(DOCUMENT_ID)
@@ -183,10 +202,10 @@ def test_failed_audit_write_preserves_original_deletion_error(monkeypatch) -> No
 def test_partial_progress_is_recorded_and_retry_repeats_idempotent_adapters(
     monkeypatch,
 ) -> None:
-    _, _, delete_vectors, remove_file, cascade, audit = _install_success_adapters(
+    _, _, delete_vectors, remove_file, cascade, audit, _ = _install_success_adapters(
         monkeypatch
     )
-    remove_file.side_effect = [RuntimeError("temporary"), True]
+    remove_file.side_effect = [SupabaseConnectionError("temporary"), True]
 
     with pytest.raises(document_service.DocumentDeletionError):
         document_service.delete_document(DOCUMENT_ID)
@@ -228,7 +247,7 @@ def test_database_failure_retry_repeats_external_deletes_and_then_succeeds(
     )
     delete_vectors = Mock(side_effect=lambda *_: events.append("qdrant") or True)
     remove_file = Mock(side_effect=lambda *_: events.append("storage") or True)
-    cascade_results = iter([RuntimeError(provider_secret), _cascade_row()])
+    cascade_results = iter([SupabaseConnectionError(provider_secret), _cascade_row()])
 
     def cascade(*_args):
         events.append("database")
@@ -247,6 +266,9 @@ def test_database_failure_retry_repeats_external_deletes_and_then_succeeds(
         document_service, "delete_owned_document_cascade", cascade_mock
     )
     monkeypatch.setattr(document_service, "insert_deletion_log", audit)
+    monkeypatch.setattr(
+        document_service, "get_successful_deletion_log", Mock(return_value=None)
+    )
 
     with caplog.at_level(logging.ERROR), pytest.raises(
         document_service.DocumentDeletionError
@@ -307,8 +329,111 @@ def test_database_failure_retry_repeats_external_deletes_and_then_succeeds(
     }
 
 
+@pytest.mark.parametrize(
+    "malformed_row",
+    [
+        {"document_id": str(DOCUMENT_ID)},
+        {**_cascade_row(), "deleted_storage_file": 1},
+        {**_cascade_row(), "deleted_chunks": -1},
+        {**_cascade_row(), "deleted": False},
+    ],
+)
+def test_malformed_rpc_success_row_raises_safe_error_without_failed_audit(
+    monkeypatch,
+    caplog,
+    malformed_row,
+) -> None:
+    _, _, _, _, cascade, audit, _ = _install_success_adapters(monkeypatch)
+    cascade.side_effect = None
+    cascade.return_value = malformed_row
+
+    with caplog.at_level(logging.ERROR), pytest.raises(
+        document_service.DocumentDeletionError
+    ) as exc_info:
+        document_service.delete_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == SAFE_MESSAGE
+    assert "validation error" not in caplog.text.lower()
+    audit.assert_not_called()
+
+
+def test_rpc_success_row_rejects_mismatched_document_id(monkeypatch) -> None:
+    row = _cascade_row()
+    row["document_id"] = "55555555-5555-4555-8555-555555555555"
+    _, _, _, _, cascade, audit, _ = _install_success_adapters(monkeypatch)
+    cascade.side_effect = None
+    cascade.return_value = row
+
+    with pytest.raises(document_service.DocumentDeletionError) as exc_info:
+        document_service.delete_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == SAFE_MESSAGE
+    audit.assert_not_called()
+
+
+def test_rpc_transport_error_reconciles_committed_success(monkeypatch) -> None:
+    (
+        events,
+        _,
+        delete_vectors,
+        remove_file,
+        cascade,
+        audit,
+        successful_audit,
+    ) = _install_success_adapters(monkeypatch)
+    cascade.side_effect = SupabaseConnectionError("rpc response secret")
+    successful_audit.return_value = {
+        **{key: value for key, value in _cascade_row().items() if key != "deleted"},
+        "status": "success",
+    }
+
+    response = document_service.delete_document(DOCUMENT_ID)
+
+    assert response.deleted is True
+    assert events == ["preflight", "qdrant", "storage"]
+    delete_vectors.assert_called_once_with(DOCUMENT_ID)
+    remove_file.assert_called_once_with(STORAGE_PATH)
+    successful_audit.assert_called_once_with("single_user", str(DOCUMENT_ID))
+    audit.assert_not_called()
+
+
+def test_rpc_transport_error_without_success_audit_preserves_database_failure(
+    monkeypatch,
+    caplog,
+) -> None:
+    _, _, _, _, cascade, audit, successful_audit = _install_success_adapters(
+        monkeypatch
+    )
+    provider_secret = "rpc response secret"
+    cascade.side_effect = SupabaseConnectionError(provider_secret)
+
+    with caplog.at_level(logging.ERROR), pytest.raises(
+        document_service.DocumentDeletionError
+    ) as exc_info:
+        document_service.delete_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == SAFE_MESSAGE
+    assert provider_secret not in caplog.text
+    successful_audit.assert_called_once_with("single_user", str(DOCUMENT_ID))
+    assert audit.call_args.args[0]["failure_stage"] == "database"
+
+
+def test_reconciliation_lookup_failure_preserves_database_failure(monkeypatch) -> None:
+    _, _, _, _, cascade, audit, successful_audit = _install_success_adapters(
+        monkeypatch
+    )
+    cascade.side_effect = SupabaseConnectionError("rpc secret")
+    successful_audit.side_effect = SupabaseConnectionError("lookup secret")
+
+    with pytest.raises(document_service.DocumentDeletionError) as exc_info:
+        document_service.delete_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == SAFE_MESSAGE
+    assert audit.call_args.args[0]["failure_stage"] == "database"
+
+
 def test_cascade_none_after_preflight_maps_to_not_found(monkeypatch) -> None:
-    _, _, delete_vectors, remove_file, _, audit = _install_success_adapters(
+    _, _, delete_vectors, remove_file, _, audit, _ = _install_success_adapters(
         monkeypatch, cascade_row=None
     )
     monkeypatch.setattr(
@@ -365,6 +490,20 @@ def test_delete_document_route_maps_safe_errors(
 
     assert response.status_code == status_code
     assert response.json() == {"detail": detail}
+
+
+def test_delete_document_route_suppresses_deletion_exception_text(monkeypatch) -> None:
+    secret = "provider-secret-in-exception"
+    monkeypatch.setattr(
+        "app.api.documents.document_service.delete_document",
+        Mock(side_effect=document_service.DocumentDeletionError(secret)),
+    )
+
+    response = client.delete(f"/api/documents/{DOCUMENT_ID}")
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": SAFE_MESSAGE}
+    assert secret not in response.text
 
 
 def test_delete_document_route_rejects_malformed_uuid() -> None:

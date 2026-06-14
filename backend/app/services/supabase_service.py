@@ -241,6 +241,33 @@ def insert_deletion_log(row: dict) -> dict:
     return _first_response_row("deletion log insert", response)
 
 
+def get_successful_deletion_log(
+    user_id: str,
+    document_id: str,
+) -> dict | None:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.table("deletion_logs")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("document_id", document_id)
+            .eq("status", "success")
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("deletion success reconciliation", exc)
+
+    rows = _response_rows(response)
+    if not rows:
+        return None
+
+    return rows[0]
+
+
 def list_deletion_logs(
     user_id: str,
     status: str | None,
