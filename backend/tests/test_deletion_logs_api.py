@@ -13,7 +13,11 @@ from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.schemas.deletion_logs import DeletionLogItem, DeletionLogListResponse
+from app.schemas.deletion_logs import (
+    DeletionLogListResponse,
+    DeletionLogResponse,
+    DeletionLogStatus,
+)
 from app.services import deletion_log_service
 
 
@@ -53,8 +57,8 @@ def _client() -> TestClient:
     return TestClient(app)
 
 
-def test_deletion_log_item_has_exact_public_shape() -> None:
-    item = DeletionLogItem.model_validate(_row())
+def test_deletion_log_response_has_exact_public_shape() -> None:
+    item = DeletionLogResponse.model_validate(_row())
 
     assert item.model_dump(mode="json") == {
         "id": str(LOG_ID),
@@ -86,14 +90,23 @@ def test_deletion_log_item_has_exact_public_shape() -> None:
         ("deleted_entities", "2"),
     ],
 )
-def test_deletion_log_item_rejects_malformed_values(field: str, value: object) -> None:
+def test_deletion_log_response_rejects_malformed_values(
+    field: str,
+    value: object,
+) -> None:
     with pytest.raises(ValidationError):
-        DeletionLogItem.model_validate(_row(**{field: value}))
+        DeletionLogResponse.model_validate(_row(**{field: value}))
 
 
-def test_deletion_log_item_rejects_private_or_unknown_fields() -> None:
+def test_deletion_log_response_rejects_private_or_unknown_fields() -> None:
     with pytest.raises(ValidationError):
-        DeletionLogItem.model_validate(_row(user_id="single_user"))
+        DeletionLogResponse.model_validate(_row(user_id="single_user"))
+
+
+def test_deletion_log_status_is_exported_from_schema() -> None:
+    valid_status: DeletionLogStatus = "success"
+
+    assert valid_status == "success"
 
 
 def test_list_deletion_logs_uses_configured_user_filter_and_limit_lookahead(
@@ -129,6 +142,39 @@ def test_list_deletion_logs_reports_no_more_when_lookahead_is_absent(
     assert result.has_more is False
 
 
+def test_list_deletion_logs_preserves_newest_first_adapter_order_when_trimming(
+    monkeypatch,
+) -> None:
+    newest_id = "33333333-3333-3333-3333-333333333333"
+    middle_id = "44444444-4444-4444-4444-444444444444"
+    lookahead_id = "55555555-5555-5555-5555-555555555555"
+    rows = [
+        _row(id=newest_id, created_at="2026-06-14T12:00:00+00:00"),
+        _row(id=middle_id, created_at="2026-06-14T11:00:00+00:00"),
+        _row(id=lookahead_id, created_at="2026-06-14T10:00:00+00:00"),
+    ]
+    monkeypatch.setattr(
+        deletion_log_service,
+        "get_settings",
+        lambda: SimpleNamespace(single_user_id="owner"),
+    )
+    monkeypatch.setattr(
+        deletion_log_service,
+        "fetch_deletion_logs",
+        Mock(return_value=rows),
+    )
+
+    result = deletion_log_service.list_deletion_logs(
+        status=None,
+        limit=2,
+        offset=4,
+    )
+
+    assert [str(log.id) for log in result.logs] == [newest_id, middle_id]
+    assert result.offset == 4
+    assert result.has_more is True
+
+
 @pytest.mark.parametrize(
     "dependency_result",
     [
@@ -158,7 +204,17 @@ def test_list_deletion_logs_wraps_dependency_and_validation_failures(
 def test_get_deletion_logs_returns_filtered_public_response(monkeypatch) -> None:
     service = Mock(
         return_value=DeletionLogListResponse(
-            logs=[DeletionLogItem.model_validate(_row(status="failed", failure_stage="storage"))],
+            logs=[
+                DeletionLogResponse.model_validate(
+                    _row(
+                        status="failed",
+                        failure_stage="storage",
+                        error_message="Storage deletion failed.",
+                        deleted_storage_file=False,
+                        deleted_qdrant_points=True,
+                    )
+                )
+            ],
             limit=20,
             offset=0,
             has_more=False,
@@ -170,8 +226,31 @@ def test_get_deletion_logs_returns_filtered_public_response(monkeypatch) -> None
 
     assert response.status_code == 200
     service.assert_called_once_with(status="failed", limit=20, offset=0)
-    assert response.json()["logs"][0]["status"] == "failed"
-    assert "user_id" not in response.json()["logs"][0]
+    assert response.json() == {
+        "logs": [
+            {
+                "id": str(LOG_ID),
+                "document_id": str(DOCUMENT_ID),
+                "file_name": "contract.pdf",
+                "status": "failed",
+                "failure_stage": "storage",
+                "error_message": "Storage deletion failed.",
+                "deleted_storage_file": False,
+                "deleted_qdrant_points": True,
+                "deleted_chunks": 3,
+                "deleted_entities": 2,
+                "deleted_relationships": 1,
+                "deleted_agent_runs": 4,
+                "deleted_agent_steps": 12,
+                "deleted_chat_messages": 8,
+                "deleted_chat_sessions": 1,
+                "created_at": "2026-06-14T09:30:00Z",
+            }
+        ],
+        "limit": 20,
+        "offset": 0,
+        "has_more": False,
+    }
 
 
 @pytest.mark.parametrize(

@@ -1,8 +1,6 @@
-from typing import Literal
-
 from fastapi import APIRouter, HTTPException, Query, status
 
-from app.schemas.deletion_logs import DeletionLogListResponse
+from app.schemas.deletion_logs import DeletionLogListResponse, DeletionLogStatus
 from app.services import deletion_log_service
 
 
@@ -15,7 +13,7 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
 )
 def get_deletion_logs(
-    status_filter: Literal["success", "failed"] | None = Query(
+    status_filter: DeletionLogStatus | None = Query(
         default=None,
         alias="status",
     ),
