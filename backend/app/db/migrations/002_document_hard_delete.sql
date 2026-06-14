@@ -1,3 +1,10 @@
+alter table public.documents
+  drop constraint if exists documents_status_check;
+
+alter table public.documents
+  add constraint documents_status_check
+  check (status in ('uploaded', 'processing', 'ready', 'failed', 'deleting'));
+
 create table if not exists public.deletion_logs (
   id uuid primary key default gen_random_uuid(),
   user_id text not null,

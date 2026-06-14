@@ -24,6 +24,7 @@ from app.services.supabase_service import (
     insert_document_metadata,
     list_document_metadata,
     remove_document_file,
+    update_document_status,
     upload_document_file,
 )
 from app.utils.file_validation import sanitize_filename, validate_upload_file
@@ -448,6 +449,19 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
     storage_path = str(document.get("storage_path") or "")
     deleted_qdrant_points = False
     deleted_storage_file = False
+
+    try:
+        update_document_status(str(document_id), "deleting", error_message=None)
+    except SupabaseConnectionError as exc:
+        _raise_deletion_failure(
+            user_id=user_id,
+            document_id=document_id,
+            file_name=file_name,
+            failure_stage="database",
+            deleted_qdrant_points=deleted_qdrant_points,
+            deleted_storage_file=deleted_storage_file,
+            cause=exc,
+        )
 
     try:
         delete_document_vectors(document_id)

@@ -152,6 +152,7 @@ def test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids(
         ("list_chunks", DOCUMENT_ID_TEXT),
         ("embedding", "First chunk content."),
         ("ensure_collection", 3),
+        ("get_document", DOCUMENT_ID_TEXT),
         (
             "upsert",
             str(CHUNK_ONE_ID),
@@ -166,6 +167,7 @@ def test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids(
         ),
         ("update_point", DOCUMENT_ID_TEXT, str(CHUNK_ONE_ID), str(CHUNK_ONE_ID)),
         ("embedding", "Second chunk content."),
+        ("get_document", DOCUMENT_ID_TEXT),
         (
             "upsert",
             str(CHUNK_TWO_ID),
@@ -220,6 +222,55 @@ def test_index_document_chunks_locks_document_before_listing_chunks(
         ("lock_document", DOCUMENT_ID_TEXT),
         ("list_chunks", DOCUMENT_ID_TEXT),
     ]
+
+
+def test_index_document_chunks_rechecks_document_status_before_qdrant_upsert(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+    documents = iter([_document_row(), _document_row(status="deleting")])
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: calls.append(
+            ("get_document", received_document_id)
+        )
+        or next(documents),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: [_chunk_rows()[0]],
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "create_embedding",
+        lambda text: calls.append(("embedding", text)) or [1.0, 2.0, 3.0],
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "ensure_collection",
+        lambda vector_size: calls.append(("ensure_collection", vector_size)),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "upsert_chunk_vector",
+        lambda *_args, **_kwargs: calls.append(("upsert",)),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "update_chunk_qdrant_point_id",
+        lambda *_args, **_kwargs: calls.append(("update_point",)),
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 0
+    assert result.failed_count == 1
+    assert result.errors[0].message == "Document must be ready before indexing."
+    assert ("upsert",) not in calls
+    assert ("update_point",) not in calls
 
 
 def test_index_document_chunks_rejects_non_ready_document(

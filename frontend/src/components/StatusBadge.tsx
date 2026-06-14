@@ -21,6 +21,10 @@ const STATUS_BADGE_CONTENT = {
     label: "Failed",
     className: "status-badge--failed",
   },
+  deleting: {
+    label: "Deleting",
+    className: "status-badge--processing",
+  },
 } satisfies Record<DocumentStatus, { label: string; className: string }>;
 
 export function StatusBadge({ status }: StatusBadgeProps) {

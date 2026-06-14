@@ -80,6 +80,14 @@ def test_deletion_logs_is_independent_and_constrains_status() -> None:
     assert "on delete cascade" not in table_sql
 
 
+def test_migration_allows_temporary_deleting_document_status() -> None:
+    sql = migration_sql()
+
+    assert "drop constraint if exists documents_status_check" in sql
+    assert "add constraint documents_status_check" in sql
+    assert "'deleting'" in sql
+
+
 def test_deletion_logs_constrains_all_deleted_counts_to_nonnegative() -> None:
     table_sql = deletion_logs_table_sql(migration_sql())
 

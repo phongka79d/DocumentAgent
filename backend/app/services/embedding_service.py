@@ -57,6 +57,12 @@ def _has_qdrant_point_id(chunk: dict) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _ensure_document_ready_for_upsert(document_id: UUID) -> None:
+    document = get_indexing_document(str(document_id))
+    if document is None or document.get("status") != "ready":
+        raise DocumentIndexingError("Document must be ready before indexing.")
+
+
 def _index_one_chunk(
     *,
     document: dict,
@@ -84,6 +90,7 @@ def _index_one_chunk(
         chunk_index=chunk.get("chunk_index"),
         content=content,
     )
+    _ensure_document_ready_for_upsert(document_id)
     point_id = upsert_chunk_vector(
         point_id=chunk_id_text,
         vector=vector,

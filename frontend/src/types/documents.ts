@@ -2,7 +2,8 @@ export type DocumentStatus =
   | "uploaded"
   | "processing"
   | "ready"
-  | "failed";
+  | "failed"
+  | "deleting";
 
 export type JsonValue =
   | string
