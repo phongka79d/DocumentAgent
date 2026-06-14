@@ -6,6 +6,7 @@ import {
 } from "../api/deletionLogs";
 import type {
   DeletionLog,
+  DeletionLogCountKey,
   DeletionLogStatus,
 } from "../types/deletionLogs";
 
@@ -20,7 +21,7 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
   { value: "failed", label: "Failed" },
 ];
 
-const COUNT_FIELDS: Array<{ key: keyof DeletionLog; label: string }> = [
+const COUNT_FIELDS: Array<{ key: DeletionLogCountKey; label: string }> = [
   { key: "deleted_chunks", label: "Chunks" },
   { key: "deleted_entities", label: "Entities" },
   { key: "deleted_relationships", label: "Relationships" },
@@ -39,7 +40,7 @@ function formatTimestamp(timestamp: string): string {
 
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
-    timeStyle: "short",
+    timeStyle: "long",
   }).format(date);
 }
 
@@ -140,6 +141,7 @@ export function DeletionLogsPanel() {
       <div
         className="deletion-logs-panel__filters"
         aria-label="Deletion log filters"
+        role="group"
       >
         {FILTERS.map((item) => (
           <button

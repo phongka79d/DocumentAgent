@@ -1,5 +1,14 @@
 export type DeletionLogStatus = "success" | "failed";
 
+export type DeletionLogCountKey =
+  | "deleted_chunks"
+  | "deleted_entities"
+  | "deleted_relationships"
+  | "deleted_agent_runs"
+  | "deleted_agent_steps"
+  | "deleted_chat_messages"
+  | "deleted_chat_sessions";
+
 export type DeletionLog = {
   id: string;
   document_id: string;
