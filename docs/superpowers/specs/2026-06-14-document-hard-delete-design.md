@@ -25,6 +25,10 @@ The deletion workflow removes:
 - user chat messages whose metadata selected the deleted document;
 - chat sessions that have no remaining messages and no remaining agent runs.
 
+Each deletion attempt also creates an independent audit record that survives
+the deleted document, agent runs, and chat data. Both successful and failed
+attempts are retained and displayed in the Logs UI.
+
 The workflow is single-user, read/write through the backend only, and does not
 add bulk deletion, undo, trash retention, restore, or background jobs.
 
@@ -137,6 +141,42 @@ The function:
 The backend service role is the only caller. The frontend never calls Supabase
 directly.
 
+### Deletion Audit Logs
+
+Add a `deletion_logs` table independent of `documents` and `agent_runs`. It
+must not have cascading foreign keys to records removed by deletion.
+
+Each attempt records:
+
+- a generated log ID;
+- configured user ID;
+- requested document ID;
+- filename captured before deletion;
+- `success` or `failed` status;
+- timestamp;
+- failure stage and a safe error message for failed attempts;
+- deletion results or counts for Storage, Qdrant, chunks, entities,
+  relationships, agent runs, agent steps, chat messages, and chat sessions.
+
+The log never stores document content, chunk content, secrets, provider error
+payloads, stack traces, bucket configuration, or credentials.
+
+The service persists a success record only after all deletion stages complete.
+When a stage fails, it persists a failed record containing completed-stage
+results and the safe failure stage. A failed audit write must not replace the
+original deletion error. If deletion succeeds but the required success audit
+record cannot be persisted, the endpoint returns a safe `500`.
+
+Add:
+
+```text
+GET /api/deletion-logs
+```
+
+The endpoint is ownership-scoped, returns newest records first, and supports
+bounded pagination plus an optional `success` or `failed` status filter. It
+returns typed public fields only.
+
 ### Qdrant
 
 Add a focused service function that deletes points using a filter:
@@ -195,6 +235,17 @@ error. Allow retry. Prevent duplicate delete requests for the same document.
 If a refresh happens during deletion, stale responses must not restore a
 successfully deleted document.
 
+### Logs UI
+
+Extend the existing Agent Logs page with a separate **Deletion Logs** section.
+It loads independently of the agent-run UUID lookup and shows status, filename,
+document ID, timestamp, deleted resource counts/results, and failed-stage
+details.
+
+Provide `All`, `Successful`, and `Failed` filters. Rows are concise and
+expandable. Loading, empty, pagination, and failure states remain isolated from
+the Agent Logs lookup state.
+
 ## Failure Handling and Retry
 
 The operation spans Qdrant, Storage, and PostgreSQL, so it cannot be one
@@ -204,6 +255,7 @@ Required behavior:
 
 - preflight ownership before external deletion;
 - safe server logging with document ID and operation stage, never secret values;
+- persistent success and failure audit records with safe structured fields;
 - idempotent Qdrant and Storage deletion;
 - transactional relational cleanup through RPC;
 - no frontend removal until complete backend success;
@@ -234,7 +286,12 @@ Add focused tests for:
 - assistant and user related-message deletion;
 - empty-session deletion and non-empty-session preservation;
 - retry behavior after partial external success;
-- no external deletion when ownership lookup fails.
+- no external deletion when ownership lookup fails;
+- successful and failed audit-record persistence;
+- safe failure-stage recording without provider details;
+- deletion-log listing, filtering, ownership scope, ordering, and pagination;
+- success-audit failure returning a safe `500`;
+- failure-audit failure preserving the original deletion error.
 
 Where practical, add a migration/RPC integration test or SQL contract
 inspection covering transactional deletion order and JSON containment.
@@ -252,6 +309,8 @@ with the production build and manual browser checks:
 - Failure retains the card and exposes a safe retryable error.
 - Keyboard focus and dialog semantics work.
 - Layout remains usable at narrow widths.
+- Deletion Logs load independently from agent-run lookup.
+- Filters, expanded details, pagination, and isolated UI states work.
 
 ### End-to-End
 
@@ -265,7 +324,9 @@ After confirmed deletion verify:
 - every run selecting the document and its steps are absent;
 - related messages are absent;
 - unrelated multi-document data remains;
-- empty sessions are removed and non-empty sessions remain.
+- empty sessions are removed and non-empty sessions remain;
+- a successful deletion audit record remains after dependent data is gone;
+- a disposable failed attempt creates a safe failed audit record.
 
 Never use an irreplaceable user document for destructive validation.
 
@@ -274,7 +335,6 @@ Never use an irreplaceable user document for destructive validation.
 - soft delete or trash;
 - restore/undo;
 - bulk selection deletion;
-- deletion history;
 - retention policies;
 - partial redaction of multi-document runs;
 - direct frontend Supabase or Qdrant calls;
@@ -291,4 +351,6 @@ Never use an irreplaceable user document for destructive validation.
 - Chat sessions are deleted only when they have no remaining messages or runs.
 - Unrelated documents, runs, messages, and sessions remain intact.
 - Partial failures return safe errors and are retryable.
+- Successful and failed attempts remain visible in Deletion Logs.
+- Audit records contain only safe metadata and deletion results.
 - Automated backend tests and frontend build pass.
