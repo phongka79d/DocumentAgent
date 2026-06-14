@@ -159,7 +159,7 @@ def test_prepare_chat_persistence_creates_session_when_session_id_is_omitted(
     )
     get_chat_session = Mock()
     create_agent_run = Mock()
-    insert_chat_message = Mock(return_value={"id": "user-message-id", "role": "user"})
+    insert_user_message = Mock(return_value={"id": "user-message-id", "role": "user"})
     monkeypatch.setattr(
         chat_service.supabase_service,
         "list_owned_document_metadata_by_ids",
@@ -174,8 +174,8 @@ def test_prepare_chat_persistence_creates_session_when_session_id_is_omitted(
     monkeypatch.setattr(chat_service.supabase_service, "create_agent_run", create_agent_run)
     monkeypatch.setattr(
         chat_service.supabase_service,
-        "insert_chat_message",
-        insert_chat_message,
+        "insert_user_chat_message_for_documents",
+        insert_user_message,
     )
 
     context = chat_service.prepare_chat_persistence(
@@ -189,12 +189,55 @@ def test_prepare_chat_persistence_creates_session_when_session_id_is_omitted(
     create_chat_session.assert_called_once_with(title="What is covered?")
     get_chat_session.assert_not_called()
     create_agent_run.assert_not_called()
-    insert_chat_message.assert_called_once_with(
+    insert_user_message.assert_called_once_with(
         session_id=str(SESSION_ID),
-        role="user",
         content="What is covered?",
-        metadata={"document_ids": [str(DOCUMENT_ID)]},
+        document_ids=[str(DOCUMENT_ID)],
     )
+
+
+def test_prepare_chat_persistence_inserts_user_message_with_document_lock_rpc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    list_owned_documents = Mock(return_value=[{"id": str(DOCUMENT_ID)}])
+    create_chat_session = Mock(return_value={"id": str(SESSION_ID)})
+    insert_user_message = Mock(
+        return_value={"id": "user-message-id", "role": "user"}
+    )
+    generic_insert_message = Mock()
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "list_owned_document_metadata_by_ids",
+        list_owned_documents,
+    )
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "create_chat_session",
+        create_chat_session,
+    )
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "insert_user_chat_message_for_documents",
+        insert_user_message,
+    )
+    monkeypatch.setattr(
+        chat_service.supabase_service,
+        "insert_chat_message",
+        generic_insert_message,
+    )
+
+    context = chat_service.prepare_chat_persistence(
+        question="What is covered?",
+        document_ids=[DOCUMENT_ID],
+    )
+
+    assert context.user_message == {"id": "user-message-id", "role": "user"}
+    insert_user_message.assert_called_once_with(
+        session_id=str(SESSION_ID),
+        content="What is covered?",
+        document_ids=[str(DOCUMENT_ID)],
+    )
+    generic_insert_message.assert_not_called()
 
 
 def test_prepare_chat_persistence_rejects_empty_question_before_writes(
@@ -431,7 +474,7 @@ def test_prepare_chat_persistence_uses_existing_owned_session(
     get_chat_session = Mock(return_value={"id": str(SESSION_ID), "title": "Existing"})
     create_chat_session = Mock()
     create_agent_run = Mock()
-    insert_chat_message = Mock(return_value={"id": "user-message-id", "role": "user"})
+    insert_user_message = Mock(return_value={"id": "user-message-id", "role": "user"})
     monkeypatch.setattr(
         chat_service.supabase_service,
         "list_owned_document_metadata_by_ids",
@@ -446,8 +489,8 @@ def test_prepare_chat_persistence_uses_existing_owned_session(
     monkeypatch.setattr(chat_service.supabase_service, "create_agent_run", create_agent_run)
     monkeypatch.setattr(
         chat_service.supabase_service,
-        "insert_chat_message",
-        insert_chat_message,
+        "insert_user_chat_message_for_documents",
+        insert_user_message,
     )
 
     context = chat_service.prepare_chat_persistence(
@@ -462,6 +505,11 @@ def test_prepare_chat_persistence_uses_existing_owned_session(
     create_chat_session.assert_not_called()
     create_agent_run.assert_not_called()
     assert context.user_message["role"] == "user"
+    insert_user_message.assert_called_once_with(
+        session_id=str(SESSION_ID),
+        content="What is covered?",
+        document_ids=[str(DOCUMENT_ID)],
+    )
 
 
 def test_persist_assistant_message_stores_safe_run_metadata(
@@ -629,11 +677,9 @@ def test_chat_ask_route_persists_user_and_assistant_messages_with_services(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client, chat_api = _chat_client()
+    insert_user_message = Mock(return_value={"id": "user-message-id", "role": "user"})
     insert_chat_message = Mock(
-        side_effect=[
-            {"id": "user-message-id", "role": "user"},
-            {"id": "assistant-message-id", "role": "assistant"},
-        ]
+        return_value={"id": "assistant-message-id", "role": "assistant"}
     )
     run_workflow = Mock(
         return_value={
@@ -660,6 +706,11 @@ def test_chat_ask_route_persists_user_and_assistant_messages_with_services(
     )
     monkeypatch.setattr(
         chat_api.chat_service.supabase_service,
+        "insert_user_chat_message_for_documents",
+        insert_user_message,
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service.supabase_service,
         "insert_chat_message",
         insert_chat_message,
     )
@@ -680,20 +731,17 @@ def test_chat_ask_route_persists_user_and_assistant_messages_with_services(
         "citations": [],
         "agent_run_id": str(AGENT_RUN_ID),
     }
-    assert insert_chat_message.call_args_list == [
-        call(
-            session_id=str(SESSION_ID),
-            role="user",
-            content="What is covered?",
-            metadata={"document_ids": [str(DOCUMENT_ID)]},
-        ),
-        call(
-            session_id=str(SESSION_ID),
-            role="assistant",
-            content="Employees may work remotely two days per week.",
-            metadata={"agent_run_id": str(AGENT_RUN_ID), "confidence": 0.82},
-        ),
-    ]
+    insert_user_message.assert_called_once_with(
+        session_id=str(SESSION_ID),
+        content="What is covered?",
+        document_ids=[str(DOCUMENT_ID)],
+    )
+    insert_chat_message.assert_called_once_with(
+        session_id=str(SESSION_ID),
+        role="assistant",
+        content="Employees may work remotely two days per week.",
+        metadata={"agent_run_id": str(AGENT_RUN_ID), "confidence": 0.82},
+    )
     run_workflow.assert_called_once_with(
         "What is covered?",
         [DOCUMENT_ID],

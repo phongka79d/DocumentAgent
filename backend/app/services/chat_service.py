@@ -145,11 +145,10 @@ def prepare_chat_persistence(
     resolved_session_id = _session_id_from_row(session)
 
     try:
-        user_message = supabase_service.insert_chat_message(
+        user_message = supabase_service.insert_user_chat_message_for_documents(
             session_id=resolved_session_id,
-            role="user",
             content=trimmed_question,
-            metadata={"document_ids": selected_document_ids},
+            document_ids=selected_document_ids,
         )
     except Exception as exc:
         raise ChatDependencyError() from exc

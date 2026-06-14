@@ -226,6 +226,122 @@ revoke execute on function public.delete_owned_document_cascade(uuid, text) from
 revoke execute on function public.delete_owned_document_cascade(uuid, text) from authenticated;
 grant execute on function public.delete_owned_document_cascade(uuid, text) to service_role;
 
+create or replace function public.lock_owned_document_for_indexing(
+  p_document_id uuid,
+  p_user_id text
+)
+returns table (
+  id uuid,
+  user_id text,
+  status text
+)
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+begin
+  perform pg_advisory_xact_lock(hashtextextended(p_document_id::text, 0));
+
+  return query
+  select d.id, d.user_id, d.status
+    from public.documents as d
+   where d.id = p_document_id
+     and d.user_id = p_user_id
+     and d.status = 'ready'
+   for update;
+end;
+$$;
+
+revoke execute on function public.lock_owned_document_for_indexing(uuid, text) from public;
+revoke execute on function public.lock_owned_document_for_indexing(uuid, text) from anon;
+revoke execute on function public.lock_owned_document_for_indexing(uuid, text) from authenticated;
+grant execute on function public.lock_owned_document_for_indexing(uuid, text) to service_role;
+
+create or replace function public.insert_user_chat_message_for_documents(
+  p_session_id uuid,
+  p_user_id text,
+  p_content text,
+  p_document_ids text[]
+)
+returns table (
+  id uuid,
+  session_id uuid,
+  user_id text,
+  role text,
+  content text,
+  created_at timestamptz,
+  metadata jsonb
+)
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare
+  v_document_id text;
+  v_owned_document_count integer := 0;
+begin
+  if p_document_ids is null or cardinality(p_document_ids) = 0 then
+    raise exception 'selected document not found.';
+  end if;
+
+  for v_document_id in
+    select distinct selected_document_id
+      from unnest(p_document_ids) as selected_document_id
+     order by selected_document_id
+  loop
+    perform pg_advisory_xact_lock(hashtextextended(v_document_id, 0));
+  end loop;
+
+  select count(*)::integer
+    into v_owned_document_count
+    from public.documents as d
+   where d.user_id = p_user_id
+     and d.id::text = any(p_document_ids);
+
+  if v_owned_document_count <> cardinality(p_document_ids) then
+    raise exception 'selected document not found.';
+  end if;
+
+  if not exists (
+    select 1
+      from public.chat_sessions as cs
+     where cs.id = p_session_id
+       and cs.user_id = p_user_id
+  ) then
+    raise exception 'chat session not found.';
+  end if;
+
+  return query
+  insert into public.chat_messages (
+    session_id,
+    user_id,
+    role,
+    content,
+    metadata
+  )
+  values (
+    p_session_id,
+    p_user_id,
+    'user',
+    p_content,
+    jsonb_build_object('document_ids', p_document_ids)
+  )
+  returning
+    chat_messages.id,
+    chat_messages.session_id,
+    chat_messages.user_id,
+    chat_messages.role,
+    chat_messages.content,
+    chat_messages.created_at,
+    chat_messages.metadata;
+end;
+$$;
+
+revoke execute on function public.insert_user_chat_message_for_documents(uuid, text, text, text[]) from public;
+revoke execute on function public.insert_user_chat_message_for_documents(uuid, text, text, text[]) from anon;
+revoke execute on function public.insert_user_chat_message_for_documents(uuid, text, text, text[]) from authenticated;
+grant execute on function public.insert_user_chat_message_for_documents(uuid, text, text, text[]) to service_role;
+
 create or replace function public.create_owned_agent_run(
   p_session_id uuid,
   p_user_id text,

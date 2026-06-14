@@ -515,6 +515,42 @@ def test_insert_chat_message_inserts_single_user_row_with_metadata(
     query.execute.assert_called_once_with()
 
 
+def test_insert_user_chat_message_for_documents_uses_lock_aware_rpc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {
+        "id": "message-id",
+        "session_id": "session-id",
+        "user_id": "single_user",
+        "role": "user",
+        "content": "Question?",
+        "metadata": {"document_ids": ["document-id"]},
+    }
+    rpc_query = Mock()
+    rpc_query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(rpc=Mock(return_value=rpc_query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_user_chat_message_for_documents(
+        session_id="session-id",
+        content="Question?",
+        document_ids=["document-id"],
+    )
+
+    assert result == row
+    client.rpc.assert_called_once_with(
+        "insert_user_chat_message_for_documents",
+        {
+            "p_session_id": "session-id",
+            "p_user_id": "single_user",
+            "p_content": "Question?",
+            "p_document_ids": ["document-id"],
+        },
+    )
+    rpc_query.execute.assert_called_once_with()
+
+
 def test_insert_chat_message_defaults_metadata_to_empty_object(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

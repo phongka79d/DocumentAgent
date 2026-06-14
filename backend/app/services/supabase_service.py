@@ -413,6 +413,33 @@ def insert_chat_message(
     return _first_response_row("chat message insert", response)
 
 
+def insert_user_chat_message_for_documents(
+    *,
+    session_id: str,
+    content: str,
+    document_ids: list[str],
+) -> dict:
+    client = get_supabase_client()
+
+    try:
+        response = (
+            client.rpc(
+                "insert_user_chat_message_for_documents",
+                {
+                    "p_session_id": session_id,
+                    "p_user_id": _get_single_user_id(),
+                    "p_content": content,
+                    "p_document_ids": document_ids,
+                },
+            )
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("user chat message document insert", exc)
+
+    return _first_response_row("user chat message document insert", response)
+
+
 def create_agent_run(
     *,
     session_id: str | None,
@@ -605,6 +632,28 @@ def get_processing_document(document_id: str) -> dict | None:
 def get_indexing_document(document_id: str) -> dict | None:
     """Load one document for indexing for the configured single user."""
     return get_document_metadata(document_id, _get_single_user_id())
+
+
+def lock_document_for_indexing(document_id: str) -> dict | None:
+    try:
+        response = (
+            get_supabase_client()
+            .rpc(
+                "lock_owned_document_for_indexing",
+                {
+                    "p_document_id": document_id,
+                    "p_user_id": _get_single_user_id(),
+                },
+            )
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document indexing lock", exc)
+
+    rows = _response_rows(response)
+    if not rows:
+        return None
+    return rows[0]
 
 
 def get_graph_document(document_id: str) -> dict | None:

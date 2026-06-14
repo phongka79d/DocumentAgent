@@ -15,6 +15,16 @@ CHUNK_ONE_ID = UUID("22222222-2222-2222-2222-222222222222")
 CHUNK_TWO_ID = UUID("33333333-3333-3333-3333-333333333333")
 
 
+@pytest.fixture(autouse=True)
+def stub_document_indexing_lock(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        embedding_service,
+        "lock_document_for_indexing",
+        lambda received_document_id: {"id": received_document_id},
+        raising=False,
+    )
+
+
 def _document_row(*, status: str = "ready") -> dict:
     return {
         "id": DOCUMENT_ID_TEXT,
@@ -66,6 +76,10 @@ def test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids(
         calls.append(("list_chunks", received_document_id))
         return chunks
 
+    def fake_lock_document_for_indexing(received_document_id: str):
+        calls.append(("lock_document", received_document_id))
+        return {"id": received_document_id}
+
     def fake_create_embedding(text: str):
         calls.append(("embedding", text))
         return [float(len(text)), 0.2, 0.3]
@@ -108,6 +122,11 @@ def test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids(
         "list_chunks_needing_indexing",
         fake_list_chunks_needing_indexing,
     )
+    monkeypatch.setattr(
+        embedding_service,
+        "lock_document_for_indexing",
+        fake_lock_document_for_indexing,
+    )
     monkeypatch.setattr(embedding_service, "create_embedding", fake_create_embedding)
     monkeypatch.setattr(embedding_service, "ensure_collection", fake_ensure_collection)
     monkeypatch.setattr(
@@ -129,6 +148,7 @@ def test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids(
     assert result.errors == []
     assert calls == [
         ("get_document", DOCUMENT_ID_TEXT),
+        ("lock_document", DOCUMENT_ID_TEXT),
         ("list_chunks", DOCUMENT_ID_TEXT),
         ("embedding", "First chunk content."),
         ("ensure_collection", 3),
@@ -159,6 +179,46 @@ def test_index_document_chunks_indexes_unindexed_chunks_and_updates_point_ids(
             "Second chunk content.",
         ),
         ("update_point", DOCUMENT_ID_TEXT, str(CHUNK_TWO_ID), str(CHUNK_TWO_ID)),
+    ]
+
+
+def test_index_document_chunks_locks_document_before_listing_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple] = []
+
+    monkeypatch.setattr(
+        embedding_service,
+        "get_indexing_document",
+        lambda received_document_id: calls.append(
+            ("get_document", received_document_id)
+        )
+        or _document_row(),
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "lock_document_for_indexing",
+        lambda received_document_id: calls.append(
+            ("lock_document", received_document_id)
+        )
+        or {"id": received_document_id},
+    )
+    monkeypatch.setattr(
+        embedding_service,
+        "list_chunks_needing_indexing",
+        lambda received_document_id: calls.append(
+            ("list_chunks", received_document_id)
+        )
+        or [],
+    )
+
+    result = embedding_service.index_document_chunks(DOCUMENT_ID)
+
+    assert result.indexed_count == 0
+    assert calls == [
+        ("get_document", DOCUMENT_ID_TEXT),
+        ("lock_document", DOCUMENT_ID_TEXT),
+        ("list_chunks", DOCUMENT_ID_TEXT),
     ]
 
 

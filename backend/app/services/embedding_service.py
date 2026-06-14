@@ -11,6 +11,7 @@ from app.services.shopaikey_service import create_embedding
 from app.services.supabase_service import (
     get_indexing_document,
     list_chunks_needing_indexing,
+    lock_document_for_indexing,
     update_chunk_qdrant_point_id,
 )
 
@@ -109,6 +110,11 @@ def index_document_chunks(document_id: UUID | str) -> DocumentIndexingResult:
 
     if document.get("status") != "ready":
         raise DocumentIndexingError("Document must be ready before indexing.")
+
+    try:
+        lock_document_for_indexing(document_id_text)
+    except Exception as exc:
+        raise DocumentIndexingError("Document not found.") from exc
 
     chunks = list_chunks_needing_indexing(document_id_text)
     indexed_count = 0
