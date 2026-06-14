@@ -35,3 +35,17 @@ class DocumentDetailResponse(BaseModel):
     updated_at: datetime
     error_message: str | None = None
     chunks: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class DocumentDeleteResponse(BaseModel):
+    document_id: UUID
+    deleted: bool
+    deleted_agent_runs: int
+    deleted_agent_steps: int
+    deleted_chat_messages: int
+    deleted_chat_sessions: int
+    deleted_chunks: int
+    deleted_entities: int
+    deleted_relationships: int
+    deleted_qdrant_points: bool
+    deleted_storage_file: bool

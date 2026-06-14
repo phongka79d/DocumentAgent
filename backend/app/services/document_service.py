@@ -4,22 +4,28 @@ from uuid import UUID, uuid4
 
 from app.core.config import get_settings
 from app.schemas.documents import (
+    DocumentDeleteResponse,
     DocumentDetailResponse,
     DocumentListItem,
     DocumentListResponse,
     DocumentUploadResponse,
 )
+from app.services.qdrant_service import delete_document_vectors
 from app.services.supabase_service import (
     SupabaseConnectionError,
+    delete_owned_document_cascade,
     get_document_metadata,
+    insert_deletion_log,
     insert_document_metadata,
     list_document_metadata,
+    remove_document_file,
     upload_document_file,
 )
 from app.utils.file_validation import sanitize_filename, validate_upload_file
 
 
 logger = logging.getLogger(__name__)
+SAFE_DOCUMENT_DELETION_MESSAGE = "Document deletion failed."
 
 
 class DocumentServiceError(RuntimeError):
@@ -36,6 +42,10 @@ class DocumentMetadataError(DocumentServiceError):
 
 class DocumentNotFoundError(DocumentServiceError):
     """Raised when a document is not found for the configured user."""
+
+
+class DocumentDeletionError(DocumentServiceError):
+    """Raised when permanent document deletion cannot be completed."""
 
 
 def build_document_storage_path(
@@ -206,3 +216,174 @@ def get_document_detail(document_id: UUID) -> DocumentDetailResponse:
         raise DocumentNotFoundError("Document not found.")
 
     return _document_detail_from_row(row)
+
+
+def _failed_deletion_log_row(
+    *,
+    user_id: str,
+    document_id: UUID,
+    file_name: str,
+    failure_stage: str,
+    deleted_qdrant_points: bool,
+    deleted_storage_file: bool,
+) -> dict[str, Any]:
+    return {
+        "user_id": user_id,
+        "document_id": str(document_id),
+        "file_name": file_name,
+        "status": "failed",
+        "failure_stage": failure_stage,
+        "error_message": SAFE_DOCUMENT_DELETION_MESSAGE,
+        "deleted_storage_file": deleted_storage_file,
+        "deleted_qdrant_points": deleted_qdrant_points,
+        "deleted_chunks": 0,
+        "deleted_entities": 0,
+        "deleted_relationships": 0,
+        "deleted_agent_runs": 0,
+        "deleted_agent_steps": 0,
+        "deleted_chat_messages": 0,
+        "deleted_chat_sessions": 0,
+    }
+
+
+def _record_failed_deletion(
+    *,
+    user_id: str,
+    document_id: UUID,
+    file_name: str,
+    failure_stage: str,
+    deleted_qdrant_points: bool,
+    deleted_storage_file: bool,
+) -> None:
+    try:
+        insert_deletion_log(
+            _failed_deletion_log_row(
+                user_id=user_id,
+                document_id=document_id,
+                file_name=file_name,
+                failure_stage=failure_stage,
+                deleted_qdrant_points=deleted_qdrant_points,
+                deleted_storage_file=deleted_storage_file,
+            )
+        )
+    except Exception:
+        logger.error(
+            "Failed to record document deletion audit for document_id=%s. "
+            "Provider details were suppressed for safety.",
+            document_id,
+        )
+
+
+def _raise_deletion_failure(
+    *,
+    user_id: str,
+    document_id: UUID,
+    file_name: str,
+    failure_stage: str,
+    deleted_qdrant_points: bool,
+    deleted_storage_file: bool,
+    cause: Exception,
+) -> None:
+    logger.error(
+        "Document deletion failed at stage=%s for document_id=%s. "
+        "Provider details were suppressed for safety.",
+        failure_stage,
+        document_id,
+    )
+    _record_failed_deletion(
+        user_id=user_id,
+        document_id=document_id,
+        file_name=file_name,
+        failure_stage=failure_stage,
+        deleted_qdrant_points=deleted_qdrant_points,
+        deleted_storage_file=deleted_storage_file,
+    )
+    raise DocumentDeletionError(SAFE_DOCUMENT_DELETION_MESSAGE) from cause
+
+
+def _delete_response_from_row(
+    document_id: UUID,
+    row: dict[str, Any],
+) -> DocumentDeleteResponse:
+    return DocumentDeleteResponse(
+        document_id=document_id,
+        deleted=True,
+        deleted_agent_runs=int(row.get("deleted_agent_runs", 0)),
+        deleted_agent_steps=int(row.get("deleted_agent_steps", 0)),
+        deleted_chat_messages=int(row.get("deleted_chat_messages", 0)),
+        deleted_chat_sessions=int(row.get("deleted_chat_sessions", 0)),
+        deleted_chunks=int(row.get("deleted_chunks", 0)),
+        deleted_entities=int(row.get("deleted_entities", 0)),
+        deleted_relationships=int(row.get("deleted_relationships", 0)),
+        deleted_qdrant_points=bool(row.get("deleted_qdrant_points")),
+        deleted_storage_file=bool(row.get("deleted_storage_file")),
+    )
+
+
+def delete_document(document_id: UUID) -> DocumentDeleteResponse:
+    settings = get_settings()
+    user_id = settings.single_user_id
+
+    try:
+        document = get_document_metadata(str(document_id), user_id)
+    except Exception as exc:
+        logger.error(
+            "Document deletion preflight failed for document_id=%s. "
+            "Provider details were suppressed for safety.",
+            document_id,
+        )
+        raise DocumentDeletionError(SAFE_DOCUMENT_DELETION_MESSAGE) from exc
+
+    if document is None:
+        raise DocumentNotFoundError("Document not found.")
+
+    file_name = str(document.get("file_name") or "")
+    storage_path = str(document.get("storage_path") or "")
+    deleted_qdrant_points = False
+    deleted_storage_file = False
+
+    try:
+        delete_document_vectors(document_id)
+        deleted_qdrant_points = True
+    except Exception as exc:
+        _raise_deletion_failure(
+            user_id=user_id,
+            document_id=document_id,
+            file_name=file_name,
+            failure_stage="qdrant",
+            deleted_qdrant_points=deleted_qdrant_points,
+            deleted_storage_file=deleted_storage_file,
+            cause=exc,
+        )
+
+    try:
+        remove_document_file(storage_path)
+        deleted_storage_file = True
+    except Exception as exc:
+        _raise_deletion_failure(
+            user_id=user_id,
+            document_id=document_id,
+            file_name=file_name,
+            failure_stage="storage",
+            deleted_qdrant_points=deleted_qdrant_points,
+            deleted_storage_file=deleted_storage_file,
+            cause=exc,
+        )
+
+    try:
+        deletion_row = delete_owned_document_cascade(str(document_id), user_id)
+    except Exception as exc:
+        _raise_deletion_failure(
+            user_id=user_id,
+            document_id=document_id,
+            file_name=file_name,
+            failure_stage="database",
+            deleted_qdrant_points=deleted_qdrant_points,
+            deleted_storage_file=deleted_storage_file,
+            cause=exc,
+        )
+
+    if deletion_row is None:
+        raise DocumentNotFoundError("Document not found.")
+
+    return _delete_response_from_row(document_id, deletion_row)

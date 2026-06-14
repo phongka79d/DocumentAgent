@@ -4,6 +4,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from app.schemas.embeddings import DocumentIndexingResult
 from app.schemas.documents import (
+    DocumentDeleteResponse,
     DocumentDetailResponse,
     DocumentListResponse,
     DocumentUploadResponse,
@@ -79,6 +80,26 @@ def get_document_detail(document_id: UUID) -> DocumentDetailResponse:
             detail=str(exc),
         ) from exc
     except document_service.DocumentMetadataError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
+
+
+@router.delete(
+    "/{document_id}",
+    response_model=DocumentDeleteResponse,
+    status_code=status.HTTP_200_OK,
+)
+def delete_document(document_id: UUID) -> DocumentDeleteResponse:
+    try:
+        return document_service.delete_document(document_id)
+    except document_service.DocumentNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except document_service.DocumentDeletionError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(exc),
