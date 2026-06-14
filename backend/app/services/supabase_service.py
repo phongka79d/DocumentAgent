@@ -109,6 +109,18 @@ def upload_document_file(
     return storage_path
 
 
+def remove_document_file(storage_path: str) -> bool:
+    client = get_supabase_client()
+    bucket_name = _get_configured_storage_bucket()
+
+    try:
+        client.storage.from_(bucket_name).remove([storage_path])
+    except Exception as exc:
+        _raise_supabase_query_error("storage delete", exc)
+
+    return True
+
+
 def _first_response_row(operation_name: str, response: object) -> dict:
     data = getattr(response, "data", None)
     if not data:
@@ -192,6 +204,68 @@ def insert_document_metadata(document_row: dict) -> dict:
         _raise_supabase_query_error("document metadata insert", exc)
 
     return _first_response_row("document metadata insert", response)
+
+
+def delete_owned_document_cascade(
+    document_id: str,
+    user_id: str,
+) -> dict | None:
+    client = get_supabase_client()
+
+    try:
+        response = client.rpc(
+            "delete_owned_document_cascade",
+            {
+                "p_document_id": document_id,
+                "p_user_id": user_id,
+            },
+        ).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("document cascade delete", exc)
+
+    rows = _response_rows(response)
+    if not rows:
+        return None
+
+    return rows[0]
+
+
+def insert_deletion_log(row: dict) -> dict:
+    client = get_supabase_client()
+
+    try:
+        response = client.table("deletion_logs").insert(row).execute()
+    except Exception as exc:
+        _raise_supabase_query_error("deletion log insert", exc)
+
+    return _first_response_row("deletion log insert", response)
+
+
+def list_deletion_logs(
+    user_id: str,
+    status: str | None,
+    limit: int,
+    offset: int,
+) -> list[dict]:
+    client = get_supabase_client()
+
+    try:
+        query = (
+            client.table("deletion_logs")
+            .select("*")
+            .eq("user_id", user_id)
+        )
+        if status is not None:
+            query = query.eq("status", status)
+        response = (
+            query.order("created_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("deletion log list", exc)
+
+    return _response_rows(response)
 
 
 def insert_agent_step_log(

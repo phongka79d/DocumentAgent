@@ -1462,3 +1462,207 @@ def test_insert_document_relationships_reports_safe_insert_failure(
     assert "document relationship insert" in message
     assert "RuntimeError" in message
     assert "database secret" not in message
+
+
+def test_remove_document_file_uses_exact_configured_bucket_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bucket = SimpleNamespace(remove=Mock(return_value=[]))
+    storage = SimpleNamespace(from_=Mock(return_value=bucket))
+    client = SimpleNamespace(storage=storage)
+    monkeypatch.setattr(
+        supabase_service,
+        "get_settings",
+        lambda: _settings(storage_bucket="private-documents"),
+    )
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.remove_document_file(
+        "documents/single_user/document-id/original file.txt"
+    )
+
+    assert result is True
+    storage.from_.assert_called_once_with("private-documents")
+    bucket.remove.assert_called_once_with(
+        ["documents/single_user/document-id/original file.txt"]
+    )
+
+
+def test_remove_document_file_treats_missing_response_as_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bucket = SimpleNamespace(remove=Mock(return_value=None))
+    client = SimpleNamespace(storage=SimpleNamespace(from_=Mock(return_value=bucket)))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    assert supabase_service.remove_document_file("missing/path.txt") is True
+
+
+def test_remove_document_file_reports_safe_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bucket = SimpleNamespace(remove=Mock(side_effect=RuntimeError("storage secret")))
+    client = SimpleNamespace(storage=SimpleNamespace(from_=Mock(return_value=bucket)))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.remove_document_file("documents/user/doc/file.txt")
+
+    message = str(exc_info.value)
+    assert "storage delete" in message
+    assert "RuntimeError" in message
+    assert "storage secret" not in message
+
+
+def test_delete_owned_document_cascade_calls_exact_rpc_and_returns_first_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"deleted_agent_runs": 2, "deleted_chat_messages": 4}
+    query = Mock()
+    query.execute.return_value = SimpleNamespace(data=[row])
+    client = SimpleNamespace(rpc=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.delete_owned_document_cascade(
+        "document-id",
+        "single_user",
+    )
+
+    assert result == row
+    client.rpc.assert_called_once_with(
+        "delete_owned_document_cascade",
+        {"p_document_id": "document-id", "p_user_id": "single_user"},
+    )
+    query.execute.assert_called_once_with()
+
+
+def test_delete_owned_document_cascade_returns_none_for_empty_rpc_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.execute.return_value = SimpleNamespace(data=[])
+    client = SimpleNamespace(rpc=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    assert (
+        supabase_service.delete_owned_document_cascade("document-id", "single_user")
+        is None
+    )
+
+
+def test_delete_owned_document_cascade_reports_safe_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(rpc=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.delete_owned_document_cascade("document-id", "single_user")
+
+    message = str(exc_info.value)
+    assert "document cascade delete" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message
+
+
+def test_insert_deletion_log_inserts_row_and_returns_first_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    row = {"user_id": "single_user", "status": "success"}
+    inserted = {"id": "log-id", **row}
+    query = Mock()
+    query.insert.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[inserted])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.insert_deletion_log(row)
+
+    assert result == inserted
+    client.table.assert_called_once_with("deletion_logs")
+    query.insert.assert_called_once_with(row)
+    query.execute.assert_called_once_with()
+
+
+def test_list_deletion_logs_omits_status_and_uses_descending_inclusive_range(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [{"id": "log-id"}]
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.range.return_value = query
+    query.execute.return_value = SimpleNamespace(data=rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_deletion_logs(
+        "single_user",
+        status=None,
+        limit=25,
+        offset=50,
+    )
+
+    assert result == rows
+    client.table.assert_called_once_with("deletion_logs")
+    query.select.assert_called_once_with("*")
+    query.eq.assert_called_once_with("user_id", "single_user")
+    query.order.assert_called_once_with("created_at", desc=True)
+    query.range.assert_called_once_with(50, 74)
+    query.execute.assert_called_once_with()
+
+
+def test_list_deletion_logs_applies_status_filter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.range.return_value = query
+    query.execute.return_value = SimpleNamespace(data=[])
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    supabase_service.list_deletion_logs(
+        "single_user",
+        status="failed",
+        limit=10,
+        offset=0,
+    )
+
+    assert query.eq.call_args_list == [
+        (("user_id", "single_user"),),
+        (("status", "failed"),),
+    ]
+
+
+def test_list_deletion_logs_reports_safe_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.order.return_value = query
+    query.range.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.list_deletion_logs(
+            "single_user",
+            status=None,
+            limit=10,
+            offset=0,
+        )
+
+    message = str(exc_info.value)
+    assert "deletion log list" in message
+    assert "RuntimeError" in message
+    assert "database secret" not in message

@@ -538,3 +538,92 @@ def test_upsert_chunk_vector_maps_vector_size_failure_to_setup_error(
     assert "vector-size mismatch" in message
     assert "verify collection setup" in message
     assert "1536" not in message
+
+
+def test_delete_document_vectors_filters_configured_user_and_document(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock()
+    settings = _settings(collection="private_document_chunks")
+    settings.single_user_id = "single_user"
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    result = qdrant_service.delete_document_vectors(
+        UUID("11111111-1111-1111-1111-111111111111")
+    )
+
+    assert result is True
+    client.delete.assert_called_once()
+    delete_kwargs = client.delete.call_args.kwargs
+    assert delete_kwargs["collection_name"] == "private_document_chunks"
+    assert delete_kwargs["wait"] is True
+    selector = delete_kwargs["points_selector"]
+    conditions = selector.filter.must
+    assert [(condition.key, condition.match.value) for condition in conditions] == [
+        ("user_id", "single_user"),
+        ("document_id", "11111111-1111-1111-1111-111111111111"),
+    ]
+
+
+def test_delete_document_vectors_maps_missing_config_to_setup_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        qdrant_service,
+        "get_settings",
+        lambda: SimpleNamespace(
+            require_qdrant_settings=Mock(
+                side_effect=RuntimeError("Missing QDRANT_COLLECTION.")
+            ),
+            single_user_id="single_user",
+        ),
+    )
+
+    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+        qdrant_service.delete_document_vectors("document-id")
+
+    assert str(exc_info.value) == "Missing QDRANT_COLLECTION."
+
+
+def test_delete_document_vectors_maps_provider_failure_to_safe_error_and_log(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = Mock()
+    client.delete.side_effect = RuntimeError(
+        "private provider detail with qdrant-secret-token"
+    )
+    settings = _settings()
+    settings.single_user_id = "single_user"
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: settings)
+    monkeypatch.setattr(qdrant_service, "get_qdrant_client", Mock(return_value=client))
+
+    with caplog.at_level(logging.ERROR, logger=qdrant_service.__name__):
+        with pytest.raises(qdrant_service.QdrantDeleteError) as exc_info:
+            qdrant_service.delete_document_vectors("document-id")
+
+    assert str(exc_info.value) == "Qdrant document vector deletion failed."
+    assert "private provider detail" not in str(exc_info.value)
+    assert "qdrant-secret-token" not in str(exc_info.value)
+    assert "Qdrant document vector deletion failed." in caplog.text
+    assert "private provider detail" not in caplog.text
+    assert "qdrant-secret-token" not in caplog.text
+
+
+def test_delete_document_vectors_preserves_client_setup_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = _settings()
+    settings.single_user_id = "single_user"
+    monkeypatch.setattr(qdrant_service, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        qdrant_service,
+        "get_qdrant_client",
+        Mock(side_effect=qdrant_service.QdrantSetupError("Safe setup failure.")),
+    )
+
+    with pytest.raises(qdrant_service.QdrantSetupError) as exc_info:
+        qdrant_service.delete_document_vectors("document-id")
+
+    assert str(exc_info.value) == "Safe setup failure."

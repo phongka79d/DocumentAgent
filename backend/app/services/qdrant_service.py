@@ -9,6 +9,7 @@ from qdrant_client.http.models import (
     Distance,
     FieldCondition,
     Filter,
+    FilterSelector,
     MatchAny,
     MatchValue,
     PointStruct,
@@ -32,6 +33,10 @@ class QdrantUpsertError(RuntimeError):
 
 class QdrantSearchError(RuntimeError):
     """Raised when a Qdrant vector search fails with a safe public message."""
+
+
+class QdrantDeleteError(RuntimeError):
+    """Raised when Qdrant document vector deletion fails."""
 
 
 @dataclass(frozen=True)
@@ -205,6 +210,46 @@ def search_vectors(
         raise QdrantSearchError("Qdrant vector search failed.") from exc
 
     return [_scored_point_to_search_result(point) for point in response.points]
+
+
+def delete_document_vectors(document_id: UUID | str) -> bool:
+    try:
+        settings = get_settings()
+        qdrant_settings = settings.require_qdrant_settings()
+    except RuntimeError as exc:
+        raise QdrantSetupError(str(exc)) from exc
+
+    points_selector = FilterSelector(
+        filter=Filter(
+            must=[
+                FieldCondition(
+                    key="user_id",
+                    match=MatchValue(value=settings.single_user_id),
+                ),
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=str(document_id)),
+                ),
+            ]
+        )
+    )
+
+    try:
+        get_qdrant_client().delete(
+            collection_name=qdrant_settings["collection"],
+            points_selector=points_selector,
+            wait=True,
+        )
+    except QdrantSetupError:
+        raise
+    except Exception as exc:
+        logger.error(
+            "Qdrant document vector deletion failed. "
+            "Provider details were suppressed for safety."
+        )
+        raise QdrantDeleteError("Qdrant document vector deletion failed.") from exc
+
+    return True
 
 
 def _payload_to_qdrant(payload: IndexedChunkPayload) -> dict[str, Any]:
