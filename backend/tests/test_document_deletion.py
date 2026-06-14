@@ -453,9 +453,47 @@ def test_final_qdrant_sweep_failure_returns_safe_deletion_error(monkeypatch) -> 
 
     assert str(exc_info.value) == SAFE_MESSAGE
     assert delete_vectors.call_args_list == [call(DOCUMENT_ID), call(DOCUMENT_ID)]
-    assert audit.call_args.args[0]["failure_stage"] == "qdrant"
-    assert audit.call_args.args[0]["deleted_qdrant_points"] is True
-    assert audit.call_args.args[0]["deleted_storage_file"] is True
+    audit.assert_not_called()
+
+
+def test_missing_document_with_success_audit_retries_final_qdrant_sweep(
+    monkeypatch,
+) -> None:
+    _, get_metadata, delete_vectors, remove_file, cascade, audit, successful_audit = (
+        _install_success_adapters(monkeypatch)
+    )
+    get_metadata.return_value = None
+    get_metadata.side_effect = None
+    successful_audit.return_value = _successful_audit_row()
+
+    response = document_service.delete_document(DOCUMENT_ID)
+
+    assert response.deleted is True
+    delete_vectors.assert_called_once_with(DOCUMENT_ID)
+    remove_file.assert_not_called()
+    cascade.assert_not_called()
+    audit.assert_not_called()
+
+
+def test_missing_document_with_success_audit_returns_safe_error_when_qdrant_retry_fails(
+    monkeypatch,
+) -> None:
+    _, get_metadata, delete_vectors, remove_file, cascade, audit, successful_audit = (
+        _install_success_adapters(monkeypatch)
+    )
+    get_metadata.return_value = None
+    get_metadata.side_effect = None
+    successful_audit.return_value = _successful_audit_row()
+    delete_vectors.side_effect = QdrantDeleteError("late qdrant secret")
+
+    with pytest.raises(document_service.DocumentDeletionError) as exc_info:
+        document_service.delete_document(DOCUMENT_ID)
+
+    assert str(exc_info.value) == SAFE_MESSAGE
+    delete_vectors.assert_called_once_with(DOCUMENT_ID)
+    remove_file.assert_not_called()
+    cascade.assert_not_called()
+    audit.assert_not_called()
 
 
 def test_rpc_transport_error_without_success_audit_preserves_database_failure(

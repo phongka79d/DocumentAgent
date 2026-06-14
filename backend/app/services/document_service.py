@@ -389,10 +389,19 @@ def _finalize_qdrant_deletion(
     document_id: UUID,
     file_name: str,
     deleted_storage_file: bool,
+    record_failure: bool = False,
 ) -> None:
     try:
         delete_document_vectors(document_id)
     except QdrantDeleteError as exc:
+        if not record_failure:
+            logger.error(
+                "Final Qdrant deletion sweep failed for document_id=%s. "
+                "Provider details were suppressed for safety.",
+                document_id,
+            )
+            raise DocumentDeletionError(SAFE_DOCUMENT_DELETION_MESSAGE) from exc
+
         _raise_deletion_failure(
             user_id=user_id,
             document_id=document_id,
@@ -419,7 +428,21 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
         raise DocumentDeletionError(SAFE_DOCUMENT_DELETION_MESSAGE) from exc
 
     if document is None:
-        raise DocumentNotFoundError("Document not found.")
+        reconciled_response = _reconcile_successful_deletion(
+            user_id=user_id,
+            document_id=document_id,
+        )
+        if reconciled_response is None:
+            raise DocumentNotFoundError("Document not found.")
+
+        _finalize_qdrant_deletion(
+            user_id=user_id,
+            document_id=document_id,
+            file_name="",
+            deleted_storage_file=reconciled_response.deleted_storage_file,
+            record_failure=False,
+        )
+        return reconciled_response
 
     file_name = str(document.get("file_name") or "")
     storage_path = str(document.get("storage_path") or "")
@@ -467,6 +490,7 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
                 document_id=document_id,
                 file_name=file_name,
                 deleted_storage_file=deleted_storage_file,
+                record_failure=False,
             )
             return reconciled_response
         _raise_deletion_failure(
@@ -489,6 +513,7 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
             document_id=document_id,
             file_name=file_name,
             deleted_storage_file=deleted_storage_file,
+            record_failure=False,
         )
         return response
     except (ValidationError, ValueError) as exc:
@@ -507,6 +532,7 @@ def delete_document(document_id: UUID) -> DocumentDeleteResponse:
                 document_id=document_id,
                 file_name=file_name,
                 deleted_storage_file=deleted_storage_file,
+                record_failure=False,
             )
             return reconciled_response
         _raise_deletion_failure(
