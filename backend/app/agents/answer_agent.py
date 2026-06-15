@@ -14,6 +14,7 @@ from app.agents.prompts import (
 from app.agents.schemas import (
     AnswerAgentInput,
     AnswerAgentOutput,
+    AnswerGroundingReview,
     AnswerSelfCheck,
     Citation,
     RejectedChunk,
@@ -61,6 +62,15 @@ class AnswerEvidenceLookup:
     rejected_file_names: frozenset[str]
     rejected_citation_pairs: frozenset[tuple[str, str]]
     rejected_chunk_ids: frozenset[str]
+
+
+@dataclass(frozen=True)
+class ExecutedAnswerGrounding:
+    """Validated grounding review and its derived public self-check."""
+
+    self_check: AnswerSelfCheck
+    confidence: float
+    review: AnswerGroundingReview
 
 
 READY_SELF_CHECK_REQUIRED_VALUES = {
@@ -149,8 +159,8 @@ def execute_answer_self_check(
     question: str,
     output: AnswerAgentOutput,
     verification: VerificationAgentOutput,
-) -> AnswerSelfCheck:
-    """Run Agent 3 self-check and normalize the provider result into the schema."""
+) -> ExecutedAnswerGrounding:
+    """Run claim grounding and derive the public Agent 3 self-check."""
     validate_answer_evidence_contract(output, verification)
     try:
         provider_content = shopaikey_service.chat_completion(
@@ -160,11 +170,21 @@ def execute_answer_self_check(
     except shopaikey_service.ShopAIKeyServiceError as exc:
         raise _AnswerAgentFailure("self_check_provider_error") from exc
 
-    executed_self_check = parse_and_validate_answer_self_check(provider_content)
+    review = parse_and_validate_answer_grounding(provider_content)
+    executed_self_check = _derive_answer_self_check(
+        output,
+        verification,
+        review,
+    )
     checked_output = output.model_copy(
         update={"self_check": executed_self_check},
     )
-    return enforce_answer_self_check(checked_output, verification)
+    enforce_answer_self_check(checked_output, verification)
+    return ExecutedAnswerGrounding(
+        self_check=executed_self_check,
+        confidence=review.confidence,
+        review=review,
+    )
 
 
 def normalize_answer_agent_input(
@@ -207,19 +227,80 @@ def parse_and_validate_draft_answer(provider_content: str) -> AnswerAgentOutput:
     return draft_output
 
 
-def parse_and_validate_answer_self_check(provider_content: str) -> AnswerSelfCheck:
-    """Parse provider JSON and validate the self-check shape."""
+def parse_and_validate_answer_grounding(
+    provider_content: str,
+) -> AnswerGroundingReview:
+    """Parse provider JSON and validate the claim-grounding shape."""
     try:
-        self_check_payload = json.loads(provider_content)
+        grounding_payload = json.loads(provider_content)
     except json.JSONDecodeError as exc:
-        logger.warning("Answer agent self-check response contained invalid JSON.")
-        raise _AnswerAgentFailure("invalid_self_check_json_response") from exc
+        logger.warning("Answer grounding response contained invalid JSON.")
+        raise _AnswerAgentFailure("invalid_grounding_json_response") from exc
 
     try:
-        return normalize_answer_self_check(self_check_payload)
+        return AnswerGroundingReview.model_validate(grounding_payload)
     except ValidationError as exc:
-        logger.warning("Answer agent self-check response failed schema validation.")
-        raise _AnswerAgentFailure("self_check_validation_error") from exc
+        logger.warning("Answer grounding response failed schema validation.")
+        raise _AnswerAgentFailure("grounding_validation_error") from exc
+
+
+def _normalize_visible_text(value: str) -> str:
+    return " ".join(value.casefold().split())
+
+
+def _derive_answer_self_check(
+    output: AnswerAgentOutput,
+    verification: VerificationAgentOutput,
+    review: AnswerGroundingReview,
+) -> AnswerSelfCheck:
+    evidence_lookup = build_answer_evidence_lookup(verification)
+    expected_text = {
+        "final_answer": output.final_answer,
+        "reasoning_summary": output.reasoning_summary,
+    }
+    all_claims_supported = True
+
+    for field_review in review.field_reviews:
+        if field_review.text != expected_text[field_review.field_name]:
+            raise AnswerEvidenceValidationError(
+                f"Grounding review text does not match {field_review.field_name}."
+            )
+        normalized_field_text = _normalize_visible_text(field_review.text)
+        for claim in field_review.claims:
+            if _normalize_visible_text(claim.claim) not in normalized_field_text:
+                raise AnswerEvidenceValidationError(
+                    "Grounding review claim is not present in the reviewed field."
+                )
+            if not claim.supported or not claim.supporting_citations:
+                all_claims_supported = False
+            for citation in claim.supporting_citations:
+                citation_pair = (citation.file_name, citation.quote)
+                if (
+                    citation_pair in evidence_lookup.rejected_citation_pairs
+                    or citation.quote in evidence_lookup.rejected_quotes
+                ):
+                    raise AnswerEvidenceValidationError(
+                        "Grounding review references rejected evidence."
+                    )
+                if citation_pair not in evidence_lookup.verified_citation_pairs:
+                    raise AnswerEvidenceValidationError(
+                        "Grounding review references non-verified evidence."
+                    )
+
+    has_citation = bool(output.citations)
+    has_unsupported_claims = (
+        not review.answers_question or not all_claims_supported
+    )
+    return AnswerSelfCheck(
+        uses_only_verified_chunks=all_claims_supported,
+        has_citation=has_citation,
+        has_unsupported_claims=has_unsupported_claims,
+        is_ready=(
+            review.answers_question
+            and all_claims_supported
+            and has_citation
+        ),
+    )
 
 
 def validate_draft_citation_quotes_against_verified_evidence(
@@ -418,7 +499,7 @@ def run_answer_agent(
         raise failure from exc
 
     try:
-        self_check = execute_answer_self_check(
+        executed_grounding = execute_answer_self_check(
             answer_input.question,
             draft_output,
             answer_input.verification,
@@ -435,15 +516,24 @@ def run_answer_agent(
     try:
         checked_output = draft_output.model_copy(
             update={
-                "self_check": self_check,
-                "confidence": answer_input.verification.confidence,
+                "self_check": executed_grounding.self_check,
+                "confidence": min(
+                    draft_output.confidence,
+                    answer_input.verification.confidence,
+                    executed_grounding.confidence,
+                ),
             }
         )
         final_output = normalize_validated_draft_output(checked_output)
     except _AnswerAgentFailure as exc:
         _log_failed_answer_self_check(answer_input, exc.failure_type)
         raise
-    _log_successful_answer_self_check(answer_input, draft_output, final_output)
+    _log_successful_answer_self_check(
+        answer_input,
+        draft_output,
+        final_output,
+        executed_grounding.review,
+    )
     return final_output
 
 
@@ -451,6 +541,7 @@ def _log_successful_answer_self_check(
     answer_input: AnswerAgentInput,
     draft_output: AnswerAgentOutput,
     final_output: AnswerAgentOutput,
+    grounding_review: AnswerGroundingReview,
 ) -> None:
     log_attempt = agent_log_service.try_log_agent_step(
         agent_run_id=str(answer_input.agent_run_id),
@@ -467,6 +558,7 @@ def _log_successful_answer_self_check(
                 "reasoning_summary": draft_output.reasoning_summary,
                 "confidence": draft_output.confidence,
             },
+            "grounding_review": grounding_review.model_dump(mode="json"),
             "self_check_result": final_output.self_check.model_dump(mode="json"),
             "final_answer": final_output.final_answer,
             "citations": [
@@ -648,6 +740,7 @@ __all__ = [
     "ANSWER_SELF_CHECK_RESPONSE_FORMAT",
     "ANSWER_OUTPUT_PUBLIC_KEYS",
     "AnswerEvidenceLookup",
+    "ExecutedAnswerGrounding",
     "AnswerAgentError",
     "AnswerEvidenceValidationError",
     "DRAFT_SELF_CHECK_PLACEHOLDER",
@@ -665,7 +758,7 @@ __all__ = [
     "normalize_answer_agent_input",
     "normalize_validated_draft_output",
     "parse_and_validate_draft_answer",
-    "parse_and_validate_answer_self_check",
+    "parse_and_validate_answer_grounding",
     "run_answer_agent",
     "validate_draft_answer_against_evidence",
     "validate_draft_citation_quotes_against_verified_evidence",

@@ -28,7 +28,7 @@ from app.agents.answer_agent import (
     normalize_answer_agent_input,
     normalize_answer_self_check,
     normalize_validated_draft_output,
-    parse_and_validate_answer_self_check,
+    parse_and_validate_answer_grounding,
     parse_and_validate_draft_answer,
     run_answer_agent,
     validate_answer_evidence_contract,
@@ -187,39 +187,51 @@ def _draft_answer_payload(
     return payload
 
 
-def _ready_self_check_payload() -> dict[str, bool]:
+def _grounding_review_payload(
+    *,
+    output: AnswerAgentOutput | None = None,
+    answers_question: bool = True,
+    supported: bool = True,
+    confidence: float = 0.82,
+    supporting_citations: list[dict[str, str]] | None = None,
+) -> dict[str, object]:
+    reviewed_output = output or _answer_output()
+    citations = (
+        [
+            citation.model_dump(mode="json")
+            for citation in reviewed_output.citations
+        ]
+        if supporting_citations is None
+        else supporting_citations
+    )
+    claim_citations = citations if supported else []
     return {
-        "uses_only_verified_chunks": True,
-        "has_citation": True,
-        "has_unsupported_claims": False,
-        "is_ready": True,
-    }
-
-
-def _unsupported_self_check_payload() -> dict[str, bool]:
-    return {
-        "uses_only_verified_chunks": True,
-        "has_citation": True,
-        "has_unsupported_claims": True,
-        "is_ready": False,
-    }
-
-
-def _unverified_self_check_payload() -> dict[str, bool]:
-    return {
-        "uses_only_verified_chunks": False,
-        "has_citation": True,
-        "has_unsupported_claims": True,
-        "is_ready": False,
-    }
-
-
-def _not_ready_self_check_payload() -> dict[str, bool]:
-    return {
-        "uses_only_verified_chunks": True,
-        "has_citation": True,
-        "has_unsupported_claims": False,
-        "is_ready": False,
+        "answers_question": answers_question,
+        "field_reviews": [
+            {
+                "field_name": "final_answer",
+                "text": reviewed_output.final_answer,
+                "claims": [
+                    {
+                        "claim": reviewed_output.final_answer,
+                        "supported": supported,
+                        "supporting_citations": claim_citations,
+                    }
+                ],
+            },
+            {
+                "field_name": "reasoning_summary",
+                "text": reviewed_output.reasoning_summary,
+                "claims": [
+                    {
+                        "claim": reviewed_output.reasoning_summary,
+                        "supported": supported,
+                        "supporting_citations": claim_citations,
+                    }
+                ],
+            },
+        ],
+        "confidence": confidence,
     }
 
 
@@ -262,7 +274,7 @@ def test_run_answer_agent_accepts_answer_agent_input_for_validation(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     monkeypatch.setattr(
@@ -285,7 +297,7 @@ def test_run_answer_agent_accepts_mapping_for_validation(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     monkeypatch.setattr(
@@ -308,7 +320,7 @@ def test_run_answer_agent_logs_successful_answer_and_self_check(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     log_agent_step = Mock(return_value={"id": "step-1"})
@@ -341,6 +353,7 @@ def test_run_answer_agent_logs_successful_answer_and_self_check(
     assert log_kwargs["output_payload"]["self_check_result"] == (
         READY_SELF_CHECK_REQUIRED_VALUES
     )
+    assert log_kwargs["output_payload"]["grounding_review"]["answers_question"] is True
     assert log_kwargs["output_payload"]["final_answer"] == output.final_answer
     assert log_kwargs["output_payload"]["confidence"] == output.confidence
     assert log_kwargs["output_payload"]["errors"] == []
@@ -352,7 +365,7 @@ def test_run_answer_agent_preserves_success_when_success_log_persistence_fails(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     persistence_error = answer_agent_module.agent_log_service.AgentLogPersistenceError(
@@ -457,7 +470,12 @@ def test_run_answer_agent_logs_failed_step_for_self_check_failure(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_unsupported_self_check_payload()),
+            json.dumps(
+                _grounding_review_payload(
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
         ]
     )
     try_log_agent_step = Mock()
@@ -545,7 +563,7 @@ def test_run_answer_agent_logs_failed_step_for_invalid_draft_response(
 @pytest.mark.parametrize(
     ("self_check_content", "expected_failure_type"),
     [
-        ("not-json", "invalid_self_check_json_response"),
+        ("not-json", "invalid_grounding_json_response"),
         (
             json.dumps(
                 {
@@ -554,7 +572,7 @@ def test_run_answer_agent_logs_failed_step_for_invalid_draft_response(
                     "has_unsupported_claims": False,
                 }
             ),
-            "self_check_validation_error",
+            "grounding_validation_error",
         ),
     ],
 )
@@ -699,7 +717,7 @@ def test_run_answer_agent_executes_self_check_for_grounded_draft_without_provide
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     monkeypatch.setattr(
@@ -725,7 +743,7 @@ def test_run_answer_agent_uses_verification_confidence_for_ready_answer(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload(confidence=0.0)),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     monkeypatch.setattr(
@@ -736,41 +754,40 @@ def test_run_answer_agent_uses_verification_confidence_for_ready_answer(
 
     output = run_answer_agent(_answer_input_payload())
 
-    assert output.confidence == 0.82
+    assert output.confidence == 0.0
 
 
 def test_execute_answer_self_check_marks_reasoning_ready_when_grounded_in_verified_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    chat_completion = Mock(return_value=json.dumps(_ready_self_check_payload()))
+    draft_output = _answer_output(
+        final_answer="Ban co the lam viec chinh thuc vao thang 8/2026."
+    )
+    chat_completion = Mock(
+        return_value=json.dumps(_grounding_review_payload(output=draft_output))
+    )
     monkeypatch.setattr(
         answer_agent_module.shopaikey_service,
         "chat_completion",
         chat_completion,
     )
-    draft_output = _answer_output(
-        final_answer="Ban co the lam viec chinh thuc vao thang 8/2026."
-    )
 
-    self_check = execute_answer_self_check(
+    executed_grounding = execute_answer_self_check(
         "When can I start official work?",
         draft_output,
         _verification_output(),
     )
 
-    assert self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    assert (
+        executed_grounding.self_check.model_dump()
+        == READY_SELF_CHECK_REQUIRED_VALUES
+    )
     chat_completion.assert_called_once()
 
 
 def test_execute_answer_self_check_rejects_unsupported_numeric_claim_with_valid_citation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    chat_completion = Mock(return_value=json.dumps(_unsupported_self_check_payload()))
-    monkeypatch.setattr(
-        answer_agent_module.shopaikey_service,
-        "chat_completion",
-        chat_completion,
-    )
     draft_output = _answer_output(
         final_answer=(
             "Ban co the lam viec chinh thuc vao thang 8/2026 "
@@ -778,8 +795,25 @@ def test_execute_answer_self_check_rejects_unsupported_numeric_claim_with_valid_
         ),
         self_check=DRAFT_SELF_CHECK_PLACEHOLDER,
     )
+    chat_completion = Mock(
+        return_value=json.dumps(
+            _grounding_review_payload(
+                output=draft_output,
+                answers_question=False,
+                supported=False,
+            )
+        )
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
 
-    with pytest.raises(AnswerEvidenceValidationError, match="has_unsupported_claims"):
+    with pytest.raises(
+        AnswerEvidenceValidationError,
+        match="uses_only_verified_chunks",
+    ):
         execute_answer_self_check(
             "When can I start official work?",
             draft_output,
@@ -791,20 +825,31 @@ def test_execute_answer_self_check_rejects_unsupported_numeric_claim_with_valid_
 def test_execute_answer_self_check_rejects_unsupported_semantic_claim_with_valid_citation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    chat_completion = Mock(return_value=json.dumps(_unsupported_self_check_payload()))
-    monkeypatch.setattr(
-        answer_agent_module.shopaikey_service,
-        "chat_completion",
-        chat_completion,
-    )
     draft_output = _answer_output(
         final_answer=(
             "Ban co the lam viec chinh thuc vao thang 8/2026 va duoc lam viec tu xa."
         ),
         self_check=DRAFT_SELF_CHECK_PLACEHOLDER,
     )
+    chat_completion = Mock(
+        return_value=json.dumps(
+            _grounding_review_payload(
+                output=draft_output,
+                answers_question=False,
+                supported=False,
+            )
+        )
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
 
-    with pytest.raises(AnswerEvidenceValidationError, match="has_unsupported_claims"):
+    with pytest.raises(
+        AnswerEvidenceValidationError,
+        match="uses_only_verified_chunks",
+    ):
         execute_answer_self_check(
             "When can I start official work?",
             draft_output,
@@ -816,26 +861,107 @@ def test_execute_answer_self_check_rejects_unsupported_semantic_claim_with_valid
 def test_execute_answer_self_check_derives_uses_only_verified_chunks_from_self_check_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    chat_completion = Mock(return_value=json.dumps(_unverified_self_check_payload()))
-    monkeypatch.setattr(
-        answer_agent_module.shopaikey_service,
-        "chat_completion",
-        chat_completion,
-    )
     draft_output = _answer_output(
         final_answer=(
             "Ban co the lam viec chinh thuc vao thang 8/2026 va theo chinh sach noi bo."
         ),
         self_check=DRAFT_SELF_CHECK_PLACEHOLDER,
     )
+    chat_completion = Mock(
+        return_value=json.dumps(
+            _grounding_review_payload(
+                output=draft_output,
+                supporting_citations=[
+                    {
+                        "file_name": "policy.pdf",
+                        "quote": "An unverified internal policy.",
+                    }
+                ],
+            )
+        )
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
 
-    with pytest.raises(AnswerEvidenceValidationError, match="uses_only_verified_chunks"):
+    with pytest.raises(AnswerEvidenceValidationError, match="non-verified"):
         execute_answer_self_check(
             "When can I start official work?",
             draft_output,
             _verification_output(),
         )
     chat_completion.assert_called_once()
+
+
+def test_execute_answer_self_check_rejects_mismatched_reviewed_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    draft_output = _answer_output()
+    grounding_payload = _grounding_review_payload(output=draft_output)
+    grounding_payload["field_reviews"][0]["text"] = "Different answer text."
+    chat_completion = Mock(return_value=json.dumps(grounding_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerEvidenceValidationError, match="does not match"):
+        execute_answer_self_check(
+            "When can I start official work?",
+            draft_output,
+            _verification_output(),
+        )
+
+
+def test_execute_answer_self_check_rejects_rejected_evidence_mapping(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    draft_output = _answer_output()
+    grounding_payload = _grounding_review_payload(
+        output=draft_output,
+        supporting_citations=[
+            {
+                "file_name": "draft.pdf",
+                "quote": REJECTED_QUOTE,
+            }
+        ],
+    )
+    chat_completion = Mock(return_value=json.dumps(grounding_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    with pytest.raises(AnswerEvidenceValidationError, match="rejected evidence"):
+        execute_answer_self_check(
+            "When can I start official work?",
+            draft_output,
+            _verification_output(),
+        )
+
+
+def test_run_answer_agent_caps_confidence_by_grounding_review(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(_draft_answer_payload(confidence=0.9)),
+            json.dumps(_grounding_review_payload(confidence=0.6)),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert output.confidence == 0.6
 
 
 def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation(
@@ -848,10 +974,19 @@ def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation
     provider_payload["reasoning_summary"] = (
         "Start date plus three months gives 09/2026."
     )
+    reviewed_output = AnswerAgentOutput.model_validate(
+        provider_payload | {"self_check": DRAFT_SELF_CHECK_PLACEHOLDER}
+    )
     chat_completion = Mock(
         side_effect=[
             json.dumps(provider_payload),
-            json.dumps(_unsupported_self_check_payload()),
+            json.dumps(
+                _grounding_review_payload(
+                    output=reviewed_output,
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
         ]
     )
     monkeypatch.setattr(
@@ -866,28 +1001,107 @@ def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation
     assert chat_completion.call_count == 2
 
 
+def test_run_answer_agent_rejects_unsupported_explanation_with_valid_conclusion_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    conclusion_quote = (
+        "'It's the stupidest tea-party I ever was at in all my life!'"
+    )
+    verification = _verification_output(
+        verified_chunks=[
+            {
+                "chunk_id": VERIFIED_CHUNK_ID,
+                "document_id": DOCUMENT_ID,
+                "file_name": "alice-in-wonderland.txt",
+                "quote": conclusion_quote,
+                "page_number": 0,
+                "verification_reason": "Alice states the conclusion.",
+                "supports_simple_reasoning": False,
+            }
+        ]
+    )
+    draft = {
+        "final_answer": (
+            "Alice considered it the stupidest tea party because the "
+            "situation was absurd."
+        ),
+        "citations": [
+            {
+                "file_name": "alice-in-wonderland.txt",
+                "quote": conclusion_quote,
+            }
+        ],
+        "reasoning_summary": (
+            "The absurd situation caused Alice to reach that conclusion."
+        ),
+        "confidence": 1.0,
+    }
+    reviewed_output = AnswerAgentOutput.model_validate(
+        draft | {"self_check": DRAFT_SELF_CHECK_PLACEHOLDER}
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(draft),
+            json.dumps(
+                _grounding_review_payload(
+                    output=reviewed_output,
+                    answers_question=False,
+                    supported=False,
+                    confidence=0.1,
+                )
+            ),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    payload = _answer_input_payload()
+    payload["question"] = (
+        "Why did Alice consider the Mad Tea-Party the stupidest tea party?"
+    )
+    payload["verification"] = verification.model_dump(mode="json")
+
+    with pytest.raises(AnswerAgentError) as exc_info:
+        run_answer_agent(payload)
+
+    assert exc_info.value.failure_type == "self_check_failed"
+
+
 @pytest.mark.parametrize(
-    "failed_self_check",
+    "failed_grounding",
     [
-        _unsupported_self_check_payload(),
-        _not_ready_self_check_payload(),
-        {
-            "uses_only_verified_chunks": True,
-            "has_citation": False,
-            "has_unsupported_claims": False,
-            "is_ready": True,
-        },
-        _unverified_self_check_payload(),
+        _grounding_review_payload(
+            answers_question=False,
+            supported=False,
+        ),
+        _grounding_review_payload(
+            answers_question=False,
+            supported=True,
+        ),
+        _grounding_review_payload(
+            supported=True,
+            supporting_citations=[],
+        ),
+        _grounding_review_payload(
+            supporting_citations=[
+                {
+                    "file_name": "policy.pdf",
+                    "quote": "An unverified internal policy.",
+                }
+            ],
+        ),
     ],
 )
 def test_run_answer_agent_raises_self_check_failure_without_returning_ready_answer(
     monkeypatch: pytest.MonkeyPatch,
-    failed_self_check: dict[str, bool],
+    failed_grounding: dict[str, object],
 ) -> None:
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(failed_self_check),
+            json.dumps(failed_grounding),
         ]
     )
     monkeypatch.setattr(
@@ -1054,7 +1268,7 @@ def test_run_answer_agent_sends_verified_evidence_only_to_provider(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     monkeypatch.setattr(
@@ -1128,10 +1342,13 @@ def test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified
         ),
         "confidence": 0.82,
     }
+    reviewed_output = AnswerAgentOutput.model_validate(
+        provider_payload | {"self_check": DRAFT_SELF_CHECK_PLACEHOLDER}
+    )
     chat_completion = Mock(
         side_effect=[
             json.dumps(provider_payload),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload(output=reviewed_output)),
         ]
     )
     monkeypatch.setattr(
@@ -1214,26 +1431,20 @@ def test_parse_and_validate_draft_answer_rejects_invalid_confidence_safely() -> 
         parse_and_validate_draft_answer(json.dumps(_draft_answer_payload(confidence=1.5)))
 
 
-def test_parse_and_validate_answer_self_check_rejects_invalid_json_safely() -> None:
+def test_parse_and_validate_answer_grounding_rejects_invalid_json_safely() -> None:
     with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
-        parse_and_validate_answer_self_check("not-json")
+        parse_and_validate_answer_grounding("not-json")
 
-    assert exc_info.value.failure_type == "invalid_self_check_json_response"
+    assert exc_info.value.failure_type == "invalid_grounding_json_response"
 
 
-def test_parse_and_validate_answer_self_check_rejects_schema_invalid_payload_safely() -> None:
+def test_parse_and_validate_answer_grounding_rejects_schema_invalid_payload_safely() -> None:
     with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
-        parse_and_validate_answer_self_check(
-            json.dumps(
-                {
-                    "uses_only_verified_chunks": True,
-                    "has_citation": True,
-                    "has_unsupported_claims": False,
-                }
-            )
+        parse_and_validate_answer_grounding(
+            json.dumps({"answers_question": True})
         )
 
-    assert exc_info.value.failure_type == "self_check_validation_error"
+    assert exc_info.value.failure_type == "grounding_validation_error"
 
 
 def test_parse_and_validate_draft_answer_accepts_valid_draft_without_self_check() -> None:
@@ -1351,7 +1562,7 @@ def test_run_answer_agent_accepts_verified_citation_and_renders_required_format(
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_ready_self_check_payload()),
+            json.dumps(_grounding_review_payload()),
         ]
     )
     monkeypatch.setattr(
@@ -1503,7 +1714,12 @@ def test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_outpu
     chat_completion = Mock(
         side_effect=[
             json.dumps(_draft_answer_payload()),
-            json.dumps(_unsupported_self_check_payload()),
+            json.dumps(
+                _grounding_review_payload(
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
         ]
     )
     try_log_agent_step = Mock()
