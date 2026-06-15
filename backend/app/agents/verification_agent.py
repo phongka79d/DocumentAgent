@@ -6,8 +6,12 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from app.agents.prompts import VERIFICATION_AGENT_SYSTEM_PROMPT
+from app.agents.prompts import (
+    EVIDENCE_COVERAGE_SYSTEM_PROMPT,
+    VERIFICATION_AGENT_SYSTEM_PROMPT,
+)
 from app.agents.schemas import (
+    EvidenceCoverageReview,
     RejectedChunk,
     VerificationAgentInput,
     VerificationAgentOutput,
@@ -41,6 +45,8 @@ FINAL_VERIFICATION_OUTPUT_KEYS = (
 )
 NO_VERIFIED_CHUNKS_CONFIDENCE_CAP = 0.2
 CONTRADICTION_CONFIDENCE_CAP = 0.4
+COVERAGE_FAILURE_CONFIDENCE_CAP = 0.4
+EVIDENCE_COVERAGE_RESPONSE_FORMAT = {"type": "json_object"}
 _MONTH_BY_NAME = {
     "january": "01",
     "february": "02",
@@ -126,6 +132,38 @@ def _build_verification_messages(
     ]
 
 
+def _build_coverage_messages(
+    input_data: VerificationAgentInput,
+) -> list[dict[str, str]]:
+    payload = {
+        "response_instruction": "Return only valid JSON.",
+        "question": input_data.question,
+        "candidates": [
+            {
+                "chunk_id": str(candidate.chunk_id),
+                "file_name": candidate.file_name,
+                "page_number": candidate.page_number,
+                "content": candidate.content,
+            }
+            for candidate in input_data.candidates
+        ],
+    }
+    return [
+        {
+            "role": "system",
+            "content": EVIDENCE_COVERAGE_SYSTEM_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": json.dumps(
+                payload,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+        },
+    ]
+
+
 def _parse_verification_output(response_content: str) -> VerificationAgentOutput:
     try:
         response_payload = json.loads(response_content)
@@ -138,6 +176,35 @@ def _parse_verification_output(response_content: str) -> VerificationAgentOutput
     except ValidationError as exc:
         logger.warning("Verification LLM returned invalid output schema.")
         raise _VerificationAgentFailure("schema_validation_error") from exc
+
+
+def _parse_coverage_review(response_content: str) -> EvidenceCoverageReview:
+    try:
+        response_payload = json.loads(response_content)
+    except json.JSONDecodeError as exc:
+        logger.warning("Evidence coverage reviewer returned invalid JSON.")
+        raise _VerificationAgentFailure("coverage_invalid_json") from exc
+
+    try:
+        return EvidenceCoverageReview.model_validate(response_payload)
+    except ValidationError as exc:
+        logger.warning("Evidence coverage reviewer returned an invalid schema.")
+        raise _VerificationAgentFailure("coverage_validation_error") from exc
+
+
+def _run_coverage_review(
+    input_data: VerificationAgentInput,
+    verification_output: VerificationAgentOutput,
+) -> EvidenceCoverageReview:
+    del verification_output
+    try:
+        response_content = shopaikey_service.chat_completion(
+            _build_coverage_messages(input_data),
+            response_format=EVIDENCE_COVERAGE_RESPONSE_FORMAT,
+        )
+    except shopaikey_service.ShopAIKeyServiceError as exc:
+        raise _VerificationAgentFailure("coverage_provider_error") from exc
+    return _parse_coverage_review(response_content)
 
 
 def _validate_candidate_membership(
@@ -285,6 +352,68 @@ def _filter_duplicate_verified_chunks(
             "rejected_chunks": rejected_chunks,
         }
     )
+
+
+def _apply_coverage_review(
+    input_data: VerificationAgentInput,
+    verification_output: VerificationAgentOutput,
+    coverage_review: EvidenceCoverageReview,
+) -> VerificationAgentOutput:
+    if not coverage_review.answers_question:
+        return verification_output.model_copy(
+            update={
+                "missing_information": True,
+                "confidence": min(
+                    verification_output.confidence,
+                    coverage_review.confidence,
+                    COVERAGE_FAILURE_CONFIDENCE_CAP,
+                ),
+            }
+        )
+
+    candidates_by_chunk_id = {
+        candidate.chunk_id: candidate for candidate in input_data.candidates
+    }
+    selected_chunks = []
+    for selection in coverage_review.selected_evidence:
+        candidate = candidates_by_chunk_id.get(selection.chunk_id)
+        if candidate is None:
+            raise _VerificationAgentFailure("coverage_unknown_chunk_id")
+        if not _quote_matches_candidate_content(selection.quote, candidate.content):
+            raise _VerificationAgentFailure("coverage_quote_validation_error")
+        selected_chunks.append(
+            VerifiedChunk(
+                chunk_id=candidate.chunk_id,
+                document_id=candidate.document_id,
+                file_name=candidate.file_name,
+                quote=selection.quote,
+                page_number=candidate.page_number,
+                verification_reason=selection.purpose,
+                supports_simple_reasoning=selection.supports_simple_reasoning,
+            )
+        )
+
+    selected_keys = {
+        (chunk.chunk_id, _normalize_quote_text(chunk.quote))
+        for chunk in selected_chunks
+    }
+    remaining_rejected_chunks = [
+        chunk
+        for chunk in verification_output.rejected_chunks
+        if (chunk.chunk_id, _normalize_quote_text(chunk.quote)) not in selected_keys
+    ]
+    covered_output = verification_output.model_copy(
+        update={
+            "verified_chunks": selected_chunks,
+            "rejected_chunks": remaining_rejected_chunks,
+            "missing_information": False,
+            "confidence": min(
+                verification_output.confidence,
+                coverage_review.confidence,
+            ),
+        }
+    )
+    return _filter_duplicate_verified_chunks(covered_output)
 
 
 def _normalize_date_match(match: re.Match[str]) -> str:
@@ -544,8 +673,17 @@ def run_verification_agent(
         duplicate_filtered_output = _filter_duplicate_verified_chunks(
             quote_validated_output,
         )
+        coverage_review = _run_coverage_review(
+            validated_input,
+            duplicate_filtered_output,
+        )
+        coverage_checked_output = _apply_coverage_review(
+            validated_input,
+            duplicate_filtered_output,
+            coverage_review,
+        )
         post_processed_output = _apply_missing_information_adjustments(
-            duplicate_filtered_output
+            coverage_checked_output
         )
         finalized_output = _finalize_verification_output(post_processed_output)
     except _VerificationAgentFailure as exc:

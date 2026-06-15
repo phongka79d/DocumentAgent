@@ -12,7 +12,11 @@ from app.agents.prompts import (
     VERIFICATION_AGENT_OUTPUT_KEYS,
     VERIFICATION_AGENT_SYSTEM_PROMPT,
 )
-from app.agents.schemas import EvidenceCoverageReview, VerificationAgentOutput
+from app.agents.schemas import (
+    EvidenceCoverageReview,
+    EvidenceCoverageSelection,
+    VerificationAgentOutput,
+)
 from app.agents import verification_agent
 from app.agents.verification_agent import VerificationAgentError, run_verification_agent
 from app.services import agent_log_service
@@ -22,6 +26,7 @@ AGENT_RUN_ID = "11111111-1111-1111-1111-111111111111"
 CANDIDATE_CHUNK_ID = "22222222-2222-2222-2222-222222222222"
 CANDIDATE_DOCUMENT_ID = "33333333-3333-3333-3333-333333333333"
 SECOND_CANDIDATE_CHUNK_ID = "44444444-4444-4444-4444-444444444444"
+REAL_RUN_COVERAGE_REVIEW = verification_agent._run_coverage_review
 
 
 def test_evidence_coverage_review_requires_selected_evidence_when_answerable() -> None:
@@ -44,6 +49,41 @@ def _disable_verification_agent_log_persistence(
         agent_log_service,
         "log_agent_step",
         Mock(return_value={"id": "step-id"}),
+    )
+
+
+@pytest.fixture(autouse=True)
+def _default_coverage_review(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def passthrough_review(
+        input_data,
+        verification_output,
+    ) -> EvidenceCoverageReview:
+        del input_data
+        selections = [
+            EvidenceCoverageSelection(
+                chunk_id=chunk.chunk_id,
+                quote=chunk.quote,
+                purpose=chunk.verification_reason,
+                supports_simple_reasoning=chunk.supports_simple_reasoning,
+            )
+            for chunk in verification_output.verified_chunks
+        ]
+        is_answerable = (
+            bool(selections) and not verification_output.missing_information
+        )
+        return EvidenceCoverageReview(
+            answers_question=is_answerable,
+            missing_information=not is_answerable,
+            selected_evidence=selections,
+            confidence=verification_output.confidence,
+        )
+
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        passthrough_review,
     )
 
 
@@ -79,6 +119,30 @@ def _second_candidate_payload() -> dict[str, object]:
     payload["chunk_id"] = SECOND_CANDIDATE_CHUNK_ID
     payload["final_score"] = 0.89
     return payload
+
+
+def _mock_two_pass_verification(
+    monkeypatch: pytest.MonkeyPatch,
+    initial_verification: dict[str, object],
+    coverage_review: dict[str, object],
+) -> Mock:
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(coverage_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+    return chat_completion
 
 
 @pytest.mark.parametrize("confidence", [0.0, 0.42, 1.0])
@@ -1109,9 +1173,7 @@ def test_verification_agent_filters_duplicate_verified_chunk_ids(
 
     assert len(output.verified_chunks) == 1
     assert output.verified_chunks[0].chunk_id.hex == CANDIDATE_CHUNK_ID.replace("-", "")
-    assert len(output.rejected_chunks) == 1
-    assert output.rejected_chunks[0].chunk_id.hex == CANDIDATE_CHUNK_ID.replace("-", "")
-    assert "Duplicate verified chunk_id" in output.rejected_chunks[0].rejection_reason
+    assert output.rejected_chunks == []
 
 
 def test_verification_agent_keeps_distinct_verified_quotes_from_same_chunk(
@@ -1465,3 +1527,219 @@ def test_verification_prompt_limits_agent_scope() -> None:
     assert "do not retrieve more chunks" in prompt
     assert "generate a final answer" in prompt
     assert "user-facing citations" in prompt
+
+
+def test_verification_agent_repairs_conclusion_only_evidence_with_exact_causal_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["file_name"] = "alice-in-wonderland.txt"
+    candidate["page_number"] = 0
+    candidate["content"] = (
+        "'Then you shouldn't talk,' said the Hatter. "
+        "This piece of rudeness was more than Alice could bear: "
+        "she got up in great disgust, and walked off. "
+        "'It's the stupidest tea-party I ever was at in all my life!'"
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "alice-in-wonderland.txt",
+                "quote": "'It's the stupidest tea-party I ever was at in all my life!'",
+                "page_number": 0,
+                "verification_reason": "Alice states her conclusion.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 1.0,
+    }
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "selected_evidence": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": (
+                    "This piece of rudeness was more than Alice could bear: "
+                    "she got up in great disgust, and walked off."
+                ),
+                "purpose": "States the cause of Alice leaving and condemning the party.",
+                "supports_simple_reasoning": True,
+            },
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": "'It's the stupidest tea-party I ever was at in all my life!'",
+                "purpose": "States Alice's conclusion about the party.",
+                "supports_simple_reasoning": False,
+            },
+        ],
+        "confidence": 0.92,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": (
+                "Why did Alice consider the Mad Tea-Party the stupidest "
+                "tea party she had ever attended?"
+            ),
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert output.confidence == 0.92
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        (
+            "This piece of rudeness was more than Alice could bear: "
+            "she got up in great disgust, and walked off."
+        ),
+        "'It's the stupidest tea-party I ever was at in all my life!'",
+    ]
+
+
+def test_verification_agent_marks_missing_when_coverage_review_is_insufficient(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = "Probation starts on June 1, 2026."
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Probation starts on June 1, 2026.",
+                "page_number": 3,
+                "verification_reason": "States the start date only.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+    coverage_review = {
+        "answers_question": False,
+        "missing_information": True,
+        "selected_evidence": [],
+        "confidence": 0.2,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "Why does probation end in August?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is True
+    assert (
+        output.confidence
+        <= verification_agent.COVERAGE_FAILURE_CONFIDENCE_CAP
+    )
+
+
+def test_verification_agent_rejects_coverage_quote_not_in_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    initial_verification = {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": True,
+        "confidence": 0.1,
+    }
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "selected_evidence": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": "This sentence is not in the candidate.",
+                "purpose": "Purports to answer the question.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "confidence": 0.8,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    with pytest.raises(VerificationAgentError):
+        run_verification_agent(
+            {
+                "agent_run_id": AGENT_RUN_ID,
+                "question": "When does probation start?",
+                "candidates": [_candidate_payload()],
+            }
+        )
+
+
+def test_verification_agent_keeps_two_distinct_coverage_quotes_from_same_chunk(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = (
+        "The item is not mine. I keep the items to sell and own none myself."
+    )
+    initial_verification = {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": True,
+        "confidence": 0.5,
+    }
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "selected_evidence": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": "The item is not mine.",
+                "purpose": "States the ownership conclusion.",
+                "supports_simple_reasoning": False,
+            },
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": "I keep the items to sell and own none myself.",
+                "purpose": "States the reason the item is not owned.",
+                "supports_simple_reasoning": True,
+            },
+        ],
+        "confidence": 0.5,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "Why is the item not theirs?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        "The item is not mine.",
+        "I keep the items to sell and own none myself.",
+    ]
