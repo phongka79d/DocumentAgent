@@ -502,6 +502,13 @@ pytest
 
 The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, guarded rerank placeholder behavior, Supabase service behavior including graph, chat, and agent-run helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, hybrid retrieval merge/scoring/ranking/reason/failure behavior, retrieval API semantic and hybrid mode contracts/error behavior, Agent 1 step logging behavior, Agent 1 retrieval callable behavior, Agent 1 schema/output/failure automated-test coverage, Agent 2 verification schema confidence bounds, prompt-content rules, empty-candidate behavior, compact ShopAIKey request construction, strict LLM JSON validation, deterministic evidence safety checks, Agent 2 success/failed step logging, Agent 2 log-insertion failure safety, Agent 3 answer schema/citation/prompt/self-check contracts, Agent 3 callable validation, deterministic insufficient-evidence output, Agent 2 verification input normalization, verified/rejected evidence lookup, verified-only answer-generation provider payloads, draft answer JSON parsing, citation presence and verified-quote enforcement, rejected evidence exclusion, Agent 3 runtime self-check enforcement, Agent 3 success/failed step logging, Agent 3 log-insertion failure safety, Agent 3 public output-shape normalization, Plan 12 chat persistence service behavior, Plan 12 agent-run service behavior, selected document ownership validation, controlled service error public messages, and the development indexing API. Plan 8 Batch05 also completed the required scoring, graph retrieval, and hybrid retrieval test runs plus a service-level hybrid retrieval smoke check against local processed, indexed, graph-built data.
 
+Agent 2 also runs an independent exact-quote coverage review before finalizing
+verified evidence. Agent 3 receives only source quote fields, then performs a
+question-aware claim-grounding review whose public self-check values are derived
+and enforced by application code. Verifier-authored reasons and flags are not
+treated as document evidence. These internal safeguards do not change the public
+Agent 2, Agent 3, chat, evidence, or agent-log API response schemas.
+
 For Plan 10 Agent 2 verification changes, the required targeted backend validation is:
 
 ```powershell
@@ -514,6 +521,15 @@ For Plan 11 Agent 3 answer changes, the required targeted backend validation is:
 ```powershell
 cd backend
 pytest tests/test_answer_agent.py -v
+```
+
+For evidence-coverage and claim-grounding changes, run:
+
+```powershell
+cd backend
+pytest tests/test_verification_agent.py -q
+pytest tests/test_answer_agent.py -q
+pytest -q
 ```
 
 For Plan 12 Batch01 workflow contract and API schema changes, the targeted backend validation is:

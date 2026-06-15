@@ -96,6 +96,16 @@ ANSWER_OUTPUT_PUBLIC_KEYS = (
 _CHUNK_ID_LABEL_PATTERN = re.compile(r"\bchunk[\s_-]*id\b", re.IGNORECASE)
 ANSWER_GENERATION_RESPONSE_FORMAT = {"type": "json_object"}
 ANSWER_SELF_CHECK_RESPONSE_FORMAT = {"type": "json_object"}
+ANSWER_GENERATION_RETRY_INSTRUCTION = (
+    "The previous draft failed claim grounding. Rewrite the answer more "
+    "narrowly using only causes, reasons, or context explicitly stated in "
+    "verified quotes. Remove broad labels, examples, and side events unless "
+    "the question asks for them."
+)
+_EXPLANATORY_QUESTION_PATTERN = re.compile(
+    r"^\s*(?:why|how|v[iì]\s+sao|t[aạ]i\s+sao)\b",
+    re.IGNORECASE,
+)
 
 
 def format_citation(citation: Citation) -> str:
@@ -171,6 +181,7 @@ def execute_answer_self_check(
         raise _AnswerAgentFailure("self_check_provider_error") from exc
 
     review = parse_and_validate_answer_grounding(provider_content)
+    review = canonicalize_grounding_review_citations(review, verification)
     executed_self_check = _derive_answer_self_check(
         output,
         verification,
@@ -317,6 +328,88 @@ def validate_draft_citation_quotes_against_verified_evidence(
             )
 
 
+def canonicalize_answer_citations(
+    output: AnswerAgentOutput,
+    verification: VerificationAgentOutput,
+) -> AnswerAgentOutput:
+    """Replace source subquote citations with their unique verified quote."""
+    canonical_citations = [
+        _canonicalize_citation(citation, verification)
+        for citation in output.citations
+    ]
+    if canonical_citations == output.citations:
+        return output
+    return output.model_copy(update={"citations": canonical_citations})
+
+
+def canonicalize_grounding_review_citations(
+    review: AnswerGroundingReview,
+    verification: VerificationAgentOutput,
+) -> AnswerGroundingReview:
+    """Replace grounding subquote support with its unique verified quote."""
+    field_reviews = []
+    for field_review in review.field_reviews:
+        claims = []
+        for claim in field_review.claims:
+            claims.append(
+                claim.model_copy(
+                    update={
+                        "supporting_citations": [
+                            _canonicalize_citation(citation, verification)
+                            for citation in claim.supporting_citations
+                        ]
+                    }
+                )
+            )
+        field_reviews.append(field_review.model_copy(update={"claims": claims}))
+    return review.model_copy(update={"field_reviews": field_reviews})
+
+
+def _canonicalize_citation(
+    citation: Citation,
+    verification: VerificationAgentOutput,
+) -> Citation:
+    normalized_citation_quote = _normalize_evidence_quote(citation.quote)
+    for rejected_chunk in verification.rejected_chunks:
+        if (
+            rejected_chunk.file_name == citation.file_name
+            and _normalize_evidence_quote(rejected_chunk.quote)
+            == normalized_citation_quote
+        ):
+            return citation
+
+    exact_matches = [
+        chunk
+        for chunk in verification.verified_chunks
+        if chunk.file_name == citation.file_name and chunk.quote == citation.quote
+    ]
+    if len(exact_matches) == 1:
+        return citation
+
+    verified_substring_matches = [
+        chunk
+        for chunk in verification.verified_chunks
+        if (
+            chunk.file_name == citation.file_name
+            and normalized_citation_quote
+            and normalized_citation_quote in _normalize_evidence_quote(chunk.quote)
+        )
+    ]
+    if len(verified_substring_matches) == 1:
+        matched_chunk = verified_substring_matches[0]
+        return Citation(file_name=matched_chunk.file_name, quote=matched_chunk.quote)
+    if len(verified_substring_matches) > 1:
+        raise AnswerEvidenceValidationError(
+            f"Citation quote matches multiple verified evidence quotes: "
+            f"{format_citation(citation)}"
+        )
+    return citation
+
+
+def _normalize_evidence_quote(value: str) -> str:
+    return " ".join(value.split())
+
+
 def validate_draft_answer_against_evidence(
     output: AnswerAgentOutput,
     verification: VerificationAgentOutput,
@@ -338,20 +431,25 @@ def normalize_validated_draft_output(
 
 def build_answer_generation_payload(
     answer_input: AnswerAgentInput,
+    retry_instruction: str | None = None,
 ) -> dict[str, Any]:
     """Build the compact provider payload from verified evidence only."""
-    return {
+    payload = {
         "response_instruction": "Return only valid JSON.",
         "question": answer_input.question,
         "verified_chunks": _answer_evidence_payload(answer_input.verification),
     }
+    if retry_instruction is not None:
+        payload["retry_instruction"] = retry_instruction
+    return payload
 
 
 def build_answer_generation_messages(
     answer_input: AnswerAgentInput,
+    retry_instruction: str | None = None,
 ) -> list[dict[str, str]]:
     """Build ShopAIKey chat messages without rejected chunks as evidence."""
-    payload = build_answer_generation_payload(answer_input)
+    payload = build_answer_generation_payload(answer_input, retry_instruction)
     return [
         {
             "role": "system",
@@ -469,26 +567,7 @@ def run_answer_agent(
         return _build_insufficient_evidence_output()
 
     try:
-        messages = build_answer_generation_messages(answer_input)
-        provider_content = shopaikey_service.chat_completion(
-            messages,
-            response_format=ANSWER_GENERATION_RESPONSE_FORMAT,
-        )
-    except shopaikey_service.ShopAIKeyServiceError as exc:
-        failure = _AnswerAgentFailure("provider_error")
-        _log_failed_answer_self_check(answer_input, failure.failure_type)
-        raise failure from exc
-
-    try:
-        draft_output = parse_and_validate_draft_answer(provider_content)
-        validate_draft_citation_quotes_against_verified_evidence(
-            draft_output,
-            answer_input.verification,
-        )
-        validate_draft_answer_against_evidence(
-            draft_output,
-            answer_input.verification,
-        )
+        draft_output = _generate_validated_draft_answer(answer_input)
     except _AnswerAgentFailure as exc:
         _log_failed_answer_self_check(answer_input, exc.failure_type)
         raise
@@ -509,9 +588,28 @@ def run_answer_agent(
         raise
     except AnswerEvidenceValidationError as exc:
         logger.warning("Answer agent self-check failed readiness validation.")
-        failure = _AnswerAgentFailure("self_check_failed")
-        _log_failed_answer_self_check(answer_input, failure.failure_type)
-        raise failure from exc
+        if not _should_retry_answer_generation_after_self_check_failure(answer_input):
+            failure = _AnswerAgentFailure("self_check_failed")
+            _log_failed_answer_self_check(answer_input, failure.failure_type)
+            raise failure from exc
+        try:
+            draft_output = _generate_validated_draft_answer(
+                answer_input,
+                retry_instruction=ANSWER_GENERATION_RETRY_INSTRUCTION,
+            )
+            executed_grounding = execute_answer_self_check(
+                answer_input.question,
+                draft_output,
+                answer_input.verification,
+            )
+        except _AnswerAgentFailure as retry_exc:
+            _log_failed_answer_self_check(answer_input, retry_exc.failure_type)
+            raise
+        except AnswerEvidenceValidationError as retry_exc:
+            logger.warning("Answer agent self-check retry failed readiness validation.")
+            failure = _AnswerAgentFailure("self_check_failed")
+            _log_failed_answer_self_check(answer_input, failure.failure_type)
+            raise failure from retry_exc
 
     try:
         checked_output = draft_output.model_copy(
@@ -535,6 +633,44 @@ def run_answer_agent(
         executed_grounding.review,
     )
     return final_output
+
+
+def _generate_validated_draft_answer(
+    answer_input: AnswerAgentInput,
+    retry_instruction: str | None = None,
+) -> AnswerAgentOutput:
+    try:
+        messages = build_answer_generation_messages(answer_input, retry_instruction)
+        provider_content = shopaikey_service.chat_completion(
+            messages,
+            response_format=ANSWER_GENERATION_RESPONSE_FORMAT,
+        )
+    except shopaikey_service.ShopAIKeyServiceError as exc:
+        raise _AnswerAgentFailure("provider_error") from exc
+
+    draft_output = parse_and_validate_draft_answer(provider_content)
+    draft_output = canonicalize_answer_citations(
+        draft_output,
+        answer_input.verification,
+    )
+    validate_draft_citation_quotes_against_verified_evidence(
+        draft_output,
+        answer_input.verification,
+    )
+    validate_draft_answer_against_evidence(
+        draft_output,
+        answer_input.verification,
+    )
+    return draft_output
+
+
+def _should_retry_answer_generation_after_self_check_failure(
+    answer_input: AnswerAgentInput,
+) -> bool:
+    return bool(_EXPLANATORY_QUESTION_PATTERN.search(answer_input.question)) and any(
+        chunk.supports_simple_reasoning
+        for chunk in answer_input.verification.verified_chunks
+    )
 
 
 def _log_successful_answer_self_check(

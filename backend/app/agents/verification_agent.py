@@ -46,7 +46,13 @@ FINAL_VERIFICATION_OUTPUT_KEYS = (
 NO_VERIFIED_CHUNKS_CONFIDENCE_CAP = 0.2
 CONTRADICTION_CONFIDENCE_CAP = 0.4
 COVERAGE_FAILURE_CONFIDENCE_CAP = 0.4
+CONTEXT_EXPANSION_CONFIDENCE_CAP = 0.65
 EVIDENCE_COVERAGE_RESPONSE_FORMAT = {"type": "json_object"}
+_EXPLANATORY_QUESTION_PATTERN = re.compile(
+    r"^\s*(?:why|how|v[iì]\s+sao|t[aạ]i\s+sao)\b",
+    re.IGNORECASE,
+)
+_SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<=[.!?])(?P<closing_quote>['\"]?)\s+")
 _MONTH_BY_NAME = {
     "january": "01",
     "february": "02",
@@ -185,6 +191,17 @@ def _parse_coverage_review(response_content: str) -> EvidenceCoverageReview:
         logger.warning("Evidence coverage reviewer returned invalid JSON.")
         raise _VerificationAgentFailure("coverage_invalid_json") from exc
 
+    if (
+        isinstance(response_payload, dict)
+        and response_payload.get("answers_question") is False
+        and response_payload.get("missing_information") is True
+    ):
+        response_payload = {
+            "selected_evidence": [],
+            "confidence": 0.0,
+            **response_payload,
+        }
+
     try:
         return EvidenceCoverageReview.model_validate(response_payload)
     except ValidationError as exc:
@@ -237,6 +254,145 @@ def _quote_matches_candidate_content(quote: str, content: str | None) -> bool:
     normalized_quote = _normalize_quote_text(quote)
     normalized_content = _normalize_quote_text(content or "")
     return bool(normalized_quote) and normalized_quote in normalized_content
+
+
+def _question_needs_explanatory_context(question: str) -> bool:
+    return bool(_EXPLANATORY_QUESTION_PATTERN.search(question))
+
+
+def _expanded_quote_with_surrounding_context(
+    quote: str,
+    content: str | None,
+) -> str | None:
+    normalized_quote = _normalize_quote_text(quote)
+    normalized_content = _normalize_quote_text(content or "")
+    if not normalized_quote or normalized_quote not in normalized_content:
+        return None
+
+    quote_start = normalized_content.find(normalized_quote)
+    quote_end = quote_start + len(normalized_quote)
+    sentence_spans = _sentence_spans(normalized_content)
+
+    overlapping_sentence_indexes = _overlapping_sentence_indexes(
+        sentence_spans,
+        quote_start,
+        quote_end,
+    )
+    if not overlapping_sentence_indexes:
+        return None
+
+    start_index = max(0, overlapping_sentence_indexes[0] - 1)
+    end_index = overlapping_sentence_indexes[-1] + 1
+    expanded_quote = _normalize_quote_text(
+        " ".join(
+            sentence
+            for _sentence_start, _sentence_end, sentence in sentence_spans[
+                start_index:end_index
+            ]
+        )
+    )
+    if expanded_quote == normalized_quote:
+        return None
+    return expanded_quote
+
+
+def _expanded_quotes_with_surrounding_context(
+    quote: str,
+    content: str | None,
+) -> list[str] | None:
+    normalized_quote = _normalize_quote_text(quote)
+    normalized_content = _normalize_quote_text(content or "")
+    if not normalized_quote or normalized_quote not in normalized_content:
+        return None
+
+    quote_start = normalized_content.find(normalized_quote)
+    quote_end = quote_start + len(normalized_quote)
+    sentence_spans = _sentence_spans(normalized_content)
+    overlapping_sentence_indexes = _overlapping_sentence_indexes(
+        sentence_spans,
+        quote_start,
+        quote_end,
+    )
+    if not overlapping_sentence_indexes:
+        return None
+
+    quotes: list[str] = []
+    previous_index = overlapping_sentence_indexes[0] - 1
+    if previous_index >= 0:
+        context_quote = _trim_preceding_context_sentence(
+            sentence_spans[previous_index][2]
+        )
+        if (
+            context_quote
+            and context_quote != normalized_quote
+            and context_quote in normalized_content
+        ):
+            quotes.append(context_quote)
+
+    if normalized_quote not in {_normalize_quote_text(value) for value in quotes}:
+        quotes.append(normalized_quote)
+
+    if len(quotes) <= 1:
+        return None
+    return quotes
+
+
+def _sentence_spans(
+    normalized_content: str,
+) -> list[tuple[int, int, str]]:
+    sentence_spans: list[tuple[int, int, str]] = []
+    sentence_start = 0
+    for boundary in _SENTENCE_BOUNDARY_PATTERN.finditer(normalized_content):
+        sentence_end = boundary.start() + len(boundary.group("closing_quote"))
+        raw_sentence = normalized_content[sentence_start:sentence_end]
+        sentence = raw_sentence.strip()
+        if sentence:
+            leading_trim = len(raw_sentence) - len(raw_sentence.lstrip())
+            trailing_trim = len(raw_sentence) - len(raw_sentence.rstrip())
+            sentence_spans.append(
+                (
+                    sentence_start + leading_trim,
+                    sentence_end - trailing_trim,
+                    sentence,
+                )
+            )
+        sentence_start = boundary.end()
+
+    raw_sentence = normalized_content[sentence_start:]
+    sentence = raw_sentence.strip()
+    if sentence:
+        leading_trim = len(raw_sentence) - len(raw_sentence.lstrip())
+        trailing_trim = len(raw_sentence) - len(raw_sentence.rstrip())
+        sentence_spans.append(
+            (
+                sentence_start + leading_trim,
+                len(normalized_content) - trailing_trim,
+                sentence,
+            )
+        )
+
+    return sentence_spans
+
+
+def _overlapping_sentence_indexes(
+    sentence_spans: list[tuple[int, int, str]],
+    quote_start: int,
+    quote_end: int,
+) -> list[int]:
+    return [
+        index
+        for index, (sentence_start, sentence_end, _sentence) in enumerate(
+            sentence_spans
+        )
+        if sentence_start < quote_end and quote_start < sentence_end
+    ]
+
+
+def _trim_preceding_context_sentence(sentence: str) -> str:
+    leading_clause, separator, _remaining = sentence.partition(";")
+    if separator and len(leading_clause.split()) >= 6:
+        return f"{leading_clause.strip()};"
+    return sentence
 
 
 def _candidate_source_excerpt(content: str | None) -> str | None:
@@ -360,6 +516,12 @@ def _apply_coverage_review(
     coverage_review: EvidenceCoverageReview,
 ) -> VerificationAgentOutput:
     if not coverage_review.answers_question:
+        expanded_output = _expand_verified_context_for_explanatory_question(
+            input_data,
+            verification_output,
+        )
+        if expanded_output is not None:
+            return expanded_output
         return verification_output.model_copy(
             update={
                 "missing_information": True,
@@ -414,6 +576,65 @@ def _apply_coverage_review(
         }
     )
     return _filter_duplicate_verified_chunks(covered_output)
+
+
+def _expand_verified_context_for_explanatory_question(
+    input_data: VerificationAgentInput,
+    verification_output: VerificationAgentOutput,
+) -> VerificationAgentOutput | None:
+    if (
+        not _question_needs_explanatory_context(input_data.question)
+        or not verification_output.verified_chunks
+    ):
+        return None
+
+    candidates_by_chunk_id = {
+        candidate.chunk_id: candidate for candidate in input_data.candidates
+    }
+    expanded_chunks = []
+    expanded_any = False
+    for verified_chunk in verification_output.verified_chunks:
+        candidate = candidates_by_chunk_id.get(verified_chunk.chunk_id)
+        if candidate is None:
+            continue
+        expanded_quotes = _expanded_quotes_with_surrounding_context(
+            verified_chunk.quote,
+            candidate.content,
+        )
+        if expanded_quotes is None:
+            expanded_chunks.append(verified_chunk)
+            continue
+        expanded_any = True
+        for expanded_quote in expanded_quotes:
+            expanded_chunks.append(
+                verified_chunk.model_copy(
+                    update={
+                        "quote": expanded_quote,
+                        "verification_reason": (
+                            f"{verified_chunk.verification_reason} "
+                            "Expanded with surrounding source context for the "
+                            "explanatory question."
+                        ),
+                        "supports_simple_reasoning": True,
+                    }
+                )
+            )
+
+    if not expanded_any:
+        return None
+
+    return _filter_duplicate_verified_chunks(
+        verification_output.model_copy(
+            update={
+                "verified_chunks": expanded_chunks,
+                "missing_information": False,
+                "confidence": min(
+                    verification_output.confidence,
+                    CONTEXT_EXPANSION_CONFIDENCE_CAP,
+                ),
+            }
+        )
+    )
 
 
 def _normalize_date_match(match: re.Match[str]) -> str:

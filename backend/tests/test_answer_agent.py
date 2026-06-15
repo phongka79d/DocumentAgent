@@ -37,6 +37,7 @@ from app.agents import AnswerAgentError as ExportedAnswerAgentError
 from app.agents import run_answer_agent as exported_run_answer_agent
 from app.agents.prompts import (
     ANSWER_GENERATION_OUTPUT_KEYS,
+    ANSWER_GROUNDING_SYSTEM_PROMPT,
     ANSWER_GENERATION_SYSTEM_PROMPT,
     ANSWER_SELF_CHECK_SYSTEM_PROMPT,
     SELF_CHECK_OUTPUT_KEYS,
@@ -944,6 +945,41 @@ def test_execute_answer_self_check_rejects_rejected_evidence_mapping(
         )
 
 
+def test_execute_answer_self_check_canonicalizes_unique_verified_subquote_support(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    draft_output = _answer_output()
+    grounding_payload = _grounding_review_payload(
+        output=draft_output,
+        supporting_citations=[
+            {
+                "file_name": "contract.pdf",
+                "quote": "starts on 01/06/2026",
+            }
+        ],
+    )
+    chat_completion = Mock(return_value=json.dumps(grounding_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    executed = execute_answer_self_check(
+        "When can I start official work?",
+        draft_output,
+        _verification_output(),
+    )
+
+    assert executed.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    assert all(
+        citation.quote == VERIFIED_QUOTE
+        for field_review in executed.review.field_reviews
+        for claim in field_review.claims
+        for citation in claim.supporting_citations
+    )
+
+
 def test_run_answer_agent_caps_confidence_by_grounding_review(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1067,6 +1103,53 @@ def test_run_answer_agent_rejects_unsupported_explanation_with_valid_conclusion_
         run_answer_agent(payload)
 
     assert exc_info.value.failure_type == "self_check_failed"
+
+
+def test_run_answer_agent_retries_explanatory_answer_after_self_check_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = _answer_input_payload()
+    payload["question"] = "Why can I start official work in August?"
+    unsupported_draft = _draft_answer_payload()
+    unsupported_draft["final_answer"] = (
+        "You can start official work in August because of an unsupported policy."
+    )
+    unsupported_draft["reasoning_summary"] = "The unsupported policy sets August."
+    repaired_draft = _draft_answer_payload()
+    repaired_output = AnswerAgentOutput.model_validate(
+        repaired_draft | {"self_check": DRAFT_SELF_CHECK_PLACEHOLDER}
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(unsupported_draft),
+            json.dumps(
+                _grounding_review_payload(
+                    output=AnswerAgentOutput.model_validate(
+                        unsupported_draft
+                        | {"self_check": DRAFT_SELF_CHECK_PLACEHOLDER}
+                    ),
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
+            json.dumps(repaired_draft),
+            json.dumps(_grounding_review_payload(output=repaired_output)),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(payload)
+
+    assert output.final_answer == repaired_draft["final_answer"]
+    assert output.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    assert chat_completion.call_count == 4
+    retry_messages = chat_completion.call_args_list[2].args[0]
+    retry_payload = json.loads(retry_messages[1]["content"])
+    assert "retry_instruction" in retry_payload
 
 
 @pytest.mark.parametrize(
@@ -1580,6 +1663,83 @@ def test_run_answer_agent_accepts_verified_citation_and_renders_required_format(
     assert chat_completion.call_count == 2
 
 
+def test_run_answer_agent_canonicalizes_unique_verified_subquote_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    verified_quote = (
+        "The meeting became rude enough that the attendee walked away. "
+        "'I will not return!' said the attendee while leaving. "
+        "'This is the worst meeting I have ever attended!'"
+    )
+    cited_subquote = (
+        "'I will not return!' said the attendee while leaving. "
+        "'This is the worst meeting I have ever attended!'"
+    )
+    payload = _answer_input_payload()
+    payload["verification"] = _verification_output(
+        verified_chunks=[
+            {
+                "chunk_id": VERIFIED_CHUNK_ID,
+                "document_id": DOCUMENT_ID,
+                "file_name": "meeting.txt",
+                "quote": verified_quote,
+                "page_number": 1,
+                "verification_reason": "Provides the cause and conclusion.",
+                "supports_simple_reasoning": True,
+            }
+        ]
+    ).model_dump(mode="json")
+    provider_payload = {
+        "final_answer": (
+            "The attendee considered it the worst meeting because it became "
+            "rude enough that they walked away."
+        ),
+        "citations": [
+            {
+                "file_name": "meeting.txt",
+                "quote": cited_subquote,
+            }
+        ],
+        "reasoning_summary": "The cited passage links rudeness, leaving, and the conclusion.",
+        "confidence": 0.82,
+    }
+    canonical_output = AnswerAgentOutput.model_validate(
+        provider_payload
+        | {
+            "citations": [
+                {
+                    "file_name": "meeting.txt",
+                    "quote": verified_quote,
+                }
+            ],
+            "self_check": DRAFT_SELF_CHECK_PLACEHOLDER,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(provider_payload),
+            json.dumps(_grounding_review_payload(output=canonical_output)),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(payload)
+
+    assert output.citations == [Citation(file_name="meeting.txt", quote=verified_quote)]
+    grounding_messages = chat_completion.call_args_list[1].args[0]
+    grounding_payload = json.loads(grounding_messages[1]["content"])
+    assert grounding_payload["draft_answer"]["citations"] == [
+        {
+            "file_name": "meeting.txt",
+            "quote": verified_quote,
+        }
+    ]
+
+
 def test_run_answer_agent_rejects_draft_citation_from_rejected_chunk(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1972,6 +2132,9 @@ def test_answer_generation_prompt_contains_required_grounding_rules() -> None:
     assert "include citations" in prompt
     assert "vietnamese by default" in prompt
     assert "simple reasoning only when the verified evidence clearly supports it" in prompt
+    assert "why or how" in prompt
+    assert "do not add broad labels" in prompt
+    assert "do not mention examples or side events" in prompt
     assert "return only valid json" in prompt
 
 
@@ -1988,6 +2151,33 @@ def test_answer_generation_prompt_requires_json_output_fields() -> None:
 
     assert '"file_name"' in ANSWER_GENERATION_SYSTEM_PROMPT
     assert '"quote"' in ANSWER_GENERATION_SYSTEM_PROMPT
+
+
+def test_answer_grounding_prompt_requires_schema_output_fields() -> None:
+    for phrase in [
+        '"answers_question"',
+        '"field_reviews"',
+        '"field_name"',
+        '"final_answer"',
+        '"reasoning_summary"',
+        '"text"',
+        '"claims"',
+        '"claim"',
+        '"supported"',
+        '"supporting_citations"',
+        '"file_name"',
+        '"quote"',
+        '"confidence"',
+    ]:
+        assert phrase in ANSWER_GROUNDING_SYSTEM_PROMPT
+
+
+def test_answer_grounding_prompt_requires_claims_copied_from_visible_text() -> None:
+    prompt = ANSWER_GROUNDING_SYSTEM_PROMPT.lower()
+
+    assert "substring" in prompt
+    assert "do not translate" in prompt
+    assert "do not paraphrase" in prompt
 
 
 def test_answer_self_check_prompt_contains_required_rules() -> None:

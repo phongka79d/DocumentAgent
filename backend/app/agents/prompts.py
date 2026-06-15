@@ -96,7 +96,22 @@ cause, reason, mechanism, condition, or surrounding context. Multiple distinct
 quotes from the same chunk_id are allowed.
 
 Set answers_question to false and missing_information to true if answering
-would require guessing. Return only JSON matching the required schema.
+would require guessing.
+
+Return only valid JSON with exactly this structure:
+{
+  "answers_question": false,
+  "missing_information": true,
+  "selected_evidence": [
+    {
+      "chunk_id": "string",
+      "quote": "exact substring copied from candidate content",
+      "purpose": "why this quote is required to answer the question",
+      "supports_simple_reasoning": false
+    }
+  ],
+  "confidence": 0.0
+}
 """.strip()
 
 ANSWER_GENERATION_SYSTEM_PROMPT = """
@@ -119,6 +134,13 @@ a month from a date, or summarizing a clearly stated policy. If the evidence doe
 not clearly support the reasoning, say the documents do not provide enough
 information instead of guessing.
 
+For why or how questions, state only causes, reasons, mechanisms, or context
+that are explicitly present in verified quotes. Do not add broad labels such as
+"absurd", "strange", "illogical", "chaotic", or similar interpretations unless
+the verified quote itself supports that wording. Do not mention examples or side events
+as reasons unless the question asks for examples or the verified quote
+explicitly says those events caused the answer.
+
 Return only valid JSON with exactly these top-level keys:
 {
   "final_answer": "string",
@@ -139,8 +161,10 @@ You are the final answer grounding reviewer.
 Review the exact final_answer and reasoning_summary against the user's question
 and only the provided verified document quotes. Split both visible fields into
 their factual or inferential claims. Copy each claim exactly from its reviewed
-field. For every claim, list exact supporting file_name and quote pairs from
-verified evidence.
+field. Every claim string must be a verbatim substring of the reviewed text
+value, in the same language as that text. Do not translate claims. Do not paraphrase
+claims. For every claim, list exact supporting file_name and quote
+pairs from verified evidence.
 
 Mark a claim unsupported when the quote merely repeats the question premise,
 does not establish the claimed cause or explanation, or requires outside
@@ -148,8 +172,49 @@ knowledge. Do not treat verifier comments, metadata, or unsupported
 interpretations as evidence.
 
 Set answers_question to true only when the final answer directly answers the
-question and every required explanation is supported. Return only JSON matching
-the required schema.
+question and every required explanation is supported.
+
+Return only valid JSON with exactly this structure:
+{
+  "answers_question": false,
+  "field_reviews": [
+    {
+      "field_name": "final_answer",
+      "text": "exact final_answer text",
+      "claims": [
+        {
+          "claim": "exact claim text copied from this field",
+          "supported": false,
+          "supporting_citations": [
+            {
+              "file_name": "string",
+              "quote": "exact quote copied from verified evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field_name": "reasoning_summary",
+      "text": "exact reasoning_summary text",
+      "claims": [
+        {
+          "claim": "exact claim text copied from this field",
+          "supported": false,
+          "supporting_citations": [
+            {
+              "file_name": "string",
+              "quote": "exact quote copied from verified evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "confidence": 0.0
+}
+
+Do not return a top-level claims object.
 """.strip()
 
 ANSWER_SELF_CHECK_SYSTEM_PROMPT = """

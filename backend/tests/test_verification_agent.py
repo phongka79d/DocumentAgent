@@ -41,6 +41,17 @@ def test_evidence_coverage_review_requires_selected_evidence_when_answerable() -
         )
 
 
+def test_parse_coverage_review_normalizes_non_answerable_minimal_payload() -> None:
+    review = verification_agent._parse_coverage_review(
+        '{"answers_question": false, "missing_information": true}'
+    )
+
+    assert review.answers_question is False
+    assert review.missing_information is True
+    assert review.selected_evidence == []
+    assert review.confidence == 0.0
+
+
 @pytest.fixture(autouse=True)
 def _disable_verification_agent_log_persistence(
     monkeypatch: pytest.MonkeyPatch,
@@ -1520,6 +1531,22 @@ def test_verification_prompt_requires_explanatory_evidence_for_why_and_how_quest
         assert phrase in prompt
 
 
+def test_evidence_coverage_prompt_contains_required_output_schema() -> None:
+    prompt = verification_agent.EVIDENCE_COVERAGE_SYSTEM_PROMPT
+
+    for phrase in [
+        '"answers_question"',
+        '"missing_information"',
+        '"selected_evidence"',
+        '"chunk_id"',
+        '"quote"',
+        '"purpose"',
+        '"supports_simple_reasoning"',
+        '"confidence"',
+    ]:
+        assert phrase in prompt
+
+
 def test_verification_prompt_limits_agent_scope() -> None:
     prompt = VERIFICATION_AGENT_SYSTEM_PROMPT.lower()
 
@@ -1653,6 +1680,92 @@ def test_verification_agent_marks_missing_when_coverage_review_is_insufficient(
         output.confidence
         <= verification_agent.COVERAGE_FAILURE_CONFIDENCE_CAP
     )
+
+
+def test_expanded_quote_with_surrounding_context_handles_multi_sentence_quote() -> None:
+    content = (
+        "The meeting became rude enough that the attendee walked away. "
+        "'I will not return!' said the attendee while leaving. "
+        "'This is the worst meeting I have ever attended!' "
+        "Afterward, the attendee noticed an unrelated sign."
+    )
+    quote = (
+        "'I will not return!' said the attendee while leaving. "
+        "'This is the worst meeting I have ever attended!'"
+    )
+
+    expanded_quote = verification_agent._expanded_quote_with_surrounding_context(
+        quote,
+        content,
+    )
+
+    assert expanded_quote is not None
+    assert "The meeting became rude enough" in expanded_quote
+    assert "'I will not return!'" in expanded_quote
+    assert "'This is the worst meeting" in expanded_quote
+    assert "unrelated sign" not in expanded_quote
+
+
+def test_verification_agent_expands_context_for_explanatory_question_when_coverage_is_too_strict(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["file_name"] = "alice-in-wonderland.txt"
+    candidate["page_number"] = 0
+    candidate["content"] = (
+        "'Then you shouldn't talk,' said the Hatter. "
+        "This piece of rudeness was more than Alice could bear: "
+        "she got up in great disgust, and walked off; "
+        "the others later discussed unrelated snacks. "
+        "'It's the stupidest tea-party I ever was at in all my life!'"
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "alice-in-wonderland.txt",
+                "quote": "'It's the stupidest tea-party I ever was at in all my life!'",
+                "page_number": 0,
+                "verification_reason": "Alice states her conclusion.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 1.0,
+    }
+    coverage_review = {
+        "answers_question": False,
+        "missing_information": True,
+        "selected_evidence": [],
+        "confidence": 0.0,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": (
+                "Why did Alice consider the Mad Tea-Party the stupidest "
+                "tea party she had ever attended?"
+            ),
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert output.confidence == verification_agent.CONTEXT_EXPANSION_CONFIDENCE_CAP
+    assert len(output.verified_chunks) == 2
+    assert "This piece of rudeness was more than Alice could bear" in (
+        output.verified_chunks[0].quote
+    )
+    assert "unrelated snacks" not in output.verified_chunks[0].quote
+    assert "It's the stupidest tea-party" in output.verified_chunks[1].quote
 
 
 def test_verification_agent_rejects_coverage_quote_not_in_candidate(
