@@ -1102,6 +1102,64 @@ def test_verification_agent_filters_duplicate_verified_chunk_ids(
     assert "Duplicate verified chunk_id" in output.rejected_chunks[0].rejection_reason
 
 
+def test_verification_agent_keeps_distinct_verified_quotes_from_same_chunk(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = (
+        "The item is not mine. I keep these items to sell and own none myself."
+    )
+
+    def fake_chat_completion(messages, response_format=None):
+        return """
+        {
+          "verified_chunks": [
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "The item is not mine.",
+              "page_number": 3,
+              "verification_reason": "This states that the item is not owned.",
+              "supports_simple_reasoning": false
+            },
+            {
+              "chunk_id": "22222222-2222-2222-2222-222222222222",
+              "document_id": "33333333-3333-3333-3333-333333333333",
+              "file_name": "contract.pdf",
+              "quote": "I keep these items to sell and own none myself.",
+              "page_number": 3,
+              "verification_reason": "This explains why the item is not owned.",
+              "supports_simple_reasoning": true
+            }
+          ],
+          "rejected_chunks": [],
+          "missing_information": false,
+          "confidence": 0.92
+        }
+        """
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "Why is the item not theirs?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        "The item is not mine.",
+        "I keep these items to sell and own none myself.",
+    ]
+    assert output.rejected_chunks == []
+
+
 def test_verification_agent_filters_duplicate_verified_content_across_chunk_ids(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1369,6 +1427,21 @@ def test_verification_prompt_contains_accept_reject_and_missing_rules() -> None:
         "wrong document",
         "missing_information",
         "guessing beyond the document",
+    ]:
+        assert phrase in prompt
+
+
+def test_verification_prompt_requires_explanatory_evidence_for_why_and_how_questions(
+) -> None:
+    prompt = VERIFICATION_AGENT_SYSTEM_PROMPT.lower()
+
+    for phrase in [
+        "questions asking why or how",
+        "merely repeats",
+        "cause, reason, mechanism, or surrounding context",
+        "same chunk_id",
+        "distinct useful excerpts",
+        "collectively answer the exact question",
     ]:
         assert phrase in prompt
 

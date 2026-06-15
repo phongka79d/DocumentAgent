@@ -244,31 +244,19 @@ def _duplicate_rejection_from_verified(
     )
 
 
-def _duplicate_content_key(
-    verified_chunk: VerifiedChunk,
-    input_data: VerificationAgentInput,
-) -> str:
-    candidates_by_chunk_id = {
-        candidate.chunk_id: candidate for candidate in input_data.candidates
-    }
-    candidate = candidates_by_chunk_id[verified_chunk.chunk_id]
-    normalized_content = _normalize_quote_text(candidate.content or "")
-    if normalized_content:
-        return normalized_content
-    return _normalize_quote_text(verified_chunk.quote)
-
-
 def _filter_duplicate_verified_chunks(
     verification_output: VerificationAgentOutput,
-    input_data: VerificationAgentInput,
 ) -> VerificationAgentOutput:
     verified_chunks = []
     rejected_chunks = list(verification_output.rejected_chunks)
-    seen_chunk_ids = set()
-    seen_content_keys = set()
+    seen_evidence_keys = set()
+    seen_quote_keys = set()
 
     for verified_chunk in verification_output.verified_chunks:
-        if verified_chunk.chunk_id in seen_chunk_ids:
+        quote_key = _normalize_quote_text(verified_chunk.quote)
+        evidence_key = (verified_chunk.chunk_id, quote_key)
+
+        if evidence_key in seen_evidence_keys:
             rejected_chunks.append(
                 _duplicate_rejection_from_verified(
                     verified_chunk,
@@ -277,21 +265,19 @@ def _filter_duplicate_verified_chunks(
             )
             continue
 
-        content_key = _duplicate_content_key(verified_chunk, input_data)
-        if content_key and content_key in seen_content_keys:
+        if quote_key in seen_quote_keys:
             rejected_chunks.append(
                 _duplicate_rejection_from_verified(
                     verified_chunk,
                     DUPLICATE_CONTENT_REJECTION_REASON,
                 )
             )
-            seen_chunk_ids.add(verified_chunk.chunk_id)
+            seen_evidence_keys.add(evidence_key)
             continue
 
         verified_chunks.append(verified_chunk)
-        seen_chunk_ids.add(verified_chunk.chunk_id)
-        if content_key:
-            seen_content_keys.add(content_key)
+        seen_evidence_keys.add(evidence_key)
+        seen_quote_keys.add(quote_key)
 
     return verification_output.model_copy(
         update={
@@ -557,7 +543,6 @@ def run_verification_agent(
         )
         duplicate_filtered_output = _filter_duplicate_verified_chunks(
             quote_validated_output,
-            validated_input,
         )
         post_processed_output = _apply_missing_information_adjustments(
             duplicate_filtered_output

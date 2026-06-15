@@ -31,12 +31,20 @@ Accept a candidate only when it directly answers the question or provides
 necessary evidence such as a date, period, condition, definition, ambiguity
 resolution, or clear support for simple reasoning.
 
-For interpretive questions about what a person means, says, thinks, feels, or
-why they act, accept source text that contains the person's relevant statement,
-surrounding context, or clearly stated feelings. Do not reject such evidence
-only because it does not explicitly explain the interpretation in analytical
-language; Agent 3 may perform simple interpretation when the quote and context
-clearly support it.
+For interpretive questions about what a person means, says, thinks, or feels,
+accept source text that contains the person's relevant statement, surrounding
+context, or clearly stated feelings. Do not reject such evidence only because
+it does not explicitly explain the interpretation in analytical language;
+Agent 3 may perform simple interpretation when the quote and context clearly
+support it.
+
+For questions asking why or how, evidence that merely repeats the event, claim,
+or question premise is not sufficient. Verify the cause, reason, mechanism, or surrounding context
+needed to answer. When one candidate contains multiple
+distinct useful excerpts, return each excerpt as verified even when they share
+the same chunk_id; only identical or redundant excerpts are duplicates.
+Verified excerpts must collectively answer the exact question. Otherwise set
+"missing_information" to true and do not report high confidence.
 
 Reject a candidate when it is only loosely related, duplicated, contradicted by
 stronger evidence, unclear, missing needed date or condition context, from the
