@@ -1,6 +1,7 @@
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class RetrievalAgentInput(BaseModel):
@@ -58,6 +59,42 @@ class VerificationAgentInput(BaseModel):
         if not normalized:
             raise ValueError("question must not be empty")
         return normalized
+
+
+class EvidenceCoverageSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    chunk_id: UUID
+    quote: str = Field(min_length=1)
+    purpose: str = Field(min_length=1)
+    supports_simple_reasoning: bool
+
+    @field_validator("quote", "purpose")
+    @classmethod
+    def normalize_coverage_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("field must not be empty")
+        return normalized
+
+
+class EvidenceCoverageReview(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    answers_question: bool
+    missing_information: bool
+    selected_evidence: list[EvidenceCoverageSelection]
+    confidence: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_consistent_coverage(self) -> "EvidenceCoverageReview":
+        if self.answers_question == self.missing_information:
+            raise ValueError(
+                "answers_question and missing_information must be opposites"
+            )
+        if self.answers_question and not self.selected_evidence:
+            raise ValueError("answerable coverage requires selected evidence")
+        return self
 
 
 class VerifiedChunk(BaseModel):
@@ -118,6 +155,47 @@ class Citation(BaseModel):
         return normalized
 
 
+class AnswerClaimGrounding(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    claim: str = Field(min_length=1)
+    supported: bool
+    supporting_citations: list[Citation]
+
+    @field_validator("claim")
+    @classmethod
+    def normalize_claim(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("claim must not be empty")
+        return normalized
+
+
+class AnswerFieldGrounding(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    field_name: Literal["final_answer", "reasoning_summary"]
+    text: str = Field(min_length=1)
+    claims: list[AnswerClaimGrounding] = Field(min_length=1)
+
+
+class AnswerGroundingReview(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    answers_question: bool
+    field_reviews: list[AnswerFieldGrounding] = Field(min_length=2, max_length=2)
+    confidence: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_reviewed_fields(self) -> "AnswerGroundingReview":
+        reviewed_fields = {review.field_name for review in self.field_reviews}
+        if reviewed_fields != {"final_answer", "reasoning_summary"}:
+            raise ValueError(
+                "grounding review must cover final_answer and reasoning_summary"
+            )
+        return self
+
+
 class AnswerSelfCheck(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -162,10 +240,15 @@ class AnswerAgentOutput(BaseModel):
 
 
 __all__ = [
+    "AnswerClaimGrounding",
+    "AnswerFieldGrounding",
     "AnswerAgentInput",
     "AnswerAgentOutput",
+    "AnswerGroundingReview",
     "AnswerSelfCheck",
     "Citation",
+    "EvidenceCoverageReview",
+    "EvidenceCoverageSelection",
     "RetrievalAgentInput",
     "RetrievalCandidate",
     "RetrievalAgentOutput",

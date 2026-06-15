@@ -43,6 +43,7 @@ from app.agents.prompts import (
 from app.agents.schemas import (
     AnswerAgentInput,
     AnswerAgentOutput,
+    AnswerGroundingReview,
     AnswerSelfCheck,
     Citation,
     VerificationAgentOutput,
@@ -57,6 +58,34 @@ REJECTED_QUOTE = "The probation period starts on 01/05/2026 and lasts 3 months."
 EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER = (
     "Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời."
 )
+
+
+def test_answer_grounding_review_requires_both_visible_answer_fields() -> None:
+    with pytest.raises(ValidationError):
+        AnswerGroundingReview.model_validate(
+            {
+                "answers_question": True,
+                "field_reviews": [
+                    {
+                        "field_name": "final_answer",
+                        "text": "Grounded answer.",
+                        "claims": [
+                            {
+                                "claim": "Grounded answer.",
+                                "supported": True,
+                                "supporting_citations": [
+                                    {
+                                        "file_name": "source.txt",
+                                        "quote": "Grounded source text.",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+                "confidence": 0.8,
+            }
+        )
 
 
 def _verification_output(

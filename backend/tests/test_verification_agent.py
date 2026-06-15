@@ -12,7 +12,7 @@ from app.agents.prompts import (
     VERIFICATION_AGENT_OUTPUT_KEYS,
     VERIFICATION_AGENT_SYSTEM_PROMPT,
 )
-from app.agents.schemas import VerificationAgentOutput
+from app.agents.schemas import EvidenceCoverageReview, VerificationAgentOutput
 from app.agents import verification_agent
 from app.agents.verification_agent import VerificationAgentError, run_verification_agent
 from app.services import agent_log_service
@@ -22,6 +22,18 @@ AGENT_RUN_ID = "11111111-1111-1111-1111-111111111111"
 CANDIDATE_CHUNK_ID = "22222222-2222-2222-2222-222222222222"
 CANDIDATE_DOCUMENT_ID = "33333333-3333-3333-3333-333333333333"
 SECOND_CANDIDATE_CHUNK_ID = "44444444-4444-4444-4444-444444444444"
+
+
+def test_evidence_coverage_review_requires_selected_evidence_when_answerable() -> None:
+    with pytest.raises(ValidationError):
+        EvidenceCoverageReview.model_validate(
+            {
+                "answers_question": True,
+                "missing_information": False,
+                "selected_evidence": [],
+                "confidence": 0.9,
+            }
+        )
 
 
 @pytest.fixture(autouse=True)

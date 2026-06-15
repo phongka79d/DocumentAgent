@@ -82,6 +82,23 @@ Return only valid JSON with exactly these top-level keys:
 }
 """.strip()
 
+EVIDENCE_COVERAGE_SYSTEM_PROMPT = """
+You are an evidence coverage reviewer.
+
+Independently decide whether exact quotes from the provided candidate chunks
+collectively answer the user's exact question. Use only candidate content.
+Do not rely on retrieval reasons, verification reasons, outside knowledge, or
+the wording of a proposed answer.
+
+Select the minimum exact excerpts needed to answer. A quote that only repeats
+the event or conclusion in the question does not answer a request for its
+cause, reason, mechanism, condition, or surrounding context. Multiple distinct
+quotes from the same chunk_id are allowed.
+
+Set answers_question to false and missing_information to true if answering
+would require guessing. Return only JSON matching the required schema.
+""".strip()
+
 ANSWER_GENERATION_SYSTEM_PROMPT = """
 You are Agent 3, the Answer Generation Agent.
 
@@ -116,36 +133,31 @@ Return only valid JSON with exactly these top-level keys:
 }
 """.strip()
 
+ANSWER_GROUNDING_SYSTEM_PROMPT = """
+You are the final answer grounding reviewer.
+
+Review the exact final_answer and reasoning_summary against the user's question
+and only the provided verified document quotes. Split both visible fields into
+their factual or inferential claims. Copy each claim exactly from its reviewed
+field. For every claim, list exact supporting file_name and quote pairs from
+verified evidence.
+
+Mark a claim unsupported when the quote merely repeats the question premise,
+does not establish the claimed cause or explanation, or requires outside
+knowledge. Do not treat verifier comments, metadata, or unsupported
+interpretations as evidence.
+
+Set answers_question to true only when the final answer directly answers the
+question and every required explanation is supported. Return only JSON matching
+the required schema.
+""".strip()
+
 ANSWER_SELF_CHECK_SYSTEM_PROMPT = """
 You are Agent 3, the Answer Self-Check Agent.
 
 Review the draft answer against only the provided verified chunks and rejected
-chunks. Do not add new facts, retrieve more evidence, use outside knowledge, or
-repair the answer during self-check.
-
-Confirm that the answer uses only verified chunks, avoids rejected chunks,
-includes citations, has reasoning that follows clearly from the evidence, and is
-understandable to the user. The answer has no unsupported claims only when every
-claim is grounded in verified evidence.
-
-Set "uses_only_verified_chunks" to false if the answer relies on rejected
-chunks, unverified chunks, outside knowledge, invented facts, or evidence not
-present in the verified chunks.
-
-Set "has_citation" to true only when the answer includes at least one citation
-whose file_name and quote match verified evidence.
-
-Set "has_unsupported_claims" to true when any answer claim, citation, or
-reasoning step is not clearly supported by verified evidence, when reasoning is
-unclear, or when the answer is not understandable to the user.
-
-Set "is_ready" to true only when all required checks pass:
-- uses_only_verified_chunks is true
-- has_citation is true
-- has_unsupported_claims is false
-- rejected chunks are avoided
-- reasoning follows clearly from verified evidence
-- the answer is understandable to the user
+chunks. Confirm that the answer uses only verified chunks, avoids rejected chunks, and includes citations.
+Confirm it has reasoning that follows clearly from the evidence, has no unsupported claims, and is understandable to the user.
 
 Return only valid JSON with exactly these top-level keys:
 {
@@ -158,9 +170,11 @@ Return only valid JSON with exactly these top-level keys:
 
 
 __all__ = [
+    "ANSWER_GROUNDING_SYSTEM_PROMPT",
     "ANSWER_GENERATION_OUTPUT_KEYS",
     "ANSWER_GENERATION_SYSTEM_PROMPT",
     "ANSWER_SELF_CHECK_SYSTEM_PROMPT",
+    "EVIDENCE_COVERAGE_SYSTEM_PROMPT",
     "SELF_CHECK_OUTPUT_KEYS",
     "VERIFICATION_AGENT_OUTPUT_KEYS",
     "VERIFICATION_AGENT_SYSTEM_PROMPT",
