@@ -11,6 +11,7 @@ from app.agents.prompts import (
     VERIFICATION_AGENT_SYSTEM_PROMPT,
 )
 from app.agents.schemas import (
+    EvidenceCoverageSelection,
     EvidenceCoverageReview,
     RejectedChunk,
     VerificationAgentInput,
@@ -49,10 +50,15 @@ COVERAGE_FAILURE_CONFIDENCE_CAP = 0.4
 CONTEXT_EXPANSION_CONFIDENCE_CAP = 0.65
 EVIDENCE_COVERAGE_RESPONSE_FORMAT = {"type": "json_object"}
 COVERAGE_RETRY_INSTRUCTION = """
-The previous response violated the evidence coverage schema.
+The previous response failed evidence coverage validation with category:
+{failure_type}.
 Return one corrected JSON object only.
 
 The fields must be internally consistent:
+- Split the question into every independently requested requirement.
+- Every requirement must say whether it is satisfied and list exact source
+  evidence or a non-empty missing_detail.
+- answers_question may be true only when every requirement is satisfied.
 - If selected_evidence is non-empty, answers_question must be true and
   missing_information must be false.
 - If answers_question is false, missing_information must be true and
@@ -60,6 +66,14 @@ The fields must be internally consistent:
 
 Do not add evidence that is not an exact substring of the candidate content.
 """.strip()
+CORRECTABLE_COVERAGE_FAILURE_TYPES = frozenset(
+    {
+        "coverage_invalid_json",
+        "coverage_validation_error",
+        "coverage_unknown_chunk_id",
+        "coverage_quote_validation_error",
+    }
+)
 _EXPLANATORY_QUESTION_PATTERN = re.compile(
     r"^\s*(?:why|how|v[iì]\s+sao|t[aạ]i\s+sao)\b",
     re.IGNORECASE,
@@ -185,6 +199,7 @@ def _build_coverage_messages(
 def _build_coverage_retry_messages(
     input_data: VerificationAgentInput,
     invalid_response: str,
+    failure_type: str,
 ) -> list[dict[str, str]]:
     return [
         *_build_coverage_messages(input_data),
@@ -194,7 +209,9 @@ def _build_coverage_retry_messages(
         },
         {
             "role": "user",
-            "content": COVERAGE_RETRY_INSTRUCTION,
+            "content": COVERAGE_RETRY_INSTRUCTION.format(
+                failure_type=failure_type
+            ),
         },
     ]
 
@@ -226,6 +243,20 @@ def _parse_coverage_review(response_content: str) -> EvidenceCoverageReview:
         and response_payload.get("missing_information") is True
     ):
         response_payload = {
+            "requirements": [
+                {
+                    "requirement": (
+                        "Answer every independently requested part of the "
+                        "question."
+                    ),
+                    "satisfied": False,
+                    "evidence": [],
+                    "missing_detail": (
+                        "Candidate evidence does not cover every requested "
+                        "requirement."
+                    ),
+                }
+            ],
             "selected_evidence": [],
             "confidence": 0.0,
             **response_payload,
@@ -243,27 +274,59 @@ def _run_coverage_review(
     verification_output: VerificationAgentOutput,
 ) -> EvidenceCoverageReview:
     del verification_output
-    try:
-        response_content = shopaikey_service.chat_completion(
-            _build_coverage_messages(input_data),
-            response_format=EVIDENCE_COVERAGE_RESPONSE_FORMAT,
-        )
-    except shopaikey_service.ShopAIKeyServiceError as exc:
-        raise _VerificationAgentFailure("coverage_provider_error") from exc
-    try:
-        return _parse_coverage_review(response_content)
-    except _VerificationAgentFailure as exc:
-        if exc.failure_type != "coverage_validation_error":
-            raise
+    messages = _build_coverage_messages(input_data)
+    for attempt in range(2):
+        try:
+            response_content = shopaikey_service.chat_completion(
+                messages,
+                response_format=EVIDENCE_COVERAGE_RESPONSE_FORMAT,
+            )
+        except shopaikey_service.ShopAIKeyServiceError as exc:
+            raise _VerificationAgentFailure("coverage_provider_error") from exc
 
-    try:
-        retry_response_content = shopaikey_service.chat_completion(
-            _build_coverage_retry_messages(input_data, response_content),
-            response_format=EVIDENCE_COVERAGE_RESPONSE_FORMAT,
-        )
-    except shopaikey_service.ShopAIKeyServiceError as exc:
-        raise _VerificationAgentFailure("coverage_provider_error") from exc
-    return _parse_coverage_review(retry_response_content)
+        try:
+            review = _parse_coverage_review(response_content)
+            _validate_coverage_review_evidence(input_data, review)
+            return review
+        except _VerificationAgentFailure as exc:
+            if (
+                exc.failure_type not in CORRECTABLE_COVERAGE_FAILURE_TYPES
+                or attempt == 1
+            ):
+                raise
+            messages = _build_coverage_retry_messages(
+                input_data,
+                response_content,
+                exc.failure_type,
+            )
+
+    raise _VerificationAgentFailure("coverage_validation_error")
+
+
+def _coverage_selections(
+    coverage_review: EvidenceCoverageReview,
+) -> list[EvidenceCoverageSelection]:
+    selections = list(coverage_review.selected_evidence)
+    for requirement in coverage_review.requirements:
+        for selection in requirement.evidence:
+            if selection not in selections:
+                selections.append(selection)
+    return selections
+
+
+def _validate_coverage_review_evidence(
+    input_data: VerificationAgentInput,
+    coverage_review: EvidenceCoverageReview,
+) -> None:
+    candidates_by_chunk_id = {
+        candidate.chunk_id: candidate for candidate in input_data.candidates
+    }
+    for selection in _coverage_selections(coverage_review):
+        candidate = candidates_by_chunk_id.get(selection.chunk_id)
+        if candidate is None:
+            raise _VerificationAgentFailure("coverage_unknown_chunk_id")
+        if not _quote_matches_candidate_content(selection.quote, candidate.content):
+            raise _VerificationAgentFailure("coverage_quote_validation_error")
 
 
 def _validate_candidate_membership(

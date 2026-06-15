@@ -13,6 +13,7 @@ from app.agents.prompts import (
     VERIFICATION_AGENT_SYSTEM_PROMPT,
 )
 from app.agents.schemas import (
+    EvidenceCoverageRequirement,
     EvidenceCoverageReview,
     EvidenceCoverageSelection,
     VerificationAgentOutput,
@@ -29,15 +30,58 @@ SECOND_CANDIDATE_CHUNK_ID = "44444444-4444-4444-4444-444444444444"
 REAL_RUN_COVERAGE_REVIEW = verification_agent._run_coverage_review
 
 
+def _coverage_selection(
+    *,
+    chunk_id: str = CANDIDATE_CHUNK_ID,
+    quote: str = "Probation starts on June 1, 2026 and lasts two months.",
+    purpose: str = "States the requested probation details.",
+    supports_simple_reasoning: bool = False,
+) -> dict[str, object]:
+    return {
+        "chunk_id": chunk_id,
+        "quote": quote,
+        "purpose": purpose,
+        "supports_simple_reasoning": supports_simple_reasoning,
+    }
+
+
+def _with_coverage_requirements(
+    payload: dict[str, object],
+) -> dict[str, object]:
+    if "requirements" in payload:
+        return payload
+
+    enriched = dict(payload)
+    if payload["answers_question"] is True:
+        enriched["requirements"] = [
+            {
+                "requirement": "Answer every requested part of the question.",
+                "satisfied": True,
+                "evidence": list(payload["selected_evidence"]),
+                "missing_detail": None,
+            }
+        ]
+    else:
+        enriched["requirements"] = [
+            {
+                "requirement": "Answer every requested part of the question.",
+                "satisfied": False,
+                "evidence": [],
+                "missing_detail": "Required evidence is missing.",
+            }
+        ]
+    return enriched
+
+
 def test_evidence_coverage_review_requires_selected_evidence_when_answerable() -> None:
     with pytest.raises(ValidationError):
         EvidenceCoverageReview.model_validate(
-            {
+            _with_coverage_requirements({
                 "answers_question": True,
                 "missing_information": False,
                 "selected_evidence": [],
                 "confidence": 0.9,
-            }
+            })
         )
 
 
@@ -45,7 +89,7 @@ def test_evidence_coverage_review_rejects_selected_evidence_when_not_answerable(
 ) -> None:
     with pytest.raises(ValidationError):
         EvidenceCoverageReview.model_validate(
-            {
+            _with_coverage_requirements({
                 "answers_question": False,
                 "missing_information": True,
                 "selected_evidence": [
@@ -57,6 +101,93 @@ def test_evidence_coverage_review_rejects_selected_evidence_when_not_answerable(
                     }
                 ],
                 "confidence": 0.0,
+            })
+        )
+
+
+def test_coverage_requirement_requires_evidence_when_satisfied() -> None:
+    with pytest.raises(ValidationError):
+        EvidenceCoverageRequirement.model_validate(
+            {
+                "requirement": "State what participants received.",
+                "satisfied": True,
+                "evidence": [],
+                "missing_detail": None,
+            }
+        )
+
+
+def test_coverage_requirement_requires_missing_detail_when_unsatisfied() -> None:
+    with pytest.raises(ValidationError):
+        EvidenceCoverageRequirement.model_validate(
+            {
+                "requirement": "State what participants received.",
+                "satisfied": False,
+                "evidence": [],
+                "missing_detail": "   ",
+            }
+        )
+
+
+def test_evidence_coverage_review_rejects_answerable_with_unsatisfied_requirement(
+) -> None:
+    selection = _coverage_selection()
+
+    with pytest.raises(ValidationError):
+        EvidenceCoverageReview.model_validate(
+            {
+                "answers_question": True,
+                "missing_information": False,
+                "requirements": [
+                    {
+                        "requirement": "State when probation starts.",
+                        "satisfied": True,
+                        "evidence": [selection],
+                        "missing_detail": None,
+                    },
+                    {
+                        "requirement": "State when probation ends.",
+                        "satisfied": False,
+                        "evidence": [],
+                        "missing_detail": "The end date is not provided.",
+                    },
+                ],
+                "selected_evidence": [selection],
+                "confidence": 0.8,
+            }
+        )
+
+
+def test_evidence_coverage_review_requires_selected_union_of_requirement_evidence(
+) -> None:
+    first = _coverage_selection()
+    second = _coverage_selection(
+        chunk_id=SECOND_CANDIDATE_CHUNK_ID,
+        quote="Official employment begins after probation.",
+        purpose="States what follows probation.",
+    )
+
+    with pytest.raises(ValidationError):
+        EvidenceCoverageReview.model_validate(
+            {
+                "answers_question": True,
+                "missing_information": False,
+                "requirements": [
+                    {
+                        "requirement": "State the probation details.",
+                        "satisfied": True,
+                        "evidence": [first],
+                        "missing_detail": None,
+                    },
+                    {
+                        "requirement": "State what follows probation.",
+                        "satisfied": True,
+                        "evidence": [second],
+                        "missing_detail": None,
+                    },
+                ],
+                "selected_evidence": [first],
+                "confidence": 0.9,
             }
         )
 
@@ -94,6 +225,8 @@ def test_parse_coverage_review_normalizes_non_answerable_minimal_payload() -> No
     assert review.answers_question is False
     assert review.missing_information is True
     assert review.selected_evidence == []
+    assert len(review.requirements) == 1
+    assert review.requirements[0].satisfied is False
     assert review.confidence == 0.0
 
 
@@ -132,6 +265,16 @@ def _default_coverage_review(
         return EvidenceCoverageReview(
             answers_question=is_answerable,
             missing_information=not is_answerable,
+            requirements=[
+                EvidenceCoverageRequirement(
+                    requirement="Answer every requested part of the question.",
+                    satisfied=is_answerable,
+                    evidence=selections if is_answerable else [],
+                    missing_detail=(
+                        None if is_answerable else "Required evidence is missing."
+                    ),
+                )
+            ],
             selected_evidence=selections,
             confidence=verification_output.confidence,
         )
@@ -186,7 +329,7 @@ def _mock_two_pass_verification(
     chat_completion = Mock(
         side_effect=[
             json.dumps(initial_verification),
-            json.dumps(coverage_review),
+            json.dumps(_with_coverage_requirements(coverage_review)),
         ]
     )
     monkeypatch.setattr(
@@ -240,18 +383,18 @@ def test_verification_agent_retries_inconsistent_coverage_review_once(
             "supports_simple_reasoning": False,
         }
     ]
-    inconsistent_review = {
+    inconsistent_review = _with_coverage_requirements({
         "answers_question": False,
         "missing_information": True,
         "selected_evidence": selected_evidence,
         "confidence": 0.0,
-    }
-    corrected_review = {
+    })
+    corrected_review = _with_coverage_requirements({
         "answers_question": True,
         "missing_information": False,
         "selected_evidence": selected_evidence,
         "confidence": 0.95,
-    }
+    })
     chat_completion = Mock(
         side_effect=[
             json.dumps(initial_verification),
@@ -304,7 +447,7 @@ def test_verification_agent_fails_after_second_inconsistent_coverage_review(
         "missing_information": False,
         "confidence": 0.9,
     }
-    inconsistent_review = {
+    inconsistent_review = _with_coverage_requirements({
         "answers_question": False,
         "missing_information": True,
         "selected_evidence": [
@@ -316,7 +459,7 @@ def test_verification_agent_fails_after_second_inconsistent_coverage_review(
             }
         ],
         "confidence": 0.0,
-    }
+    })
     chat_completion = Mock(
         side_effect=[
             json.dumps(initial_verification),
@@ -1728,6 +1871,11 @@ def test_evidence_coverage_prompt_contains_required_output_schema() -> None:
     for phrase in [
         '"answers_question"',
         '"missing_information"',
+        '"requirements"',
+        '"requirement"',
+        '"satisfied"',
+        '"evidence"',
+        '"missing_detail"',
         '"selected_evidence"',
         '"chunk_id"',
         '"quote"',
@@ -1750,6 +1898,18 @@ def test_evidence_coverage_prompt_requires_consistent_answerability_fields() -> 
         assert phrase in prompt
 
 
+def test_evidence_coverage_prompt_requires_every_requested_part() -> None:
+    prompt = verification_agent.EVIDENCE_COVERAGE_SYSTEM_PROMPT.lower()
+
+    for phrase in [
+        "independently requested",
+        "every requirement",
+        "if any requirement is missing",
+        "exact substring",
+    ]:
+        assert phrase in prompt
+
+
 def test_verification_prompt_limits_agent_scope() -> None:
     prompt = VERIFICATION_AGENT_SYSTEM_PROMPT.lower()
 
@@ -1757,6 +1917,272 @@ def test_verification_prompt_limits_agent_scope() -> None:
     assert "do not retrieve more chunks" in prompt
     assert "generate a final answer" in prompt
     assert "user-facing citations" in prompt
+
+
+def test_verification_agent_marks_multi_part_question_missing_when_one_requirement_is_unsatisfied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = (
+        "The coordinator arranged the activity in a circle and declared "
+        "everyone a winner."
+    )
+    initial_verification = {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": True,
+        "confidence": 0.5,
+    }
+    first_selection = _coverage_selection(
+        quote="The coordinator arranged the activity in a circle",
+        purpose="States how the activity was organized.",
+    )
+    coverage_review = {
+        "answers_question": False,
+        "missing_information": True,
+        "requirements": [
+            {
+                "requirement": "Explain how the activity was organized.",
+                "satisfied": True,
+                "evidence": [first_selection],
+                "missing_detail": None,
+            },
+            {
+                "requirement": "State what participants received.",
+                "satisfied": False,
+                "evidence": [],
+                "missing_detail": "The participant item is not in the candidates.",
+            },
+        ],
+        "selected_evidence": [],
+        "confidence": 0.2,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": (
+                "How was the activity organized, who won, and what did "
+                "participants receive?"
+            ),
+            "candidates": [first_candidate],
+        }
+    )
+
+    assert output.missing_information is True
+    assert output.confidence <= verification_agent.COVERAGE_FAILURE_CONFIDENCE_CAP
+
+
+def test_verification_agent_accepts_complete_multi_part_cross_chunk_coverage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = (
+        "The coordinator arranged the activity in a circle. "
+        "Every participant won."
+    )
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = (
+        "Each participant received a token, while the coordinator received "
+        "a badge."
+    )
+    first_selection = _coverage_selection(
+        quote="The coordinator arranged the activity in a circle.",
+        purpose="States how the activity was organized.",
+    )
+    winner_selection = _coverage_selection(
+        quote="Every participant won.",
+        purpose="States who won.",
+    )
+    participant_selection = _coverage_selection(
+        chunk_id=SECOND_CANDIDATE_CHUNK_ID,
+        quote="Each participant received a token",
+        purpose="States the participant prize.",
+    )
+    coordinator_selection = _coverage_selection(
+        chunk_id=SECOND_CANDIDATE_CHUNK_ID,
+        quote="the coordinator received a badge.",
+        purpose="States the coordinator prize.",
+    )
+    selected_evidence = [
+        first_selection,
+        winner_selection,
+        participant_selection,
+        coordinator_selection,
+    ]
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Explain how the activity was organized.",
+                "satisfied": True,
+                "evidence": [first_selection],
+                "missing_detail": None,
+            },
+            {
+                "requirement": "State who won.",
+                "satisfied": True,
+                "evidence": [winner_selection],
+                "missing_detail": None,
+            },
+            {
+                "requirement": "State what participants received.",
+                "satisfied": True,
+                "evidence": [participant_selection],
+                "missing_detail": None,
+            },
+            {
+                "requirement": "State what the coordinator received.",
+                "satisfied": True,
+                "evidence": [coordinator_selection],
+                "missing_detail": None,
+            },
+        ],
+        "selected_evidence": selected_evidence,
+        "confidence": 0.9,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        {
+            "verified_chunks": [],
+            "rejected_chunks": [],
+            "missing_information": True,
+            "confidence": 0.9,
+        },
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": (
+                "How was the activity organized, who won, and what did "
+                "participants and the coordinator receive?"
+            ),
+            "candidates": [first_candidate, second_candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert output.confidence == 0.9
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        selection["quote"] for selection in selected_evidence
+    ]
+
+
+def test_verification_agent_retries_invalid_coverage_json_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    selection = _coverage_selection()
+    corrected_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [selection],
+            "confidence": 0.8,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(
+                {
+                    "verified_chunks": [],
+                    "rejected_chunks": [],
+                    "missing_information": True,
+                    "confidence": 0.5,
+                }
+            ),
+            "not valid json",
+            json.dumps(corrected_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start and how long does it last?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert output.missing_information is False
+    assert chat_completion.call_count == 3
+
+
+def test_verification_agent_retries_unknown_coverage_chunk_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    invalid_selection = _coverage_selection(
+        chunk_id="99999999-9999-9999-9999-999999999999"
+    )
+    corrected_selection = _coverage_selection()
+    invalid_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [invalid_selection],
+            "confidence": 0.8,
+        }
+    )
+    corrected_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [corrected_selection],
+            "confidence": 0.8,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(
+                {
+                    "verified_chunks": [],
+                    "rejected_chunks": [],
+                    "missing_information": True,
+                    "confidence": 0.5,
+                }
+            ),
+            json.dumps(invalid_review),
+            json.dumps(corrected_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start and how long does it last?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert output.missing_information is False
+    assert chat_completion.call_count == 3
 
 
 def test_verification_agent_repairs_conclusion_only_evidence_with_exact_causal_context(
@@ -1993,10 +2419,23 @@ def test_verification_agent_rejects_coverage_quote_not_in_candidate(
         ],
         "confidence": 0.8,
     }
-    _mock_two_pass_verification(
-        monkeypatch,
-        initial_verification,
-        coverage_review,
+    enriched_review = _with_coverage_requirements(coverage_review)
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(enriched_review),
+            json.dumps(enriched_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
     )
 
     with pytest.raises(VerificationAgentError):
@@ -2007,6 +2446,70 @@ def test_verification_agent_rejects_coverage_quote_not_in_candidate(
                 "candidates": [_candidate_payload()],
             }
         )
+
+    assert chat_completion.call_count == 3
+
+
+def test_verification_agent_retries_coverage_quote_not_in_candidate_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    initial_verification = {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": True,
+        "confidence": 0.5,
+    }
+    invalid_selection = _coverage_selection(
+        quote="This sentence is not in the candidate."
+    )
+    corrected_selection = _coverage_selection()
+    invalid_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [invalid_selection],
+            "confidence": 0.8,
+        }
+    )
+    corrected_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [corrected_selection],
+            "confidence": 0.8,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(invalid_review),
+            json.dumps(corrected_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start and how long does it last?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        corrected_selection["quote"]
+    ]
+    assert chat_completion.call_count == 3
 
 
 def test_verification_agent_accepts_coverage_quote_with_terminal_punctuation_variation(

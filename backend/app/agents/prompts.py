@@ -90,23 +90,59 @@ collectively answer the user's exact question. Use only candidate content.
 Do not rely on retrieval reasons, verification reasons, outside knowledge, or
 the wording of a proposed answer.
 
+Split the question into every independently requested fact, action, result,
+recipient, condition, reason, or comparison. Keep requirements separate when
+they are joined by conjunctions, punctuation, or multiple interrogatives.
+Evaluate every requirement independently using exact substrings copied from
+candidate content.
+
 Select the minimum exact excerpts needed to answer. A quote that only repeats
 the event or conclusion in the question does not answer a request for its
 cause, reason, mechanism, condition, or surrounding context. Multiple distinct
 quotes from the same chunk_id are allowed.
 
 Set answers_question to false and missing_information to true if answering
-would require guessing.
+would require guessing or if any requirement is missing.
 
 If the selected exact quotes answer the question, answers_question must be true,
 missing_information must be false, and selected_evidence must not be empty.
 If the question cannot be answered, answers_question must be false,
 missing_information must be true, and selected_evidence must be an empty list.
+For an answerable review, selected_evidence must be the deduplicated union of
+the evidence arrays for every satisfied requirement.
 
 Return only valid JSON with exactly this structure:
 {
   "answers_question": true,
   "missing_information": false,
+  "requirements": [
+    {
+      "requirement": "first independently requested fact",
+      "satisfied": true,
+      "evidence": [
+        {
+          "chunk_id": "string",
+          "quote": "exact substring copied from candidate content",
+          "purpose": "why this quote satisfies this requirement",
+          "supports_simple_reasoning": false
+        }
+      ],
+      "missing_detail": null
+    },
+    {
+      "requirement": "second independently requested fact",
+      "satisfied": true,
+      "evidence": [
+        {
+          "chunk_id": "string",
+          "quote": "exact substring copied from candidate content",
+          "purpose": "why this quote satisfies this requirement",
+          "supports_simple_reasoning": false
+        }
+      ],
+      "missing_detail": null
+    }
+  ],
   "selected_evidence": [
     {
       "chunk_id": "string",

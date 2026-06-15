@@ -79,11 +79,49 @@ class EvidenceCoverageSelection(BaseModel):
         return normalized
 
 
+class EvidenceCoverageRequirement(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    requirement: str = Field(min_length=1)
+    satisfied: bool
+    evidence: list[EvidenceCoverageSelection]
+    missing_detail: str | None = None
+
+    @field_validator("requirement")
+    @classmethod
+    def normalize_requirement(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("requirement must not be empty")
+        return normalized
+
+    @field_validator("missing_detail")
+    @classmethod
+    def normalize_missing_detail(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("missing_detail must not be empty")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_requirement_coverage(self) -> "EvidenceCoverageRequirement":
+        if self.satisfied and not self.evidence:
+            raise ValueError("satisfied requirement requires evidence")
+        if self.satisfied and self.missing_detail is not None:
+            raise ValueError("satisfied requirement must not include missing_detail")
+        if not self.satisfied and self.missing_detail is None:
+            raise ValueError("unsatisfied requirement requires missing_detail")
+        return self
+
+
 class EvidenceCoverageReview(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     answers_question: bool
     missing_information: bool
+    requirements: list[EvidenceCoverageRequirement] = Field(min_length=1)
     selected_evidence: list[EvidenceCoverageSelection]
     confidence: float = Field(ge=0.0, le=1.0)
 
@@ -99,6 +137,26 @@ class EvidenceCoverageReview(BaseModel):
             raise ValueError(
                 "non-answerable coverage must not include selected evidence"
             )
+
+        all_requirements_satisfied = all(
+            requirement.satisfied for requirement in self.requirements
+        )
+        if self.answers_question != all_requirements_satisfied:
+            raise ValueError(
+                "answers_question must match whether every requirement is satisfied"
+            )
+
+        if self.answers_question:
+            expected_evidence: list[EvidenceCoverageSelection] = []
+            for requirement in self.requirements:
+                for selection in requirement.evidence:
+                    if selection not in expected_evidence:
+                        expected_evidence.append(selection)
+            if self.selected_evidence != expected_evidence:
+                raise ValueError(
+                    "selected_evidence must equal the deduplicated union of "
+                    "satisfied requirement evidence"
+                )
         return self
 
 
@@ -252,6 +310,7 @@ __all__ = [
     "AnswerGroundingReview",
     "AnswerSelfCheck",
     "Citation",
+    "EvidenceCoverageRequirement",
     "EvidenceCoverageReview",
     "EvidenceCoverageSelection",
     "RetrievalAgentInput",
