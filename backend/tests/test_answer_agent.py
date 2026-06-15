@@ -20,6 +20,7 @@ from app.agents.answer_agent import (
     build_answer_generation_messages,
     build_answer_generation_payload,
     build_answer_self_check_messages,
+    build_answer_self_check_payload,
     build_answer_evidence_lookup,
     enforce_answer_self_check,
     execute_answer_self_check,
@@ -751,7 +752,11 @@ def test_execute_answer_self_check_marks_reasoning_ready_when_grounded_in_verifi
         final_answer="Ban co the lam viec chinh thuc vao thang 8/2026."
     )
 
-    self_check = execute_answer_self_check(draft_output, _verification_output())
+    self_check = execute_answer_self_check(
+        "When can I start official work?",
+        draft_output,
+        _verification_output(),
+    )
 
     assert self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
     chat_completion.assert_called_once()
@@ -775,7 +780,11 @@ def test_execute_answer_self_check_rejects_unsupported_numeric_claim_with_valid_
     )
 
     with pytest.raises(AnswerEvidenceValidationError, match="has_unsupported_claims"):
-        execute_answer_self_check(draft_output, _verification_output())
+        execute_answer_self_check(
+            "When can I start official work?",
+            draft_output,
+            _verification_output(),
+        )
     chat_completion.assert_called_once()
 
 
@@ -796,7 +805,11 @@ def test_execute_answer_self_check_rejects_unsupported_semantic_claim_with_valid
     )
 
     with pytest.raises(AnswerEvidenceValidationError, match="has_unsupported_claims"):
-        execute_answer_self_check(draft_output, _verification_output())
+        execute_answer_self_check(
+            "When can I start official work?",
+            draft_output,
+            _verification_output(),
+        )
     chat_completion.assert_called_once()
 
 
@@ -817,7 +830,11 @@ def test_execute_answer_self_check_derives_uses_only_verified_chunks_from_self_c
     )
 
     with pytest.raises(AnswerEvidenceValidationError, match="uses_only_verified_chunks"):
-        execute_answer_self_check(draft_output, _verification_output())
+        execute_answer_self_check(
+            "When can I start official work?",
+            draft_output,
+            _verification_output(),
+        )
     chat_completion.assert_called_once()
 
 
@@ -957,8 +974,6 @@ def test_build_answer_generation_payload_contains_question_and_verified_evidence
                 "file_name": "contract.pdf",
                 "quote": VERIFIED_QUOTE,
                 "page_number": 3,
-                "verification_reason": "Directly answers the probation period.",
-                "supports_simple_reasoning": True,
             }
         ],
     }
@@ -990,15 +1005,47 @@ def test_build_answer_generation_messages_exclude_rejected_chunks_from_user_evid
 
 
 def test_build_answer_self_check_messages_include_json_instruction_for_json_mode() -> None:
-    messages = build_answer_self_check_messages(_answer_output(), _verification_output())
+    messages = build_answer_self_check_messages(
+        "Why did the event happen?",
+        _answer_output(),
+        _verification_output(),
+    )
 
     assert messages[1]["role"] == "user"
     provider_payload = json.loads(messages[1]["content"])
     assert "json" in messages[1]["content"].lower()
+    assert provider_payload["question"] == "Why did the event happen?"
     assert provider_payload["draft_answer"]["final_answer"] == (
         "Ban co the lam viec chinh thuc vao thang 8/2026."
     )
     assert provider_payload["verified_chunks"][0]["quote"] == VERIFIED_QUOTE
+    serialized = json.dumps(provider_payload)
+    assert "verification_reason" not in serialized
+    assert "supports_simple_reasoning" not in serialized
+    assert "rejection_reason" not in serialized
+
+
+def test_answer_grounding_payload_excludes_verifier_authored_metadata() -> None:
+    payload = build_answer_self_check_payload(
+        "Why did the event happen?",
+        _answer_output(),
+        _verification_output(),
+    )
+
+    assert payload["question"] == "Why did the event happen?"
+    assert payload["verified_chunks"] == [
+        {
+            "file_name": "contract.pdf",
+            "quote": VERIFIED_QUOTE,
+            "page_number": 3,
+        }
+    ]
+    assert payload["rejected_chunks"] == [
+        {
+            "file_name": "draft.pdf",
+            "quote": REJECTED_QUOTE,
+        }
+    ]
 
 
 def test_run_answer_agent_sends_verified_evidence_only_to_provider(
@@ -1031,8 +1078,6 @@ def test_run_answer_agent_sends_verified_evidence_only_to_provider(
             "file_name": "contract.pdf",
             "quote": VERIFIED_QUOTE,
             "page_number": 3,
-            "verification_reason": "Directly answers the probation period.",
-            "supports_simple_reasoning": True,
         }
     ]
     assert "rejected_chunks" not in user_payload
@@ -1121,15 +1166,11 @@ def test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified
             "file_name": "contract.pdf",
             "quote": start_date_quote,
             "page_number": 1,
-            "verification_reason": "Provides the probation start date.",
-            "supports_simple_reasoning": True,
         },
         {
             "file_name": "contract.pdf",
             "quote": duration_quote,
             "page_number": 1,
-            "verification_reason": "Provides the probation duration.",
-            "supports_simple_reasoning": True,
         },
     ]
     assert "rejected_chunks" not in answer_generation_payload

@@ -8,8 +8,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from app.agents.prompts import (
+    ANSWER_GROUNDING_SYSTEM_PROMPT,
     ANSWER_GENERATION_SYSTEM_PROMPT,
-    ANSWER_SELF_CHECK_SYSTEM_PROMPT,
 )
 from app.agents.schemas import (
     AnswerAgentInput,
@@ -146,6 +146,7 @@ def enforce_answer_self_check(
 
 
 def execute_answer_self_check(
+    question: str,
     output: AnswerAgentOutput,
     verification: VerificationAgentOutput,
 ) -> AnswerSelfCheck:
@@ -153,7 +154,7 @@ def execute_answer_self_check(
     validate_answer_evidence_contract(output, verification)
     try:
         provider_content = shopaikey_service.chat_completion(
-            build_answer_self_check_messages(output, verification),
+            build_answer_self_check_messages(question, output, verification),
             response_format=ANSWER_SELF_CHECK_RESPONSE_FORMAT,
         )
     except shopaikey_service.ShopAIKeyServiceError as exc:
@@ -261,16 +262,7 @@ def build_answer_generation_payload(
     return {
         "response_instruction": "Return only valid JSON.",
         "question": answer_input.question,
-        "verified_chunks": [
-            {
-                "file_name": chunk.file_name,
-                "quote": chunk.quote,
-                "page_number": chunk.page_number,
-                "verification_reason": chunk.verification_reason,
-                "supports_simple_reasoning": chunk.supports_simple_reasoning,
-            }
-            for chunk in answer_input.verification.verified_chunks
-        ],
+        "verified_chunks": _answer_evidence_payload(answer_input.verification),
     }
 
 
@@ -292,12 +284,14 @@ def build_answer_generation_messages(
 
 
 def build_answer_self_check_payload(
+    question: str,
     output: AnswerAgentOutput,
     verification: VerificationAgentOutput,
 ) -> dict[str, Any]:
     """Build the self-check payload with full draft content and evidence context."""
     return {
         "response_instruction": "Return only valid JSON.",
+        "question": question,
         "draft_answer": {
             "final_answer": output.final_answer,
             "citations": [
@@ -306,42 +300,52 @@ def build_answer_self_check_payload(
             "reasoning_summary": output.reasoning_summary,
             "confidence": output.confidence,
         },
-        "verified_chunks": [
-            {
-                "file_name": chunk.file_name,
-                "quote": chunk.quote,
-                "page_number": chunk.page_number,
-                "verification_reason": chunk.verification_reason,
-                "supports_simple_reasoning": chunk.supports_simple_reasoning,
-            }
-            for chunk in verification.verified_chunks
-        ],
-        "rejected_chunks": [
-            {
-                "file_name": chunk.file_name,
-                "quote": chunk.quote,
-                "rejection_reason": chunk.rejection_reason,
-            }
-            for chunk in verification.rejected_chunks
-        ],
+        "verified_chunks": _answer_evidence_payload(verification),
+        "rejected_chunks": _rejected_evidence_payload(verification),
     }
 
 
 def build_answer_self_check_messages(
+    question: str,
     output: AnswerAgentOutput,
     verification: VerificationAgentOutput,
 ) -> list[dict[str, str]]:
     """Build ShopAIKey messages for full-content answer self-check."""
-    payload = build_answer_self_check_payload(output, verification)
+    payload = build_answer_self_check_payload(question, output, verification)
     return [
         {
             "role": "system",
-            "content": ANSWER_SELF_CHECK_SYSTEM_PROMPT,
+            "content": ANSWER_GROUNDING_SYSTEM_PROMPT,
         },
         {
             "role": "user",
             "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
         },
+    ]
+
+
+def _answer_evidence_payload(
+    verification: VerificationAgentOutput,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "file_name": chunk.file_name,
+            "quote": chunk.quote,
+            "page_number": chunk.page_number,
+        }
+        for chunk in verification.verified_chunks
+    ]
+
+
+def _rejected_evidence_payload(
+    verification: VerificationAgentOutput,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "file_name": chunk.file_name,
+            "quote": chunk.quote,
+        }
+        for chunk in verification.rejected_chunks
     ]
 
 
@@ -415,6 +419,7 @@ def run_answer_agent(
 
     try:
         self_check = execute_answer_self_check(
+            answer_input.question,
             draft_output,
             answer_input.verification,
         )
