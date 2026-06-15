@@ -1332,6 +1332,79 @@ def test_list_document_chunks_filters_single_user_and_orders_by_index(
     query.execute.assert_called_once_with()
 
 
+def test_list_document_chunks_by_indexes_skips_empty_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    get_supabase_client = Mock()
+    monkeypatch.setattr(
+        supabase_service,
+        "get_supabase_client",
+        get_supabase_client,
+    )
+
+    assert supabase_service.list_document_chunks_by_indexes("document-id", []) == []
+    get_supabase_client.assert_not_called()
+
+
+def test_list_document_chunks_by_indexes_is_scoped_and_ordered(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [
+        {"id": "chunk-5", "document_id": "document-id", "chunk_index": 5},
+        {"id": "chunk-6", "document_id": "document-id", "chunk_index": 6},
+    ]
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.in_.return_value = query
+    query.order.return_value = query
+    query.execute.return_value = SimpleNamespace(data=rows)
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    result = supabase_service.list_document_chunks_by_indexes(
+        "document-id",
+        [6, 5, 6],
+    )
+
+    assert result == rows
+    client.table.assert_called_once_with("document_chunks")
+    query.select.assert_called_once_with(
+        "id, document_id, chunk_index, content, page_number, section_title"
+    )
+    assert query.eq.call_args_list == [
+        (("document_id", "document-id"),),
+        (("user_id", "single_user"),),
+    ]
+    query.in_.assert_called_once_with("chunk_index", [5, 6])
+    query.order.assert_called_once_with("chunk_index")
+    query.execute.assert_called_once_with()
+
+
+def test_list_document_chunks_by_indexes_reports_safe_lookup_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = Mock()
+    query.select.return_value = query
+    query.eq.return_value = query
+    query.in_.return_value = query
+    query.order.return_value = query
+    query.execute.side_effect = RuntimeError("database secret")
+    client = SimpleNamespace(table=Mock(return_value=query))
+    monkeypatch.setattr(supabase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(supabase_service, "get_supabase_client", lambda: client)
+
+    with pytest.raises(SupabaseConnectionError) as exc_info:
+        supabase_service.list_document_chunks_by_indexes(
+            "document-id",
+            [4, 5],
+        )
+
+    assert "document chunks index lookup" in str(exc_info.value)
+    assert "database secret" not in str(exc_info.value)
+
+
 def test_clear_document_graph_rows_deletes_relationships_before_entities(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

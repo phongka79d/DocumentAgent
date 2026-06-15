@@ -33,6 +33,30 @@ def test_settings_allow_retrieval_semantic_top_k_override() -> None:
     assert settings.retrieval_semantic_top_k == 8
 
 
+def test_retrieval_context_settings_have_bounded_defaults() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.retrieval_context_window == 1
+    assert settings.retrieval_context_max_candidates == 8
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("retrieval_context_window", -1),
+        ("retrieval_context_window", 4),
+        ("retrieval_context_max_candidates", -1),
+        ("retrieval_context_max_candidates", 51),
+    ],
+)
+def test_retrieval_context_settings_reject_out_of_range_values(
+    field_name: str,
+    value: int,
+) -> None:
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, **{field_name: value})
+
+
 def test_settings_allow_graph_extraction_and_chat_model_overrides() -> None:
     settings = Settings(
         _env_file=None,

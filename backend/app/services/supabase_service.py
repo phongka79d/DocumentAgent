@@ -737,6 +737,34 @@ def list_document_chunks(document_id: str) -> list[dict]:
     return _response_rows(response)
 
 
+def list_document_chunks_by_indexes(
+    document_id: str,
+    chunk_indexes: list[int],
+) -> list[dict]:
+    normalized_indexes = sorted(set(chunk_indexes))
+    if not normalized_indexes:
+        return []
+
+    client = get_supabase_client()
+    try:
+        response = (
+            client.table("document_chunks")
+            .select(
+                "id, document_id, chunk_index, content, page_number, "
+                "section_title"
+            )
+            .eq("document_id", document_id)
+            .eq("user_id", _get_single_user_id())
+            .in_("chunk_index", normalized_indexes)
+            .order("chunk_index")
+            .execute()
+        )
+    except Exception as exc:
+        _raise_supabase_query_error("document chunks index lookup", exc)
+
+    return _response_rows(response)
+
+
 def clear_document_graph_rows(document_id: str) -> None:
     client = get_supabase_client()
     user_id = _get_single_user_id()
