@@ -160,6 +160,7 @@ def _candidate_payload() -> dict[str, object]:
         "content": "Probation starts on June 1, 2026 and lasts two months.",
         "page_number": 3,
         "section_title": "Probation",
+        "chunk_index": 5,
         "semantic_similarity": 0.88,
         "graph_relevance": 0.72,
         "keyword_overlap": 0.64,

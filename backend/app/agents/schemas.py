@@ -25,6 +25,7 @@ class RetrievalCandidate(BaseModel):
     content: str | None
     page_number: int | None
     section_title: str | None
+    chunk_index: int | None = None
     semantic_similarity: float = Field(ge=0.0, le=1.0)
     graph_relevance: float = Field(ge=0.0, le=1.0)
     keyword_overlap: float = Field(ge=0.0, le=1.0)

@@ -5,7 +5,11 @@ from typing import Any
 from app.agents.schemas import RetrievalAgentInput, RetrievalAgentOutput, RetrievalCandidate
 from app.core.config import get_settings
 from app.schemas.retrieval import HybridRetrievalCandidate
-from app.services import agent_log_service, hybrid_retrieval_service
+from app.services import (
+    agent_log_service,
+    hybrid_retrieval_service,
+    retrieval_context_service,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +36,12 @@ def run_retrieval_agent(
             validated_input.document_ids,
             settings.retrieval_final_top_k,
         )
+        expanded_candidates = retrieval_context_service.expand_retrieval_context(
+            validated_input.question,
+            hybrid_response.candidates,
+            context_window=settings.retrieval_context_window,
+            max_context_candidates=settings.retrieval_context_max_candidates,
+        )
     except Exception:
         _log_failed_retrieval(validated_input)
         raise RetrievalAgentError(RETRIEVAL_FAILURE_MESSAGE) from None
@@ -40,7 +50,7 @@ def run_retrieval_agent(
         {
             "question": hybrid_response.question,
             "candidates": [
-                _to_agent_candidate(candidate) for candidate in hybrid_response.candidates
+                _to_agent_candidate(candidate) for candidate in expanded_candidates
             ],
         }
     )

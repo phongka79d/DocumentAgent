@@ -9,7 +9,11 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.schemas.retrieval import RetrievalResult, SearchResponse
+from app.schemas.retrieval import (
+    HybridRetrievalCandidate,
+    RetrievalResult,
+    SearchResponse,
+)
 from app.services import hybrid_retrieval_service
 from app.services.graph_retrieval_service import (
     GraphRetrievalCandidate,
@@ -86,7 +90,47 @@ def _graph_candidate(
 
 def test_hybrid_retrieval_service_imports_contract() -> None:
     assert callable(hybrid_retrieval_service.retrieve_hybrid)
+    assert callable(hybrid_retrieval_service.score_hybrid_candidate)
     assert hybrid_retrieval_service.HybridRetrievalValidationError is not None
+
+
+def test_score_hybrid_candidate_preserves_explicit_context_reason() -> None:
+    candidate = HybridRetrievalCandidate(
+        chunk_id=UUID("11111111-1111-1111-1111-111111111111"),
+        document_id=UUID("22222222-2222-2222-2222-222222222222"),
+        file_name="source.txt",
+        file_type="text/plain",
+        content="The requested result followed the event.",
+        content_preview=None,
+        page_number=2,
+        section_title="Result",
+        chunk_index=6,
+        semantic_similarity=0.0,
+        metadata=None,
+        graph_relevance=0.0,
+        keyword_overlap=0.0,
+        metadata_match=0.0,
+        recency_or_position_score=0.0,
+        final_score=0.0,
+        retrieval_reason="Adjacent source context for retrieved chunk index 5.",
+    )
+
+    scored = hybrid_retrieval_service.score_hybrid_candidate(
+        candidate,
+        question="What result followed the event?",
+        document_ids=[candidate.document_id],
+        preserve_retrieval_reason=True,
+    )
+
+    assert 0.0 <= scored.keyword_overlap <= 1.0
+    assert 0.0 <= scored.metadata_match <= 1.0
+    assert 0.0 <= scored.recency_or_position_score <= 1.0
+    assert 0.0 <= scored.final_score <= 1.0
+    assert scored.final_score > 0.0
+    assert (
+        scored.retrieval_reason
+        == "Adjacent source context for retrieved chunk index 5."
+    )
 
 
 def test_retrieve_hybrid_rejects_empty_question_before_dependency_calls(

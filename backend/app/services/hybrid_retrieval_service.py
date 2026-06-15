@@ -227,7 +227,11 @@ def _score_candidates(
     document_ids: list[UUID] | None,
 ) -> list[HybridRetrievalCandidate]:
     return [
-        _score_candidate(candidate, question=question, document_ids=document_ids)
+        score_hybrid_candidate(
+            candidate,
+            question=question,
+            document_ids=document_ids,
+        )
         for candidate in candidates
     ]
 
@@ -243,11 +247,12 @@ def _rank_and_limit_candidates(
     )[:final_top_k]
 
 
-def _score_candidate(
+def score_hybrid_candidate(
     candidate: HybridRetrievalCandidate,
     *,
     question: str,
     document_ids: list[UUID] | None,
+    preserve_retrieval_reason: bool = False,
 ) -> HybridRetrievalCandidate:
     semantic_similarity = clamp_score(candidate.semantic_similarity)
     graph_relevance = clamp_score(candidate.graph_relevance)
@@ -267,6 +272,18 @@ def _score_candidate(
         }
     )
 
+    retrieval_reason = candidate.retrieval_reason
+    if not preserve_retrieval_reason:
+        retrieval_reason = _build_retrieval_reason(
+            candidate,
+            question=question,
+            semantic_similarity=semantic_similarity,
+            graph_relevance=graph_relevance,
+            keyword_overlap=keyword_overlap,
+            metadata_match=metadata_match,
+            position=position,
+        )
+
     return candidate.model_copy(
         update={
             "semantic_similarity": semantic_similarity,
@@ -275,15 +292,7 @@ def _score_candidate(
             "metadata_match": metadata_match,
             "recency_or_position_score": position,
             "final_score": calculated_final_score,
-            "retrieval_reason": _build_retrieval_reason(
-                candidate,
-                question=question,
-                semantic_similarity=semantic_similarity,
-                graph_relevance=graph_relevance,
-                keyword_overlap=keyword_overlap,
-                metadata_match=metadata_match,
-                position=position,
-            ),
+            "retrieval_reason": retrieval_reason,
         }
     )
 
@@ -482,4 +491,5 @@ __all__ = [
     "HybridRetrievalValidationError",
     "SemanticSearchDependency",
     "retrieve_hybrid",
+    "score_hybrid_candidate",
 ]

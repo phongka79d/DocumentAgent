@@ -137,6 +137,7 @@ def _build_hybrid_candidate(
     content: str = "Relevant contract content",
     page_number: int = 3,
     section_title: str = "Probation",
+    chunk_index: int | None = None,
     semantic_similarity: float = 0.9,
     graph_relevance: float = 0.8,
     keyword_overlap: float = 0.7,
@@ -152,6 +153,7 @@ def _build_hybrid_candidate(
         content=content,
         page_number=page_number,
         section_title=section_title,
+        chunk_index=chunk_index,
         semantic_similarity=semantic_similarity,
         graph_relevance=graph_relevance,
         keyword_overlap=keyword_overlap,
@@ -215,7 +217,19 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
     monkeypatch.setattr(
         retrieval_agent,
         "get_settings",
-        lambda: SimpleNamespace(retrieval_final_top_k=11),
+        lambda: SimpleNamespace(
+            retrieval_final_top_k=11,
+            retrieval_context_window=1,
+            retrieval_context_max_candidates=8,
+        ),
+    )
+    expand_retrieval_context = Mock(
+        return_value=hybrid_response.candidates
+    )
+    monkeypatch.setattr(
+        retrieval_agent.retrieval_context_service,
+        "expand_retrieval_context",
+        expand_retrieval_context,
     )
 
     result = retrieval_agent.run_retrieval_agent(
@@ -275,6 +289,7 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
         "content",
         "page_number",
         "section_title",
+        "chunk_index",
         "semantic_similarity",
         "graph_relevance",
         "keyword_overlap",
@@ -288,6 +303,12 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
         "When can I start?",
         [UUID("22222222-2222-2222-2222-222222222222")],
         11,
+    )
+    expand_retrieval_context.assert_called_once_with(
+        "When can I start?",
+        hybrid_response.candidates,
+        context_window=1,
+        max_context_candidates=8,
     )
     log_agent_step.assert_called_once_with(
         agent_run_id="11111111-1111-1111-1111-111111111111",
@@ -339,7 +360,17 @@ def test_run_retrieval_agent_treats_empty_candidates_as_success(
     monkeypatch.setattr(
         retrieval_agent,
         "get_settings",
-        lambda: SimpleNamespace(retrieval_final_top_k=5),
+        lambda: SimpleNamespace(
+            retrieval_final_top_k=5,
+            retrieval_context_window=1,
+            retrieval_context_max_candidates=8,
+        ),
+    )
+    expand_retrieval_context = Mock(return_value=[])
+    monkeypatch.setattr(
+        retrieval_agent.retrieval_context_service,
+        "expand_retrieval_context",
+        expand_retrieval_context,
     )
 
     result = retrieval_agent.run_retrieval_agent(
@@ -359,6 +390,12 @@ def test_run_retrieval_agent_treats_empty_candidates_as_success(
         "When can I start?",
         [UUID("22222222-2222-2222-2222-222222222222")],
         5,
+    )
+    expand_retrieval_context.assert_called_once_with(
+        "When can I start?",
+        [],
+        context_window=1,
+        max_context_candidates=8,
     )
     log_agent_step.assert_called_once_with(
         agent_run_id="11111111-1111-1111-1111-111111111111",
@@ -472,7 +509,16 @@ def test_run_retrieval_agent_rejects_candidate_schema_mismatch_before_logging(
     monkeypatch.setattr(
         retrieval_agent,
         "get_settings",
-        lambda: SimpleNamespace(retrieval_final_top_k=7),
+        lambda: SimpleNamespace(
+            retrieval_final_top_k=7,
+            retrieval_context_window=1,
+            retrieval_context_max_candidates=8,
+        ),
+    )
+    monkeypatch.setattr(
+        retrieval_agent.retrieval_context_service,
+        "expand_retrieval_context",
+        Mock(return_value=[malformed_candidate]),
     )
 
     with pytest.raises(ValidationError) as exc_info:
@@ -511,7 +557,11 @@ def test_run_retrieval_agent_logs_failed_step_and_raises_controlled_error(
     monkeypatch.setattr(
         retrieval_agent,
         "get_settings",
-        lambda: SimpleNamespace(retrieval_final_top_k=7),
+        lambda: SimpleNamespace(
+            retrieval_final_top_k=7,
+            retrieval_context_window=1,
+            retrieval_context_max_candidates=8,
+        ),
     )
 
     with pytest.raises(RetrievalAgentError) as exc_info:
@@ -572,7 +622,11 @@ def test_run_retrieval_agent_reports_failed_log_insert_without_erasing_retrieval
     monkeypatch.setattr(
         retrieval_agent,
         "get_settings",
-        lambda: SimpleNamespace(retrieval_final_top_k=7),
+        lambda: SimpleNamespace(
+            retrieval_final_top_k=7,
+            retrieval_context_window=1,
+            retrieval_context_max_candidates=8,
+        ),
     )
 
     with caplog.at_level("ERROR", logger=retrieval_agent.logger.name):
