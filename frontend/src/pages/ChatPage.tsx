@@ -214,6 +214,7 @@ export function ChatPage() {
       {latestResponse ? (
         <>
           <AnswerPanel
+            agentRunId={latestResponse.agent_run_id}
             answer={latestResponse.answer}
             citations={latestResponse.citations}
             confidence={latestResponse.confidence}

@@ -1,8 +1,10 @@
 import { useId } from "react";
+import { Link } from "react-router-dom";
 
 import type { ChatCitation } from "../types/chat";
 
 export type AnswerPanelProps = {
+  agentRunId: string;
   answer: string;
   confidence: number | null;
   citations: ChatCitation[];
@@ -17,6 +19,7 @@ function formatConfidence(confidence: number | null): string {
 }
 
 export function AnswerPanel({
+  agentRunId,
   answer,
   confidence,
   citations,
@@ -24,11 +27,25 @@ export function AnswerPanel({
   const generatedId = useId();
   const titleId = `answer-panel-title-${generatedId}`;
   const citationsTitleId = `answer-panel-citations-title-${generatedId}`;
+  const normalizedAgentRunId = agentRunId.trim();
+  const agentLogsPath = normalizedAgentRunId
+    ? `/agent-logs/${encodeURIComponent(normalizedAgentRunId)}`
+    : null;
 
   return (
     <article className="answer-panel" aria-labelledby={titleId}>
       <header className="answer-panel__header">
-        <h2 id={titleId}>Answer</h2>
+        <div className="answer-panel__title-group">
+          <h2 id={titleId}>Answer</h2>
+          {agentLogsPath ? (
+            <Link className="answer-panel__run-link" to={agentLogsPath}>
+              <span className="answer-panel__run-label">Agent run:</span>{" "}
+              <span className="answer-panel__run-id">
+                {normalizedAgentRunId}
+              </span>
+            </Link>
+          ) : null}
+        </div>
         <p className="answer-panel__confidence">
           <span className="answer-panel__confidence-label">Confidence:</span>{" "}
           {formatConfidence(confidence)}

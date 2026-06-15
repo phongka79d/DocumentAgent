@@ -2135,6 +2135,32 @@ button {
   font-size: 1.2rem;
 }
 
+.answer-panel__title-group {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.75rem;
+}
+
+.answer-panel__run-link {
+  min-width: 0;
+  color: #315f9f;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+
+.answer-panel__run-label {
+  font-weight: 800;
+}
+
+.answer-panel__run-id {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
 .answer-panel__citations h3 {
   font-size: 1rem;
 }
@@ -3026,6 +3052,10 @@ button {
   .answer-panel__confidence,
   .evidence-panel__count {
     justify-self: start;
+  }
+
+  .answer-panel__title-group {
+    width: 100%;
   }
 
   .document-list-page__error button {
