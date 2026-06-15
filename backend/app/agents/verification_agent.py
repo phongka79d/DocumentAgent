@@ -48,6 +48,18 @@ CONTRADICTION_CONFIDENCE_CAP = 0.4
 COVERAGE_FAILURE_CONFIDENCE_CAP = 0.4
 CONTEXT_EXPANSION_CONFIDENCE_CAP = 0.65
 EVIDENCE_COVERAGE_RESPONSE_FORMAT = {"type": "json_object"}
+COVERAGE_RETRY_INSTRUCTION = """
+The previous response violated the evidence coverage schema.
+Return one corrected JSON object only.
+
+The fields must be internally consistent:
+- If selected_evidence is non-empty, answers_question must be true and
+  missing_information must be false.
+- If answers_question is false, missing_information must be true and
+  selected_evidence must be an empty list.
+
+Do not add evidence that is not an exact substring of the candidate content.
+""".strip()
 _EXPLANATORY_QUESTION_PATTERN = re.compile(
     r"^\s*(?:why|how|v[iì]\s+sao|t[aạ]i\s+sao)\b",
     re.IGNORECASE,
@@ -170,6 +182,23 @@ def _build_coverage_messages(
     ]
 
 
+def _build_coverage_retry_messages(
+    input_data: VerificationAgentInput,
+    invalid_response: str,
+) -> list[dict[str, str]]:
+    return [
+        *_build_coverage_messages(input_data),
+        {
+            "role": "assistant",
+            "content": invalid_response,
+        },
+        {
+            "role": "user",
+            "content": COVERAGE_RETRY_INSTRUCTION,
+        },
+    ]
+
+
 def _parse_verification_output(response_content: str) -> VerificationAgentOutput:
     try:
         response_payload = json.loads(response_content)
@@ -221,7 +250,20 @@ def _run_coverage_review(
         )
     except shopaikey_service.ShopAIKeyServiceError as exc:
         raise _VerificationAgentFailure("coverage_provider_error") from exc
-    return _parse_coverage_review(response_content)
+    try:
+        return _parse_coverage_review(response_content)
+    except _VerificationAgentFailure as exc:
+        if exc.failure_type != "coverage_validation_error":
+            raise
+
+    try:
+        retry_response_content = shopaikey_service.chat_completion(
+            _build_coverage_retry_messages(input_data, response_content),
+            response_format=EVIDENCE_COVERAGE_RESPONSE_FORMAT,
+        )
+    except shopaikey_service.ShopAIKeyServiceError as exc:
+        raise _VerificationAgentFailure("coverage_provider_error") from exc
+    return _parse_coverage_review(retry_response_content)
 
 
 def _validate_candidate_membership(
@@ -247,13 +289,31 @@ def _validate_candidate_membership(
 
 
 def _normalize_quote_text(value: str) -> str:
-    return " ".join(value.split())
+    text = " ".join(value.split())
+    # Normalize curly double quotes, curly single quotes, and straight double quotes to straight single quotes
+    text = text.replace("“", "'").replace("”", "'").replace("„", "'").replace("‟", "'")
+    text = text.replace("‘", "'").replace("’", "'").replace("‚", "'").replace("‛", "'")
+    text = text.replace('"', "'")
+    return text
 
 
 def _quote_matches_candidate_content(quote: str, content: str | None) -> bool:
-    normalized_quote = _normalize_quote_text(quote)
-    normalized_content = _normalize_quote_text(content or "")
-    return bool(normalized_quote) and normalized_quote in normalized_content
+    normalized_quote = _normalize_quote_text(quote).lower()
+    normalized_content = _normalize_quote_text(content or "").lower()
+    if not normalized_quote:
+        return False
+    if normalized_quote in normalized_content:
+        return True
+
+    quote_without_terminal_punctuation = re.sub(
+        r"[.,:;!?]+(?='?$)",
+        "",
+        normalized_quote,
+    )
+    return (
+        quote_without_terminal_punctuation != normalized_quote
+        and quote_without_terminal_punctuation in normalized_content
+    )
 
 
 def _question_needs_explanatory_context(question: str) -> bool:

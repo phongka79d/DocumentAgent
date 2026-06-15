@@ -477,6 +477,13 @@ def test_run_answer_agent_logs_failed_step_for_self_check_failure(
                     supported=False,
                 )
             ),
+            json.dumps(_draft_answer_payload()),
+            json.dumps(
+                _grounding_review_payload(
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
         ]
     )
     try_log_agent_step = Mock()
@@ -1023,6 +1030,14 @@ def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation
                     supported=False,
                 )
             ),
+            json.dumps(provider_payload),
+            json.dumps(
+                _grounding_review_payload(
+                    output=reviewed_output,
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
         ]
     )
     monkeypatch.setattr(
@@ -1034,7 +1049,7 @@ def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation
     with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
         run_answer_agent(_answer_input_payload())
 
-    assert chat_completion.call_count == 2
+    assert chat_completion.call_count == 4
 
 
 def test_run_answer_agent_rejects_unsupported_explanation_with_valid_conclusion_citation(
@@ -1077,6 +1092,15 @@ def test_run_answer_agent_rejects_unsupported_explanation_with_valid_conclusion_
     )
     chat_completion = Mock(
         side_effect=[
+            json.dumps(draft),
+            json.dumps(
+                _grounding_review_payload(
+                    output=reviewed_output,
+                    answers_question=False,
+                    supported=False,
+                    confidence=0.1,
+                )
+            ),
             json.dumps(draft),
             json.dumps(
                 _grounding_review_payload(
@@ -1152,6 +1176,48 @@ def test_run_answer_agent_retries_explanatory_answer_after_self_check_failure(
     assert "retry_instruction" in retry_payload
 
 
+def test_run_answer_agent_retries_factual_answer_after_self_check_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = _answer_input_payload()
+    payload["question"] = "What label was written on the item?"
+    unsupported_draft = _draft_answer_payload()
+    unsupported_draft["final_answer"] = "The translated label was unsupported."
+    unsupported_draft["reasoning_summary"] = "The label was translated."
+    repaired_draft = _draft_answer_payload()
+    repaired_output = AnswerAgentOutput.model_validate(
+        repaired_draft | {"self_check": DRAFT_SELF_CHECK_PLACEHOLDER}
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(unsupported_draft),
+            json.dumps(
+                _grounding_review_payload(
+                    output=AnswerAgentOutput.model_validate(
+                        unsupported_draft
+                        | {"self_check": DRAFT_SELF_CHECK_PLACEHOLDER}
+                    ),
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
+            json.dumps(repaired_draft),
+            json.dumps(_grounding_review_payload(output=repaired_output)),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(payload)
+
+    assert output.final_answer == repaired_draft["final_answer"]
+    assert output.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    assert chat_completion.call_count == 4
+
+
 @pytest.mark.parametrize(
     "failed_grounding",
     [
@@ -1185,6 +1251,8 @@ def test_run_answer_agent_raises_self_check_failure_without_returning_ready_answ
         side_effect=[
             json.dumps(_draft_answer_payload()),
             json.dumps(failed_grounding),
+            json.dumps(_draft_answer_payload()),
+            json.dumps(failed_grounding),
         ]
     )
     monkeypatch.setattr(
@@ -1197,7 +1265,7 @@ def test_run_answer_agent_raises_self_check_failure_without_returning_ready_answ
         run_answer_agent(_answer_input_payload())
 
     assert exc_info.value.failure_type == "self_check_failed"
-    assert chat_completion.call_count == 2
+    assert chat_completion.call_count == 4
 
 
 def test_run_answer_agent_wraps_input_validation_failures_safely() -> None:
@@ -1880,6 +1948,13 @@ def test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_outpu
                     supported=False,
                 )
             ),
+            json.dumps(_draft_answer_payload()),
+            json.dumps(
+                _grounding_review_payload(
+                    answers_question=False,
+                    supported=False,
+                )
+            ),
         ]
     )
     try_log_agent_step = Mock()
@@ -1898,7 +1973,7 @@ def test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_outpu
         run_answer_agent(_answer_input_payload())
 
     assert exc_info.value.failure_type == "self_check_failed"
-    assert chat_completion.call_count == 2
+    assert chat_completion.call_count == 4
     try_log_agent_step.assert_called_once()
     log_call = try_log_agent_step.call_args.kwargs
     assert log_call["status"] == "failed"
@@ -2135,6 +2210,8 @@ def test_answer_generation_prompt_contains_required_grounding_rules() -> None:
     assert "why or how" in prompt
     assert "do not add broad labels" in prompt
     assert "do not mention examples or side events" in prompt
+    assert "preserve literal labels" in prompt
+    assert "do not translate or rewrite those literal values" in prompt
     assert "return only valid json" in prompt
 
 

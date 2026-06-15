@@ -98,10 +98,15 @@ quotes from the same chunk_id are allowed.
 Set answers_question to false and missing_information to true if answering
 would require guessing.
 
+If the selected exact quotes answer the question, answers_question must be true,
+missing_information must be false, and selected_evidence must not be empty.
+If the question cannot be answered, answers_question must be false,
+missing_information must be true, and selected_evidence must be an empty list.
+
 Return only valid JSON with exactly this structure:
 {
-  "answers_question": false,
-  "missing_information": true,
+  "answers_question": true,
+  "missing_information": false,
   "selected_evidence": [
     {
       "chunk_id": "string",
@@ -110,7 +115,7 @@ Return only valid JSON with exactly this structure:
       "supports_simple_reasoning": false
     }
   ],
-  "confidence": 0.0
+  "confidence": 0.9
 }
 """.strip()
 
@@ -123,6 +128,10 @@ assumptions, or invented dates, policies, conditions, or document content.
 
 Write the final answer in Vietnamese by default. Keep it clear, short, direct,
 and grounded in the provided evidence.
+
+Preserve literal labels, names, titles, identifiers, codes, and numeric values
+exactly as written in verified quotes. You may translate the surrounding
+explanation into Vietnamese, but do not translate or rewrite those literal values.
 
 Include citations for every answer. Each citation must use only a verified chunk
 and must contain exactly the verified chunk's file_name and quote. Do not expose

@@ -41,6 +41,51 @@ def test_evidence_coverage_review_requires_selected_evidence_when_answerable() -
         )
 
 
+def test_evidence_coverage_review_rejects_selected_evidence_when_not_answerable(
+) -> None:
+    with pytest.raises(ValidationError):
+        EvidenceCoverageReview.model_validate(
+            {
+                "answers_question": False,
+                "missing_information": True,
+                "selected_evidence": [
+                    {
+                        "chunk_id": CANDIDATE_CHUNK_ID,
+                        "quote": "The jar was empty.",
+                        "purpose": "States what was inside the jar.",
+                        "supports_simple_reasoning": False,
+                    }
+                ],
+                "confidence": 0.0,
+            }
+        )
+
+
+def test_verified_chunk_defaults_missing_simple_reasoning_permission_to_false(
+) -> None:
+    output = verification_agent._parse_verification_output(
+        json.dumps(
+            {
+                "verified_chunks": [
+                    {
+                        "chunk_id": CANDIDATE_CHUNK_ID,
+                        "document_id": CANDIDATE_DOCUMENT_ID,
+                        "file_name": "alice-in-wonderland.txt",
+                        "quote": "The jar was empty.",
+                        "page_number": 0,
+                        "verification_reason": "Direct evidence.",
+                    }
+                ],
+                "rejected_chunks": [],
+                "missing_information": False,
+                "confidence": 0.9,
+            }
+        )
+    )
+
+    assert output.verified_chunks[0].supports_simple_reasoning is False
+
+
 def test_parse_coverage_review_normalizes_non_answerable_minimal_payload() -> None:
     review = verification_agent._parse_coverage_review(
         '{"answers_question": false, "missing_information": true}'
@@ -154,6 +199,151 @@ def _mock_two_pass_verification(
         REAL_RUN_COVERAGE_REVIEW,
     )
     return chat_completion
+
+
+def test_verification_agent_retries_inconsistent_coverage_review_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["file_name"] = "alice-in-wonderland.txt"
+    candidate["content"] = (
+        "She took down a jar from one of the shelves as she passed; "
+        "it was labelled 'ORANGE MARMALADE', but to her great "
+        "disappointment it was empty."
+    )
+    answer_quote = (
+        "it was labelled 'ORANGE MARMALADE', but to her great "
+        "disappointment it was empty."
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "alice-in-wonderland.txt",
+                "quote": answer_quote,
+                "page_number": 0,
+                "verification_reason": "Directly answers both requested details.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 1.0,
+    }
+    selected_evidence = [
+        {
+            "chunk_id": CANDIDATE_CHUNK_ID,
+            "quote": answer_quote,
+            "purpose": "States the jar label and that the jar was empty.",
+            "supports_simple_reasoning": False,
+        }
+    ]
+    inconsistent_review = {
+        "answers_question": False,
+        "missing_information": True,
+        "selected_evidence": selected_evidence,
+        "confidence": 0.0,
+    }
+    corrected_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "selected_evidence": selected_evidence,
+        "confidence": 0.95,
+    }
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(inconsistent_review),
+            json.dumps(corrected_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": (
+                "What was the label on the jar, and what was inside it?"
+            ),
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [answer_quote]
+    assert chat_completion.call_count == 3
+
+
+def test_verification_agent_fails_after_second_inconsistent_coverage_review(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Probation starts on June 1, 2026 and lasts two months.",
+                "page_number": 3,
+                "verification_reason": "Direct answer.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+    inconsistent_review = {
+        "answers_question": False,
+        "missing_information": True,
+        "selected_evidence": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": "Probation starts on June 1, 2026 and lasts two months.",
+                "purpose": "States the requested probation details.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "confidence": 0.0,
+    }
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(inconsistent_review),
+            json.dumps(inconsistent_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    with pytest.raises(VerificationAgentError):
+        run_verification_agent(
+            {
+                "agent_run_id": AGENT_RUN_ID,
+                "question": "When does probation start and how long does it last?",
+                "candidates": [_candidate_payload()],
+            }
+        )
+
+    assert chat_completion.call_count == 3
 
 
 @pytest.mark.parametrize("confidence", [0.0, 0.42, 1.0])
@@ -1547,6 +1737,18 @@ def test_evidence_coverage_prompt_contains_required_output_schema() -> None:
         assert phrase in prompt
 
 
+def test_evidence_coverage_prompt_requires_consistent_answerability_fields() -> None:
+    prompt = verification_agent.EVIDENCE_COVERAGE_SYSTEM_PROMPT.lower()
+
+    for phrase in [
+        "selected_evidence must not be empty",
+        "selected_evidence must be an empty list",
+        '"answers_question": true',
+        '"missing_information": false',
+    ]:
+        assert phrase in prompt
+
+
 def test_verification_prompt_limits_agent_scope() -> None:
     prompt = VERIFICATION_AGENT_SYSTEM_PROMPT.lower()
 
@@ -1806,6 +2008,70 @@ def test_verification_agent_rejects_coverage_quote_not_in_candidate(
         )
 
 
+def test_verification_agent_accepts_coverage_quote_with_terminal_punctuation_variation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["file_name"] = "alice-in-wonderland.txt"
+    candidate["content"] = (
+        "It was labelled 'ORANGE MARMALADE', but to her great "
+        "disappointment it was empty: she put the jar back."
+    )
+    source_quote = (
+        "It was labelled 'ORANGE MARMALADE', but to her great "
+        "disappointment it was empty:"
+    )
+    coverage_quote = (
+        "It was labelled 'ORANGE MARMALADE', but to her great "
+        "disappointment it was empty."
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "alice-in-wonderland.txt",
+                "quote": source_quote,
+                "page_number": 0,
+                "verification_reason": "Directly states the label and contents.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 1.0,
+    }
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "selected_evidence": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": coverage_quote,
+                "purpose": "States the label and that the jar was empty.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "confidence": 0.9,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "What was the label, and what was inside the jar?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [coverage_quote]
+
+
 def test_verification_agent_keeps_two_distinct_coverage_quotes_from_same_chunk(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1856,3 +2122,91 @@ def test_verification_agent_keeps_two_distinct_coverage_quotes_from_same_chunk(
         "The item is not mine.",
         "I keep the items to sell and own none myself.",
     ]
+
+
+def test_verification_agent_accepts_quote_with_quote_style_variations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = "It was labelled 'ORANGE MARMALADE', but it was empty."
+
+    # LLM returns quote with double quotes
+    llm_quote = 'It was labelled "ORANGE MARMALADE", but it was empty.'
+
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "test.txt",
+                "quote": llm_quote,
+                "page_number": 1,
+                "verification_reason": "Direct answer",
+                "supports_simple_reasoning": True,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+
+    monkeypatch.setattr(
+        "app.services.shopaikey_service.chat_completion",
+        lambda *args, **kwargs: json.dumps(initial_verification),
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "What was the label?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert len(output.verified_chunks) == 1
+    assert output.verified_chunks[0].quote == llm_quote
+    assert len(output.rejected_chunks) == 0
+
+
+def test_verification_agent_accepts_quote_with_case_variations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = "She took down a jar from the shelf."
+
+    # LLM returns lowercase quote
+    llm_quote = "she took down a jar from the shelf."
+
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "test.txt",
+                "quote": llm_quote,
+                "page_number": 1,
+                "verification_reason": "Direct answer",
+                "supports_simple_reasoning": True,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+
+    monkeypatch.setattr(
+        "app.services.shopaikey_service.chat_completion",
+        lambda *args, **kwargs: json.dumps(initial_verification),
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "Who took the jar?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert len(output.verified_chunks) == 1
+    assert output.verified_chunks[0].quote == llm_quote
+    assert len(output.rejected_chunks) == 0

@@ -98,9 +98,10 @@ ANSWER_GENERATION_RESPONSE_FORMAT = {"type": "json_object"}
 ANSWER_SELF_CHECK_RESPONSE_FORMAT = {"type": "json_object"}
 ANSWER_GENERATION_RETRY_INSTRUCTION = (
     "The previous draft failed claim grounding. Rewrite the answer more "
-    "narrowly using only causes, reasons, or context explicitly stated in "
-    "verified quotes. Remove broad labels, examples, and side events unless "
-    "the question asks for them."
+    "narrowly using only facts, causes, reasons, or context explicitly stated "
+    "in verified quotes. Preserve literal labels, names, titles, identifiers, "
+    "codes, and numeric values exactly. Remove unsupported interpretations, "
+    "broad labels, examples, and side events unless the question asks for them."
 )
 _EXPLANATORY_QUESTION_PATTERN = re.compile(
     r"^\s*(?:why|how|v[iì]\s+sao|t[aạ]i\s+sao)\b",
@@ -667,10 +668,7 @@ def _generate_validated_draft_answer(
 def _should_retry_answer_generation_after_self_check_failure(
     answer_input: AnswerAgentInput,
 ) -> bool:
-    return bool(_EXPLANATORY_QUESTION_PATTERN.search(answer_input.question)) and any(
-        chunk.supports_simple_reasoning
-        for chunk in answer_input.verification.verified_chunks
-    )
+    return bool(answer_input.verification.verified_chunks)
 
 
 def _log_successful_answer_self_check(

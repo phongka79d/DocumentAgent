@@ -94,6 +94,10 @@ class EvidenceCoverageReview(BaseModel):
             )
         if self.answers_question and not self.selected_evidence:
             raise ValueError("answerable coverage requires selected evidence")
+        if not self.answers_question and self.selected_evidence:
+            raise ValueError(
+                "non-answerable coverage must not include selected evidence"
+            )
         return self
 
 
@@ -104,7 +108,7 @@ class VerifiedChunk(BaseModel):
     quote: str = Field(min_length=1)
     page_number: int | None
     verification_reason: str = Field(min_length=1)
-    supports_simple_reasoning: bool
+    supports_simple_reasoning: bool = False
 
     @field_validator("quote", "verification_reason")
     @classmethod
