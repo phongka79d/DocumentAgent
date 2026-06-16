@@ -121,6 +121,40 @@ def test_semantic_search_calls_dependencies_in_order(
     assert response.results[0].content == "Full chunk text"
 
 
+def test_semantic_search_enriches_content_when_qdrant_preview_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chunk_id = "33333333-3333-3333-3333-333333333333"
+    create_embedding = Mock(return_value=[0.1, 0.2])
+    search_vectors = Mock(
+        return_value=[
+            SimpleNamespace(
+                payload={
+                    "chunk_id": chunk_id,
+                    "document_id": "44444444-4444-4444-4444-444444444444",
+                },
+                semantic_similarity=0.9,
+            )
+        ]
+    )
+    get_chunk_content_by_ids = Mock(return_value={chunk_id: "Full chunk text"})
+
+    monkeypatch.setattr(retrieval_service, "create_embedding", create_embedding)
+    monkeypatch.setattr(retrieval_service, "search_vectors", search_vectors)
+    monkeypatch.setattr(
+        retrieval_service,
+        "get_chunk_content_by_ids",
+        get_chunk_content_by_ids,
+        raising=False,
+    )
+
+    response = retrieval_service.semantic_search("What is the policy?", top_k=1)
+
+    get_chunk_content_by_ids.assert_called_once_with([chunk_id])
+    assert response.results[0].content == "Full chunk text"
+    assert response.results[0].content_preview is None
+
+
 def test_semantic_search_returns_empty_results_for_no_qdrant_matches(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -378,31 +412,39 @@ def test_semantic_search_maps_complete_qdrant_payload_to_response_shape(
     assert response.results[0].semantic_similarity == 0.88
 
 
-def test_semantic_search_maps_missing_optional_payload_fields_to_null(
+def test_semantic_search_maps_missing_optional_payload_fields_and_enriches_content(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    chunk_id = "33333333-3333-3333-3333-333333333333"
     create_embedding = Mock(return_value=[0.1])
     search_vectors = Mock(
         return_value=[
             SimpleNamespace(
                 payload={
-                    "chunk_id": "33333333-3333-3333-3333-333333333333",
+                    "chunk_id": chunk_id,
                     "document_id": "44444444-4444-4444-4444-444444444444",
                 },
                 semantic_similarity=0.77,
             )
         ]
     )
+    get_chunk_content_by_ids = Mock(return_value={chunk_id: "Full chunk text"})
 
     monkeypatch.setattr(retrieval_service, "create_embedding", create_embedding)
     monkeypatch.setattr(retrieval_service, "search_vectors", search_vectors)
+    monkeypatch.setattr(
+        retrieval_service,
+        "get_chunk_content_by_ids",
+        get_chunk_content_by_ids,
+        raising=False,
+    )
 
     response = retrieval_service.semantic_search("probation", top_k=1)
 
     result = response.results[0]
     assert result.file_name is None
     assert result.file_type is None
-    assert result.content is None
+    assert result.content == "Full chunk text"
     assert result.content_preview is None
     assert result.page_number is None
     assert result.section_title is None
@@ -414,12 +456,13 @@ def test_semantic_search_maps_malformed_optional_payload_fields_to_null(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
+    chunk_id = "33333333-3333-3333-3333-333333333333"
     create_embedding = Mock(return_value=[0.1])
     search_vectors = Mock(
         return_value=[
             SimpleNamespace(
                 payload={
-                    "chunk_id": "33333333-3333-3333-3333-333333333333",
+                    "chunk_id": chunk_id,
                     "document_id": "44444444-4444-4444-4444-444444444444",
                     "file_name": {"unexpected": "object"},
                     "file_type": ["pdf"],
@@ -433,9 +476,16 @@ def test_semantic_search_maps_malformed_optional_payload_fields_to_null(
             )
         ]
     )
+    get_chunk_content_by_ids = Mock(return_value={chunk_id: "Full chunk text"})
 
     monkeypatch.setattr(retrieval_service, "create_embedding", create_embedding)
     monkeypatch.setattr(retrieval_service, "search_vectors", search_vectors)
+    monkeypatch.setattr(
+        retrieval_service,
+        "get_chunk_content_by_ids",
+        get_chunk_content_by_ids,
+        raising=False,
+    )
 
     with caplog.at_level(logging.WARNING, logger=retrieval_service.logger.name):
         response = retrieval_service.semantic_search("probation", top_k=1)
@@ -443,7 +493,7 @@ def test_semantic_search_maps_malformed_optional_payload_fields_to_null(
     result = response.results[0]
     assert result.file_name is None
     assert result.file_type is None
-    assert result.content is None
+    assert result.content == "Full chunk text"
     assert result.content_preview is None
     assert result.page_number is None
     assert result.section_title is None
@@ -580,7 +630,7 @@ def test_semantic_search_omits_preview_only_points_when_supabase_row_is_absent(
         response = retrieval_service.semantic_search("probation", top_k=1)
 
     assert response.results == []
-    assert "Supabase chunk row was not found" in caplog.text
+    assert "Supabase chunk content was not found" in caplog.text
 
 
 def test_get_chunk_content_by_ids_filters_single_user(

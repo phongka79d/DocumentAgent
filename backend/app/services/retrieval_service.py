@@ -93,7 +93,7 @@ def _enrich_missing_content_from_supabase(
     missing_content_chunk_ids = [
         str(result.chunk_id)
         for result in results
-        if result.content is None and result.content_preview is not None
+        if result.content is None
     ]
     if not missing_content_chunk_ids:
         return results
@@ -101,14 +101,14 @@ def _enrich_missing_content_from_supabase(
     content_by_chunk_id = get_chunk_content_by_ids(missing_content_chunk_ids)
     enriched_results: list[RetrievalResult] = []
     for result in results:
-        if result.content is not None or result.content_preview is None:
+        if result.content is not None:
             enriched_results.append(result)
             continue
 
         chunk_id = str(result.chunk_id)
-        if chunk_id not in content_by_chunk_id:
+        if chunk_id not in content_by_chunk_id or content_by_chunk_id[chunk_id] is None:
             logger.warning(
-                "Skipping retrieval result because Supabase chunk row was not found. "
+                "Skipping retrieval result because Supabase chunk content was not found. "
                 "chunk_id=%s",
                 chunk_id,
             )

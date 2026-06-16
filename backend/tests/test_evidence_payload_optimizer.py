@@ -164,3 +164,117 @@ def test_optimize_candidates_preserves_multi_part_answer_evidence() -> None:
     assert len(optimized[0].content) <= 170
     assert "ORANGE MARMALADE" in optimized[0].content
     assert "it was empty" in optimized[0].content
+
+
+def test_indirect_when_question_snippet_keeps_date_and_duration_evidence() -> None:
+    candidate = _candidate(
+        file_name="contract.pdf",
+        section_title="Probation",
+        content=(
+            "The employee began trial employment on 01/06/2026. "
+            "Trial employment lasts 2 months. "
+            "After completion, official work status may be considered. "
+            + "General workplace policy sentence. " * 80
+        ),
+    )
+
+    optimized = optimize_candidates_for_verification(
+        question="When can I start official work?",
+        candidates=[candidate],
+        max_candidates=1,
+        snippet_max_chars=150,
+        context_sentences=0,
+    )
+
+    snippet = optimized[0].content
+
+    assert snippet is not None
+    assert "01/06/2026" in snippet
+    assert "2 months" in snippet
+    assert "official work status" in snippet
+    assert len(snippet) <= 150
+
+
+def test_vietnamese_official_work_question_keeps_date_duration_and_condition() -> None:
+    candidate = _candidate(
+        file_name="hop-dong.txt",
+        section_title="Thoi gian thu viec",
+        content=(
+            "Nguoi lao dong bat dau thu viec tu ngay 01/06/2026. "
+            "Thoi gian thu viec keo dai 2 thang. "
+            "Sau khi hoan thanh thu viec, nguoi lao dong co the duoc xet lam viec chinh thuc. "
+            + "Noi quy chung cua cong ty. " * 80
+        ),
+    )
+
+    optimized = optimize_candidates_for_verification(
+        question="Toi co the lam viec chinh thuc vao thang may?",
+        candidates=[candidate],
+        max_candidates=1,
+        snippet_max_chars=230,
+        context_sentences=0,
+    )
+
+    snippet = optimized[0].content
+
+    assert snippet is not None
+    assert "01/06/2026" in snippet
+    assert "2 thang" in snippet
+    assert "lam viec chinh thuc" in snippet
+    assert len(snippet) <= 230
+
+
+def test_vietnamese_when_question_prioritizes_date_and_duration_under_tight_budget() -> None:
+    candidate = _candidate(
+        file_name="hop-dong.txt",
+        section_title="Thoi gian thu viec",
+        content=(
+            "Nguoi lao dong bat dau thu viec tu ngay 01/06/2026. "
+            "Thoi gian thu viec keo dai 2 thang. "
+            "Sau khi hoan thanh thu viec, nguoi lao dong co the duoc xet lam viec chinh thuc. "
+            + "Noi quy chung cua cong ty. " * 80
+        ),
+    )
+
+    optimized = optimize_candidates_for_verification(
+        question="Bao gio toi duoc xet chinh thuc?",
+        candidates=[candidate],
+        max_candidates=1,
+        snippet_max_chars=95,
+        context_sentences=0,
+    )
+
+    snippet = optimized[0].content
+
+    assert snippet is not None
+    assert "01/06/2026" in snippet
+    assert "2 thang" in snippet
+    assert len(snippet) <= 95
+
+
+def test_accented_vietnamese_month_question_prioritizes_date_and_duration() -> None:
+    candidate = _candidate(
+        file_name="hop-dong.txt",
+        section_title="Thời gian thử việc",
+        content=(
+            "Người lao động bắt đầu thử việc từ ngày 01/06/2026. "
+            "Thời gian thử việc kéo dài 2 tháng. "
+            "Sau khi hoàn thành thử việc, người lao động có thể được xét làm việc chính thức. "
+            + "Nội quy chung của công ty. " * 80
+        ),
+    )
+
+    optimized = optimize_candidates_for_verification(
+        question="Tôi có thể làm việc chính thức vào tháng mấy?",
+        candidates=[candidate],
+        max_candidates=1,
+        snippet_max_chars=95,
+        context_sentences=0,
+    )
+
+    snippet = optimized[0].content
+
+    assert snippet is not None
+    assert "01/06/2026" in snippet
+    assert "2 tháng" in snippet
+    assert len(snippet) <= 95

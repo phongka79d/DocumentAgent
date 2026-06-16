@@ -753,11 +753,13 @@ def test_run_qa_workflow_answers_multi_part_question_across_adjacent_chunks(
 
     retrieval_output = logged_steps["agent_1_retrieval"]["output_payload"]
     assert {
-        candidate.chunk_index for candidate in retrieval_output.candidates
+        candidate["chunk_index"] for candidate in retrieval_output["candidates"]
     } == {4, 5}
     assert {
-        candidate.chunk_id for candidate in retrieval_output.candidates
+        UUID(candidate["chunk_id"]) for candidate in retrieval_output["candidates"]
     } == {anchor_chunk_id, adjacent_chunk_id}
+    assert all("content" not in candidate for candidate in retrieval_output["candidates"])
+    assert all("content_preview" in candidate for candidate in retrieval_output["candidates"])
     verification_output = logged_steps["agent_2_verification"]["output_payload"]
     assert verification_output.missing_information is False
     assert [chunk.quote for chunk in verification_output.verified_chunks] == [

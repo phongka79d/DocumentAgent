@@ -298,6 +298,11 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
         "final_score",
         "retrieval_reason",
     }
+    required_logged_candidate_fields = required_candidate_fields - {"content"} | {
+        "content_preview",
+        "content_char_count",
+        "content_omitted",
+    }
     assert set(result.candidates[0].model_dump(mode="json")) == required_candidate_fields
     retrieve_hybrid.assert_called_once_with(
         "When can I start?",
@@ -310,6 +315,7 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
         context_window=1,
         max_context_candidates=8,
     )
+    expected_log_output = retrieval_agent._build_retrieval_log_output(expected_output)
     log_agent_step.assert_called_once_with(
         agent_run_id="11111111-1111-1111-1111-111111111111",
         step_name=AGENT_1_RETRIEVAL_STEP_NAME,
@@ -319,17 +325,85 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
             question="When can I start?",
             document_ids=["22222222-2222-2222-2222-222222222222"],
         ),
-        output_payload=expected_output,
+        output_payload=expected_log_output,
         status="success",
     )
     log_call = log_agent_step.call_args.kwargs
-    assert isinstance(log_call["output_payload"], RetrievalAgentOutput)
+    assert isinstance(log_call["output_payload"], dict)
     assert log_call["status"] == "success"
     assert log_call.get("error_message") is None
     assert (
-        set(log_call["output_payload"].candidates[0].model_dump(mode="json"))
-        == required_candidate_fields
+        set(log_call["output_payload"]["candidates"][0])
+        == required_logged_candidate_fields
     )
+    assert "content" not in log_call["output_payload"]["candidates"][0]
+
+
+def test_run_retrieval_agent_logs_compact_candidates_without_mutating_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    long_content = (
+        "The policy starts with background context. "
+        + "Detailed probation evidence sentence. "
+        + "Extra retrieved text. " * 80
+    )
+    hybrid_response = HybridSearchResponse(
+        question="What evidence is retrieved?",
+        candidates=[
+            _build_hybrid_candidate(
+                chunk_id="44444444-4444-4444-4444-444444444444",
+                content=long_content,
+                final_score=0.91,
+                retrieval_reason="Best match",
+            )
+        ],
+    )
+    monkeypatch.setattr(
+        retrieval_agent.hybrid_retrieval_service,
+        "retrieve_hybrid",
+        Mock(return_value=hybrid_response),
+    )
+    monkeypatch.setattr(
+        retrieval_agent.retrieval_context_service,
+        "expand_retrieval_context",
+        Mock(return_value=hybrid_response.candidates),
+    )
+    log_agent_step = Mock(return_value={"id": "step-id"})
+    monkeypatch.setattr(
+        retrieval_agent.agent_log_service,
+        "log_agent_step",
+        log_agent_step,
+    )
+    monkeypatch.setattr(
+        retrieval_agent,
+        "get_settings",
+        lambda: SimpleNamespace(
+            retrieval_final_top_k=8,
+            retrieval_context_window=1,
+            retrieval_context_max_candidates=8,
+        ),
+    )
+
+    result = retrieval_agent.run_retrieval_agent(
+        {
+            "agent_run_id": "11111111-1111-1111-1111-111111111111",
+            "question": "What evidence is retrieved?",
+            "document_ids": ["22222222-2222-2222-2222-222222222222"],
+        }
+    )
+
+    assert result.candidates[0].content == long_content
+    log_output = log_agent_step.call_args.kwargs["output_payload"]
+
+    assert isinstance(log_output, dict)
+    logged_candidate = log_output["candidates"][0]
+    assert "content" not in logged_candidate
+    assert logged_candidate["content_preview"] == long_content[:500]
+    assert logged_candidate["content_char_count"] == len(long_content)
+    assert logged_candidate["content_omitted"] is True
+    assert logged_candidate["final_score"] == 0.91
+    assert logged_candidate["retrieval_reason"] == "Best match"
+    assert logged_candidate["chunk_id"] == "44444444-4444-4444-4444-444444444444"
 
 
 def test_run_retrieval_agent_treats_empty_candidates_as_success(
@@ -406,11 +480,11 @@ def test_run_retrieval_agent_treats_empty_candidates_as_success(
             question="When can I start?",
             document_ids=["22222222-2222-2222-2222-222222222222"],
         ),
-        output_payload=expected_output,
+        output_payload={"question": "When can I start?", "candidates": []},
         status="success",
     )
     log_call = log_agent_step.call_args.kwargs
-    assert log_call["output_payload"].candidates == []
+    assert log_call["output_payload"]["candidates"] == []
     assert log_call["status"] == "success"
     assert log_call.get("error_message") is None
     try_log_agent_step.assert_not_called()

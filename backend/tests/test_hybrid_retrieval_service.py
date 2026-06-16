@@ -133,6 +133,37 @@ def test_score_hybrid_candidate_preserves_explicit_context_reason() -> None:
     )
 
 
+def test_score_hybrid_candidate_zeros_graph_relevance_without_text_or_entity_alignment() -> None:
+    candidate = HybridRetrievalCandidate(
+        chunk_id=UUID("11111111-1111-1111-1111-111111111111"),
+        document_id=UUID("22222222-2222-2222-2222-222222222222"),
+        file_name="source.txt",
+        file_type="text/plain",
+        content="Office cafeteria menu and parking rules.",
+        content_preview=None,
+        page_number=2,
+        section_title="Appendix",
+        chunk_index=6,
+        semantic_similarity=0.0,
+        metadata={"matched_entity_name": "cafeteria"},
+        graph_relevance=0.9,
+        keyword_overlap=0.0,
+        metadata_match=0.0,
+        recency_or_position_score=0.0,
+        final_score=0.0,
+        retrieval_reason=None,
+    )
+
+    scored = hybrid_retrieval_service.score_hybrid_candidate(
+        candidate,
+        question="When does probation start?",
+        document_ids=[candidate.document_id],
+    )
+
+    assert scored.keyword_overlap == 0.0
+    assert scored.graph_relevance == 0.0
+
+
 def test_retrieve_hybrid_rejects_empty_question_before_dependency_calls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -280,7 +311,7 @@ def test_retrieve_hybrid_keeps_graph_only_candidate_with_zero_semantic_score(
 
     assert len(response.candidates) == 1
     assert response.candidates[0].semantic_similarity == 0.0
-    assert response.candidates[0].graph_relevance == pytest.approx(0.64 * 0.25)
+    assert response.candidates[0].graph_relevance == 0.0
 
 
 def test_retrieve_hybrid_generates_semantic_retrieval_reason_without_answer_text(

@@ -22,7 +22,42 @@ from app.agents.schemas import (
 from app.core.config import get_settings
 from app.services import agent_log_service
 from app.services import shopaikey_service
-from app.services.evidence_payload_optimizer import optimize_candidates_for_verification
+from app.services.evidence_quote_service import (
+    canonical_source_quote_for_candidate as _canonical_source_quote_for_candidate,
+)
+from app.services.evidence_quote_service import (
+    candidate_source_excerpt as _candidate_source_excerpt,
+)
+from app.services.evidence_quote_service import (
+    expanded_quote_with_surrounding_context as _expanded_quote_with_surrounding_context,
+)
+from app.services.evidence_quote_service import (
+    expanded_quotes_with_surrounding_context as _expanded_quotes_with_surrounding_context,
+)
+from app.services.evidence_quote_service import normalize_quote_text as _normalize_quote_text
+from app.services.evidence_quote_service import (
+    quote_matches_candidate_content as _quote_matches_candidate_content,
+)
+from app.services.verification_prompt_service import (
+    COVERAGE_RETRY_INSTRUCTION,
+    VERIFICATION_RETRY_INSTRUCTION,
+    build_coverage_messages as _service_build_coverage_messages,
+    build_coverage_retry_messages as _service_build_coverage_retry_messages,
+    build_verification_messages as _service_build_verification_messages,
+    build_verification_retry_messages as _service_build_verification_retry_messages,
+)
+from app.services.verification_log_service import (
+    VERIFICATION_LOG_CONTENT_PREVIEW_CHARS,
+    build_safe_failed_verification_input,
+    build_safe_failed_verification_output,
+    build_verification_log_input,
+)
+from app.services.verification_post_processor import (
+    CONTRADICTION_CONFIDENCE_CAP,
+    CONTRADICTION_VERIFICATION_REASON,
+    NO_VERIFIED_CHUNKS_CONFIDENCE_CAP,
+    apply_missing_information_adjustments as _apply_missing_information_adjustments,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -37,9 +72,8 @@ DUPLICATE_CHUNK_ID_REJECTION_REASON = (
 DUPLICATE_CONTENT_REJECTION_REASON = (
     "Duplicate verified content was removed from verified evidence."
 )
-CONTRADICTION_VERIFICATION_REASON = (
-    "Potential contradiction detected: verified chunks contain unresolved "
-    "conflicting evidence."
+OVERLAPPING_CONTENT_REJECTION_REASON = (
+    "Overlapping verified content was removed in favor of a fuller source quote."
 )
 FINAL_VERIFICATION_OUTPUT_KEYS = (
     "verified_chunks",
@@ -47,29 +81,9 @@ FINAL_VERIFICATION_OUTPUT_KEYS = (
     "missing_information",
     "confidence",
 )
-NO_VERIFIED_CHUNKS_CONFIDENCE_CAP = 0.2
-CONTRADICTION_CONFIDENCE_CAP = 0.4
 COVERAGE_FAILURE_CONFIDENCE_CAP = 0.4
 CONTEXT_EXPANSION_CONFIDENCE_CAP = 0.65
-ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR = 0.5
 EVIDENCE_COVERAGE_RESPONSE_FORMAT = {"type": "json_object"}
-COVERAGE_RETRY_INSTRUCTION = """
-The previous response failed evidence coverage validation with category:
-{failure_type}.
-Return one corrected JSON object only.
-
-The fields must be internally consistent:
-- Split the question into every independently requested requirement.
-- Every requirement must say whether it is satisfied and list exact source
-  evidence or a non-empty missing_detail.
-- answers_question may be true only when every requirement is satisfied.
-- If selected_evidence is non-empty, answers_question must be true and
-  missing_information must be false.
-- If answers_question is false, missing_information must be true and
-  selected_evidence must be an empty list.
-
-Do not add evidence that is not an exact substring of the candidate content.
-""".strip()
 CORRECTABLE_COVERAGE_FAILURE_TYPES = frozenset(
     {
         "coverage_invalid_json",
@@ -78,15 +92,6 @@ CORRECTABLE_COVERAGE_FAILURE_TYPES = frozenset(
         "coverage_quote_validation_error",
     }
 )
-VERIFICATION_RETRY_INSTRUCTION = """
-The previous verification response failed validation with category:
-{failure_type}.
-Return one corrected JSON object only.
-
-Use only chunk_id and document_id values that appear in the compact evidence
-payload. Do not invent IDs, documents, quotes, or metadata. Keep quotes copied
-from candidate content, and keep the exact Agent 2 response schema.
-""".strip()
 CORRECTABLE_VERIFICATION_FAILURE_TYPES = frozenset(
     {
         "invalid_json",
@@ -96,38 +101,6 @@ CORRECTABLE_VERIFICATION_FAILURE_TYPES = frozenset(
 )
 _EXPLANATORY_QUESTION_PATTERN = re.compile(
     r"^\s*(?:why|how|v[iì]\s+sao|t[aạ]i\s+sao)\b",
-    re.IGNORECASE,
-)
-_SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<=[.!?])(?P<closing_quote>['\"]?)\s+")
-_ELLIPSIS_MARKER_PATTERN = re.compile(
-    r"\s*(?:\[\s*(?:\.{3}|\u2026)\s*\]|\.{3}|\u2026)\s*"
-)
-_QUOTE_TOKEN_PATTERN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?", re.IGNORECASE)
-_ORDERED_QUOTE_MIN_TOKENS = 6
-_ORDERED_QUOTE_MAX_EXTRA_TOKENS = 30
-_ORDERED_QUOTE_MAX_SPAN_TOKEN_MULTIPLIER = 4
-_ORDERED_QUOTE_MAX_SPAN_CHARS = 1200
-_MONTH_BY_NAME = {
-    "january": "01",
-    "february": "02",
-    "march": "03",
-    "april": "04",
-    "may": "05",
-    "june": "06",
-    "july": "07",
-    "august": "08",
-    "september": "09",
-    "october": "10",
-    "november": "11",
-    "december": "12",
-}
-_DATE_PATTERN = re.compile(
-    r"\b(?P<iso>\d{4}[-/]\d{1,2}[-/]\d{1,2})\b"
-    r"|\b(?P<numeric>\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b"
-    r"|\b(?P<month>"
-    r"january|february|march|april|may|june|july|august|september|october|"
-    r"november|december"
-    r")\s+(?P<day>\d{1,2}),?\s+(?P<year>\d{4})\b",
     re.IGNORECASE,
 )
 _NEGATION_PATTERN = re.compile(
@@ -150,43 +123,6 @@ class _VerificationAgentFailure(VerificationAgentError):
     def __init__(self, failure_type: str) -> None:
         self.failure_type = failure_type
         super().__init__(VERIFICATION_FAILURE_MESSAGE)
-
-
-def _build_compact_evidence_payload(
-    input_data: VerificationAgentInput,
-    candidates: list[RetrievalCandidate] | None = None,
-) -> dict[str, Any]:
-    payload_candidates = candidates if candidates is not None else input_data.candidates
-    return {
-        "question": input_data.question,
-        "evidence": [
-            {
-                "chunk_id": str(candidate.chunk_id),
-                "document_id": str(candidate.document_id),
-                "file_name": candidate.file_name,
-                "page_number": candidate.page_number,
-                "section_title": candidate.section_title,
-                "score": candidate.final_score,
-                "content": candidate.content,
-            }
-            for candidate in payload_candidates
-        ],
-    }
-
-
-def _compact_candidates_for_llm(
-    input_data: VerificationAgentInput,
-    *,
-    max_candidates: int,
-) -> list[RetrievalCandidate]:
-    settings = get_settings()
-    return optimize_candidates_for_verification(
-        question=input_data.question,
-        candidates=input_data.candidates,
-        max_candidates=max_candidates,
-        snippet_max_chars=settings.agent_evidence_snippet_max_chars,
-        context_sentences=settings.agent_evidence_snippet_context_sentences,
-    )
 
 
 def _log_llm_payload_diagnostics(
@@ -220,80 +156,38 @@ def _build_verification_messages(
     input_data: VerificationAgentInput,
 ) -> list[dict[str, str]]:
     settings = get_settings()
-    compact_candidates = _compact_candidates_for_llm(
+    return _service_build_verification_messages(
         input_data,
         max_candidates=settings.agent_verification_max_candidates,
+        snippet_max_chars=settings.agent_evidence_snippet_max_chars,
+        context_sentences=settings.agent_evidence_snippet_context_sentences,
     )
-    compact_payload = _build_compact_evidence_payload(
-        input_data,
-        compact_candidates,
-    )
-    return [
-        {
-            "role": "system",
-            "content": VERIFICATION_AGENT_SYSTEM_PROMPT,
-        },
-        {
-            "role": "user",
-            "content": (
-                "Verify the candidate evidence for this question using only the "
-                "compact JSON payload below.\n"
-                f"{json.dumps(compact_payload, ensure_ascii=False, indent=2)}"
-            ),
-        },
-    ]
 
 
 def _build_verification_retry_messages(
     input_data: VerificationAgentInput,
     failure_type: str,
 ) -> list[dict[str, str]]:
-    return [
-        *_build_verification_messages(input_data),
-        {
-            "role": "user",
-            "content": VERIFICATION_RETRY_INSTRUCTION.format(
-                failure_type=failure_type
-            ),
-        },
-    ]
+    settings = get_settings()
+    return _service_build_verification_retry_messages(
+        input_data,
+        failure_type=failure_type,
+        max_candidates=settings.agent_verification_max_candidates,
+        snippet_max_chars=settings.agent_evidence_snippet_max_chars,
+        context_sentences=settings.agent_evidence_snippet_context_sentences,
+    )
 
 
 def _build_coverage_messages(
     input_data: VerificationAgentInput,
 ) -> list[dict[str, str]]:
     settings = get_settings()
-    compact_candidates = _compact_candidates_for_llm(
+    return _service_build_coverage_messages(
         input_data,
         max_candidates=settings.agent_coverage_max_candidates,
+        snippet_max_chars=settings.agent_evidence_snippet_max_chars,
+        context_sentences=settings.agent_evidence_snippet_context_sentences,
     )
-    payload = {
-        "response_instruction": "Return only valid JSON.",
-        "question": input_data.question,
-        "candidates": [
-            {
-                "chunk_id": str(candidate.chunk_id),
-                "file_name": candidate.file_name,
-                "page_number": candidate.page_number,
-                "content": candidate.content,
-            }
-            for candidate in compact_candidates
-        ],
-    }
-    return [
-        {
-            "role": "system",
-            "content": EVIDENCE_COVERAGE_SYSTEM_PROMPT,
-        },
-        {
-            "role": "user",
-            "content": json.dumps(
-                payload,
-                ensure_ascii=False,
-                separators=(",", ":"),
-            ),
-        },
-    ]
 
 
 def _build_coverage_retry_messages(
@@ -301,19 +195,15 @@ def _build_coverage_retry_messages(
     invalid_response: str,
     failure_type: str,
 ) -> list[dict[str, str]]:
-    return [
-        *_build_coverage_messages(input_data),
-        {
-            "role": "assistant",
-            "content": invalid_response,
-        },
-        {
-            "role": "user",
-            "content": COVERAGE_RETRY_INSTRUCTION.format(
-                failure_type=failure_type
-            ),
-        },
-    ]
+    settings = get_settings()
+    return _service_build_coverage_retry_messages(
+        input_data,
+        invalid_response=invalid_response,
+        failure_type=failure_type,
+        max_candidates=settings.agent_coverage_max_candidates,
+        snippet_max_chars=settings.agent_evidence_snippet_max_chars,
+        context_sentences=settings.agent_evidence_snippet_context_sentences,
+    )
 
 
 def _parse_verification_output(response_content: str) -> VerificationAgentOutput:
@@ -758,320 +648,8 @@ def _validate_candidate_membership(
     return verification_output
 
 
-def _source_span_for_ellipsized_quote(
-    quote: str,
-    content: str | None,
-) -> str | None:
-    normalized_quote = _normalize_quote_text(quote)
-    if not _ELLIPSIS_MARKER_PATTERN.search(normalized_quote):
-        return None
-
-    fragments = [
-        fragment.strip()
-        for fragment in _ELLIPSIS_MARKER_PATTERN.split(normalized_quote)
-        if fragment.strip()
-    ]
-    if len(fragments) < 2:
-        return None
-
-    normalized_content = _normalize_quote_text(content or "")
-    span_start: int | None = None
-    span_end: int | None = None
-    search_start = 0
-    for fragment in fragments:
-        fragment_start = normalized_content.find(fragment, search_start)
-        if fragment_start < 0:
-            return None
-        if span_start is None:
-            span_start = fragment_start
-        span_end = fragment_start + len(fragment)
-        search_start = span_end
-
-    if span_start is None or span_end is None:
-        return None
-    return normalized_content[span_start:span_end].strip()
-
-
-def _source_span_for_token_sequence_quote(
-    quote: str,
-    content: str | None,
-) -> str | None:
-    normalized_quote = _normalize_quote_text(quote)
-    normalized_content = _normalize_quote_text(content or "")
-    quote_tokens = [
-        match.group(0).casefold()
-        for match in _QUOTE_TOKEN_PATTERN.finditer(normalized_quote)
-    ]
-    if len(quote_tokens) < 4:
-        return None
-
-    content_token_matches = list(_QUOTE_TOKEN_PATTERN.finditer(normalized_content))
-    content_tokens = [match.group(0).casefold() for match in content_token_matches]
-    matches: list[tuple[int, int]] = []
-    window_size = len(quote_tokens)
-    for start in range(0, len(content_tokens) - window_size + 1):
-        if content_tokens[start : start + window_size] == quote_tokens:
-            span_start = content_token_matches[start].start()
-            span_end = content_token_matches[start + window_size - 1].end()
-            matches.append((span_start, span_end))
-
-    if len(matches) != 1:
-        return None
-    span_start, span_end = matches[0]
-    return normalized_content[span_start:span_end].strip()
-
-
-def _source_span_for_ordered_token_quote(
-    quote: str,
-    content: str | None,
-) -> str | None:
-    normalized_quote = _normalize_quote_text(quote)
-    normalized_content = _normalize_quote_text(content or "")
-    quote_tokens = [
-        match.group(0).casefold()
-        for match in _QUOTE_TOKEN_PATTERN.finditer(normalized_quote)
-    ]
-    if len(quote_tokens) < _ORDERED_QUOTE_MIN_TOKENS:
-        return None
-
-    content_token_matches = list(_QUOTE_TOKEN_PATTERN.finditer(normalized_content))
-    content_tokens = [match.group(0).casefold() for match in content_token_matches]
-    max_span_tokens = max(
-        len(quote_tokens) + _ORDERED_QUOTE_MAX_EXTRA_TOKENS,
-        len(quote_tokens) * _ORDERED_QUOTE_MAX_SPAN_TOKEN_MULTIPLIER,
-    )
-    spans: list[tuple[int, int, int]] = []
-
-    for start_index, token in enumerate(content_tokens):
-        if token != quote_tokens[0]:
-            continue
-
-        quote_index = 1
-        end_index = start_index
-        for content_index in range(start_index + 1, len(content_tokens)):
-            if content_tokens[content_index] != quote_tokens[quote_index]:
-                continue
-            quote_index += 1
-            end_index = content_index
-            if quote_index == len(quote_tokens):
-                break
-
-        if quote_index != len(quote_tokens):
-            continue
-
-        span_token_count = end_index - start_index + 1
-        span_start = content_token_matches[start_index].start()
-        span_end = content_token_matches[end_index].end()
-        if span_token_count > max_span_tokens:
-            continue
-        if span_end - span_start > _ORDERED_QUOTE_MAX_SPAN_CHARS:
-            continue
-        spans.append((span_token_count, span_start, span_end))
-
-    if not spans:
-        return None
-
-    shortest_span_token_count = min(span[0] for span in spans)
-    shortest_spans = {
-        (span_start, span_end)
-        for span_token_count, span_start, span_end in spans
-        if span_token_count == shortest_span_token_count
-    }
-    if len(shortest_spans) != 1:
-        return None
-
-    span_start, span_end = next(iter(shortest_spans))
-    return normalized_content[span_start:span_end].strip()
-
-
-def _canonical_source_quote_for_candidate(
-    quote: str,
-    content: str | None,
-) -> str | None:
-    if _quote_matches_candidate_content(quote, content):
-        return quote
-
-    canonical_quote = _source_span_for_ellipsized_quote(quote, content)
-    if canonical_quote is not None:
-        return canonical_quote
-
-    canonical_quote = _source_span_for_token_sequence_quote(quote, content)
-    if canonical_quote is not None:
-        return canonical_quote
-
-    return _source_span_for_ordered_token_quote(quote, content)
-
-
-def _normalize_quote_text(value: str) -> str:
-    text = " ".join(value.split())
-    # Normalize curly double quotes, curly single quotes, and straight double quotes to straight single quotes
-    text = text.replace("“", "'").replace("”", "'").replace("„", "'").replace("‟", "'")
-    text = text.replace("‘", "'").replace("’", "'").replace("‚", "'").replace("‛", "'")
-    text = text.replace('"', "'")
-    return text
-
-
-def _quote_matches_candidate_content(quote: str, content: str | None) -> bool:
-    normalized_quote = _normalize_quote_text(quote).lower()
-    normalized_content = _normalize_quote_text(content or "").lower()
-    if not normalized_quote:
-        return False
-    if normalized_quote in normalized_content:
-        return True
-
-    quote_without_terminal_punctuation = re.sub(
-        r"[.,:;!?]+(?='?$)",
-        "",
-        normalized_quote,
-    )
-    return (
-        quote_without_terminal_punctuation != normalized_quote
-        and quote_without_terminal_punctuation in normalized_content
-    )
-
-
 def _question_needs_explanatory_context(question: str) -> bool:
     return bool(_EXPLANATORY_QUESTION_PATTERN.search(question))
-
-
-def _expanded_quote_with_surrounding_context(
-    quote: str,
-    content: str | None,
-) -> str | None:
-    normalized_quote = _normalize_quote_text(quote)
-    normalized_content = _normalize_quote_text(content or "")
-    if not normalized_quote or normalized_quote not in normalized_content:
-        return None
-
-    quote_start = normalized_content.find(normalized_quote)
-    quote_end = quote_start + len(normalized_quote)
-    sentence_spans = _sentence_spans(normalized_content)
-
-    overlapping_sentence_indexes = _overlapping_sentence_indexes(
-        sentence_spans,
-        quote_start,
-        quote_end,
-    )
-    if not overlapping_sentence_indexes:
-        return None
-
-    start_index = max(0, overlapping_sentence_indexes[0] - 1)
-    end_index = overlapping_sentence_indexes[-1] + 1
-    expanded_quote = _normalize_quote_text(
-        " ".join(
-            sentence
-            for _sentence_start, _sentence_end, sentence in sentence_spans[
-                start_index:end_index
-            ]
-        )
-    )
-    if expanded_quote == normalized_quote:
-        return None
-    return expanded_quote
-
-
-def _expanded_quotes_with_surrounding_context(
-    quote: str,
-    content: str | None,
-) -> list[str] | None:
-    normalized_quote = _normalize_quote_text(quote)
-    normalized_content = _normalize_quote_text(content or "")
-    if not normalized_quote or normalized_quote not in normalized_content:
-        return None
-
-    quote_start = normalized_content.find(normalized_quote)
-    quote_end = quote_start + len(normalized_quote)
-    sentence_spans = _sentence_spans(normalized_content)
-    overlapping_sentence_indexes = _overlapping_sentence_indexes(
-        sentence_spans,
-        quote_start,
-        quote_end,
-    )
-    if not overlapping_sentence_indexes:
-        return None
-
-    quotes: list[str] = []
-    previous_index = overlapping_sentence_indexes[0] - 1
-    if previous_index >= 0:
-        context_quote = _trim_preceding_context_sentence(
-            sentence_spans[previous_index][2]
-        )
-        if (
-            context_quote
-            and context_quote != normalized_quote
-            and context_quote in normalized_content
-        ):
-            quotes.append(context_quote)
-
-    if normalized_quote not in {_normalize_quote_text(value) for value in quotes}:
-        quotes.append(normalized_quote)
-
-    if len(quotes) <= 1:
-        return None
-    return quotes
-
-
-def _sentence_spans(
-    normalized_content: str,
-) -> list[tuple[int, int, str]]:
-    sentence_spans: list[tuple[int, int, str]] = []
-    sentence_start = 0
-    for boundary in _SENTENCE_BOUNDARY_PATTERN.finditer(normalized_content):
-        sentence_end = boundary.start() + len(boundary.group("closing_quote"))
-        raw_sentence = normalized_content[sentence_start:sentence_end]
-        sentence = raw_sentence.strip()
-        if sentence:
-            leading_trim = len(raw_sentence) - len(raw_sentence.lstrip())
-            trailing_trim = len(raw_sentence) - len(raw_sentence.rstrip())
-            sentence_spans.append(
-                (
-                    sentence_start + leading_trim,
-                    sentence_end - trailing_trim,
-                    sentence,
-                )
-            )
-        sentence_start = boundary.end()
-
-    raw_sentence = normalized_content[sentence_start:]
-    sentence = raw_sentence.strip()
-    if sentence:
-        leading_trim = len(raw_sentence) - len(raw_sentence.lstrip())
-        trailing_trim = len(raw_sentence) - len(raw_sentence.rstrip())
-        sentence_spans.append(
-            (
-                sentence_start + leading_trim,
-                len(normalized_content) - trailing_trim,
-                sentence,
-            )
-        )
-
-    return sentence_spans
-
-
-def _overlapping_sentence_indexes(
-    sentence_spans: list[tuple[int, int, str]],
-    quote_start: int,
-    quote_end: int,
-) -> list[int]:
-    return [
-        index
-        for index, (sentence_start, sentence_end, _sentence) in enumerate(
-            sentence_spans
-        )
-        if sentence_start < quote_end and quote_start < sentence_end
-    ]
-
-
-def _trim_preceding_context_sentence(sentence: str) -> str:
-    leading_clause, separator, _remaining = sentence.partition(";")
-    if separator and len(leading_clause.split()) >= 6:
-        return f"{leading_clause.strip()};"
-    return sentence
-
-
-def _candidate_source_excerpt(content: str | None) -> str | None:
-    excerpt = (content or "").strip()
-    return excerpt or None
 
 
 def _canonicalize_verified_chunk_quote(
@@ -1209,6 +787,37 @@ def _filter_duplicate_verified_chunks(
         quote_key = _normalize_quote_text(verified_chunk.quote)
         evidence_key = (verified_chunk.chunk_id, quote_key)
 
+        overlapping_index = _overlapping_verified_chunk_index(
+            verified_chunks,
+            verified_chunk,
+        )
+        if overlapping_index is not None:
+            existing_chunk = verified_chunks[overlapping_index]
+            existing_quote_key = _coverage_quote_dedup_text(existing_chunk.quote)
+            current_quote_key = _coverage_quote_dedup_text(verified_chunk.quote)
+            if len(current_quote_key) > len(existing_quote_key):
+                rejected_chunks.append(
+                    _duplicate_rejection_from_verified(
+                        existing_chunk,
+                        OVERLAPPING_CONTENT_REJECTION_REASON,
+                    )
+                )
+                verified_chunks[overlapping_index] = verified_chunk
+                seen_evidence_keys.discard(
+                    (existing_chunk.chunk_id, _normalize_quote_text(existing_chunk.quote))
+                )
+                seen_quote_keys.discard(_normalize_quote_text(existing_chunk.quote))
+                seen_evidence_keys.add(evidence_key)
+                seen_quote_keys.add(quote_key)
+            else:
+                rejected_chunks.append(
+                    _duplicate_rejection_from_verified(
+                        verified_chunk,
+                        OVERLAPPING_CONTENT_REJECTION_REASON,
+                    )
+                )
+            continue
+
         if evidence_key in seen_evidence_keys:
             rejected_chunks.append(
                 _duplicate_rejection_from_verified(
@@ -1238,6 +847,25 @@ def _filter_duplicate_verified_chunks(
             "rejected_chunks": rejected_chunks,
         }
     )
+
+
+def _overlapping_verified_chunk_index(
+    verified_chunks: list[VerifiedChunk],
+    candidate_chunk: VerifiedChunk,
+) -> int | None:
+    candidate_quote_key = _coverage_quote_dedup_text(candidate_chunk.quote).casefold()
+    if not candidate_quote_key:
+        return None
+    for index, verified_chunk in enumerate(verified_chunks):
+        if verified_chunk.chunk_id != candidate_chunk.chunk_id:
+            continue
+        verified_quote_key = _coverage_quote_dedup_text(verified_chunk.quote).casefold()
+        if (
+            candidate_quote_key in verified_quote_key
+            or verified_quote_key in candidate_quote_key
+        ):
+            return index
+    return None
 
 
 def _apply_coverage_review(
@@ -1384,126 +1012,6 @@ def _expand_verified_context_for_explanatory_question(
     )
 
 
-def _normalize_date_match(match: re.Match[str]) -> str:
-    if match.group("iso"):
-        year, month, day = re.split(r"[-/]", match.group("iso"))
-        return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
-
-    if match.group("numeric"):
-        first, second, third = re.split(r"[-/]", match.group("numeric"))
-        if len(third) == 2:
-            third = f"20{third}"
-        return f"{int(third):04d}-{int(second):02d}-{int(first):02d}"
-
-    month = _MONTH_BY_NAME[match.group("month").lower()]
-    return f"{int(match.group('year')):04d}-{month}-{int(match.group('day')):02d}"
-
-
-def _date_conflict_key(text: str) -> tuple[str, tuple[str, ...]] | None:
-    dates = tuple(_normalize_date_match(match) for match in _DATE_PATTERN.finditer(text))
-    if not dates:
-        return None
-
-    without_dates = _DATE_PATTERN.sub(" <date> ", text.lower())
-    key = _normalize_quote_text(re.sub(r"[^a-z0-9<>\s]", " ", without_dates))
-    return key, dates
-
-
-def _has_clear_date_conflict(verified_chunks: list[VerifiedChunk]) -> bool:
-    dates_by_statement_key: dict[str, tuple[str, ...]] = {}
-
-    for verified_chunk in verified_chunks:
-        conflict_key = _date_conflict_key(verified_chunk.quote)
-        if conflict_key is None:
-            continue
-
-        statement_key, dates = conflict_key
-        existing_dates = dates_by_statement_key.get(statement_key)
-        if existing_dates is not None and existing_dates != dates:
-            return True
-        dates_by_statement_key[statement_key] = dates
-
-    return False
-
-
-def _claim_conflict_key(text: str) -> tuple[str, bool] | None:
-    normalized_text = _normalize_quote_text(text.lower())
-    if len(normalized_text) > 180:
-        return None
-
-    has_negation = bool(_NEGATION_PATTERN.search(normalized_text))
-    without_negation = _NEGATION_PATTERN.sub(" ", normalized_text)
-    without_helper_verbs = _CLAIM_HELPER_VERB_PATTERN.sub(" ", without_negation)
-    key = _normalize_quote_text(re.sub(r"[^a-z0-9\s]", " ", without_helper_verbs))
-    return (key, has_negation) if key else None
-
-
-def _has_clear_short_claim_conflict(verified_chunks: list[VerifiedChunk]) -> bool:
-    polarity_by_claim_key: dict[str, bool] = {}
-
-    for verified_chunk in verified_chunks:
-        conflict_key = _claim_conflict_key(verified_chunk.quote)
-        if conflict_key is None:
-            continue
-
-        claim_key, has_negation = conflict_key
-        existing_negation = polarity_by_claim_key.get(claim_key)
-        if existing_negation is not None and existing_negation != has_negation:
-            return True
-        polarity_by_claim_key[claim_key] = has_negation
-
-    return False
-
-
-def _append_contradiction_reason(verified_chunk: VerifiedChunk) -> VerifiedChunk:
-    if "contradict" in verified_chunk.verification_reason.lower():
-        return verified_chunk
-
-    return verified_chunk.model_copy(
-        update={
-            "verification_reason": (
-                f"{verified_chunk.verification_reason} "
-                f"{CONTRADICTION_VERIFICATION_REASON}"
-            )
-        }
-    )
-
-
-def _apply_missing_information_adjustments(
-    verification_output: VerificationAgentOutput,
-) -> VerificationAgentOutput:
-    if not verification_output.verified_chunks:
-        return verification_output.model_copy(
-            update={
-                "missing_information": True,
-                "confidence": min(
-                    verification_output.confidence,
-                    NO_VERIFIED_CHUNKS_CONFIDENCE_CAP,
-                ),
-            }
-        )
-
-    has_conflict = _has_clear_date_conflict(
-        verification_output.verified_chunks
-    ) or _has_clear_short_claim_conflict(verification_output.verified_chunks)
-    if not has_conflict:
-        return verification_output
-
-    return verification_output.model_copy(
-        update={
-            "verified_chunks": [
-                _append_contradiction_reason(chunk)
-                for chunk in verification_output.verified_chunks
-            ],
-            "missing_information": True,
-            "confidence": min(
-                verification_output.confidence,
-                CONTRADICTION_CONFIDENCE_CAP,
-            ),
-        }
-    )
-
-
 def _finalize_verification_output(
     verification_output: VerificationAgentOutput | Mapping[str, Any],
 ) -> VerificationAgentOutput:
@@ -1522,15 +1030,6 @@ def _finalize_verification_output(
         logger.warning("Verification post-processing returned invalid output schema.")
         raise _VerificationAgentFailure("post_processing_validation_error") from exc
 
-    if (
-        validated_output.verified_chunks
-        and not validated_output.missing_information
-        and validated_output.confidence < ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR
-    ):
-        return validated_output.model_copy(
-            update={"confidence": ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR}
-        )
-
     return validated_output
 
 
@@ -1542,7 +1041,7 @@ def _log_successful_verification(
         agent_run_id=str(validated_input.agent_run_id),
         step_name=AGENT_2_VERIFICATION_STEP_NAME,
         agent_name=VERIFICATION_AGENT_NAME,
-        input_payload=validated_input,
+        input_payload=build_verification_log_input(validated_input),
         output_payload=validated_output,
         status="success",
     )
@@ -1552,23 +1051,14 @@ def _log_successful_verification(
 def _safe_failed_verification_input(
     validated_input: VerificationAgentInput,
 ) -> dict[str, Any]:
-    return {
-        "agent_run_id": str(validated_input.agent_run_id),
-        "question": validated_input.question,
-        "candidate_count": len(validated_input.candidates),
-        "candidate_chunk_ids": [
-            str(candidate.chunk_id) for candidate in validated_input.candidates
-        ],
-    }
+    return build_safe_failed_verification_input(validated_input)
 
 
 def _safe_failed_verification_output(failure_type: str) -> dict[str, Any]:
-    return {
-        "error": {
-            "type": failure_type,
-            "message": VERIFICATION_FAILURE_MESSAGE,
-        }
-    }
+    return build_safe_failed_verification_output(
+        failure_type=failure_type,
+        failure_message=VERIFICATION_FAILURE_MESSAGE,
+    )
 
 
 def _log_failed_verification(
@@ -1665,7 +1155,7 @@ __all__ = [
     "AGENT_2_VERIFICATION_STEP_NAME",
     "VERIFICATION_AGENT_NAME",
     "VERIFICATION_FAILURE_MESSAGE",
-    "ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR",
+    "VERIFICATION_LOG_CONTENT_PREVIEW_CHARS",
     "VerificationAgentError",
     "run_verification_agent",
 ]

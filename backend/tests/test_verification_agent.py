@@ -801,7 +801,7 @@ def test_verification_agent_logs_success_for_empty_candidates(
     assert log_call["step_name"] == verification_agent.AGENT_2_VERIFICATION_STEP_NAME
     assert log_call["agent_name"] == verification_agent.VERIFICATION_AGENT_NAME
     assert log_call["status"] == "success"
-    assert log_call["input_payload"].model_dump(mode="json") == {
+    assert log_call["input_payload"] == {
         "agent_run_id": AGENT_RUN_ID,
         "question": "When can I start?",
         "candidates": [],
@@ -855,14 +855,24 @@ def test_verification_agent_calls_shopaikey_with_compact_evidence_payload(
     assert "When does probation start?" in user_payload
     assert CANDIDATE_CHUNK_ID in user_payload
     assert CANDIDATE_DOCUMENT_ID in user_payload
-    assert f'"document_id": "{CANDIDATE_DOCUMENT_ID}"' in user_payload
     assert "contract.pdf" in user_payload
-    assert '"page_number": 3' in user_payload
-    assert '"section_title": "Probation"' in user_payload
-    assert '"score": 0.91' in user_payload
     assert "Probation starts on June 1, 2026 and lasts two months." in user_payload
     assert "semantic_similarity" not in user_payload
     assert "retrieval_reason" not in user_payload
+    assert '\n  "question"' not in user_payload
+    compact_payload = json.loads(user_payload.splitlines()[-1])
+    assert compact_payload["question"] == "When does probation start?"
+    assert compact_payload["evidence"][0] == {
+        "chunk_id": CANDIDATE_CHUNK_ID,
+        "document_id": CANDIDATE_DOCUMENT_ID,
+        "file_name": "contract.pdf",
+        "page_number": 3,
+        "section_title": "Probation",
+        "score": 0.91,
+        "content": (
+            "Probation starts on June 1, 2026 and lasts two months."
+        ),
+    }
 
 
 def test_verification_agent_returns_validated_llm_json(
@@ -1066,12 +1076,38 @@ def test_verification_agent_logs_success_with_final_verification_result(
     assert log_call["step_name"] == verification_agent.AGENT_2_VERIFICATION_STEP_NAME
     assert log_call["agent_name"] == verification_agent.VERIFICATION_AGENT_NAME
     assert log_call["status"] == "success"
-    assert log_call["input_payload"].model_dump(mode="json") == {
+    assert log_call["input_payload"] == {
         "agent_run_id": AGENT_RUN_ID,
         "question": "When does probation start?",
         "candidates": [
-            _candidate_payload(),
-            _second_candidate_payload(),
+            {
+                **{
+                    key: value
+                    for key, value in _candidate_payload().items()
+                    if key != "content"
+                },
+                "content_preview": (
+                    "Probation starts on June 1, 2026 and lasts two months."
+                ),
+                "content_char_count": len(
+                    "Probation starts on June 1, 2026 and lasts two months."
+                ),
+                "content_omitted": False,
+            },
+            {
+                **{
+                    key: value
+                    for key, value in _second_candidate_payload().items()
+                    if key != "content"
+                },
+                "content_preview": (
+                    "Probation starts on June 1, 2026 and lasts two months."
+                ),
+                "content_char_count": len(
+                    "Probation starts on June 1, 2026 and lasts two months."
+                ),
+                "content_omitted": False,
+            },
         ],
     }
     assert log_call["output_payload"].model_dump(mode="json") == {
@@ -1100,6 +1136,72 @@ def test_verification_agent_logs_success_with_final_verification_result(
         "missing_information": False,
         "confidence": 0.82,
     }
+
+
+def test_verification_agent_logs_compact_candidate_input_without_mutating_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    log_agent_step = Mock(return_value={"id": "step-id"})
+    monkeypatch.setattr(
+        agent_log_service,
+        "log_agent_step",
+        log_agent_step,
+    )
+    long_content = (
+        "Probation starts on June 1, 2026 and lasts two months. "
+        + "Additional source detail. " * 120
+    )
+
+    def fake_chat_completion(messages, response_format=None):
+        return json.dumps(
+            {
+                "verified_chunks": [
+                    {
+                        "chunk_id": CANDIDATE_CHUNK_ID,
+                        "document_id": CANDIDATE_DOCUMENT_ID,
+                        "file_name": "contract.pdf",
+                        "quote": "Probation starts on June 1, 2026 and lasts two months.",
+                        "page_number": 3,
+                        "verification_reason": "This chunk states the probation start and duration.",
+                        "supports_simple_reasoning": True,
+                    }
+                ],
+                "rejected_chunks": [],
+                "missing_information": False,
+                "confidence": 0.82,
+            }
+        )
+
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload(content=long_content)],
+        }
+    )
+
+    assert output.verified_chunks[0].quote == (
+        "Probation starts on June 1, 2026 and lasts two months."
+    )
+    log_agent_step.assert_called_once()
+    log_input = log_agent_step.call_args.kwargs["input_payload"]
+    assert log_input["agent_run_id"] == AGENT_RUN_ID
+    assert log_input["question"] == "When does probation start?"
+    assert len(log_input["candidates"]) == 1
+    logged_candidate = log_input["candidates"][0]
+    assert "content" not in logged_candidate
+    assert logged_candidate["content_preview"] == long_content[:500]
+    assert logged_candidate["content_char_count"] == len(long_content)
+    assert logged_candidate["content_omitted"] is True
+    assert logged_candidate["chunk_id"] == CANDIDATE_CHUNK_ID
+    assert logged_candidate["final_score"] == 0.91
+    assert long_content not in str(log_input)
 
 
 def test_verification_agent_warns_when_success_log_insert_fails(
@@ -1621,9 +1723,7 @@ def test_verification_agent_accepts_quote_with_whitespace_variation(
     )
 
     assert len(output.verified_chunks) == 1
-    assert output.verified_chunks[0].quote == (
-        "Probation starts on June 1, 2026\n   and lasts two months."
-    )
+    assert output.verified_chunks[0].quote == _candidate_payload()["content"]
     assert output.rejected_chunks == []
 
 
@@ -2382,7 +2482,7 @@ def test_verification_agent_accepts_complete_multi_part_cross_chunk_coverage(
     ]
 
 
-def test_verification_agent_floors_confidence_for_answerable_verified_evidence(
+def test_verification_agent_preserves_low_confidence_for_answerable_verified_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     candidate = _candidate_payload()
@@ -2438,7 +2538,7 @@ def test_verification_agent_floors_confidence_for_answerable_verified_evidence(
 
     assert output.missing_information is False
     assert output.verified_chunks
-    assert output.confidence == verification_agent.ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR
+    assert output.confidence == 0.0
 
 
 def test_verification_agent_reassigns_coverage_selection_to_unique_matching_chunk(
@@ -3556,7 +3656,7 @@ def test_verification_agent_accepts_coverage_quote_with_terminal_punctuation_var
     )
 
     assert output.missing_information is False
-    assert [chunk.quote for chunk in output.verified_chunks] == [coverage_quote]
+    assert [chunk.quote for chunk in output.verified_chunks] == [source_quote]
 
 
 def test_verification_agent_keeps_two_distinct_coverage_quotes_from_same_chunk(
@@ -3611,6 +3711,59 @@ def test_verification_agent_keeps_two_distinct_coverage_quotes_from_same_chunk(
     ]
 
 
+def test_verification_agent_removes_overlapping_same_chunk_coverage_quotes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    full_quote = (
+        "The refund period lasts 30 days after purchase and customers must "
+        "provide the original receipt."
+    )
+    subquote = "The refund period lasts 30 days after purchase"
+    candidate["content"] = full_quote
+    initial_verification = {
+        "verified_chunks": [],
+        "rejected_chunks": [],
+        "missing_information": True,
+        "confidence": 0.5,
+    }
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "selected_evidence": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": subquote,
+                "purpose": "States the refund period.",
+                "supports_simple_reasoning": False,
+            },
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": full_quote,
+                "purpose": "States the refund period and required proof.",
+                "supports_simple_reasoning": False,
+            },
+        ],
+        "confidence": 0.5,
+    }
+    _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "What is the refund period and what proof is required?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert [chunk.quote for chunk in output.verified_chunks] == [full_quote]
+    assert [chunk.quote for chunk in output.rejected_chunks] == [subquote]
+
+
 def test_verification_agent_accepts_quote_with_quote_style_variations(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -3651,7 +3804,7 @@ def test_verification_agent_accepts_quote_with_quote_style_variations(
     )
 
     assert len(output.verified_chunks) == 1
-    assert output.verified_chunks[0].quote == llm_quote
+    assert output.verified_chunks[0].quote == candidate["content"]
     assert len(output.rejected_chunks) == 0
 
 
@@ -3695,5 +3848,5 @@ def test_verification_agent_accepts_quote_with_case_variations(
     )
 
     assert len(output.verified_chunks) == 1
-    assert output.verified_chunks[0].quote == llm_quote
+    assert output.verified_chunks[0].quote == candidate["content"]
     assert len(output.rejected_chunks) == 0

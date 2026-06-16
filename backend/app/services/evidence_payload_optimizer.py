@@ -7,6 +7,58 @@ from app.agents.schemas import RetrievalCandidate
 
 _WORD_PATTERN = re.compile(r"[\w']+", re.UNICODE)
 _SENTENCE_BOUNDARY_PATTERN = re.compile("(?<=[.!?\u3002\uff01\uff1f])\\s+")
+_DATE_OR_DURATION_PATTERN = re.compile(
+    r"\b(?:"
+    r"\d{1,4}[-/]\d{1,2}(?:[-/]\d{1,4})?"
+    r"|(?:january|february|march|april|may|june|july|august|september|"
+    r"october|november|december)\s+\d{1,2},?\s+\d{4}"
+    r"|\d+\s+(?:day|days|week|weeks|month|months|year|years)"
+    r"|\d+\s+(?:ngay|ngày|tuan|tuần|thang|tháng|nam|năm)"
+    r")\b",
+    re.IGNORECASE,
+)
+_TEMPORAL_QUESTION_TERMS = frozenset(
+    {
+        "when",
+        "date",
+        "day",
+        "month",
+        "year",
+        "start",
+        "starts",
+        "started",
+        "begin",
+        "begins",
+        "began",
+        "duration",
+        "period",
+        "official",
+        "bao",
+        "gio",
+        "ngay",
+        "ngày",
+        "thang",
+        "tháng",
+        "nam",
+        "năm",
+        "bat",
+        "bắt",
+        "dau",
+        "đầu",
+        "thoi",
+        "thời",
+        "gian",
+        "thu",
+        "thử",
+        "viec",
+        "việc",
+        "chinh",
+        "chính",
+        "thuc",
+        "thức",
+        "giờ",
+    }
+)
 
 
 def optimize_candidates_for_verification(
@@ -134,10 +186,15 @@ def _content_terms(value: str | None) -> set[str]:
 
 
 def _sentence_score(sentence: str, question_terms: set[str]) -> int:
+    signal_score = 0
+    if question_terms & _TEMPORAL_QUESTION_TERMS and _DATE_OR_DURATION_PATTERN.search(
+        sentence
+    ):
+        signal_score += 4
     if not question_terms:
-        return 0
+        return signal_score
     sentence_terms = _content_terms(sentence)
-    return len(sentence_terms & question_terms)
+    return len(sentence_terms & question_terms) + signal_score
 
 
 def _sentence_spans(content: str) -> list[tuple[int, int]]:

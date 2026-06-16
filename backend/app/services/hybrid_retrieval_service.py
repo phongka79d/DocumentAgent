@@ -359,10 +359,15 @@ def _aligned_graph_relevance(
         return 0.0
 
     # Graph paths are expansion signals, not proof that a chunk answers the
-    # question. Keep a floor so graph-only discovery still contributes, but
-    # damp broad entity paths when the candidate text lacks question terms.
-    text_alignment = max(clamp_score(keyword_overlap), 0.25)
+    # question. Require either text overlap or a matched entity that overlaps
+    # the question before graph relevance contributes to ranking.
+    text_alignment = clamp_score(keyword_overlap)
     entity_specificity = _matched_entity_specificity(candidate, question)
+    if text_alignment <= 0.0 and entity_specificity <= 0.0:
+        return 0.0
+    if entity_specificity <= 0.0:
+        entity_specificity = 1.0
+    text_alignment = max(text_alignment, 0.25)
     return clamp_score(graph_relevance * text_alignment * entity_specificity)
 
 
@@ -373,14 +378,17 @@ def _matched_entity_specificity(
     metadata = candidate.metadata if isinstance(candidate.metadata, dict) else {}
     matched_entity = metadata.get("matched_entity_name")
     if not isinstance(matched_entity, str) or not matched_entity.strip():
-        return 1.0
+        return 0.0
 
     question_terms = set(_reason_tokens(question))
     entity_terms = set(_reason_tokens(matched_entity))
     if not question_terms or not entity_terms:
-        return 1.0
+        return 0.0
 
-    return max(0.25, min(1.0, len(entity_terms & question_terms) / len(question_terms)))
+    overlap_ratio = len(entity_terms & question_terms) / len(question_terms)
+    if overlap_ratio <= 0.0:
+        return 0.0
+    return max(0.25, min(1.0, overlap_ratio))
 
 
 def _candidate_from_semantic(candidate: RetrievalResult) -> HybridRetrievalCandidate:

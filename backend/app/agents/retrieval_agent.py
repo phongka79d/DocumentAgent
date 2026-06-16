@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 AGENT_1_RETRIEVAL_STEP_NAME = "agent_1_retrieval"
 RETRIEVAL_AGENT_NAME = "retrieval_agent"
 RETRIEVAL_FAILURE_MESSAGE = "Retrieval failed. Please try again later."
+RETRIEVAL_LOG_CONTENT_PREVIEW_CHARS = 500
 
 
 class RetrievalAgentError(RuntimeError):
@@ -60,7 +61,7 @@ def run_retrieval_agent(
         step_name=AGENT_1_RETRIEVAL_STEP_NAME,
         agent_name=RETRIEVAL_AGENT_NAME,
         input_payload=validated_input,
-        output_payload=validated_output,
+        output_payload=_build_retrieval_log_output(validated_output),
         status="success",
     )
 
@@ -92,10 +93,31 @@ def _to_agent_candidate(candidate: HybridRetrievalCandidate) -> RetrievalCandida
     )
 
 
+def _build_retrieval_log_output(
+    output: RetrievalAgentOutput,
+) -> dict[str, Any]:
+    return {
+        "question": output.question,
+        "candidates": [
+            _candidate_log_payload(candidate) for candidate in output.candidates
+        ],
+    }
+
+
+def _candidate_log_payload(candidate: RetrievalCandidate) -> dict[str, Any]:
+    payload = candidate.model_dump(mode="json", exclude={"content"})
+    content = candidate.content or ""
+    payload["content_preview"] = content[:RETRIEVAL_LOG_CONTENT_PREVIEW_CHARS] or None
+    payload["content_char_count"] = len(content)
+    payload["content_omitted"] = len(content) > RETRIEVAL_LOG_CONTENT_PREVIEW_CHARS
+    return payload
+
+
 __all__ = [
     "AGENT_1_RETRIEVAL_STEP_NAME",
     "RETRIEVAL_AGENT_NAME",
     "RETRIEVAL_FAILURE_MESSAGE",
+    "RETRIEVAL_LOG_CONTENT_PREVIEW_CHARS",
     "RetrievalAgentError",
     "run_retrieval_agent",
 ]

@@ -60,7 +60,10 @@ DOCUMENT_ID = "44444444-4444-4444-4444-444444444444"
 VERIFIED_QUOTE = "The probation period starts on 01/06/2026 and lasts 2 months."
 REJECTED_QUOTE = "The probation period starts on 01/05/2026 and lasts 3 months."
 EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER = (
-    "Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời."
+    "Tài liệu hiện tại chưa cung cấp đủ thông tin để xác định câu trả lời.\n\n"
+    "Thông tin còn thiếu:\n"
+    "- Bằng chứng đã được xác minh trực tiếp trả lời câu hỏi.\n"
+    "- Ngữ cảnh, ngày tháng, điều kiện hoặc dữ kiện cần thiết để suy luận."
 )
 
 
@@ -369,8 +372,18 @@ def test_run_answer_agent_logs_successful_answer_and_self_check(
     assert log_kwargs["agent_name"] == answer_agent_module.ANSWER_AGENT_NAME
     assert log_kwargs["status"] == "success"
     assert log_kwargs["error_message"] is None
-    assert log_kwargs["input_payload"]["question"] == "When can I start official work?"
-    assert "verified_chunks" in log_kwargs["input_payload"]["verification"]
+    assert log_kwargs["input_payload"] == {
+        "agent_run_id": _answer_input_payload()["agent_run_id"],
+        "question": "When can I start official work?",
+        "missing_information": False,
+        "verification_confidence": 0.82,
+        "verified_chunk_count": 1,
+        "rejected_chunk_count": 1,
+        "verified_chunk_ids": [VERIFIED_CHUNK_ID],
+        "rejected_chunk_ids": [REJECTED_CHUNK_ID],
+    }
+    assert VERIFIED_QUOTE not in str(log_kwargs["input_payload"])
+    assert REJECTED_QUOTE not in str(log_kwargs["input_payload"])
     assert log_kwargs["output_payload"]["draft_answer"]["final_answer"] == (
         _draft_answer_payload()["final_answer"]
     )
@@ -815,7 +828,7 @@ def test_run_answer_agent_executes_self_check_for_grounded_draft_without_provide
     assert chat_completion.call_count == 2
 
 
-def test_run_answer_agent_uses_verification_confidence_for_ready_answer(
+def test_run_answer_agent_preserves_lower_draft_confidence_for_ready_answer(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     chat_completion = Mock(
@@ -832,7 +845,7 @@ def test_run_answer_agent_uses_verification_confidence_for_ready_answer(
 
     output = run_answer_agent(_answer_input_payload())
 
-    assert output.confidence == 0.82
+    assert output.confidence == 0.0
 
 
 def test_answer_generation_payload_diagnostics_log_safe_metadata_only(
@@ -1598,12 +1611,7 @@ def test_answer_grounding_payload_excludes_verifier_authored_metadata() -> None:
             "page_number": 3,
         }
     ]
-    assert payload["rejected_chunks"] == [
-        {
-            "file_name": "draft.pdf",
-            "quote": REJECTED_QUOTE,
-        }
-    ]
+    assert payload["rejected_chunks"] == []
 
 
 def test_run_answer_agent_sends_verified_evidence_only_to_provider(
@@ -2368,6 +2376,19 @@ def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_mis
     assert log_call["error_message"] is None
     assert log_call["output_payload"]["fallback_reason"] == "insufficient_evidence"
     assert log_call["output_payload"]["confidence"] == 0.0
+
+
+def test_insufficient_evidence_answer_explains_missing_information() -> None:
+    payload = _answer_input_payload()
+    payload["verification"] = _verification_output(
+        missing_information=True
+    ).model_dump(mode="json")
+
+    output = run_answer_agent(payload)
+
+    assert EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER in output.final_answer
+    assert "Thông tin còn thiếu:" in output.final_answer
+    assert "bằng chứng đã được xác minh" in output.final_answer.lower()
 
 
 def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_empty_verified_chunks(
