@@ -1245,6 +1245,69 @@ def test_verification_agent_rejects_unknown_returned_chunk_ids(
     assert "Probation starts on June 1, 2026" not in str(log_call)
 
 
+def test_verification_agent_retries_unknown_returned_chunk_id_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    unknown_chunk_id = "55555555-5555-5555-5555-555555555555"
+    invalid_response = {
+        "verified_chunks": [
+            {
+                "chunk_id": unknown_chunk_id,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Probation starts on June 1, 2026 and lasts two months.",
+                "page_number": 3,
+                "verification_reason": "States the requested date.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.5,
+    }
+    corrected_response = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Probation starts on June 1, 2026 and lasts two months.",
+                "page_number": 3,
+                "verification_reason": "States the requested date.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.8,
+    }
+    chat_completion = Mock(
+        side_effect=[json.dumps(invalid_response), json.dumps(corrected_response)]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "When does probation start?",
+            "candidates": [_candidate_payload()],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [str(chunk.chunk_id) for chunk in output.verified_chunks] == [
+        CANDIDATE_CHUNK_ID
+    ]
+    assert chat_completion.call_count == 2
+    retry_messages = chat_completion.call_args_list[1].args[0]
+    assert "unknown_chunk_id" in retry_messages[-1]["content"]
+    assert unknown_chunk_id not in retry_messages[-1]["content"]
+
+
 def test_verification_agent_keeps_verified_quote_found_in_candidate_content(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2073,6 +2136,624 @@ def test_verification_agent_accepts_complete_multi_part_cross_chunk_coverage(
     assert output.confidence == 0.9
     assert [chunk.quote for chunk in output.verified_chunks] == [
         selection["quote"] for selection in selected_evidence
+    ]
+
+
+def test_verification_agent_reassigns_coverage_selection_to_unique_matching_chunk(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = "The activity began in a marked circle."
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = "Each participant received a token."
+    first_selection = _coverage_selection(
+        quote="The activity began in a marked circle.",
+        purpose="States how the activity began.",
+    )
+    wrong_chunk_selection = _coverage_selection(
+        chunk_id=CANDIDATE_CHUNK_ID,
+        quote="Each participant received a token.",
+        purpose="States the participant prize.",
+    )
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Explain how the activity began.",
+                "satisfied": True,
+                "evidence": [first_selection],
+                "missing_detail": None,
+            },
+            {
+                "requirement": "State what participants received.",
+                "satisfied": True,
+                "evidence": [wrong_chunk_selection],
+                "missing_detail": None,
+            },
+        ],
+        "selected_evidence": [first_selection, wrong_chunk_selection],
+        "confidence": 0.9,
+    }
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(
+                {
+                    "verified_chunks": [],
+                    "rejected_chunks": [],
+                    "missing_information": True,
+                    "confidence": 0.9,
+                }
+            ),
+            json.dumps(_with_coverage_requirements(coverage_review)),
+            json.dumps(_with_coverage_requirements(coverage_review)),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "How did the activity begin, and what did participants receive?",
+            "candidates": [first_candidate, second_candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [(chunk.chunk_id.hex, chunk.quote) for chunk in output.verified_chunks] == [
+        (
+            CANDIDATE_CHUNK_ID.replace("-", ""),
+            "The activity began in a marked circle.",
+        ),
+        (
+            SECOND_CANDIDATE_CHUNK_ID.replace("-", ""),
+            "Each participant received a token.",
+        ),
+    ]
+    assert chat_completion.call_count == 2
+
+
+def test_verification_agent_ignores_redundant_non_selected_requirement_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = "The activity began in a marked circle."
+    valid_selection = _coverage_selection(
+        quote="The activity began in a marked circle.",
+        purpose="States how the activity began.",
+    )
+    redundant_selection = _coverage_selection(
+        quote="The activity began [...] in a marked circle.",
+        purpose="Redundant malformed quote.",
+    )
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Explain how the activity began.",
+                "satisfied": True,
+                "evidence": [valid_selection, redundant_selection],
+                "missing_detail": None,
+            }
+        ],
+        "selected_evidence": [valid_selection],
+        "confidence": 0.9,
+    }
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(
+                {
+                    "verified_chunks": [],
+                    "rejected_chunks": [],
+                    "missing_information": True,
+                    "confidence": 0.9,
+                }
+            ),
+            json.dumps(coverage_review),
+            json.dumps(coverage_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "How did the activity begin?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        "The activity began in a marked circle."
+    ]
+    assert chat_completion.call_count == 2
+
+
+def test_verification_agent_rebuilds_selected_evidence_from_requirements(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = "The activity began in a marked circle."
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = "Each participant received a token."
+    first_selection = _coverage_selection(
+        quote="The activity began in a marked circle.",
+        purpose="States how the activity began.",
+    )
+    second_selection = _coverage_selection(
+        chunk_id=SECOND_CANDIDATE_CHUNK_ID,
+        quote="Each participant received a token.",
+        purpose="States the participant prize.",
+    )
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Explain how the activity began.",
+                "satisfied": True,
+                "evidence": [first_selection],
+                "missing_detail": None,
+            },
+            {
+                "requirement": "State what participants received.",
+                "satisfied": True,
+                "evidence": [second_selection],
+                "missing_detail": None,
+            },
+        ],
+        "selected_evidence": [first_selection],
+        "confidence": 0.9,
+    }
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(
+                {
+                    "verified_chunks": [],
+                    "rejected_chunks": [],
+                    "missing_information": True,
+                    "confidence": 0.9,
+                }
+            ),
+            json.dumps(coverage_review),
+            json.dumps(coverage_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "How did the activity begin, and what did participants receive?",
+            "candidates": [first_candidate, second_candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        "The activity began in a marked circle.",
+        "Each participant received a token.",
+    ]
+    assert chat_completion.call_count == 2
+
+
+def test_verification_agent_canonicalizes_ellipsized_coverage_quote(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = (
+        "First it marked out a race-course, in a sort of circle, and then "
+        "all the party were placed along the course."
+    )
+    ellipsized_selection = _coverage_selection(
+        quote=(
+            "First it marked out a race-course, [...] all the party were "
+            "placed along the course."
+        ),
+        purpose="States how the race was organized.",
+    )
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Explain how the race was organized.",
+                "satisfied": True,
+                "evidence": [ellipsized_selection],
+                "missing_detail": None,
+            }
+        ],
+        "selected_evidence": [ellipsized_selection],
+        "confidence": 0.9,
+    }
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(
+                {
+                    "verified_chunks": [],
+                    "rejected_chunks": [],
+                    "missing_information": True,
+                    "confidence": 0.9,
+                }
+            ),
+            json.dumps(coverage_review),
+            json.dumps(coverage_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "How was the race organized?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        candidate["content"]
+    ]
+    assert chat_completion.call_count == 2
+
+
+def test_verification_agent_canonicalizes_ellipsized_initial_verified_quote(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["content"] = (
+        "Alice put her hand in her pocket, pulled out a box of comfits, "
+        "and handed them round as prizes."
+    )
+    ellipsized_quote = (
+        "Alice put her hand in her pocket... box of comfits... as prizes."
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "source.txt",
+                "quote": ellipsized_quote,
+                "page_number": 1,
+                "verification_reason": "States participant prizes.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+    coverage_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [
+                {
+                    "chunk_id": CANDIDATE_CHUNK_ID,
+                    "quote": ellipsized_quote,
+                    "purpose": "States participant prizes.",
+                    "supports_simple_reasoning": False,
+                }
+            ],
+            "confidence": 0.9,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(coverage_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "What prizes were handed round?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [candidate["content"]]
+
+
+def test_verification_agent_canonicalizes_ordered_coverage_quote_to_source_span(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = "The activity began in a marked circle."
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = (
+        "The host had no idea what to do, and in despair she put her hand "
+        "in her pocket, pulled out a box of tokens, and handed them round "
+        "as prizes. There was exactly one apiece all round."
+    )
+    compressed_quote = (
+        "host pulled out a box of tokens and handed them round as prizes"
+    )
+    expected_quote = (
+        "host had no idea what to do, and in despair she put her hand "
+        "in her pocket, pulled out a box of tokens, and handed them round "
+        "as prizes"
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "The activity began in a marked circle.",
+                "page_number": 3,
+                "verification_reason": "States how the activity began.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Explain how the activity began.",
+                "satisfied": True,
+                "evidence": [
+                    {
+                        "chunk_id": CANDIDATE_CHUNK_ID,
+                        "quote": "The activity began in a marked circle.",
+                        "purpose": "States how the activity began.",
+                        "supports_simple_reasoning": False,
+                    }
+                ],
+                "missing_detail": None,
+            },
+            {
+                "requirement": "State what participants received.",
+                "satisfied": True,
+                "evidence": [
+                    {
+                        "chunk_id": CANDIDATE_CHUNK_ID,
+                        "quote": compressed_quote,
+                        "purpose": "States what participants received.",
+                        "supports_simple_reasoning": False,
+                    }
+                ],
+                "missing_detail": None,
+            },
+        ],
+        "selected_evidence": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": "The activity began in a marked circle.",
+                "purpose": "States how the activity began.",
+                "supports_simple_reasoning": False,
+            },
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "quote": compressed_quote,
+                "purpose": "States what participants received.",
+                "supports_simple_reasoning": False,
+            },
+        ],
+        "confidence": 0.9,
+    }
+    chat_completion = _mock_two_pass_verification(
+        monkeypatch,
+        initial_verification,
+        coverage_review,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "How did the activity begin, and what did participants receive?",
+            "candidates": [first_candidate, second_candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [(str(chunk.chunk_id), chunk.quote) for chunk in output.verified_chunks] == [
+        (CANDIDATE_CHUNK_ID, "The activity began in a marked circle."),
+        (SECOND_CANDIDATE_CHUNK_ID, expected_quote),
+    ]
+    assert chat_completion.call_count == 2
+
+
+def test_verification_agent_reassigns_initial_ordered_quote_to_matching_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = "The activity began in a marked circle."
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = (
+        "The host had no idea what to do, and in despair she put her hand "
+        "in her pocket, pulled out a box of tokens, and handed them round "
+        "as prizes. There was exactly one apiece all round."
+    )
+    compressed_quote = (
+        "host pulled out a box of tokens and handed them round as prizes"
+    )
+    expected_quote = (
+        "host had no idea what to do, and in despair she put her hand "
+        "in her pocket, pulled out a box of tokens, and handed them round "
+        "as prizes"
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": compressed_quote,
+                "page_number": 3,
+                "verification_reason": "States what participants received.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+    selected = _coverage_selection(
+        quote="The activity began in a marked circle.",
+        purpose="States how the activity began.",
+    )
+    coverage_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [selected],
+            "confidence": 0.9,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(coverage_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "How did the activity begin, and what did participants receive?",
+            "candidates": [first_candidate, second_candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [(str(chunk.chunk_id), chunk.quote) for chunk in output.verified_chunks] == [
+        (CANDIDATE_CHUNK_ID, "The activity began in a marked circle."),
+        (SECOND_CANDIDATE_CHUNK_ID, expected_quote),
+    ]
+    assert chat_completion.call_count == 2
+
+
+def test_verification_agent_retains_initial_verified_chunks_with_answerable_coverage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_candidate = _candidate_payload()
+    first_candidate["content"] = "The activity began in a marked circle."
+    second_candidate = _second_candidate_payload()
+    second_candidate["content"] = "Each participant received a token."
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": SECOND_CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "contract.pdf",
+                "quote": "Each participant received a token.",
+                "page_number": 3,
+                "verification_reason": "States the participant prize.",
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.9,
+    }
+    selected = _coverage_selection(
+        quote="The activity began in a marked circle.",
+        purpose="States how the activity began.",
+    )
+    coverage_review = _with_coverage_requirements(
+        {
+            "answers_question": True,
+            "missing_information": False,
+            "selected_evidence": [selected],
+            "confidence": 0.9,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(initial_verification),
+            json.dumps(coverage_review),
+        ]
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "_run_coverage_review",
+        REAL_RUN_COVERAGE_REVIEW,
+    )
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "How did the activity begin, and what did participants receive?",
+            "candidates": [first_candidate, second_candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert [chunk.quote for chunk in output.verified_chunks] == [
+        "The activity began in a marked circle.",
+        "Each participant received a token.",
     ]
 
 

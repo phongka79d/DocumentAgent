@@ -1,5 +1,7 @@
 import sys
+import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock
 from uuid import UUID
 
@@ -7,7 +9,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.agents import graph
+from app.agents import answer_agent, graph, retrieval_agent, verification_agent
+from app.agents.prompts import (
+    ANSWER_GENERATION_SYSTEM_PROMPT,
+    ANSWER_GROUNDING_SYSTEM_PROMPT,
+    EVIDENCE_COVERAGE_SYSTEM_PROMPT,
+    VERIFICATION_AGENT_SYSTEM_PROMPT,
+)
 from app.agents.schemas import (
     AnswerAgentOutput,
     AnswerSelfCheck,
@@ -17,6 +25,8 @@ from app.agents.schemas import (
     VerifiedChunk,
     VerificationAgentOutput,
 )
+from app.schemas.retrieval import HybridRetrievalCandidate, HybridSearchResponse
+from app.services import agent_log_service
 from app.services import agent_run_service
 
 
@@ -413,6 +423,368 @@ def test_run_qa_workflow_success_creates_run_logs_steps_and_returns_agent_3_answ
         "citations": answer.citations,
         "agent_run_id": agent_run_id,
     }
+
+
+def test_run_qa_workflow_answers_multi_part_question_across_adjacent_chunks(
+    monkeypatch,
+):
+    agent_run_id = UUID("00000000-0000-0000-0000-000000000070")
+    document_id = UUID("00000000-0000-0000-0000-000000000071")
+    anchor_chunk_id = UUID("00000000-0000-0000-0000-000000000072")
+    adjacent_chunk_id = UUID("00000000-0000-0000-0000-000000000073")
+    question = (
+        "How was the meadow ceremony organized, who succeeded, and what prizes "
+        "were distributed to the participants and host?"
+    )
+    anchor_quote = (
+        "The meadow ceremony was organized by drawing a wide chalk circle on "
+        "the grass; everyone started whenever they liked and stopped when the "
+        "bell rang. Mira succeeded because she crossed the finish cord first."
+    )
+    adjacent_quote = (
+        "After the result, each participant received a silver token, and the "
+        "host received a blue ribbon."
+    )
+    final_answer = (
+        "The ceremony was organized by drawing a wide chalk circle on the "
+        "grass; everyone started whenever they liked and stopped when the bell "
+        "rang. Mira succeeded because she crossed the finish cord first. Each "
+        "participant received a silver token, and the host received a blue "
+        "ribbon."
+    )
+    reasoning_summary = (
+        "The first verified quote states the organization and winner. The "
+        "second verified quote states both prize recipients."
+    )
+    logged_steps: dict[str, dict] = {}
+
+    anchor_candidate = HybridRetrievalCandidate(
+        chunk_id=anchor_chunk_id,
+        document_id=document_id,
+        file_name="ceremony-notes.txt",
+        file_type="txt",
+        content=anchor_quote,
+        page_number=1,
+        section_title="Ceremony",
+        chunk_index=4,
+        semantic_similarity=0.94,
+        graph_relevance=0.2,
+        keyword_overlap=0.8,
+        metadata_match=1.0,
+        recency_or_position_score=0.7,
+        final_score=0.9,
+        retrieval_reason="Matched ceremony organization and winner.",
+    )
+    hybrid_response = HybridSearchResponse(
+        question=question,
+        candidates=[anchor_candidate],
+    )
+
+    def fake_chunk_lookup(document_id_value: str, chunk_indexes: list[int]):
+        assert document_id_value == str(document_id)
+        assert chunk_indexes == [3, 5]
+        return [
+            {
+                "id": str(adjacent_chunk_id),
+                "chunk_index": 5,
+                "content": adjacent_quote,
+                "page_number": 1,
+                "section_title": "Ceremony",
+            }
+        ]
+
+    original_expand = retrieval_agent.retrieval_context_service.expand_retrieval_context
+
+    def expand_with_fake_lookup(
+        question_value,
+        anchors,
+        *,
+        context_window,
+        max_context_candidates,
+    ):
+        return original_expand(
+            question_value,
+            anchors,
+            context_window=context_window,
+            max_context_candidates=max_context_candidates,
+            chunk_lookup=fake_chunk_lookup,
+        )
+
+    def fake_log_agent_step(**kwargs):
+        logged_steps[kwargs["step_name"]] = {
+            "input_payload": kwargs["input_payload"],
+            "output_payload": kwargs["output_payload"],
+            "status": kwargs["status"],
+        }
+        return {"id": f"{kwargs['step_name']}-log", "status": kwargs["status"]}
+
+    def fake_try_log_agent_step(**kwargs):
+        row = fake_log_agent_step(**kwargs)
+        return agent_log_service.AgentStepLogAttempt(persisted=True, row=row)
+
+    verification_payload = {
+        "verified_chunks": [
+            {
+                "chunk_id": str(anchor_chunk_id),
+                "document_id": str(document_id),
+                "file_name": "ceremony-notes.txt",
+                "quote": anchor_quote,
+                "page_number": 1,
+                "verification_reason": "Covers organization and winner.",
+                "supports_simple_reasoning": True,
+            },
+            {
+                "chunk_id": str(adjacent_chunk_id),
+                "document_id": str(document_id),
+                "file_name": "ceremony-notes.txt",
+                "quote": adjacent_quote,
+                "page_number": 1,
+                "verification_reason": "Covers the distributed prizes.",
+                "supports_simple_reasoning": True,
+            },
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.88,
+    }
+    coverage_evidence = [
+        {
+            "chunk_id": str(anchor_chunk_id),
+            "quote": anchor_quote,
+            "purpose": "Shows how the ceremony was organized and who succeeded.",
+            "supports_simple_reasoning": True,
+        },
+        {
+            "chunk_id": str(adjacent_chunk_id),
+            "quote": adjacent_quote,
+            "purpose": "Shows the prizes for participants and the host.",
+            "supports_simple_reasoning": True,
+        },
+    ]
+    coverage_payload = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Identify how the ceremony was organized.",
+                "satisfied": True,
+                "evidence": [coverage_evidence[0]],
+            },
+            {
+                "requirement": "Identify who succeeded.",
+                "satisfied": True,
+                "evidence": [coverage_evidence[0]],
+            },
+            {
+                "requirement": "Identify participant prizes.",
+                "satisfied": True,
+                "evidence": [coverage_evidence[1]],
+            },
+            {
+                "requirement": "Identify the host prize.",
+                "satisfied": True,
+                "evidence": [coverage_evidence[1]],
+            },
+        ],
+        "selected_evidence": coverage_evidence,
+        "confidence": 0.86,
+    }
+    answer_payload = {
+        "final_answer": final_answer,
+        "citations": [
+            {"file_name": "ceremony-notes.txt", "quote": anchor_quote},
+            {"file_name": "ceremony-notes.txt", "quote": adjacent_quote},
+        ],
+        "reasoning_summary": reasoning_summary,
+        "confidence": 0.84,
+    }
+    grounding_payload = {
+        "answers_question": True,
+        "field_reviews": [
+            {
+                "field_name": "final_answer",
+                "text": final_answer,
+                "claims": [
+                    {
+                        "claim": (
+                            "The ceremony was organized by drawing a wide "
+                            "chalk circle on the grass; everyone started "
+                            "whenever they liked and stopped when the bell "
+                            "rang."
+                        ),
+                        "supported": True,
+                        "supporting_citations": [
+                            {"file_name": "ceremony-notes.txt", "quote": anchor_quote}
+                        ],
+                    },
+                    {
+                        "claim": (
+                            "Mira succeeded because she crossed the finish "
+                            "cord first."
+                        ),
+                        "supported": True,
+                        "supporting_citations": [
+                            {"file_name": "ceremony-notes.txt", "quote": anchor_quote}
+                        ],
+                    },
+                    {
+                        "claim": "Each participant received a silver token",
+                        "supported": True,
+                        "supporting_citations": [
+                            {
+                                "file_name": "ceremony-notes.txt",
+                                "quote": adjacent_quote,
+                            }
+                        ],
+                    },
+                    {
+                        "claim": "the host received a blue ribbon",
+                        "supported": True,
+                        "supporting_citations": [
+                            {
+                                "file_name": "ceremony-notes.txt",
+                                "quote": adjacent_quote,
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "field_name": "reasoning_summary",
+                "text": reasoning_summary,
+                "claims": [
+                    {
+                        "claim": (
+                            "The first verified quote states the organization "
+                            "and winner."
+                        ),
+                        "supported": True,
+                        "supporting_citations": [
+                            {"file_name": "ceremony-notes.txt", "quote": anchor_quote}
+                        ],
+                    },
+                    {
+                        "claim": (
+                            "The second verified quote states both prize "
+                            "recipients."
+                        ),
+                        "supported": True,
+                        "supporting_citations": [
+                            {
+                                "file_name": "ceremony-notes.txt",
+                                "quote": adjacent_quote,
+                            }
+                        ],
+                    },
+                ],
+            },
+        ],
+        "confidence": 0.83,
+    }
+
+    def fake_chat_completion(messages, *, response_format):
+        assert response_format == {"type": "json_object"}
+        system_prompt = messages[0]["content"]
+        if system_prompt == VERIFICATION_AGENT_SYSTEM_PROMPT:
+            return json.dumps(verification_payload)
+        if system_prompt == EVIDENCE_COVERAGE_SYSTEM_PROMPT:
+            return json.dumps(coverage_payload)
+        if system_prompt == ANSWER_GENERATION_SYSTEM_PROMPT:
+            return json.dumps(answer_payload)
+        if system_prompt == ANSWER_GROUNDING_SYSTEM_PROMPT:
+            return json.dumps(grounding_payload)
+        raise AssertionError(f"Unexpected system prompt: {system_prompt}")
+
+    monkeypatch.setattr(
+        graph.agent_run_service,
+        "create_running_agent_run",
+        Mock(return_value={"id": str(agent_run_id), "status": "running"}),
+    )
+    mark_success = Mock(return_value={"id": str(agent_run_id), "status": "success"})
+    mark_failed = Mock()
+    monkeypatch.setattr(graph.agent_run_service, "mark_agent_run_success", mark_success)
+    monkeypatch.setattr(graph.agent_run_service, "mark_agent_run_failed", mark_failed)
+    monkeypatch.setattr(
+        retrieval_agent,
+        "get_settings",
+        lambda: SimpleNamespace(
+            retrieval_final_top_k=1,
+            retrieval_context_window=1,
+            retrieval_context_max_candidates=4,
+        ),
+    )
+    monkeypatch.setattr(
+        retrieval_agent.hybrid_retrieval_service,
+        "retrieve_hybrid",
+        Mock(return_value=hybrid_response),
+    )
+    monkeypatch.setattr(
+        retrieval_agent.retrieval_context_service,
+        "expand_retrieval_context",
+        expand_with_fake_lookup,
+    )
+    monkeypatch.setattr(
+        retrieval_agent.agent_log_service,
+        "log_agent_step",
+        fake_log_agent_step,
+    )
+    monkeypatch.setattr(
+        verification_agent.agent_log_service,
+        "try_log_agent_step",
+        fake_try_log_agent_step,
+    )
+    monkeypatch.setattr(
+        answer_agent.agent_log_service,
+        "try_log_agent_step",
+        fake_try_log_agent_step,
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
+
+    result = graph.run_qa_workflow(question, [document_id])
+
+    retrieval_output = logged_steps["agent_1_retrieval"]["output_payload"]
+    assert {
+        candidate.chunk_index for candidate in retrieval_output.candidates
+    } == {4, 5}
+    assert {
+        candidate.chunk_id for candidate in retrieval_output.candidates
+    } == {anchor_chunk_id, adjacent_chunk_id}
+    verification_output = logged_steps["agent_2_verification"]["output_payload"]
+    assert verification_output.missing_information is False
+    assert [chunk.quote for chunk in verification_output.verified_chunks] == [
+        anchor_quote,
+        adjacent_quote,
+    ]
+    assert {
+        chunk.verification_reason for chunk in verification_output.verified_chunks
+    } == {
+        "Shows how the ceremony was organized and who succeeded.",
+        "Shows the prizes for participants and the host.",
+    }
+    assert result["answer"] == final_answer
+    assert result["confidence"] == 0.83
+    assert [citation.quote for citation in result["citations"]] == [
+        anchor_quote,
+        adjacent_quote,
+    ]
+    assert result["agent_run_id"] == agent_run_id
+    answer_log = logged_steps["agent_3_answer_self_check"]["output_payload"]
+    assert answer_log["self_check_result"]["is_ready"] is True
+    mark_success.assert_called_once_with(
+        agent_run_id,
+        final_answer=final_answer,
+        confidence=0.83,
+    )
+    mark_failed.assert_not_called()
 
 
 def test_run_qa_workflow_marks_success_for_insufficient_evidence(monkeypatch):

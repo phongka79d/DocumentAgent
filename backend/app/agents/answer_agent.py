@@ -378,6 +378,15 @@ def _canonicalize_citation(
             == normalized_citation_quote
         ):
             return citation
+        if (
+            rejected_chunk.file_name == citation.file_name
+            and _terminal_punctuation_insensitive_quote_key(rejected_chunk.quote)
+            == _terminal_punctuation_insensitive_quote_key(citation.quote)
+        ):
+            return Citation(
+                file_name=rejected_chunk.file_name,
+                quote=rejected_chunk.quote,
+            )
 
     exact_matches = [
         chunk
@@ -387,13 +396,33 @@ def _canonicalize_citation(
     if len(exact_matches) == 1:
         return citation
 
+    terminal_punctuation_matches = [
+        chunk
+        for chunk in verification.verified_chunks
+        if (
+            chunk.file_name == citation.file_name
+            and _terminal_punctuation_insensitive_quote_key(chunk.quote)
+            == _terminal_punctuation_insensitive_quote_key(citation.quote)
+        )
+    ]
+    if len(terminal_punctuation_matches) == 1:
+        matched_chunk = terminal_punctuation_matches[0]
+        return Citation(file_name=matched_chunk.file_name, quote=matched_chunk.quote)
+    if len(terminal_punctuation_matches) > 1:
+        raise AnswerEvidenceValidationError(
+            f"Citation quote matches multiple verified evidence quotes: "
+            f"{format_citation(citation)}"
+        )
+
     verified_substring_matches = [
         chunk
         for chunk in verification.verified_chunks
         if (
             chunk.file_name == citation.file_name
-            and normalized_citation_quote
-            and normalized_citation_quote in _normalize_evidence_quote(chunk.quote)
+            and _citation_quote_matches_verified_quote(
+                citation.quote,
+                chunk.quote,
+            )
         )
     ]
     if len(verified_substring_matches) == 1:
@@ -409,6 +438,33 @@ def _canonicalize_citation(
 
 def _normalize_evidence_quote(value: str) -> str:
     return " ".join(value.split())
+
+
+def _terminal_punctuation_insensitive_quote_key(value: str) -> str:
+    return re.sub(r"[.,:;!?]+(?='?$)", "", _normalize_evidence_quote(value))
+
+
+def _citation_quote_matches_verified_quote(
+    citation_quote: str,
+    verified_quote: str,
+) -> bool:
+    normalized_citation_quote = _normalize_evidence_quote(citation_quote)
+    normalized_verified_quote = _normalize_evidence_quote(verified_quote)
+    if not normalized_citation_quote:
+        return False
+    if normalized_citation_quote in normalized_verified_quote:
+        return True
+
+    punctuation_insensitive_citation = _terminal_punctuation_insensitive_quote_key(
+        citation_quote
+    )
+    punctuation_insensitive_verified = _terminal_punctuation_insensitive_quote_key(
+        verified_quote
+    )
+    return (
+        punctuation_insensitive_citation != normalized_citation_quote
+        and punctuation_insensitive_citation in punctuation_insensitive_verified
+    )
 
 
 def validate_draft_answer_against_evidence(
@@ -627,7 +683,6 @@ def run_answer_agent(
             update={
                 "self_check": executed_grounding.self_check,
                 "confidence": min(
-                    draft_output.confidence,
                     answer_input.verification.confidence,
                     executed_grounding.confidence,
                 ),

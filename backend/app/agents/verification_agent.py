@@ -14,6 +14,7 @@ from app.agents.schemas import (
     EvidenceCoverageSelection,
     EvidenceCoverageReview,
     RejectedChunk,
+    RetrievalCandidate,
     VerificationAgentInput,
     VerificationAgentOutput,
     VerifiedChunk,
@@ -74,11 +75,35 @@ CORRECTABLE_COVERAGE_FAILURE_TYPES = frozenset(
         "coverage_quote_validation_error",
     }
 )
+VERIFICATION_RETRY_INSTRUCTION = """
+The previous verification response failed validation with category:
+{failure_type}.
+Return one corrected JSON object only.
+
+Use only chunk_id and document_id values that appear in the compact evidence
+payload. Do not invent IDs, documents, quotes, or metadata. Keep quotes copied
+from candidate content, and keep the exact Agent 2 response schema.
+""".strip()
+CORRECTABLE_VERIFICATION_FAILURE_TYPES = frozenset(
+    {
+        "invalid_json",
+        "schema_validation_error",
+        "unknown_chunk_id",
+    }
+)
 _EXPLANATORY_QUESTION_PATTERN = re.compile(
     r"^\s*(?:why|how|v[iì]\s+sao|t[aạ]i\s+sao)\b",
     re.IGNORECASE,
 )
 _SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<=[.!?])(?P<closing_quote>['\"]?)\s+")
+_ELLIPSIS_MARKER_PATTERN = re.compile(
+    r"\s*(?:\[\s*(?:\.{3}|\u2026)\s*\]|\.{3}|\u2026)\s*"
+)
+_QUOTE_TOKEN_PATTERN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?", re.IGNORECASE)
+_ORDERED_QUOTE_MIN_TOKENS = 6
+_ORDERED_QUOTE_MAX_EXTRA_TOKENS = 30
+_ORDERED_QUOTE_MAX_SPAN_TOKEN_MULTIPLIER = 4
+_ORDERED_QUOTE_MAX_SPAN_CHARS = 1200
 _MONTH_BY_NAME = {
     "january": "01",
     "february": "02",
@@ -159,6 +184,21 @@ def _build_verification_messages(
                 "Verify the candidate evidence for this question using only the "
                 "compact JSON payload below.\n"
                 f"{json.dumps(compact_payload, ensure_ascii=False, indent=2)}"
+            ),
+        },
+    ]
+
+
+def _build_verification_retry_messages(
+    input_data: VerificationAgentInput,
+    failure_type: str,
+) -> list[dict[str, str]]:
+    return [
+        *_build_verification_messages(input_data),
+        {
+            "role": "user",
+            "content": VERIFICATION_RETRY_INSTRUCTION.format(
+                failure_type=failure_type
             ),
         },
     ]
@@ -262,11 +302,195 @@ def _parse_coverage_review(response_content: str) -> EvidenceCoverageReview:
             **response_payload,
         }
 
+    response_payload = _normalize_answerable_coverage_payload(response_payload)
+
     try:
         return EvidenceCoverageReview.model_validate(response_payload)
     except ValidationError as exc:
         logger.warning("Evidence coverage reviewer returned an invalid schema.")
         raise _VerificationAgentFailure("coverage_validation_error") from exc
+
+
+def _parse_candidate_aware_coverage_review(
+    input_data: VerificationAgentInput,
+    response_content: str,
+) -> EvidenceCoverageReview:
+    try:
+        response_payload = json.loads(response_content)
+    except json.JSONDecodeError as exc:
+        logger.warning("Evidence coverage reviewer returned invalid JSON.")
+        raise _VerificationAgentFailure("coverage_invalid_json") from exc
+
+    response_payload = _normalize_non_answerable_coverage_payload(response_payload)
+    if (
+        isinstance(response_payload, dict)
+        and response_payload.get("answers_question") is True
+    ):
+        response_payload = _normalize_answerable_coverage_payload_with_candidates(
+            input_data,
+            response_payload,
+        )
+
+    try:
+        return EvidenceCoverageReview.model_validate(response_payload)
+    except ValidationError as exc:
+        logger.warning("Evidence coverage reviewer returned an invalid schema.")
+        raise _VerificationAgentFailure("coverage_validation_error") from exc
+
+
+def _normalize_non_answerable_coverage_payload(response_payload: Any) -> Any:
+    if (
+        not isinstance(response_payload, dict)
+        or response_payload.get("answers_question") is not False
+        or response_payload.get("missing_information") is not True
+    ):
+        return response_payload
+
+    return {
+        "requirements": [
+            {
+                "requirement": (
+                    "Answer every independently requested part of the question."
+                ),
+                "satisfied": False,
+                "evidence": [],
+                "missing_detail": (
+                    "Candidate evidence does not cover every requested requirement."
+                ),
+            }
+        ],
+        "selected_evidence": [],
+        "confidence": 0.0,
+        **response_payload,
+    }
+
+
+def _normalize_answerable_coverage_payload(response_payload: Any) -> Any:
+    if (
+        not isinstance(response_payload, dict)
+        or response_payload.get("answers_question") is not True
+        or not isinstance(response_payload.get("selected_evidence"), list)
+        or not isinstance(response_payload.get("requirements"), list)
+    ):
+        return response_payload
+
+    selected_keys = {
+        _coverage_mapping_key(selection)
+        for selection in response_payload["selected_evidence"]
+        if _coverage_mapping_key(selection) is not None
+    }
+    if not selected_keys:
+        return response_payload
+
+    changed = False
+    requirements = []
+    for requirement in response_payload["requirements"]:
+        if not isinstance(requirement, dict):
+            requirements.append(requirement)
+            continue
+        evidence = requirement.get("evidence")
+        if requirement.get("satisfied") is not True or not isinstance(evidence, list):
+            requirements.append(requirement)
+            continue
+
+        filtered_evidence = [
+            selection
+            for selection in evidence
+            if _coverage_mapping_key(selection) in selected_keys
+        ]
+        if len(filtered_evidence) != len(evidence):
+            changed = True
+            requirement = {**requirement, "evidence": filtered_evidence}
+        requirements.append(requirement)
+
+    if not changed:
+        return response_payload
+    return {**response_payload, "requirements": requirements}
+
+
+def _coverage_mapping_key(selection: Any) -> tuple[Any, Any] | None:
+    if not isinstance(selection, dict):
+        return None
+    return selection.get("chunk_id"), selection.get("quote")
+
+
+def _normalize_answerable_coverage_payload_with_candidates(
+    input_data: VerificationAgentInput,
+    response_payload: dict[str, Any],
+) -> dict[str, Any]:
+    requirements = response_payload.get("requirements")
+    if not isinstance(requirements, list):
+        return response_payload
+
+    normalized_requirements = []
+    selected_evidence: list[dict[str, Any]] = []
+    for requirement in requirements:
+        if not isinstance(requirement, dict):
+            normalized_requirements.append(requirement)
+            continue
+        if requirement.get("satisfied") is not True:
+            normalized_requirements.append(requirement)
+            continue
+
+        raw_evidence = requirement.get("evidence")
+        if not isinstance(raw_evidence, list):
+            normalized_requirements.append(requirement)
+            continue
+
+        canonical_evidence = _canonicalize_coverage_evidence_payloads(
+            input_data,
+            raw_evidence,
+        )
+        normalized_requirement = {
+            **requirement,
+            "evidence": canonical_evidence,
+        }
+        normalized_requirements.append(normalized_requirement)
+        for selection in canonical_evidence:
+            if selection not in selected_evidence:
+                selected_evidence.append(selection)
+
+    return {
+        **response_payload,
+        "requirements": normalized_requirements,
+        "selected_evidence": selected_evidence,
+    }
+
+
+def _canonicalize_coverage_evidence_payloads(
+    input_data: VerificationAgentInput,
+    raw_evidence: list[Any],
+) -> list[dict[str, Any]]:
+    canonical_evidence = []
+    saw_known_invalid_quote = False
+    for raw_selection in raw_evidence:
+        try:
+            selection = EvidenceCoverageSelection.model_validate(raw_selection)
+        except ValidationError as exc:
+            raise _VerificationAgentFailure("coverage_validation_error") from exc
+
+        selected_candidate = _candidate_for_selection(input_data, selection)
+        if selected_candidate is None:
+            raise _VerificationAgentFailure("coverage_unknown_chunk_id")
+
+        canonical_selection = _canonicalize_coverage_selection(input_data, selection)
+        canonical_candidate = _candidate_for_selection(input_data, canonical_selection)
+        if canonical_candidate is None:
+            raise _VerificationAgentFailure("coverage_unknown_chunk_id")
+        if not _quote_matches_candidate_content(
+            canonical_selection.quote,
+            canonical_candidate.content,
+        ):
+            saw_known_invalid_quote = True
+            continue
+
+        selection_payload = canonical_selection.model_dump(mode="json")
+        if selection_payload not in canonical_evidence:
+            canonical_evidence.append(selection_payload)
+
+    if not canonical_evidence and saw_known_invalid_quote:
+        raise _VerificationAgentFailure("coverage_quote_validation_error")
+    return canonical_evidence
 
 
 def _run_coverage_review(
@@ -285,7 +509,11 @@ def _run_coverage_review(
             raise _VerificationAgentFailure("coverage_provider_error") from exc
 
         try:
-            review = _parse_coverage_review(response_content)
+            review = _parse_candidate_aware_coverage_review(
+                input_data,
+                response_content,
+            )
+            review = _canonicalize_coverage_review_evidence(input_data, review)
             _validate_coverage_review_evidence(input_data, review)
             return review
         except _VerificationAgentFailure as exc:
@@ -301,6 +529,39 @@ def _run_coverage_review(
             )
 
     raise _VerificationAgentFailure("coverage_validation_error")
+
+
+def _run_initial_verification(
+    input_data: VerificationAgentInput,
+) -> VerificationAgentOutput:
+    messages = _build_verification_messages(input_data)
+    for attempt in range(2):
+        try:
+            response_content = shopaikey_service.chat_completion(
+                messages,
+                response_format={"type": "json_object"},
+            )
+        except shopaikey_service.ShopAIKeyServiceError as exc:
+            raise _VerificationAgentFailure("provider_error") from exc
+
+        try:
+            verification_output = _parse_verification_output(response_content)
+            return _validate_candidate_membership(
+                verification_output,
+                input_data,
+            )
+        except _VerificationAgentFailure as exc:
+            if (
+                exc.failure_type not in CORRECTABLE_VERIFICATION_FAILURE_TYPES
+                or attempt == 1
+            ):
+                raise
+            messages = _build_verification_retry_messages(
+                input_data,
+                exc.failure_type,
+            )
+
+    raise _VerificationAgentFailure("schema_validation_error")
 
 
 def _coverage_selections(
@@ -329,6 +590,80 @@ def _validate_coverage_review_evidence(
             raise _VerificationAgentFailure("coverage_quote_validation_error")
 
 
+def _canonicalize_coverage_review_evidence(
+    input_data: VerificationAgentInput,
+    coverage_review: EvidenceCoverageReview,
+) -> EvidenceCoverageReview:
+    updated_requirements = [
+        requirement.model_copy(
+            update={
+                "evidence": [
+                    _canonicalize_coverage_selection(input_data, selection)
+                    for selection in requirement.evidence
+                ]
+            }
+        )
+        for requirement in coverage_review.requirements
+    ]
+    updated_review = coverage_review.model_copy(
+        update={
+            "requirements": updated_requirements,
+            "selected_evidence": [
+                _canonicalize_coverage_selection(input_data, selection)
+                for selection in coverage_review.selected_evidence
+            ],
+        }
+    )
+    return EvidenceCoverageReview.model_validate(
+        updated_review.model_dump(mode="json")
+    )
+
+
+def _candidate_for_selection(
+    input_data: VerificationAgentInput,
+    selection: EvidenceCoverageSelection,
+) -> RetrievalCandidate | None:
+    for candidate in input_data.candidates:
+        if candidate.chunk_id == selection.chunk_id:
+            return candidate
+    return None
+
+
+def _canonicalize_coverage_selection(
+    input_data: VerificationAgentInput,
+    selection: EvidenceCoverageSelection,
+) -> EvidenceCoverageSelection:
+    selected_candidate = _candidate_for_selection(input_data, selection)
+    if selected_candidate is None:
+        return selection
+    canonical_quote = _canonical_source_quote_for_candidate(
+        selection.quote,
+        selected_candidate.content,
+    )
+    if canonical_quote is not None:
+        return selection.model_copy(update={"quote": canonical_quote})
+
+    matching_evidence = []
+    for candidate in input_data.candidates:
+        canonical_quote = _canonical_source_quote_for_candidate(
+            selection.quote,
+            candidate.content,
+        )
+        if canonical_quote is not None:
+            matching_evidence.append((candidate, canonical_quote))
+
+    if len(matching_evidence) != 1:
+        return selection
+
+    matching_candidate, matching_quote = matching_evidence[0]
+    return selection.model_copy(
+        update={
+            "chunk_id": matching_candidate.chunk_id,
+            "quote": matching_quote,
+        }
+    )
+
+
 def _validate_candidate_membership(
     verification_output: VerificationAgentOutput,
     input_data: VerificationAgentInput,
@@ -349,6 +684,150 @@ def _validate_candidate_membership(
             raise _VerificationAgentFailure("unknown_chunk_id")
 
     return verification_output
+
+
+def _source_span_for_ellipsized_quote(
+    quote: str,
+    content: str | None,
+) -> str | None:
+    normalized_quote = _normalize_quote_text(quote)
+    if not _ELLIPSIS_MARKER_PATTERN.search(normalized_quote):
+        return None
+
+    fragments = [
+        fragment.strip()
+        for fragment in _ELLIPSIS_MARKER_PATTERN.split(normalized_quote)
+        if fragment.strip()
+    ]
+    if len(fragments) < 2:
+        return None
+
+    normalized_content = _normalize_quote_text(content or "")
+    span_start: int | None = None
+    span_end: int | None = None
+    search_start = 0
+    for fragment in fragments:
+        fragment_start = normalized_content.find(fragment, search_start)
+        if fragment_start < 0:
+            return None
+        if span_start is None:
+            span_start = fragment_start
+        span_end = fragment_start + len(fragment)
+        search_start = span_end
+
+    if span_start is None or span_end is None:
+        return None
+    return normalized_content[span_start:span_end].strip()
+
+
+def _source_span_for_token_sequence_quote(
+    quote: str,
+    content: str | None,
+) -> str | None:
+    normalized_quote = _normalize_quote_text(quote)
+    normalized_content = _normalize_quote_text(content or "")
+    quote_tokens = [
+        match.group(0).casefold()
+        for match in _QUOTE_TOKEN_PATTERN.finditer(normalized_quote)
+    ]
+    if len(quote_tokens) < 4:
+        return None
+
+    content_token_matches = list(_QUOTE_TOKEN_PATTERN.finditer(normalized_content))
+    content_tokens = [match.group(0).casefold() for match in content_token_matches]
+    matches: list[tuple[int, int]] = []
+    window_size = len(quote_tokens)
+    for start in range(0, len(content_tokens) - window_size + 1):
+        if content_tokens[start : start + window_size] == quote_tokens:
+            span_start = content_token_matches[start].start()
+            span_end = content_token_matches[start + window_size - 1].end()
+            matches.append((span_start, span_end))
+
+    if len(matches) != 1:
+        return None
+    span_start, span_end = matches[0]
+    return normalized_content[span_start:span_end].strip()
+
+
+def _source_span_for_ordered_token_quote(
+    quote: str,
+    content: str | None,
+) -> str | None:
+    normalized_quote = _normalize_quote_text(quote)
+    normalized_content = _normalize_quote_text(content or "")
+    quote_tokens = [
+        match.group(0).casefold()
+        for match in _QUOTE_TOKEN_PATTERN.finditer(normalized_quote)
+    ]
+    if len(quote_tokens) < _ORDERED_QUOTE_MIN_TOKENS:
+        return None
+
+    content_token_matches = list(_QUOTE_TOKEN_PATTERN.finditer(normalized_content))
+    content_tokens = [match.group(0).casefold() for match in content_token_matches]
+    max_span_tokens = max(
+        len(quote_tokens) + _ORDERED_QUOTE_MAX_EXTRA_TOKENS,
+        len(quote_tokens) * _ORDERED_QUOTE_MAX_SPAN_TOKEN_MULTIPLIER,
+    )
+    spans: list[tuple[int, int, int]] = []
+
+    for start_index, token in enumerate(content_tokens):
+        if token != quote_tokens[0]:
+            continue
+
+        quote_index = 1
+        end_index = start_index
+        for content_index in range(start_index + 1, len(content_tokens)):
+            if content_tokens[content_index] != quote_tokens[quote_index]:
+                continue
+            quote_index += 1
+            end_index = content_index
+            if quote_index == len(quote_tokens):
+                break
+
+        if quote_index != len(quote_tokens):
+            continue
+
+        span_token_count = end_index - start_index + 1
+        span_start = content_token_matches[start_index].start()
+        span_end = content_token_matches[end_index].end()
+        if span_token_count > max_span_tokens:
+            continue
+        if span_end - span_start > _ORDERED_QUOTE_MAX_SPAN_CHARS:
+            continue
+        spans.append((span_token_count, span_start, span_end))
+
+    if not spans:
+        return None
+
+    shortest_span_token_count = min(span[0] for span in spans)
+    shortest_spans = {
+        (span_start, span_end)
+        for span_token_count, span_start, span_end in spans
+        if span_token_count == shortest_span_token_count
+    }
+    if len(shortest_spans) != 1:
+        return None
+
+    span_start, span_end = next(iter(shortest_spans))
+    return normalized_content[span_start:span_end].strip()
+
+
+def _canonical_source_quote_for_candidate(
+    quote: str,
+    content: str | None,
+) -> str | None:
+    if _quote_matches_candidate_content(quote, content):
+        return quote
+
+    canonical_quote = _source_span_for_ellipsized_quote(quote, content)
+    if canonical_quote is not None:
+        return canonical_quote
+
+    canonical_quote = _source_span_for_token_sequence_quote(quote, content)
+    if canonical_quote is not None:
+        return canonical_quote
+
+    return _source_span_for_ordered_token_quote(quote, content)
 
 
 def _normalize_quote_text(value: str) -> str:
@@ -523,6 +1002,52 @@ def _candidate_source_excerpt(content: str | None) -> str | None:
     return excerpt or None
 
 
+def _canonicalize_verified_chunk_quote(
+    input_data: VerificationAgentInput,
+    verified_chunk: VerifiedChunk,
+) -> VerifiedChunk | None:
+    selected_candidate = next(
+        (
+            candidate
+            for candidate in input_data.candidates
+            if candidate.chunk_id == verified_chunk.chunk_id
+        ),
+        None,
+    )
+    if selected_candidate is None:
+        return None
+
+    canonical_quote = _canonical_source_quote_for_candidate(
+        verified_chunk.quote,
+        selected_candidate.content,
+    )
+    if canonical_quote is not None:
+        return verified_chunk.model_copy(update={"quote": canonical_quote})
+
+    matching_evidence: list[tuple[RetrievalCandidate, str]] = []
+    for candidate in input_data.candidates:
+        canonical_quote = _canonical_source_quote_for_candidate(
+            verified_chunk.quote,
+            candidate.content,
+        )
+        if canonical_quote is not None:
+            matching_evidence.append((candidate, canonical_quote))
+
+    if len(matching_evidence) != 1:
+        return None
+
+    matching_candidate, matching_quote = matching_evidence[0]
+    return verified_chunk.model_copy(
+        update={
+            "chunk_id": matching_candidate.chunk_id,
+            "document_id": matching_candidate.document_id,
+            "file_name": matching_candidate.file_name,
+            "quote": matching_quote,
+            "page_number": matching_candidate.page_number,
+        }
+    )
+
+
 def _validate_candidate_quotes(
     verification_output: VerificationAgentOutput,
     input_data: VerificationAgentInput,
@@ -534,8 +1059,14 @@ def _validate_candidate_quotes(
 
     for rejected_chunk in verification_output.rejected_chunks:
         candidate = candidates_by_chunk_id[rejected_chunk.chunk_id]
-        if _quote_matches_candidate_content(rejected_chunk.quote, candidate.content):
-            rejected_chunks.append(rejected_chunk)
+        canonical_quote = _canonical_source_quote_for_candidate(
+            rejected_chunk.quote,
+            candidate.content,
+        )
+        if canonical_quote is not None:
+            rejected_chunks.append(
+                rejected_chunk.model_copy(update={"quote": canonical_quote})
+            )
             continue
 
         source_excerpt = _candidate_source_excerpt(candidate.content)
@@ -549,8 +1080,12 @@ def _validate_candidate_quotes(
 
     for verified_chunk in verification_output.verified_chunks:
         candidate = candidates_by_chunk_id[verified_chunk.chunk_id]
-        if _quote_matches_candidate_content(verified_chunk.quote, candidate.content):
-            verified_chunks.append(verified_chunk)
+        canonical_verified_chunk = _canonicalize_verified_chunk_quote(
+            input_data,
+            verified_chunk,
+        )
+        if canonical_verified_chunk is not None:
+            verified_chunks.append(canonical_verified_chunk)
             continue
 
         source_excerpt = _candidate_source_excerpt(candidate.content)
@@ -679,17 +1214,25 @@ def _apply_coverage_review(
         )
 
     selected_keys = {
-        (chunk.chunk_id, _normalize_quote_text(chunk.quote))
+        _verified_chunk_dedup_key(chunk)
         for chunk in selected_chunks
     }
+    verified_chunks = list(selected_chunks)
+    for chunk in verification_output.verified_chunks:
+        chunk_key = _verified_chunk_dedup_key(chunk)
+        if chunk_key in selected_keys:
+            continue
+        verified_chunks.append(chunk)
+        selected_keys.add(chunk_key)
+
     remaining_rejected_chunks = [
         chunk
         for chunk in verification_output.rejected_chunks
-        if (chunk.chunk_id, _normalize_quote_text(chunk.quote)) not in selected_keys
+        if (chunk.chunk_id, _coverage_quote_dedup_text(chunk.quote)) not in selected_keys
     ]
     covered_output = verification_output.model_copy(
         update={
-            "verified_chunks": selected_chunks,
+            "verified_chunks": verified_chunks,
             "rejected_chunks": remaining_rejected_chunks,
             "missing_information": False,
             "confidence": min(
@@ -699,6 +1242,15 @@ def _apply_coverage_review(
         }
     )
     return _filter_duplicate_verified_chunks(covered_output)
+
+
+def _verified_chunk_dedup_key(chunk: VerifiedChunk) -> tuple[Any, str]:
+    return chunk.chunk_id, _coverage_quote_dedup_text(chunk.quote)
+
+
+def _coverage_quote_dedup_text(quote: str) -> str:
+    normalized_quote = _normalize_quote_text(quote)
+    return re.sub(r"[.,:;!?]+(?='?$)", "", normalized_quote)
 
 
 def _expand_verified_context_for_explanatory_question(
@@ -993,23 +1545,8 @@ def run_verification_agent(
         _log_successful_verification(validated_input, empty_output)
         return empty_output
 
-    messages = _build_verification_messages(validated_input)
     try:
-        response_content = shopaikey_service.chat_completion(
-            messages,
-            response_format={"type": "json_object"},
-        )
-    except shopaikey_service.ShopAIKeyServiceError as exc:
-        failure = _VerificationAgentFailure("provider_error")
-        _log_failed_verification(validated_input, failure.failure_type)
-        raise failure from exc
-
-    try:
-        verification_output = _parse_verification_output(response_content)
-        candidate_bound_output = _validate_candidate_membership(
-            verification_output,
-            validated_input,
-        )
+        candidate_bound_output = _run_initial_verification(validated_input)
         quote_validated_output = _validate_candidate_quotes(
             candidate_bound_output,
             validated_input,

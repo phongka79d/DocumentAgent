@@ -757,7 +757,7 @@ def test_run_answer_agent_uses_verification_confidence_for_ready_answer(
 
     output = run_answer_agent(_answer_input_payload())
 
-    assert output.confidence == 0.0
+    assert output.confidence == 0.82
 
 
 def test_execute_answer_self_check_marks_reasoning_ready_when_grounded_in_verified_evidence(
@@ -976,6 +976,63 @@ def test_execute_answer_self_check_canonicalizes_unique_verified_subquote_suppor
     assert executed.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
     assert all(
         citation.quote == VERIFIED_QUOTE
+        for field_review in executed.review.field_reviews
+        for claim in field_review.claims
+        for citation in claim.supporting_citations
+    )
+
+
+def test_execute_answer_self_check_canonicalizes_terminal_punctuation_support(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    verified_quote = "The participants began running when they liked"
+    draft_output = _answer_output(
+        final_answer="The participants began running when they liked.",
+        citations=[
+            {
+                "file_name": "race.txt",
+                "quote": verified_quote,
+            }
+        ],
+    )
+    verification = _verification_output(
+        verified_chunks=[
+            {
+                "chunk_id": VERIFIED_CHUNK_ID,
+                "document_id": DOCUMENT_ID,
+                "file_name": "race.txt",
+                "quote": verified_quote,
+                "page_number": 1,
+                "verification_reason": "States how the activity began.",
+                "supports_simple_reasoning": False,
+            }
+        ]
+    )
+    grounding_payload = _grounding_review_payload(
+        output=draft_output,
+        supporting_citations=[
+            {
+                "file_name": "race.txt",
+                "quote": f"{verified_quote}.",
+            }
+        ],
+    )
+    chat_completion = Mock(return_value=json.dumps(grounding_payload))
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    executed = execute_answer_self_check(
+        "How did the activity begin?",
+        draft_output,
+        verification,
+    )
+
+    assert executed.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    assert all(
+        citation.quote == verified_quote
         for field_review in executed.review.field_reviews
         for claim in field_review.claims
         for citation in claim.supporting_citations
@@ -1796,6 +1853,134 @@ def test_run_answer_agent_canonicalizes_unique_verified_subquote_citation(
     assert grounding_payload["draft_answer"]["citations"] == [
         {
             "file_name": "meeting.txt",
+            "quote": verified_quote,
+        }
+    ]
+
+
+def test_run_answer_agent_canonicalizes_terminal_punctuation_subquote_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    verified_quote = (
+        "The host pulled out a box of tokens, and handed them round as prizes"
+    )
+    cited_subquote = "handed them round as prizes."
+    payload = _answer_input_payload()
+    payload["verification"] = _verification_output(
+        verified_chunks=[
+            {
+                "chunk_id": VERIFIED_CHUNK_ID,
+                "document_id": DOCUMENT_ID,
+                "file_name": "race.txt",
+                "quote": verified_quote,
+                "page_number": 1,
+                "verification_reason": "States participant prizes.",
+                "supports_simple_reasoning": False,
+            }
+        ]
+    ).model_dump(mode="json")
+    provider_payload = {
+        "final_answer": "The host handed tokens round as prizes.",
+        "citations": [
+            {
+                "file_name": "race.txt",
+                "quote": cited_subquote,
+            }
+        ],
+        "reasoning_summary": "The cited passage states the participant prize.",
+        "confidence": 0.82,
+    }
+    canonical_output = AnswerAgentOutput.model_validate(
+        provider_payload
+        | {
+            "citations": [
+                {
+                    "file_name": "race.txt",
+                    "quote": verified_quote,
+                }
+            ],
+            "self_check": DRAFT_SELF_CHECK_PLACEHOLDER,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(provider_payload),
+            json.dumps(_grounding_review_payload(output=canonical_output)),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(payload)
+
+    assert output.citations == [Citation(file_name="race.txt", quote=verified_quote)]
+
+
+def test_run_answer_agent_canonicalizes_terminal_punctuation_variant_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    verified_quote = "The participants began running when they liked"
+    cited_quote = f"{verified_quote}."
+    payload = _answer_input_payload()
+    payload["verification"] = _verification_output(
+        verified_chunks=[
+            {
+                "chunk_id": VERIFIED_CHUNK_ID,
+                "document_id": DOCUMENT_ID,
+                "file_name": "race.txt",
+                "quote": verified_quote,
+                "page_number": 1,
+                "verification_reason": "States how the activity began.",
+                "supports_simple_reasoning": False,
+            }
+        ]
+    ).model_dump(mode="json")
+    provider_payload = {
+        "final_answer": "The participants began running when they liked.",
+        "citations": [
+            {
+                "file_name": "race.txt",
+                "quote": cited_quote,
+            }
+        ],
+        "reasoning_summary": "The cited passage states how the activity began.",
+        "confidence": 0.82,
+    }
+    canonical_output = AnswerAgentOutput.model_validate(
+        provider_payload
+        | {
+            "citations": [
+                {
+                    "file_name": "race.txt",
+                    "quote": verified_quote,
+                }
+            ],
+            "self_check": DRAFT_SELF_CHECK_PLACEHOLDER,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(provider_payload),
+            json.dumps(_grounding_review_payload(output=canonical_output)),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(payload)
+
+    assert output.citations == [Citation(file_name="race.txt", quote=verified_quote)]
+    grounding_messages = chat_completion.call_args_list[1].args[0]
+    grounding_payload = json.loads(grounding_messages[1]["content"])
+    assert grounding_payload["draft_answer"]["citations"] == [
+        {
+            "file_name": "race.txt",
             "quote": verified_quote,
         }
     ]

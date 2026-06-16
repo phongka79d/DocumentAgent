@@ -231,7 +231,7 @@ Plan 8 Batch01 through Batch04 backend retrieval behavior is implemented:
 The current architecture is layered:
 
 - API layer: `backend/app/api/health.py`, `backend/app/api/documents.py`, `backend/app/api/retrieval.py`, `backend/app/api/chat.py`, and `backend/app/api/agent_runs.py` expose FastAPI routes and map service exceptions to HTTP responses.
-- Agent package: `backend/app/agents/` exposes shared Agent 1 retrieval input, candidate, and output schemas, Agent 2 verification input/output schemas and prompt rules, Agent 3 answer input/output schemas, citation/evidence validation helpers, answer-generation and self-check prompts, and deterministic self-check readiness helpers. It also includes the backend-only retrieval agent callable that delegates to hybrid retrieval, returns validated candidates, logs successful steps, and raises a controlled retrieval error after failed-step logging when retrieval fails, plus the backend-only Agent 2 verification callable that validates input, short-circuits empty candidates, calls ShopAIKey chat for non-empty candidates, validates JSON output, applies deterministic evidence safety checks, logs success and controlled failure steps through the agent log service, surfaces log persistence failures through safe warnings, and preserves the final public output shape before returning success. The Agent 3 runtime callable validates Agent 2 verification input, returns deterministic insufficient-evidence output without provider calls, builds verified-only ShopAIKey answer-generation messages for sufficient evidence, calls ShopAIKey, parses draft JSON into `AnswerAgentOutput`, enforces citation presence and format, validates citations against verified evidence, rejects rejected evidence reuse, runs LLM-assisted self-check, rejects non-ready self-check results with controlled `AnswerAgentError`, normalizes the public output shape, and attempts success/failed `agent_steps` logging with safe log persistence warnings. `backend/app/agents/graph.py` defines the LangGraph QA workflow state and `run_qa_workflow(question, document_ids, session_id=None)` contract that creates a running agent run, invokes Agent 1, Agent 2, and Agent 3 in order, marks success/failure through `agent_run_service`, returns Agent 3 answer fields plus `agent_run_id`, and preserves Agent 3 insufficient-evidence handling. The public chat route prepares the session and user message, invokes this workflow, persists the assistant message, and returns the workflow response. Chat and agent-run failure paths now return controlled public errors without exposing provider, Supabase, Qdrant, stack, or secret details.
+- Agent package: `backend/app/agents/` exposes shared Agent 1 retrieval input, candidate, and output schemas, Agent 2 verification input/output schemas and prompt rules, Agent 3 answer input/output schemas, citation/evidence validation helpers, answer-generation and self-check prompts, and deterministic self-check readiness helpers. It also includes the backend-only retrieval agent callable that delegates to hybrid retrieval, returns validated candidates, logs successful steps, and raises a controlled retrieval error after failed-step logging when retrieval fails, plus the backend-only Agent 2 verification callable that validates input, short-circuits empty candidates, calls ShopAIKey chat for non-empty candidates, validates JSON output, applies deterministic evidence safety checks, logs success and controlled failure steps through the agent log service, surfaces log persistence failures through safe warnings, and preserves the final public output shape before returning success. The Agent 3 runtime callable validates Agent 2 verification input, returns deterministic insufficient-evidence output without provider calls, builds verified-only ShopAIKey answer-generation messages for sufficient evidence, calls ShopAIKey, parses draft JSON into `AnswerAgentOutput`, enforces citation presence and format, validates citations against verified evidence, rejects rejected evidence reuse, runs LLM-assisted self-check, converts repeated grounding/readiness insufficiency into the safe insufficient-evidence output, normalizes the public output shape, and attempts success/failed `agent_steps` logging with safe log persistence warnings. `backend/app/agents/graph.py` defines the LangGraph QA workflow state and `run_qa_workflow(question, document_ids, session_id=None)` contract that creates a running agent run, invokes Agent 1, Agent 2, and Agent 3 in order, marks success/failure through `agent_run_service`, returns Agent 3 answer fields plus `agent_run_id`, and preserves Agent 3 insufficient-evidence handling. The public chat route prepares the session and user message, invokes this workflow, persists the assistant message, and returns the workflow response. Chat and agent-run failure paths now return controlled public errors without exposing provider, Supabase, Qdrant, stack, or secret details.
 - `backend/app/schemas/chat.py`: Plan 12 `/api/chat/ask` request/response contracts with optional `session_id`, UUID-validated `document_ids`, non-empty questions, answer confidence, citations, and `agent_run_id`.
 - `backend/app/schemas/agent_runs.py`: Plan 12 response contracts for the public agent-run evidence and logs endpoints.
 - Configuration layer: `backend/app/core/config.py` centralizes Pydantic settings, default values, and required external-service checks.
@@ -367,6 +367,8 @@ Do not expose or copy secret values into documentation.
 | `RETRIEVAL_SEMANTIC_TOP_K` | No | Semantic retrieval limit, constrained from 1 to 50. Defaults to `20`. | `backend/app/core/config.py` |
 | `RETRIEVAL_GRAPH_TOP_K` | No | Graph candidate limit before hybrid merge, constrained from 1 to 50. Defaults to `20`. | `backend/app/core/config.py` |
 | `RETRIEVAL_FINAL_TOP_K` | No | Final ranked hybrid result limit, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
+| `RETRIEVAL_CONTEXT_WINDOW` | No | Adjacent source chunk window added around Agent 1 retrieval anchors, constrained from 0 to 3. Defaults to `1`. Adjacent chunks are candidates only. | `backend/app/core/config.py` |
+| `RETRIEVAL_CONTEXT_MAX_CANDIDATES` | No | Maximum adjacent source-context candidates added per retrieval call, constrained from 0 to 50. Defaults to `8`. | `backend/app/core/config.py` |
 | `ENABLE_RERANK` | No | Enables guarded rerank placeholder behavior only when explicitly true and the rerank model is configured. Defaults to `false`. | `backend/app/core/config.py` |
 | `MAX_UPLOAD_BYTES` | No | Upload size limit in bytes. Defaults to `25000000`. | `backend/app/core/config.py` |
 | `CHUNK_SIZE_TOKENS` | No | Approximate chunk size. Defaults to `1000`. | `backend/app/core/config.py` |
@@ -508,6 +510,24 @@ question-aware claim-grounding review whose public self-check values are derived
 and enforced by application code. Verifier-authored reasons and flags are not
 treated as document evidence. These internal safeguards do not change the public
 Agent 2, Agent 3, chat, evidence, or agent-log API response schemas.
+
+### Cross-Chunk QA Behavior
+
+Agent 1 adds a bounded, document-scoped adjacent source context window around
+retrieval anchors using `RETRIEVAL_CONTEXT_WINDOW` and
+`RETRIEVAL_CONTEXT_MAX_CANDIDATES`. These adjacent chunks are not trusted as
+answers by retrieval alone; they are only extra candidates that still must pass
+Agent 2 candidate membership, exact-quote validation, duplicate filtering, and
+requirement-level coverage review.
+
+For multi-part questions, Agent 2 must split the request into independently
+requested requirements and may mark `missing_information=true` unless every
+requirement has supporting exact source evidence. Agent 3 then answers only
+from verified chunks and runs claim grounding over the final answer and
+reasoning summary. Ordinary exhausted grounding/readiness gaps return the
+existing insufficient-evidence answer with confidence `0.0` and no citations.
+Provider, storage, malformed JSON/schema, persistence, and contract failures
+remain controlled errors rather than being converted into grounded answers.
 
 For Plan 10 Agent 2 verification changes, the required targeted backend validation is:
 
