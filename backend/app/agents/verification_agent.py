@@ -19,8 +19,10 @@ from app.agents.schemas import (
     VerificationAgentOutput,
     VerifiedChunk,
 )
+from app.core.config import get_settings
 from app.services import agent_log_service
 from app.services import shopaikey_service
+from app.services.evidence_payload_optimizer import optimize_candidates_for_verification
 
 
 logger = logging.getLogger(__name__)
@@ -152,7 +154,9 @@ class _VerificationAgentFailure(VerificationAgentError):
 
 def _build_compact_evidence_payload(
     input_data: VerificationAgentInput,
+    candidates: list[RetrievalCandidate] | None = None,
 ) -> dict[str, Any]:
+    payload_candidates = candidates if candidates is not None else input_data.candidates
     return {
         "question": input_data.question,
         "evidence": [
@@ -165,15 +169,65 @@ def _build_compact_evidence_payload(
                 "score": candidate.final_score,
                 "content": candidate.content,
             }
-            for candidate in input_data.candidates
+            for candidate in payload_candidates
         ],
     }
+
+
+def _compact_candidates_for_llm(
+    input_data: VerificationAgentInput,
+    *,
+    max_candidates: int,
+) -> list[RetrievalCandidate]:
+    settings = get_settings()
+    return optimize_candidates_for_verification(
+        question=input_data.question,
+        candidates=input_data.candidates,
+        max_candidates=max_candidates,
+        snippet_max_chars=settings.agent_evidence_snippet_max_chars,
+        context_sentences=settings.agent_evidence_snippet_context_sentences,
+    )
+
+
+def _log_llm_payload_diagnostics(
+    *,
+    phase: str,
+    messages: list[dict[str, str]],
+    candidate_count: int,
+    retry: bool,
+) -> None:
+    message_chars = shopaikey_service.estimate_chat_messages_chars(messages)
+    logger.info(
+        "LLM payload prepared. agent=%s phase=%s message_chars=%s candidate_count=%s retry=%s",
+        VERIFICATION_AGENT_NAME,
+        phase,
+        message_chars,
+        candidate_count,
+        retry,
+    )
+    if message_chars >= get_settings().agent_llm_payload_warn_chars:
+        logger.warning(
+            "LLM payload exceeds warning threshold. agent=%s phase=%s message_chars=%s candidate_count=%s retry=%s",
+            VERIFICATION_AGENT_NAME,
+            phase,
+            message_chars,
+            candidate_count,
+            retry,
+        )
 
 
 def _build_verification_messages(
     input_data: VerificationAgentInput,
 ) -> list[dict[str, str]]:
-    compact_payload = _build_compact_evidence_payload(input_data)
+    settings = get_settings()
+    compact_candidates = _compact_candidates_for_llm(
+        input_data,
+        max_candidates=settings.agent_verification_max_candidates,
+    )
+    compact_payload = _build_compact_evidence_payload(
+        input_data,
+        compact_candidates,
+    )
     return [
         {
             "role": "system",
@@ -208,6 +262,11 @@ def _build_verification_retry_messages(
 def _build_coverage_messages(
     input_data: VerificationAgentInput,
 ) -> list[dict[str, str]]:
+    settings = get_settings()
+    compact_candidates = _compact_candidates_for_llm(
+        input_data,
+        max_candidates=settings.agent_coverage_max_candidates,
+    )
     payload = {
         "response_instruction": "Return only valid JSON.",
         "question": input_data.question,
@@ -218,7 +277,7 @@ def _build_coverage_messages(
                 "page_number": candidate.page_number,
                 "content": candidate.content,
             }
-            for candidate in input_data.candidates
+            for candidate in compact_candidates
         ],
     }
     return [
@@ -502,6 +561,12 @@ def _run_coverage_review(
     messages = _build_coverage_messages(input_data)
     for attempt in range(2):
         try:
+            _log_llm_payload_diagnostics(
+                phase="coverage_review",
+                messages=messages,
+                candidate_count=len(input_data.candidates),
+                retry=attempt > 0,
+            )
             response_content = shopaikey_service.chat_completion(
                 messages,
                 response_format=EVIDENCE_COVERAGE_RESPONSE_FORMAT,
@@ -538,6 +603,12 @@ def _run_initial_verification(
     messages = _build_verification_messages(input_data)
     for attempt in range(2):
         try:
+            _log_llm_payload_diagnostics(
+                phase="initial_verification",
+                messages=messages,
+                candidate_count=len(input_data.candidates),
+                retry=attempt > 0,
+            )
             response_content = shopaikey_service.chat_completion(
                 messages,
                 response_format={"type": "json_object"},

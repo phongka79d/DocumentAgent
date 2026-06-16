@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     retrieval_final_top_k: int = Field(default=8, ge=1, le=50)
     retrieval_context_window: int = Field(default=1, ge=0, le=3)
     retrieval_context_max_candidates: int = Field(default=8, ge=0, le=50)
+    agent_evidence_snippet_max_chars: int = Field(default=1800, ge=1, le=20000)
+    agent_evidence_snippet_context_sentences: int = Field(default=1, ge=0, le=5)
+    agent_verification_max_candidates: int = Field(default=8, ge=1, le=50)
+    agent_coverage_max_candidates: int = Field(default=8, ge=1, le=50)
+    agent_llm_payload_warn_chars: int = Field(default=30000, ge=1)
     enable_rerank: bool = False
     max_upload_bytes: int | None = 25_000_000
     chunk_size_tokens: int = Field(default=1000, gt=0)

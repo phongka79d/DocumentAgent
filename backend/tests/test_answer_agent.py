@@ -1,4 +1,5 @@
 import json
+import logging
 import sys
 from copy import deepcopy
 from pathlib import Path
@@ -50,6 +51,7 @@ from app.agents.schemas import (
     Citation,
     VerificationAgentOutput,
 )
+from app.core.config import Settings
 
 
 VERIFIED_CHUNK_ID = "22222222-2222-2222-2222-222222222222"
@@ -831,6 +833,71 @@ def test_run_answer_agent_uses_verification_confidence_for_ready_answer(
     output = run_answer_agent(_answer_input_payload())
 
     assert output.confidence == 0.82
+
+
+def test_answer_generation_payload_diagnostics_log_safe_metadata_only(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    answer_input = AnswerAgentInput.model_validate(_answer_input_payload())
+    monkeypatch.setattr(
+        answer_agent_module,
+        "get_settings",
+        lambda: Settings(_env_file=None, agent_llm_payload_warn_chars=1),
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        Mock(return_value=json.dumps(_draft_answer_payload())),
+    )
+
+    with caplog.at_level(logging.INFO, logger=answer_agent_module.__name__):
+        answer_agent_module._generate_validated_draft_answer(answer_input)
+
+    assert "LLM payload prepared." in caplog.text
+    assert "agent=answer_agent" in caplog.text
+    assert "phase=answer_generation" in caplog.text
+    assert "candidate_count=1" in caplog.text
+    assert "retry=False" in caplog.text
+    assert "message_chars=" in caplog.text
+    assert VERIFIED_QUOTE not in caplog.text
+    assert "private-shopaikey-value" not in caplog.text
+
+
+def test_answer_self_check_payload_diagnostics_log_safe_metadata_only(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    answer_input = AnswerAgentInput.model_validate(_answer_input_payload())
+    output = AnswerAgentOutput.model_validate(
+        _draft_answer_payload(self_check=DRAFT_SELF_CHECK_PLACEHOLDER)
+    )
+    monkeypatch.setattr(
+        answer_agent_module,
+        "get_settings",
+        lambda: Settings(_env_file=None, agent_llm_payload_warn_chars=1),
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        Mock(return_value=json.dumps(_grounding_review_payload(output=output))),
+    )
+
+    with caplog.at_level(logging.INFO, logger=answer_agent_module.__name__):
+        execute_answer_self_check(
+            answer_input.question,
+            output,
+            answer_input.verification,
+        )
+
+    assert "LLM payload prepared." in caplog.text
+    assert "agent=answer_agent" in caplog.text
+    assert "phase=answer_self_check" in caplog.text
+    assert "candidate_count=1" in caplog.text
+    assert "retry=False" in caplog.text
+    assert "message_chars=" in caplog.text
+    assert VERIFIED_QUOTE not in caplog.text
+    assert "private-shopaikey-value" not in caplog.text
 
 
 def test_execute_answer_self_check_marks_reasoning_ready_when_grounded_in_verified_evidence(

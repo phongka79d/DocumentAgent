@@ -674,6 +674,62 @@ def test_chat_ask_route_runs_workflow_and_persists_assistant_message(
     )
 
 
+def test_chat_ask_route_preserves_public_schema_for_multi_part_grounded_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, chat_api = _chat_client()
+    exact_quote = "Probation starts on June 1, 2026 and lasts two months."
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        Mock(
+            return_value=chat_service.ChatPersistenceContext(
+                session={"id": str(SESSION_ID), "title": "Existing"},
+                user_message={"id": "user-message-id", "role": "user"},
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        chat_api,
+        "run_qa_workflow",
+        Mock(
+            return_value={
+                "answer": "Probation starts on June 1, 2026 and lasts two months.",
+                "confidence": 0.86,
+                "citations": [
+                    Citation(file_name="contract.pdf", quote=exact_quote),
+                ],
+                "agent_run_id": AGENT_RUN_ID,
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "persist_assistant_message",
+        Mock(return_value={"id": "assistant-message-id", "role": "assistant"}),
+    )
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "session_id": str(SESSION_ID),
+            "question": "When does probation start and how long does it last?",
+            "document_ids": [str(DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == 200
+    assert set(response.json()) == {
+        "answer",
+        "confidence",
+        "citations",
+        "agent_run_id",
+    }
+    assert response.json()["citations"] == [
+        {"file_name": "contract.pdf", "quote": exact_quote}
+    ]
+
+
 def test_chat_ask_returns_200_when_grounding_exhaustion_becomes_insufficient(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -27,6 +27,10 @@ def _is_retryable_chat_status(status_code: int) -> bool:
     return status_code in {408, 429} or status_code >= 500
 
 
+def estimate_chat_messages_chars(messages: list[dict[str, Any]]) -> int:
+    return sum(len(str(message.get("content", ""))) for message in messages)
+
+
 def rerank_candidates(
     question: str,
     candidates: list[CandidateT],

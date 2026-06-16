@@ -21,6 +21,7 @@ from app.agents.schemas import (
     VerificationAgentOutput,
     VerifiedChunk,
 )
+from app.core.config import get_settings
 from app.services import agent_log_service, shopaikey_service
 
 
@@ -117,6 +118,33 @@ _EXPLANATORY_QUESTION_PATTERN = re.compile(
 )
 
 
+def _log_llm_payload_diagnostics(
+    *,
+    phase: str,
+    messages: list[dict[str, str]],
+    candidate_count: int,
+    retry: bool,
+) -> None:
+    message_chars = shopaikey_service.estimate_chat_messages_chars(messages)
+    logger.info(
+        "LLM payload prepared. agent=%s phase=%s message_chars=%s candidate_count=%s retry=%s",
+        ANSWER_AGENT_NAME,
+        phase,
+        message_chars,
+        candidate_count,
+        retry,
+    )
+    if message_chars >= get_settings().agent_llm_payload_warn_chars:
+        logger.warning(
+            "LLM payload exceeds warning threshold. agent=%s phase=%s message_chars=%s candidate_count=%s retry=%s",
+            ANSWER_AGENT_NAME,
+            phase,
+            message_chars,
+            candidate_count,
+            retry,
+        )
+
+
 def format_citation(citation: Citation) -> str:
     """Render a structured citation in the normal-user display format."""
     return f'{citation.file_name}: "{citation.quote}"'
@@ -182,8 +210,15 @@ def execute_answer_self_check(
     """Run claim grounding and derive the public Agent 3 self-check."""
     validate_answer_evidence_contract(output, verification)
     try:
+        messages = build_answer_self_check_messages(question, output, verification)
+        _log_llm_payload_diagnostics(
+            phase="answer_self_check",
+            messages=messages,
+            candidate_count=len(verification.verified_chunks),
+            retry=False,
+        )
         provider_content = shopaikey_service.chat_completion(
-            build_answer_self_check_messages(question, output, verification),
+            messages,
             response_format=ANSWER_SELF_CHECK_RESPONSE_FORMAT,
         )
     except shopaikey_service.ShopAIKeyServiceError as exc:
@@ -749,6 +784,12 @@ def _generate_validated_draft_answer(
 ) -> AnswerAgentOutput:
     try:
         messages = build_answer_generation_messages(answer_input, retry_instruction)
+        _log_llm_payload_diagnostics(
+            phase="answer_generation",
+            messages=messages,
+            candidate_count=len(answer_input.verification.verified_chunks),
+            retry=retry_instruction is not None,
+        )
         provider_content = shopaikey_service.chat_completion(
             messages,
             response_format=ANSWER_GENERATION_RESPONSE_FORMAT,

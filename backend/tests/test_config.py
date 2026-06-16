@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -54,6 +55,38 @@ def test_retrieval_context_settings_reject_out_of_range_values(
     value: int,
 ) -> None:
     with pytest.raises(ValueError):
+        Settings(_env_file=None, **{field_name: value})
+
+
+def test_evidence_payload_optimizer_settings_have_bounded_defaults() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.agent_evidence_snippet_max_chars == 1800
+    assert settings.agent_evidence_snippet_context_sentences == 1
+    assert settings.agent_verification_max_candidates == 8
+    assert settings.agent_coverage_max_candidates == 8
+    assert settings.agent_llm_payload_warn_chars == 30000
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("agent_evidence_snippet_max_chars", 0),
+        ("agent_evidence_snippet_max_chars", 20001),
+        ("agent_evidence_snippet_context_sentences", -1),
+        ("agent_evidence_snippet_context_sentences", 6),
+        ("agent_verification_max_candidates", 0),
+        ("agent_verification_max_candidates", 51),
+        ("agent_coverage_max_candidates", 0),
+        ("agent_coverage_max_candidates", 51),
+        ("agent_llm_payload_warn_chars", 0),
+    ],
+)
+def test_evidence_payload_optimizer_settings_reject_out_of_range_values(
+    field_name: str,
+    value: int,
+) -> None:
+    with pytest.raises(ValidationError):
         Settings(_env_file=None, **{field_name: value})
 
 

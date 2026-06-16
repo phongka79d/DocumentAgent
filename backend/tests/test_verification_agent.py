@@ -1,7 +1,9 @@
 import json
+import logging
 import sys
 from pathlib import Path
 from unittest.mock import Mock
+from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
@@ -16,10 +18,12 @@ from app.agents.schemas import (
     EvidenceCoverageRequirement,
     EvidenceCoverageReview,
     EvidenceCoverageSelection,
+    VerificationAgentInput,
     VerificationAgentOutput,
 )
 from app.agents import verification_agent
 from app.agents.verification_agent import VerificationAgentError, run_verification_agent
+from app.core.config import Settings
 from app.services import agent_log_service
 
 
@@ -295,8 +299,8 @@ def _verification_output_payload(confidence: float) -> dict[str, object]:
     }
 
 
-def _candidate_payload() -> dict[str, object]:
-    return {
+def _candidate_payload(**overrides: object) -> dict[str, object]:
+    payload = {
         "chunk_id": CANDIDATE_CHUNK_ID,
         "document_id": CANDIDATE_DOCUMENT_ID,
         "file_name": "contract.pdf",
@@ -312,6 +316,8 @@ def _candidate_payload() -> dict[str, object]:
         "final_score": 0.91,
         "retrieval_reason": "Matched probation date terms.",
     }
+    payload.update(overrides)
+    return payload
 
 
 def _second_candidate_payload() -> dict[str, object]:
@@ -319,6 +325,231 @@ def _second_candidate_payload() -> dict[str, object]:
     payload["chunk_id"] = SECOND_CANDIDATE_CHUNK_ID
     payload["final_score"] = 0.89
     return payload
+
+
+def _verification_input_payload(
+    *,
+    candidates: list[dict[str, object]] | None = None,
+    question: str = "What does the document say about probation?",
+) -> dict[str, object]:
+    return {
+        "agent_run_id": AGENT_RUN_ID,
+        "question": question,
+        "candidates": candidates if candidates is not None else [_candidate_payload()],
+    }
+
+
+def test_verification_prompt_uses_compact_candidates_but_quote_validation_uses_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_quote = "The warranty lasts two years after purchase."
+    long_content = (
+        "Unrelated start. "
+        f"{source_quote} "
+        + "Unrelated end. " * 200
+    )
+    input_data = VerificationAgentInput.model_validate(
+        _verification_input_payload(
+            question="How long does the warranty last?",
+            candidates=[_candidate_payload(content=long_content)],
+        )
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "get_settings",
+        lambda: Settings(
+            _env_file=None,
+            agent_evidence_snippet_max_chars=120,
+        ),
+    )
+
+    messages = verification_agent._build_verification_messages(input_data)
+    prompt = messages[1]["content"]
+
+    assert source_quote in prompt
+    assert len(prompt) < len(long_content)
+
+    output = VerificationAgentOutput.model_validate(
+        {
+            "verified_chunks": [
+                {
+                    "chunk_id": CANDIDATE_CHUNK_ID,
+                    "document_id": CANDIDATE_DOCUMENT_ID,
+                    "file_name": "contract.pdf",
+                    "quote": source_quote,
+                    "page_number": 3,
+                    "verification_reason": "Direct warranty evidence.",
+                }
+            ],
+            "rejected_chunks": [],
+            "missing_information": False,
+            "confidence": 0.9,
+        }
+    )
+
+    validated = verification_agent._validate_candidate_quotes(output, input_data)
+
+    assert validated.verified_chunks[0].quote == source_quote
+
+
+def test_coverage_prompt_uses_compact_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_quote = "The warranty lasts two years after purchase."
+    long_content = (
+        "Unrelated start. "
+        f"{source_quote} "
+        + "Unrelated end. " * 200
+    )
+    input_data = VerificationAgentInput.model_validate(
+        _verification_input_payload(
+            question="How long does the warranty last?",
+            candidates=[_candidate_payload(content=long_content)],
+        )
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "get_settings",
+        lambda: Settings(
+            _env_file=None,
+            agent_evidence_snippet_max_chars=120,
+        ),
+    )
+
+    messages = verification_agent._build_coverage_messages(input_data)
+    prompt = messages[1]["content"]
+
+    assert source_quote in prompt
+    assert len(prompt) < len(long_content)
+
+
+def test_coverage_prompt_uses_configured_candidate_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidates = [
+        _candidate_payload(
+            chunk_id=UUID(f"22222222-2222-4222-8222-{index:012d}"),
+            content=f"Candidate {index} has unique evidence.",
+        )
+        for index in range(12)
+    ]
+    input_data = VerificationAgentInput.model_validate(
+        _verification_input_payload(candidates=candidates)
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "get_settings",
+        lambda: Settings(_env_file=None, agent_coverage_max_candidates=6),
+    )
+
+    messages = verification_agent._build_coverage_messages(input_data)
+    prompt = messages[1]["content"]
+
+    assert "Candidate 0" in prompt
+    assert "Candidate 5" in prompt
+    assert "Candidate 6" not in prompt
+
+
+def test_verification_prompt_uses_configured_candidate_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidates = [
+        _candidate_payload(
+            chunk_id=UUID(f"22222222-2222-4222-8222-{index:012d}"),
+            content=f"Candidate {index} has unique evidence.",
+        )
+        for index in range(12)
+    ]
+    input_data = VerificationAgentInput.model_validate(
+        _verification_input_payload(candidates=candidates)
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "get_settings",
+        lambda: Settings(_env_file=None, agent_verification_max_candidates=5),
+    )
+
+    messages = verification_agent._build_verification_messages(input_data)
+    prompt = messages[1]["content"]
+
+    assert "Candidate 0" in prompt
+    assert "Candidate 4" in prompt
+    assert "Candidate 5" not in prompt
+
+
+def test_verification_payload_diagnostics_log_safe_metadata_only(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    sensitive_source = "Sensitive warranty source text should stay out of logs."
+    input_data = VerificationAgentInput.model_validate(
+        _verification_input_payload(
+            candidates=[_candidate_payload(content=sensitive_source)]
+        )
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "get_settings",
+        lambda: Settings(_env_file=None, agent_llm_payload_warn_chars=1),
+    )
+    monkeypatch.setattr(
+        verification_agent.shopaikey_service,
+        "chat_completion",
+        Mock(
+            side_effect=[
+                "not-json",
+                json.dumps(
+                    {
+                        "verified_chunks": [],
+                        "rejected_chunks": [],
+                        "missing_information": True,
+                        "confidence": 0.0,
+                    }
+                ),
+            ]
+        ),
+    )
+
+    with caplog.at_level(logging.INFO, logger=verification_agent.__name__):
+        verification_agent._run_initial_verification(input_data)
+
+    assert "LLM payload prepared." in caplog.text
+    assert "agent=verification_agent" in caplog.text
+    assert "phase=initial_verification" in caplog.text
+    assert "candidate_count=1" in caplog.text
+    assert "retry=False" in caplog.text
+    assert "retry=True" in caplog.text
+    assert "message_chars=" in caplog.text
+    assert sensitive_source not in caplog.text
+    assert "private-shopaikey-value" not in caplog.text
+
+
+def test_agent_2_prompt_size_is_reduced_for_long_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    long_candidates = [
+        _candidate_payload(
+            chunk_id=UUID(f"22222222-2222-4222-8222-{index:012d}"),
+            content=("Noise sentence. " * 300) + "Refund lasts 30 days.",
+        )
+        for index in range(12)
+    ]
+    input_data = VerificationAgentInput.model_validate(
+        _verification_input_payload(
+            question="How long does the refund last?",
+            candidates=long_candidates,
+        )
+    )
+    monkeypatch.setattr(
+        verification_agent,
+        "get_settings",
+        lambda: Settings(_env_file=None),
+    )
+
+    messages = verification_agent._build_verification_messages(input_data)
+    prompt_chars = sum(len(message["content"]) for message in messages)
+
+    assert prompt_chars < 30000
 
 
 def _mock_two_pass_verification(

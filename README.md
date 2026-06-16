@@ -369,6 +369,11 @@ Do not expose or copy secret values into documentation.
 | `RETRIEVAL_FINAL_TOP_K` | No | Final ranked hybrid result limit, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
 | `RETRIEVAL_CONTEXT_WINDOW` | No | Adjacent source chunk window added around Agent 1 retrieval anchors, constrained from 0 to 3. Defaults to `1`. Adjacent chunks are candidates only. | `backend/app/core/config.py` |
 | `RETRIEVAL_CONTEXT_MAX_CANDIDATES` | No | Maximum adjacent source-context candidates added per retrieval call, constrained from 0 to 50. Defaults to `8`. | `backend/app/core/config.py` |
+| `AGENT_EVIDENCE_SNIPPET_MAX_CHARS` | No | Maximum source-backed candidate snippet sent to Agent 2 LLM prompts, constrained from 1 to 20000. Defaults to `1800`. | `backend/app/core/config.py` |
+| `AGENT_EVIDENCE_SNIPPET_CONTEXT_SENTENCES` | No | Neighboring sentence window around the best matching candidate sentence for Agent 2 prompt snippets, constrained from 0 to 5. Defaults to `1`. | `backend/app/core/config.py` |
+| `AGENT_VERIFICATION_MAX_CANDIDATES` | No | Maximum optimized candidates sent to the initial Agent 2 verification prompt, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
+| `AGENT_COVERAGE_MAX_CANDIDATES` | No | Maximum optimized candidates sent to the Agent 2 evidence coverage prompt, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
+| `AGENT_LLM_PAYLOAD_WARN_CHARS` | No | Character-count threshold for safe LLM payload diagnostics. Defaults to `30000`. | `backend/app/core/config.py` |
 | `ENABLE_RERANK` | No | Enables guarded rerank placeholder behavior only when explicitly true and the rerank model is configured. Defaults to `false`. | `backend/app/core/config.py` |
 | `MAX_UPLOAD_BYTES` | No | Upload size limit in bytes. Defaults to `25000000`. | `backend/app/core/config.py` |
 | `CHUNK_SIZE_TOKENS` | No | Approximate chunk size. Defaults to `1000`. | `backend/app/core/config.py` |
@@ -528,6 +533,35 @@ reasoning summary. Ordinary exhausted grounding/readiness gaps return the
 existing insufficient-evidence answer with confidence `0.0` and no citations.
 Provider, storage, malformed JSON/schema, persistence, and contract failures
 remain controlled errors rather than being converted into grounded answers.
+
+### Agent Evidence Payload Optimization
+
+Agent 2 no longer sends every full retrieved chunk to ShopAIKey verification
+and coverage prompts. Before each Agent 2 LLM call, candidates are limited and
+compacted into generic, question-term-ranked sentence snippets. The optimizer
+preserves candidate IDs and metadata, never invents text, and still validates
+LLM quotes against the original Agent 1 source candidates rather than the
+shortened prompt snippets. Agent 3 still receives only Agent 2 verified
+evidence, so public chat, evidence, and agent-log response shapes stay the
+same.
+
+Tune `AGENT_EVIDENCE_SNIPPET_MAX_CHARS`, `AGENT_EVIDENCE_SNIPPET_CONTEXT_SENTENCES`,
+`AGENT_VERIFICATION_MAX_CANDIDATES`, and `AGENT_COVERAGE_MAX_CANDIDATES` to
+balance cost and recall. Increase limits when legitimate multi-part answers
+are missed; decrease them when Agent 2 payload diagnostics are consistently
+large and answer quality remains stable.
+
+Agent 2 and Agent 3 log safe LLM payload diagnostics with agent name, phase,
+message character count, candidate count, and retry flag. Logs intentionally do
+not include raw evidence text or provider secrets. Set
+`AGENT_LLM_PAYLOAD_WARN_CHARS` to control when warnings are emitted.
+
+Focused validation for payload optimization:
+
+```powershell
+cd backend
+pytest tests/test_evidence_payload_optimizer.py tests/test_verification_agent.py tests/test_answer_agent.py tests/test_langgraph_workflow.py tests/test_chat_api.py -q
+```
 
 For Plan 10 Agent 2 verification changes, the required targeted backend validation is:
 
