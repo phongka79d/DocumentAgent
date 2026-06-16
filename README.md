@@ -2,389 +2,195 @@
 
 ## Overview
 
-Document QA Agent is a single-user document question-answering project. The planned system lets one configured user upload documents, parse and chunk their contents, index chunks with embeddings, retrieve relevant evidence, and eventually answer questions using a multi-agent workflow grounded only in verified document evidence.
+Document QA Agent is a single-user document question-answering application. It lets the configured user upload documents, process them into chunks, index those chunks in Qdrant, and ask grounded questions through a three-agent RAG workflow.
 
-This repository is a mixed workspace:
+The workspace contains both runtime apps:
 
-- `backend/` contains the FastAPI API, service layer, Supabase persistence/storage integration, ShopAIKey embedding integration, Qdrant vector indexing, schemas, migrations, and tests.
-- `frontend/` contains a Vite React TypeScript application with an Axios API client, typed document, chat/evidence, and agent-run logs API contracts, reusable upload/document/chat/evidence/log inspection components, routed upload, document list, chat, direct evidence, and direct agent logs pages, compact navigation, responsive/accessibility styling, and a shared file validation helper.
-- `docs/` contains the implementation plan sequence, task reports, review reports, and a visual overview.
+- `backend/`: FastAPI API, document processing, Supabase persistence/storage, Qdrant indexing/search, ShopAIKey model calls, and LangGraph agent orchestration.
+- `frontend/`: Vite React TypeScript UI for upload, document listing, chat, evidence inspection, deletion logs, and agent logs.
+- `docs/`: master plan, implementation plans, task reports, review reports, and design/spec documents.
 
-The current codebase is not the complete MVP described in `docs/plans/Master_Plan.md`. Implemented backend areas include health, document upload metadata/storage, document listing/detail, parsing, chunking, embedding generation, Qdrant upsert/search primitives, semantic retrieval service orchestration/result mapping, the retrieval search API, a development indexing endpoint, backend graph extraction configuration, validated graph schemas, Supabase graph helper contracts, ShopAIKey chat completion support, a backend entity extraction service with deterministic fallback, graph builder rebuild behavior for `Document -> Section -> Chunk -> Entity` persistence plus validated relationship expansion, graph building wired into the backend document processing service after chunks are persisted, Plan 8 hybrid retrieval configuration, schemas, deterministic scoring utilities, graph candidate lookup, hybrid candidate merge/scoring/final ranking service behavior, guarded rerank placeholder behavior, safe hybrid failure handling, optional hybrid mode routing on the existing retrieval search API, the Plan 9 Batch01 backend agent package with shared Agent 1 input/candidate/output Pydantic schemas, the Plan 9 Batch02 agent step logging service, the Plan 9 Batch03 Agent 1 retrieval callable with hybrid retrieval delegation, validated output conversion, success logging, and controlled failure logging, the Plan 10 Batch01 Agent 2 verification schemas, reusable verification prompt, confidence bounds, and backend-only ShopAIKey chat configuration checks, the Plan 10 Batch02 backend-only Agent 2 verification callable with deterministic empty-candidate handling, compact ShopAIKey verification requests, strict JSON parsing, and Pydantic output validation, the Plan 10 Batch03 Agent 2 deterministic evidence safety checks for candidate membership, quote fidelity, duplicate filtering, contradiction/missing-information adjustment, and final output shape validation, the Plan 10 Batch04 Agent 2 success/failure step logging with safe log-insertion failure visibility, the Plan 11 Batch01 Agent 3 answer contracts with answer output schemas, citation/evidence validation helpers, answer-generation and self-check prompt contracts, deterministic self-check readiness enforcement, and confirmed backend-only ShopAIKey chat configuration boundaries, the Plan 11 Batch02 Agent 3 internal answer callable with controlled errors, deterministic insufficient-evidence output, Agent 2 verification input normalization, verified/rejected evidence lookup, and verified-only ShopAIKey answer-generation payload construction for sufficient evidence, the Plan 11 Batch03 Agent 3 sufficient-evidence draft path with mocked ShopAIKey chat calls, strict JSON/Pydantic draft parsing, citation presence and file-name/quote format enforcement, verified quote membership checks, rejected-evidence rejection, and public output-shape normalization, the Plan 11 Batch04 Agent 3 runtime self-check execution, controlled self-check failure policy, success/failed `agent_steps` logging, and safe log-insertion failure visibility, the Plan 12 Batch01 LangGraph workflow dependency, internal QA workflow state/callable contract, chat ask schemas, and agent-run evidence/log response schemas, the Plan 12 Batch02 service-layer persistence for chat sessions, chat messages, agent run lifecycle, selected document ownership validation, evidence/log lookup, and controlled public error messages, the Plan 12 Batch03 internal LangGraph orchestration that runs Agent 1 -> Agent 2 -> Agent 3, creates and updates an `agent_runs` lifecycle row, returns Agent 3 answer fields, and preserves safe insufficient-evidence behavior, the Plan 12 Batch04 public chat, evidence, and logs APIs with production router registration and chat-message persistence around ask requests, the Plan 12 Batch05 failure-handling and single-user-safety hardening for chat validation, selected-document errors, owned session/run/message/step access, failed-run lifecycle behavior, evidence/log safe errors, and secret-boundary confirmation, and the Plan 12 Batch06 required automated tests for LangGraph workflow success/failure order, insufficient-evidence behavior, chat API behavior, evidence/log API behavior, and targeted validation runs. The routed upload, document list, chat, direct evidence, and direct agent-log frontend screens are implemented; public graph APIs and frontend retrieval screens remain incomplete or planned.
-
-Plan 10 Batch05 also completed the required automated Agent 2 verification tests for accept/reject behavior, missing-information handling, invalid provider output, unknown chunk IDs, provider failures, quote safety, duplicate filtering, contradictions, confidence bounds, and targeted pytest validation. Plan 10 Batch06 completed manual validation reporting and scope review: a user-authorized live technical Agent 1 -> Agent 2 smoke run succeeded on existing indexed smoke-test data after Agent 2 compact evidence payloads were updated to include `document_id`, while the exact contract-specific start-date/probation/official-work-condition sample remains unavailable until matching indexed document content is provided. Plan 11 Batch05 completed required automated Agent 3 answer tests for grounded simple reasoning, insufficient-evidence refusal, citation enforcement, rejected chunk exclusion, unsupported self-check claims, provider/parsing/logging failures, and targeted pytest validation. Plan 11 Batch06 completed Agent 3 manual validation reporting and scope review: a live synthetic Agent 2-shaped evidence smoke check succeeded after Agent 3 answer-generation and self-check payloads were updated to include explicit JSON-mode instructions, while no real user-provided Agent 2 payload was available.
-
-Plan 12 Batch07 completed live chat, evidence, and logs validation plus final reporting and scope review. The live checks found and repaired two response-boundary mismatches: `/api/chat/ask` now serializes Agent 3 citation models into the public chat citation shape, and agent-run evidence now reads Agent 2 data from the persisted `agent_steps.output` field. Production-shaped regression tests cover both fixes, and the repaired live endpoints returned HTTP 200 with grounded chat output, verified/rejected evidence arrays, and chronologically ordered agent steps.
-
-Plan 13 Batch06 completed frontend validation and final scope review for the upload and document list UI. The mandatory `npm run build` passed, no frontend test runner is configured, and live browser checks covered TXT upload, unsupported-file rejection, progress/busy state, recent-document refresh, document list refresh, failed-status error rendering, connection-error handling, keyboard focus, backend API network destinations, and 320px mobile through desktop overflow. A development React StrictMode document-list loading issue was repaired by ignoring stale list responses while allowing the latest load to render.
-
-Plan 14 Batch01 completed the frontend chat and evidence contract boundary. The frontend now has typed chat/evidence models plus Axios-backed `askQuestion()` and `getAgentRunEvidence()` helpers that call only the existing backend `/api/chat/ask` and `/api/agent-runs/{agent_run_id}/evidence` endpoints through `VITE_API_BASE_URL`. No chat UI, evidence UI, logs/debug UI, backend API, schema, authentication, streaming, or frontend secret exposure was added in this batch.
-
-Plan 14 Batch02 completed reusable frontend chat input controls. `DocumentSelector` can load or receive document list data, allows only `ready` documents to be selected, exposes typed ready-document validation helpers, and shows loading/error/empty/no-ready states. `ChatBox` provides a controlled question textarea, trimmed non-empty validation, validation feedback, and a loading/disabled submit state.
-
-Plan 14 Batches03 through 05 completed the chat and evidence display flow. The frontend now renders answers, confidence, citations, verified/rejected evidence, the assembled ready-document chat workflow, lazy evidence loading, and a direct evidence viewer. `App.tsx` exposes `/chat` through navigation and `/evidence/:agentRunId` for direct run inspection while preserving `/upload` and `/documents`. Chat/evidence layouts include long-content wrapping, visible focus treatment, structured loading/error/empty states, and mobile single-column behavior.
-
-Plan 14 Batch06 completed frontend chat/evidence validation and reviewer handoff. The production build passed, no frontend test script is configured, and user-performed browser checks covered ready-only selection, grounded answer/confidence/citations, verified/rejected evidence display, empty-question and no-selection validation, safe backend connection errors, keyboard focus, and desktop/320px/375px overflow. Direct `/evidence/:agentRunId` navigation and evidence-load failure isolation were not manually simulated and remain documented validation gaps.
-
-Plan 15 Batch01 completed the existing logs contract and frontend API boundary. The mounted agent-run logs endpoint now returns persisted `step_name` and nullable `error_message` fields for every step, including safe failed-step messages. The frontend defines shared `AgentStep` and `AgentRunLogsResponse` types and exposes encoded `getAgentRunLogs()` requests through the existing `VITE_API_BASE_URL` Axios client. The Agent Logs page and debug-component integration remain planned for later Plan 15 batches.
-
-Plan 15 Batch02 completed the standalone agent-step debug display components. The frontend now has a safe read-only raw JSON viewer, an Agent 1 retrieval score table that preserves persisted candidate order and score fields, an Agent 2 verified/rejected evidence panel with defensive malformed states, and an Agent 3 answer/self-check panel that supports current `self_check_result` logs plus the `self_check` compatibility key. Selected-step dispatch, page integration, routing, and navigation remain planned for later Plan 15 batches.
-
-Plan 15 Batch03 completed the reusable agent step list and detail viewer. `AgentLogViewer` preserves persisted step order, supports keyboard-operable selection, shows status, timestamps, and errors, dispatches recognized successful steps to the Agent 1/2/3 panels, and always exposes raw input/output. It also handles empty, unknown, failed, malformed, long-content, narrow-screen, and multiple-instance accessibility states. Agent Logs page integration, lookup, routing, and navigation remain planned for later Plan 15 batches.
-
-Plan 15 Batch04 completed the Agent Logs page lookup and chat integration. `AgentLogsPage` is mounted at `/agent-logs` and `/agent-logs/:agentRunId`, validates UUID input before fetching, handles loading, not-found, backend-error, empty, and stale-response states, and renders `AgentLogViewer` for successful non-empty log responses. The chat page now shows an `Inspect agent logs` link for the latest successful `agent_run_id`, targeting the matching encoded `/agent-logs/{agentRunId}` URL without changing answer, citation, or evidence behavior.
-
-Plan 15 Batch05 completed Agent Logs routing, navigation, styling, and scope hardening. The primary navigation now includes an `Agent Logs` link, the debug workspace has responsive and overflow-contained styling for long JSON, tables, statuses, errors, and selected steps, and the recorded scope audit confirmed the page remains a one-run, read-only debug view without backend-only secrets, direct provider calls, admin browsing, mutations, polling, graph visualization, or observability-dashboard expansion.
-
-Plan 15 Batch06 completed automated validation, real-run happy-path browser validation, negative/responsive checks, and the reviewer handoff. The targeted backend agent-run tests passed 30/30, the frontend production build passed, and frontend tests remain not configured. Validation used real run `34d20637-92fe-4a31-8136-7a1b7c98f415`; user-provided browser evidence covered the Agent 1/2/3 panels, raw JSON, chat-to-logs navigation, invalid and not-found IDs, safe connection errors, keyboard operation, responsive layouts, and overflow containment. Live failed-step, empty-step, and malformed/unknown-output fixture checks remain explicitly `BLOCKED_BY_USER_ACTION` and are not recorded as passed.
+The target architecture is described in [docs/plans/Master_Plan.md](docs/plans/Master_Plan.md). Treat code as the source of truth for what is currently implemented.
 
 ## What This Folder Does
 
-This root folder owns the full application workspace for the document QA system. It is not only a backend package or only a frontend app.
+This root folder is a mixed full-stack workspace. There is no root package manager script; run backend and frontend commands from their own folders.
 
-Authoritative runtime behavior is defined primarily by:
+Primary source-of-truth files:
 
-- `backend/app/main.py` for FastAPI app creation and router registration.
-- `backend/app/core/config.py` for environment-driven settings.
-- `backend/app/api/` for API routes currently exposed by the backend.
-- `backend/app/services/` for document, parsing, chunking, embedding, Supabase, ShopAIKey, Qdrant, and semantic retrieval behavior.
-- `backend/app/db/migrations/001_initial_schema.sql` for the planned Supabase PostgreSQL schema.
-- `frontend/package.json` and `frontend/src/` for the current frontend shell.
-- `docs/plans/README.md` and `docs/plans/Master_Plan.md` for the intended implementation roadmap.
+- [backend/app/main.py](backend/app/main.py): FastAPI app creation, CORS, and router registration.
+- [backend/app/core/config.py](backend/app/core/config.py): backend environment settings loaded from `backend/.env`.
+- [backend/app/api/](backend/app/api): mounted API routers.
+- [backend/app/agents/](backend/app/agents): Agent 1 retrieval, Agent 2 evidence verification, Agent 3 answer/self-check, and LangGraph workflow.
+- [backend/app/services/](backend/app/services): Supabase, Qdrant, ShopAIKey, document processing, indexing, retrieval, logging, and deletion behavior.
+- [frontend/src/App.tsx](frontend/src/App.tsx): client-side routes and navigation.
+- [frontend/src/api/](frontend/src/api): frontend API clients using `VITE_API_BASE_URL`.
+- [backend/app/db/migrations/](backend/app/db/migrations): Supabase schema migrations.
 
-Do not treat `docs/plans/Master_Plan.md` as proof that a feature exists in code. It documents the target system. Check the backend routers and services before claiming a workflow is implemented.
+Do not expose backend secrets to the frontend. Supabase service role, Qdrant API key, and ShopAIKey API key are backend-only.
 
 ## Repository Structure
 
 ```text
 .
-├── backend/
-│   ├── app/
-│   │   ├── api/          # FastAPI routers for health and documents
-│   │   ├── core/         # Settings and logging setup
-│   │   ├── db/           # SQL migrations
-│   │   ├── schemas/      # Pydantic API/service contracts
-│   │   ├── services/     # Supabase, agent logging, parsing, chunking, embedding, Qdrant logic
-│   │   ├── utils/        # Upload validation and retrieval scoring helpers
-│   │   └── main.py       # FastAPI application factory and router wiring
-│   ├── tests/            # Pytest tests and sample document fixtures
-│   └── requirements.txt  # Python dependencies
-├── docs/
-│   ├── plans/            # Master plan and milestone plans
-│   ├── reports/          # Task execution reports
-│   ├── review/           # Task review reports
-│   ├── tasks/            # Task documents
-│   └── visual-overview.html
-├── frontend/
-│   ├── src/
-│   │   ├── api/client.ts # Axios client using VITE_API_BASE_URL
-│   │   ├── components/   # Reusable upload, document card, and status badge components
-│   │   ├── utils/        # Shared frontend file validation helpers
-│   │   ├── App.tsx      # Upload/documents/chat/evidence routes and navigation
-│   │   ├── main.tsx     # React entrypoint and BrowserRouter provider
-│   │   └── styles.css   # Responsive application and document UI styling
-│   ├── package.json
-│   └── vite.config.ts
-├── .gitignore
-└── README.md
+|-- backend/
+|   |-- app/
+|   |   |-- agents/       # Agent schemas, prompts, workflow, retrieval/verification/answer agents
+|   |   |-- api/          # FastAPI routers
+|   |   |-- core/         # Settings and logging
+|   |   |-- db/           # SQL migrations
+|   |   |-- schemas/      # API/service Pydantic contracts
+|   |   |-- services/     # Supabase, Qdrant, ShopAIKey, processing, retrieval, indexing
+|   |   |-- utils/        # File validation and scoring helpers
+|   |   `-- main.py       # FastAPI app factory
+|   |-- tests/            # Pytest suite and fixtures
+|   `-- requirements.txt
+|-- frontend/
+|   |-- src/
+|   |   |-- api/          # Axios clients and typed API functions
+|   |   |-- components/   # Reusable UI components
+|   |   |-- pages/        # Routed pages
+|   |   |-- types/        # Frontend TypeScript contracts
+|   |   |-- App.tsx
+|   |   `-- main.tsx
+|   |-- package.json
+|   `-- vite.config.ts
+|-- docs/
+|   |-- plans/            # Master plan and numbered implementation plans
+|   |-- superpowers/      # Specs and implementation plans created during later work
+|   |-- tasks/            # Task files
+|   |-- reports/          # Execution reports
+|   `-- review/           # Review reports
+`-- README.md
 ```
 
 ## Main Workflows
 
 ### Backend Startup
 
-1. `backend/app/main.py` calls `setup_logging()`.
-2. `create_app()` loads settings from `backend/app/core/config.py`.
-3. The FastAPI app is created with title `Document QA Agent`.
-4. CORS allows `settings.frontend_origin`, defaulting to `http://localhost:5173`.
-5. Routers are mounted:
-   - `GET /api/health`
-   - document routes under `/api/documents`
-   - `POST /api/retrieval/search`
-   - `POST /api/chat/ask`
-   - `GET /api/agent-runs/{agent_run_id}/evidence`
-   - `GET /api/agent-runs/{agent_run_id}/logs`
+1. `uvicorn app.main:app --reload` imports [backend/app/main.py](backend/app/main.py).
+2. `create_app()` loads settings from [backend/app/core/config.py](backend/app/core/config.py).
+3. CORS allows `FRONTEND_ORIGIN`, defaulting to `http://localhost:5173`.
+4. Routers are mounted under `/api`.
 
-### Health Check
+Mounted backend routes include:
 
-1. `GET /api/health` is handled by `backend/app/api/health.py`.
-2. The route reads settings with `get_settings()`.
-3. It returns `status`, `service`, and `app_env`.
+| Route | Purpose |
+| --- | --- |
+| `GET /api/health` | Health check |
+| `POST /api/documents/upload` | Upload document and queue background processing/indexing |
+| `GET /api/documents` | List documents for `SINGLE_USER_ID` |
+| `GET /api/documents/{document_id}` | Get document detail |
+| `DELETE /api/documents/{document_id}` | Hard-delete document data |
+| `POST /api/documents/{document_id}/index` | Internal/development indexing trigger |
+| `POST /api/retrieval/search` | Semantic or hybrid retrieval search |
+| `POST /api/chat/ask` | Run the full QA agent workflow |
+| `GET /api/agent-runs/{agent_run_id}/evidence` | Read verified/rejected evidence from a run |
+| `GET /api/agent-runs/{agent_run_id}/logs` | Read persisted Agent 1/2/3 step logs |
+| `GET /api/deletion-logs` | Inspect deletion logs |
 
-### Document Upload
+### Document Upload and Processing
 
-1. `POST /api/documents/upload` accepts a multipart `file` in `backend/app/api/documents.py`.
-2. `backend/app/services/document_service.py` validates the upload through `backend/app/utils/file_validation.py`.
-3. Supported extensions are `pdf`, `docx`, `txt`, and `csv`; content type is checked when provided.
-4. The service creates a UUID document ID and a Supabase Storage path shaped like `documents/{user_id}/{document_id}/{safe_filename}`.
-5. `backend/app/services/supabase_service.py` uploads the original file to the configured Supabase Storage bucket.
-6. A `documents` metadata row is inserted with status `uploaded` and `chunk_count` set to `0`.
-7. The API returns `document_id`, `file_name`, and `status`.
+1. `POST /api/documents/upload` receives a multipart file in [backend/app/api/documents.py](backend/app/api/documents.py).
+2. [backend/app/services/document_service.py](backend/app/services/document_service.py) validates type and size, stores the original file in Supabase Storage, and inserts document metadata.
+3. The route schedules `_process_uploaded_document()` as a FastAPI background task.
+4. [backend/app/services/document_processing_service.py](backend/app/services/document_processing_service.py) parses the file, chunks content, stores `document_chunks`, builds graph metadata, and marks status `ready` or `failed`.
+5. [backend/app/services/embedding_service.py](backend/app/services/embedding_service.py) embeds chunks through ShopAIKey and upserts vectors to Qdrant.
 
-Important current limitation: upload does not automatically call `process_document()`. Processing exists as a service but is not wired into the upload route.
+Supported upload types are PDF, DOCX, TXT, and CSV. Upload validation is implemented in [backend/app/utils/file_validation.py](backend/app/utils/file_validation.py).
 
-### Document Listing and Detail
+### Chat and Agent Workflow
 
-1. `GET /api/documents` calls `document_service.list_documents()`.
-2. Supabase metadata is filtered by `settings.single_user_id` and ordered newest first.
-3. `GET /api/documents/{document_id}` calls `document_service.get_document_detail()`.
-4. Detail responses currently include document metadata and an empty `chunks` list.
+`POST /api/chat/ask` accepts a question, selected `document_ids`, and optional `session_id`.
 
-### Document Processing Service
+The workflow in [backend/app/agents/graph.py](backend/app/agents/graph.py) runs:
 
-`backend/app/services/document_processing_service.py` defines the parse/chunk/persist workflow:
+1. **Agent 1: Retrieval**
+   - [backend/app/agents/retrieval_agent.py](backend/app/agents/retrieval_agent.py)
+   - Uses hybrid retrieval, semantic retrieval, graph retrieval, scoring, and bounded adjacent context expansion.
+2. **Agent 2: Evidence Verification**
+   - [backend/app/agents/verification_agent.py](backend/app/agents/verification_agent.py)
+   - Verifies candidate membership, exact quote support, requirement-level coverage, missing information, and confidence.
+3. **Agent 3: Answer and Self-Check**
+   - [backend/app/agents/answer_agent.py](backend/app/agents/answer_agent.py)
+   - Generates the answer from verified evidence only, validates citations, runs claim grounding, and fails safely when evidence is insufficient.
 
-1. Load the document row for the configured single user.
-2. Mark the document `processing`.
-3. Download the original file from Supabase Storage.
-4. Parse bytes with `document_parser.parse_document()`.
-5. Enrich parsed sections with document/user/file metadata.
-6. Split sections into `ChunkDraft` records with `chunking_service.chunk_sections()`.
-7. Insert chunks into Supabase `document_chunks`.
-8. Update document `chunk_count`.
-9. Build graph rows for the document through `graph_builder.build_document_graph(document_id)`.
-10. Mark the document `ready`, or mark it `failed` with a safe error message.
+Run lifecycle and step logs are persisted through [backend/app/services/agent_run_service.py](backend/app/services/agent_run_service.py) and [backend/app/services/agent_log_service.py](backend/app/services/agent_log_service.py).
 
-The processing result includes graph entity, relationship, and graph error counts. Graph build failures are mapped to the safe public message `Document graph build failed.` before the document is marked `failed`. This workflow is tested, but no public API route currently triggers it.
+### Evidence and Agent Logs
 
-### Parsing and Chunking
+The frontend can inspect a run after chat:
 
-`backend/app/services/document_parser.py` supports:
+- `/evidence/:agentRunId` calls `GET /api/agent-runs/{id}/evidence`.
+- `/agent-logs/:agentRunId` calls `GET /api/agent-runs/{id}/logs`.
 
-- PDF via `pypdf.PdfReader`, preserving page numbers.
-- DOCX via `python-docx`, preserving heading-derived section titles and paragraph metadata.
-- TXT via UTF-8 with Latin-1 fallback.
-- CSV via Python `csv`, converting each non-empty row into readable text with column names and row indexes.
+The logs page renders Agent 1 retrieval candidates, Agent 2 verified/rejected evidence, Agent 3 answer/self-check, and raw input/output JSON.
 
-`backend/app/services/chunking_service.py` uses a deterministic word-based token estimate, configurable chunk size and overlap, and prefers sentence/newline boundaries when splitting long sections.
+### Deletion
 
-### Embedding and Qdrant Indexing
-
-1. `POST /api/documents/{document_id}/index` is a development/internal route in `backend/app/api/documents.py`; the route docstring says the frontend must not call it.
-2. `embedding_service.index_document_chunks()` requires the document status to be `ready`.
-3. It loads chunks without `qdrant_point_id` from Supabase.
-4. Each chunk is embedded through `shopaikey_service.create_embedding()`, which calls an OpenAI-compatible `/embeddings` endpoint.
-5. `qdrant_service.ensure_collection()` creates or validates the configured Qdrant collection using cosine distance.
-6. The chunk vector is upserted to Qdrant using the chunk UUID as the stable point ID.
-7. Supabase `document_chunks.qdrant_point_id` is updated after successful upsert.
-
-Partial failures are collected into `DocumentIndexingResult` instead of stopping all chunks immediately.
-
-### Semantic Retrieval Service
-
-`backend/app/services/retrieval_service.py` defines the current service-level semantic search workflow:
-
-1. `semantic_search(question, document_ids=None, top_k=None)` trims and validates the question.
-2. It resolves omitted `top_k` from `RETRIEVAL_SEMANTIC_TOP_K` and enforces the 1 through 50 bounds.
-3. It embeds the question with `shopaikey_service.create_embedding()`.
-4. It searches Qdrant through `qdrant_service.search_vectors()`, including the existing single-user and optional document filters owned by the Qdrant service.
-5. It maps Qdrant payload fields into `RetrievalResult` objects, tolerating malformed optional fields and skipping unsafe points that cannot be identified or scored.
-6. If Qdrant only has `content_preview`, it fetches full chunk content from Supabase `document_chunks` with `SINGLE_USER_ID` filtering.
-7. No-match searches return `SearchResponse(results=[])`.
-
-ShopAIKey embedding failures are wrapped as `RetrievalDependencyError` with the safe public message `Semantic retrieval is temporarily unavailable.` so the API layer can map the failure without leaking provider details.
-
-### Semantic Retrieval API
-
-`backend/app/api/retrieval.py` exposes `POST /api/retrieval/search`, mounted from `backend/app/main.py` under `/api/retrieval`.
-
-The request schema accepts `question`, optional `document_ids`, optional `top_k`, and optional `mode` values of `semantic` or `hybrid`, defaulting to `semantic`. Omitted `mode` and explicit `mode="semantic"` delegate to `retrieval_service.semantic_search()` and return the normalized `question` plus a semantic `results` list. `mode="hybrid"` delegates to `hybrid_retrieval_service.retrieve_hybrid()` on the same endpoint, maps request `top_k` to the hybrid final Top-K, and returns the normalized `question` plus a hybrid `candidates` list with score components and `final_score`. API-level error behavior is:
-
-- Empty or whitespace-only questions return HTTP 400.
-- `top_k` values outside 1 through 50 return HTTP 400.
-- Invalid document UUIDs return HTTP 422 through FastAPI/Pydantic validation.
-- ShopAIKey and Qdrant dependency failures return HTTP 500 with a safe public message.
-- Hybrid validation failures return HTTP 400, and hybrid dependency failures return HTTP 500 with a safe public message.
-- No matching indexed chunks return HTTP 200 with an empty `results` list.
-
-### Graph Configuration, Entity Extraction, Builder, and Persistence Contracts
-
-Plan 7 graph groundwork is partially implemented in backend-only code:
-
-1. `backend/app/core/config.py` exposes `SHOPAIKEY_CHAT_MODEL` and `GRAPH_EXTRACTION_ENABLED`.
-2. `backend/app/schemas/graph.py` defines allowed graph entity and relationship types, validated extraction output models, persistence draft models, and graph build result/error contracts.
-3. `backend/app/services/supabase_service.py` includes helper contracts for graph document lookup, chunk listing, graph row clearing, entity insertion/lookup, and relationship insertion.
-4. `backend/app/services/shopaikey_service.py` exposes `chat_completion(messages, response_format=None)` for OpenAI-compatible structured extraction calls.
-5. `backend/app/services/entity_extraction_service.py` extracts entities and candidate entity relationships from one chunk, validates LLM JSON with Pydantic before returning drafts, raises controlled chunk-scoped errors for invalid/provider output, and uses deterministic date/repeated-capitalized-term fallback when graph extraction is disabled.
-6. `backend/app/services/graph_builder.py` loads one document and its chunks through graph helpers, clears existing graph rows after preconditions pass, derives stable section concepts, extracts and de-duplicates entities, persists `document_entities`, and inserts validated structural, chunk-entity, entity-entity, and strong-overlap chunk-chunk relationships.
-7. Graph build results report inserted entity and relationship counts, safe per-chunk extraction errors, and partial-state flags when rows were cleared or a partial rebuild risk exists.
-8. The supported graph build path is currently `document_processing_service.process_document()` after chunk persistence.
-
-No public graph build route is mounted yet. Public graph APIs, graph expansion retrieval, and frontend graph workflows are still planned.
-
-### Hybrid Retrieval Configuration, Schemas, Scoring Utilities, Graph Candidates, and API Mode
-
-Plan 8 Batch01 through Batch04 backend retrieval behavior is implemented:
-
-1. `backend/app/core/config.py` exposes backend-only `RETRIEVAL_GRAPH_TOP_K`, `RETRIEVAL_FINAL_TOP_K`, `ENABLE_RERANK`, and optional `SHOPAIKEY_RERANK_MODEL` settings while preserving `RETRIEVAL_SEMANTIC_TOP_K`.
-2. `ENABLE_RERANK` defaults to `false`; settings validation requires `SHOPAIKEY_RERANK_MODEL` only when rerank is enabled.
-3. `backend/app/schemas/retrieval.py` defines hybrid score component, candidate, and response models that include all five Plan 8 score components plus `final_score` and optional retrieval reason.
-4. `backend/app/utils/scoring.py` contains deterministic helpers for score clamping, keyword overlap, metadata matching, recency or position scoring, and the exact Plan 8 final score formula.
-5. `backend/app/services/graph_retrieval_service.py` provides backend-only graph candidate lookup through deterministic question term matching, persisted entity/relationship traversal, selected-document filtering, chunk enrichment, normalized `graph_relevance`, and a mockable repository boundary.
-6. `backend/app/services/hybrid_retrieval_service.py` calls semantic and graph retrieval with configurable candidate counts, merges candidates by `chunk_id`, fills missing semantic or graph scores with `0.0`, computes deterministic keyword, metadata, position, and final scores, sorts by `final_score` descending, applies configurable final Top-K, can attach optional retrieval-only reasons without answer generation, fails safely on semantic dependency errors, and falls back to semantic-only scoring when graph lookup is unavailable.
-7. `backend/app/services/shopaikey_service.py` exposes a guarded rerank placeholder. Disabled rerank returns candidates unchanged and makes no provider call; enabled rerank requires backend rerank configuration and currently fails safely because live rerank is not implemented.
-8. `backend/app/api/retrieval.py` supports optional `mode="hybrid"` routing on `POST /api/retrieval/search` while preserving semantic default behavior.
-9. No live rerank call or frontend retrieval UI is implemented yet.
+`DELETE /api/documents/{document_id}` hard-deletes document-related data through [backend/app/services/document_service.py](backend/app/services/document_service.py). Deletion history is exposed by [backend/app/api/deletion_logs.py](backend/app/api/deletion_logs.py).
 
 ## Architecture
 
-The current architecture is layered:
+```text
+Frontend React pages
+  -> frontend/src/api Axios clients
+    -> FastAPI routers in backend/app/api
+      -> service layer in backend/app/services
+        -> Supabase PostgreSQL / Supabase Storage / Qdrant / ShopAIKey
+      -> LangGraph workflow in backend/app/agents/graph.py
+        -> Agent 1 retrieval
+        -> Agent 2 evidence verification
+        -> Agent 3 answer and self-check
+```
 
-- API layer: `backend/app/api/health.py`, `backend/app/api/documents.py`, `backend/app/api/retrieval.py`, `backend/app/api/chat.py`, and `backend/app/api/agent_runs.py` expose FastAPI routes and map service exceptions to HTTP responses.
-- Agent package: `backend/app/agents/` exposes shared Agent 1 retrieval input, candidate, and output schemas, Agent 2 verification input/output schemas and prompt rules, Agent 3 answer input/output schemas, citation/evidence validation helpers, answer-generation and self-check prompts, and deterministic self-check readiness helpers. It also includes the backend-only retrieval agent callable that delegates to hybrid retrieval, returns validated candidates, logs successful steps, and raises a controlled retrieval error after failed-step logging when retrieval fails, plus the backend-only Agent 2 verification callable that validates input, short-circuits empty candidates, calls ShopAIKey chat for non-empty candidates, validates JSON output, applies deterministic evidence safety checks, logs success and controlled failure steps through the agent log service, surfaces log persistence failures through safe warnings, and preserves the final public output shape before returning success. The Agent 3 runtime callable validates Agent 2 verification input, returns deterministic insufficient-evidence output without provider calls, builds verified-only ShopAIKey answer-generation messages for sufficient evidence, calls ShopAIKey, parses draft JSON into `AnswerAgentOutput`, enforces citation presence and format, validates citations against verified evidence, rejects rejected evidence reuse, runs LLM-assisted self-check, converts repeated grounding/readiness insufficiency into the safe insufficient-evidence output, normalizes the public output shape, and attempts success/failed `agent_steps` logging with safe log persistence warnings. `backend/app/agents/graph.py` defines the LangGraph QA workflow state and `run_qa_workflow(question, document_ids, session_id=None)` contract that creates a running agent run, invokes Agent 1, Agent 2, and Agent 3 in order, marks success/failure through `agent_run_service`, returns Agent 3 answer fields plus `agent_run_id`, and preserves Agent 3 insufficient-evidence handling. The public chat route prepares the session and user message, invokes this workflow, persists the assistant message, and returns the workflow response. Chat and agent-run failure paths now return controlled public errors without exposing provider, Supabase, Qdrant, stack, or secret details.
-- `backend/app/schemas/chat.py`: Plan 12 `/api/chat/ask` request/response contracts with optional `session_id`, UUID-validated `document_ids`, non-empty questions, answer confidence, citations, and `agent_run_id`.
-- `backend/app/schemas/agent_runs.py`: Plan 12 response contracts for the public agent-run evidence and logs endpoints.
-- Configuration layer: `backend/app/core/config.py` centralizes Pydantic settings, default values, and required external-service checks.
-- Service layer: `backend/app/services/` owns orchestration, entity extraction, chat persistence preparation, agent-run lifecycle/evidence/log lookup, and provider-specific clients.
-- Persistence layer: `supabase_service.py` reads/writes Supabase tables and storage buckets, including chat session/message and agent run helper contracts scoped to `SINGLE_USER_ID`.
-- Vector layer: `qdrant_service.py` manages collection setup, vector upsert, and vector search helpers.
-- Provider layer: `shopaikey_service.py` calls the embedding and chat completion endpoints.
-- Schema layer: `backend/app/schemas/` defines Pydantic request/response and internal contracts, including graph extraction and graph build contracts.
-- Frontend layer: `frontend/src/` is a routed React application with an Axios client, typed document upload/list/detail API helpers, typed chat/evidence and agent-run logs API helpers, mounted upload/document/chat/evidence pages, reusable document display/chat input components, compact navigation, responsive/accessibility styling, and shared file validation.
+Important boundaries:
 
-The planned architecture in `docs/plans/Master_Plan.md` also includes public graph APIs and richer frontend pages. The backend now implements the LangGraph agent workflow, chat sessions/messages, agent runs/steps, and public chat, evidence, and logs APIs.
+- The frontend never calls Supabase, Qdrant, or ShopAIKey directly.
+- Retrieval alone is not trusted as evidence. Agent 2 must verify exact source support.
+- Agent 3 receives only verified evidence and must cite exact verified quotes.
+- Provider, schema, storage, and persistence failures remain controlled errors instead of being converted into unsupported answers.
+- The system is single-user by design through `SINGLE_USER_ID`; there is no JWT/auth system in the MVP.
 
 ## Frontend
 
-The frontend is a Vite React TypeScript project in `frontend/`.
+The frontend is a Vite React TypeScript app.
 
-Evidence:
+Routes in [frontend/src/App.tsx](frontend/src/App.tsx):
 
-- `frontend/package.json` defines `dev`, `build`, and `preview` scripts.
-- `frontend/package.json` includes `react-router-dom` for upload and document list routing.
-- `frontend/src/main.tsx` mounts `<App />` inside `BrowserRouter`.
-- `frontend/src/App.tsx` renders compact Upload/Documents/Chat navigation, routes `/upload`, `/documents`, `/chat`, and `/evidence/:agentRunId`, and redirects root or unknown paths to `/upload`.
-- `frontend/src/api/client.ts` creates an Axios client with `baseURL: import.meta.env.VITE_API_BASE_URL`.
-- `frontend/src/api/documents.ts` exposes typed `uploadDocument`, `listDocuments`, and `getDocument` helpers through the backend `/api/documents` routes, along with safe document API error and upload progress contracts.
-- `frontend/src/api/chat.ts` exposes typed `askQuestion` through the backend `POST /api/chat/ask` route, along with safe chat API error mapping.
-- `frontend/src/api/agentRuns.ts` exposes typed `getAgentRunEvidence` and `getAgentRunLogs` helpers through the existing backend evidence and logs routes, encodes run IDs, and shares safe agent-run API error mapping.
-- `frontend/src/types/documents.ts` defines shared frontend response types for document status, upload, list, and detail responses.
-- `frontend/src/types/chat.ts` defines shared frontend response types for chat requests, chat answers, citations, verified evidence, rejected evidence, and agent-run evidence responses.
-- `frontend/src/types/agentRuns.ts` defines the complete logs response contract, recognized Agent 1/2/3 step names with future string compatibility, JSON payloads as `unknown`, success/failed status, timestamps, and nullable error messages.
-- `frontend/src/components/StatusBadge.tsx`, `frontend/src/components/DocumentCard.tsx`, and `frontend/src/components/UploadBox.tsx` provide reusable document status, document metadata, and file selection UI components.
-- `frontend/src/components/DocumentSelector.tsx` provides a ready-only document selector, internal or parent-provided document loading support, typed selected-ready-document validation helpers, and loading/error/empty/no-ready states.
-- `frontend/src/components/ChatBox.tsx` provides a controlled question textarea, trimmed non-empty validation helper, validation feedback, and loading/disabled submit behavior for later chat page composition.
-- `frontend/src/utils/fileValidation.ts` accepts PDF, DOCX, TXT, and CSV files case-insensitively and rejects unsupported or zero-byte files before upload callers receive the file.
-- `frontend/src/styles.css` contains responsive application, navigation, focus, busy, error/success, status badge, document card, document selector, chat box, and upload box styles.
+| Route | Page |
+| --- | --- |
+| `/upload` | Upload document page |
+| `/documents` | Document list page |
+| `/chat` | Chat page with document selection, answer, citations, evidence, and logs link |
+| `/evidence/:agentRunId` | Direct evidence viewer |
+| `/agent-logs` | Agent log lookup |
+| `/agent-logs/:agentRunId` | Direct agent log viewer |
 
-The upload, document list, chat, direct evidence, and direct Agent Logs screens are mounted. The Agent Logs screen supports `/agent-logs` for manual lookup and `/agent-logs/:agentRunId` for shareable run URLs; successful chat answers link to the matching encoded Agent Logs URL.
+API client:
+
+- [frontend/src/api/client.ts](frontend/src/api/client.ts) creates an Axios client using `VITE_API_BASE_URL`.
+- [frontend/src/api/documents.ts](frontend/src/api/documents.ts) handles document upload/list/detail/delete calls.
+- [frontend/src/api/chat.ts](frontend/src/api/chat.ts) handles chat and evidence calls.
+- [frontend/src/api/agentRuns.ts](frontend/src/api/agentRuns.ts) handles agent log calls.
+
+Frontend scripts from [frontend/package.json](frontend/package.json):
+
+```powershell
+cd frontend
+npm install
+npm run dev
+npm run build
+npm run preview
+```
+
+There is currently no frontend test script.
 
 ## Backend
 
-The backend is a FastAPI project in `backend/`.
+The backend is a FastAPI app using Pydantic, Supabase, Qdrant, ShopAIKey, and LangGraph.
 
-Key files:
-
-- `backend/app/main.py`: app factory, CORS setup, route registration.
-- `backend/app/agents/schemas.py`: shared Agent 1 retrieval input, candidate, and output Pydantic schemas, Agent 2 verification input/output schemas, and Agent 3 answer/citation/self-check schemas.
-- `backend/app/agents/prompts.py`: reusable Agent 2 verification prompt rules, Agent 3 answer-generation and self-check prompt rules, and required output-key metadata.
-- `backend/app/agents/retrieval_agent.py`: backend-only Agent 1 callable for hybrid retrieval delegation, output validation, success logging, and controlled retrieval failure handling.
-- `backend/app/agents/verification_agent.py`: backend-only Agent 2 callable for verification input validation, empty-candidate missing-information output, compact ShopAIKey chat requests, strict JSON parsing, Pydantic output validation, deterministic candidate membership checks, quote fidelity checks, duplicate filtering, contradiction/missing-information adjustment, success/failed step logging with safe payloads, safe log-insertion failure warnings, and final output shape preservation.
-- `backend/app/agents/answer_agent.py`: Agent 3 internal callable, controlled answer error, input normalization, verified/rejected evidence lookup, deterministic insufficient-evidence output, verified-only provider payload/message construction, ShopAIKey draft answer parsing, citation formatting, verified/rejected evidence validation, visible chunk-ID blocking, LLM-assisted self-check execution, output-shape normalization, self-check normalization, ready-state enforcement helpers, and safe success/failed step logging.
-- `backend/app/api/health.py`: health endpoint.
-- `backend/app/api/documents.py`: upload, list, detail, and development indexing routes.
-- `backend/app/api/retrieval.py`: retrieval search endpoint and safe API error mapping.
-- `backend/app/core/config.py`: settings and required provider configuration checks.
-- `backend/app/services/document_service.py`: upload/list/detail orchestration.
-- `backend/app/services/agent_log_service.py`: Agent 1 step log validation and safe persistence wrapper.
-- `backend/app/services/chat_service.py`: service-layer chat persistence preparation, selected document ownership validation, owned-session checks before user/assistant message writes, and controlled chat errors for API mapping.
-- `backend/app/services/agent_run_service.py`: agent run lifecycle helpers, owned-session checks before run creation, Agent 2 evidence extraction from persisted steps, ordered log response mapping, and controlled agent-run errors for API mapping.
-- `backend/app/services/document_processing_service.py`: parse/chunk/persist/graph-build workflow, not exposed through an API route.
-- `backend/app/services/document_parser.py`: parsers for PDF, DOCX, TXT, and CSV.
-- `backend/app/services/chunking_service.py`: deterministic chunk generation.
-- `backend/app/services/embedding_service.py`: document chunk indexing orchestration.
-- `backend/app/services/supabase_service.py`: Supabase database and storage operations.
-- `backend/tests/test_agent_log_service.py`: mocked coverage for Agent 1 step log persistence and safe failure behavior.
-- `backend/tests/test_retrieval_agent.py`: mocked coverage for Agent 1 schema validation, retrieval delegation, validated output conversion, success logging, empty-result success, candidate schema mismatch rejection, invalid-input rejection, controlled retrieval failure logging, and failed-log preservation.
-- `backend/tests/test_answer_agent.py`: Agent 3 callable, input normalization, insufficient-evidence, provider payload, draft JSON parsing, citation enforcement, schema, citation/evidence contract, prompt-rule, self-check readiness, controlled self-check failure, success/failed logging, and safe log-persistence failure tests.
-- `backend/tests/test_langgraph_workflow.py`: mocked coverage for the internal LangGraph QA workflow state, Agent 1 -> Agent 2 -> Agent 3 execution order, compiled graph order, persisted run lifecycle success/failure handling, Agent 3 final-answer ownership, and insufficient-evidence success behavior.
-- `backend/tests/test_chat_api.py`: schema-level coverage for the planned chat ask request/response contracts plus service-level chat persistence and safe error tests.
-- `backend/tests/test_agent_runs_api.py`: schema-level coverage for the planned agent-run evidence/log response contracts plus service-level lifecycle, evidence, logs, and safe error tests.
-- `backend/app/services/qdrant_service.py`: Qdrant collection, upsert, and search helpers.
-- `backend/app/services/shopaikey_service.py`: embedding and chat completion API calls.
-- `backend/app/services/retrieval_service.py`: semantic retrieval orchestration, result mapping, Supabase content fallback, and safe dependency failure wrapping.
-- `backend/app/services/graph_retrieval_service.py`: backend-only graph candidate lookup over persisted entities, relationships, and chunks.
-- `backend/app/services/hybrid_retrieval_service.py`: backend-only hybrid candidate merge, scoring, final ranking, and deterministic retrieval reason generation.
-- `backend/app/utils/scoring.py`: deterministic hybrid retrieval score normalization helpers and exact final score formula.
-
-## Data, Storage, and External Services
-
-### Supabase
-
-Supabase is used for PostgreSQL metadata/chunk tables and original document storage. The migration at `backend/app/db/migrations/001_initial_schema.sql` defines:
-
-- `documents`
-- `document_chunks`
-- `document_entities`
-- `document_relationships`
-- `chat_sessions`
-- `chat_messages`
-- `agent_runs`
-- `agent_steps`
-
-Only some of these tables are currently used by service code. Document upload/list/detail uses `documents`; processing and indexing use `document_chunks`. Graph helper contracts can read chunks and write `document_entities` and `document_relationships`; the current graph builder writes structural document-section and section-chunk relationships, de-duplicated extracted entities, chunk-entity links, valid entity-entity links, and strong-overlap chunk-chunk links. Agent 1 retrieval, Agent 2 verification, and Agent 3 answer/self-check write `agent_steps` through the backend agent log service. The public chat workflow uses `chat_sessions`, `chat_messages`, and `agent_runs`; evidence and logs APIs read the owned run and persisted Agent 2/all-step data.
-
-### Qdrant
-
-Qdrant stores chunk vectors. `qdrant_service.py` creates or validates a collection using cosine distance and stores payload fields including `user_id`, `document_id`, `chunk_id`, `file_name`, `file_type`, page/section metadata, chunk index, and a content preview.
-
-Vector search helpers always include a `user_id = SINGLE_USER_ID` filter and optionally filter by selected document IDs.
-
-For live semantic retrieval checks, the Qdrant collection must support keyword payload filtering on `user_id` and `document_id`; otherwise required filtered searches can fail even when vectors exist.
-
-### ShopAIKey
-
-`shopaikey_service.py` calls OpenAI-compatible endpoints for embeddings and chat completion:
-
-- Embeddings use `{SHOPAIKEY_BASE_URL}/embeddings` and `SHOPAIKEY_EMBEDDING_MODEL`.
-- Chat completion uses `{SHOPAIKEY_BASE_URL}/chat/completions` and `SHOPAIKEY_CHAT_MODEL`.
-
-The embedding and chat models are configured through backend settings; they are not hardcoded in the service. ShopAIKey API key, base URL, and chat model values remain backend-only and are not exposed through frontend configuration. Agent 3 sufficient-evidence answer generation now builds verified-only chat messages through the existing backend chat helper, parses provider draft JSON with citation/evidence enforcement, and runs self-check through the same backend chat helper before returning ready output. Guarded rerank configuration exists in backend settings, but no live rerank service call is implemented.
-
-## Configuration
-
-`backend/app/core/config.py` reads environment variables from `backend/.env` because `BACKEND_DIR` resolves to the `backend/` folder. A root `.env` exists in this workspace, but the backend settings code does not read root `.env` by default.
-
-Do not expose or copy secret values into documentation.
-
-| Variable | Required | Purpose | Source |
-| --- | --- | --- | --- |
-| `APP_ENV` | No | Runtime environment label returned by health and logged at startup. | `backend/app/core/config.py` |
-| `SINGLE_USER_ID` | No | Single-user ownership filter for documents, chunks, vectors, and future agent data. | `backend/app/core/config.py` |
-| `FRONTEND_ORIGIN` | No | Allowed CORS origin for the backend. Defaults to `http://localhost:5173`. | `backend/app/core/config.py` |
-| `SUPABASE_URL` | Yes for Supabase operations | Supabase project URL. | `Settings.require_supabase_settings()` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes for Supabase operations | Backend-only Supabase service role key. | `Settings.require_supabase_settings()` |
-| `SUPABASE_STORAGE_BUCKET` | No | Storage bucket for original uploaded documents. Defaults to `documents`. | `backend/app/core/config.py` |
-| `SHOPAIKEY_API_KEY` | Yes for embeddings | Backend-only ShopAIKey API key. | `Settings.require_shopaikey_settings()` |
-| `SHOPAIKEY_BASE_URL` | Yes for embeddings | OpenAI-compatible API base URL. | `Settings.require_shopaikey_settings()` |
-| `SHOPAIKEY_CHAT_MODEL` | Yes for backend chat completion calls | Chat model used by backend ShopAIKey chat completion callers, including graph extraction and Agent 3 answer/self-check generation. | `backend/app/core/config.py` |
-| `SHOPAIKEY_EMBEDDING_MODEL` | Yes for embeddings | Embedding model sent to the `/embeddings` endpoint. | `Settings.require_shopaikey_settings()` |
-| `SHOPAIKEY_RERANK_MODEL` | Yes only when `ENABLE_RERANK=true` | Optional rerank model name for guarded rerank placeholder configuration. | `backend/app/core/config.py` |
-| `GRAPH_EXTRACTION_ENABLED` | No | Enables future live graph extraction; can be disabled for deterministic fallback tests/local development. Defaults to `true`. | `backend/app/core/config.py` |
-| `QDRANT_URL` | Yes for Qdrant operations | Qdrant endpoint URL. | `Settings.require_qdrant_settings()` |
-| `QDRANT_API_KEY` | Yes for Qdrant operations | Backend-only Qdrant API key. | `Settings.require_qdrant_settings()` |
-| `QDRANT_COLLECTION` | Yes for Qdrant operations | Collection name for chunk vectors. | `Settings.require_qdrant_settings()` |
-| `RETRIEVAL_SEMANTIC_TOP_K` | No | Semantic retrieval limit, constrained from 1 to 50. Defaults to `20`. | `backend/app/core/config.py` |
-| `RETRIEVAL_GRAPH_TOP_K` | No | Graph candidate limit before hybrid merge, constrained from 1 to 50. Defaults to `20`. | `backend/app/core/config.py` |
-| `RETRIEVAL_FINAL_TOP_K` | No | Final ranked hybrid result limit, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
-| `RETRIEVAL_CONTEXT_WINDOW` | No | Adjacent source chunk window added around Agent 1 retrieval anchors, constrained from 0 to 3. Defaults to `1`. Adjacent chunks are candidates only. | `backend/app/core/config.py` |
-| `RETRIEVAL_CONTEXT_MAX_CANDIDATES` | No | Maximum adjacent source-context candidates added per retrieval call, constrained from 0 to 50. Defaults to `8`. | `backend/app/core/config.py` |
-| `AGENT_EVIDENCE_SNIPPET_MAX_CHARS` | No | Maximum source-backed candidate snippet sent to Agent 2 LLM prompts, constrained from 1 to 20000. Defaults to `1800`. | `backend/app/core/config.py` |
-| `AGENT_EVIDENCE_SNIPPET_CONTEXT_SENTENCES` | No | Neighboring sentence window around the best matching candidate sentence for Agent 2 prompt snippets, constrained from 0 to 5. Defaults to `1`. | `backend/app/core/config.py` |
-| `AGENT_VERIFICATION_MAX_CANDIDATES` | No | Maximum optimized candidates sent to the initial Agent 2 verification prompt, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
-| `AGENT_COVERAGE_MAX_CANDIDATES` | No | Maximum optimized candidates sent to the Agent 2 evidence coverage prompt, constrained from 1 to 50. Defaults to `8`. | `backend/app/core/config.py` |
-| `AGENT_LLM_PAYLOAD_WARN_CHARS` | No | Character-count threshold for safe LLM payload diagnostics. Defaults to `30000`. | `backend/app/core/config.py` |
-| `ENABLE_RERANK` | No | Enables guarded rerank placeholder behavior only when explicitly true and the rerank model is configured. Defaults to `false`. | `backend/app/core/config.py` |
-| `MAX_UPLOAD_BYTES` | No | Upload size limit in bytes. Defaults to `25000000`. | `backend/app/core/config.py` |
-| `CHUNK_SIZE_TOKENS` | No | Approximate chunk size. Defaults to `1000`. | `backend/app/core/config.py` |
-| `CHUNK_OVERLAP_TOKENS` | No | Approximate chunk overlap. Defaults to `150`; must be less than chunk size. | `backend/app/core/config.py` |
-| `VITE_API_BASE_URL` | Yes for frontend API calls | Frontend Axios base URL. | `frontend/src/api/client.ts` |
-
-## Setup
-
-### Backend
-
-From the repository root:
+Backend setup:
 
 ```powershell
 cd backend
@@ -393,303 +199,214 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Create `backend/.env` with the backend variables listed above. The backend code expects provider secrets to remain backend-only.
+Run backend:
 
-Apply the Supabase schema from:
-
-```text
-backend/app/db/migrations/001_initial_schema.sql
+```powershell
+cd backend
+python -m uvicorn app.main:app --reload
 ```
 
-The repository does not include an automated migration runner; apply the SQL using your Supabase workflow.
+Default Uvicorn URL is `http://127.0.0.1:8000`.
 
-### Frontend
+Useful checks:
 
-From the repository root:
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/health
+python -m pytest -q
+```
+
+## Data, Storage, and External Services
+
+| Service | Used For | Main Code |
+| --- | --- | --- |
+| Supabase PostgreSQL | documents, chunks, graph rows, chat sessions/messages, agent runs/steps, deletion logs | [backend/app/services/supabase_service.py](backend/app/services/supabase_service.py) |
+| Supabase Storage | original uploaded files | [backend/app/services/document_service.py](backend/app/services/document_service.py) |
+| Qdrant | vector storage and semantic search | [backend/app/services/qdrant_service.py](backend/app/services/qdrant_service.py) |
+| ShopAIKey embeddings | chunk embeddings | [backend/app/services/embedding_service.py](backend/app/services/embedding_service.py) |
+| ShopAIKey chat completions | entity extraction, evidence verification, answer generation, self-check | [backend/app/services/shopaikey_service.py](backend/app/services/shopaikey_service.py) |
+| LangGraph | Agent 1 -> Agent 2 -> Agent 3 workflow | [backend/app/agents/graph.py](backend/app/agents/graph.py) |
+
+Migrations:
+
+- [backend/app/db/migrations/001_initial_schema.sql](backend/app/db/migrations/001_initial_schema.sql)
+- [backend/app/db/migrations/002_document_hard_delete.sql](backend/app/db/migrations/002_document_hard_delete.sql)
+
+## Configuration
+
+Backend settings are loaded from `backend/.env`. Do not commit real secret values.
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `APP_ENV` | No | Environment label returned by health endpoint |
+| `SINGLE_USER_ID` | No | Single-user ownership scope |
+| `FRONTEND_ORIGIN` | No | Allowed CORS origin |
+| `SUPABASE_URL` | Yes for Supabase operations | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes for Supabase operations | Backend-only Supabase service key |
+| `SUPABASE_STORAGE_BUCKET` | No | Storage bucket for source documents |
+| `SHOPAIKEY_API_KEY` | Yes for model calls | Backend-only ShopAIKey key |
+| `SHOPAIKEY_BASE_URL` | Yes for model calls | OpenAI-compatible ShopAIKey base URL |
+| `SHOPAIKEY_CHAT_MODEL` | Yes for chat completions | LLM model for agents/extraction |
+| `SHOPAIKEY_EMBEDDING_MODEL` | Yes for embeddings | Embedding model for indexing/search |
+| `SHOPAIKEY_RERANK_MODEL` | Only if rerank enabled | Rerank model name |
+| `QDRANT_URL` | Yes for vector operations | Qdrant cluster URL |
+| `QDRANT_API_KEY` | Yes for vector operations | Backend-only Qdrant key |
+| `QDRANT_COLLECTION` | Yes for vector operations | Collection name |
+| `GRAPH_EXTRACTION_ENABLED` | No | Enables graph extraction during processing |
+| `RETRIEVAL_SEMANTIC_TOP_K` | No | Semantic retrieval breadth |
+| `RETRIEVAL_GRAPH_TOP_K` | No | Graph retrieval breadth |
+| `RETRIEVAL_FINAL_TOP_K` | No | Final hybrid retrieval result count |
+| `RETRIEVAL_CONTEXT_WINDOW` | No | Adjacent chunk window around retrieval anchors |
+| `RETRIEVAL_CONTEXT_MAX_CANDIDATES` | No | Max adjacent context candidates |
+| `AGENT_EVIDENCE_SNIPPET_MAX_CHARS` | No | Max compact evidence snippet size sent to Agent 2 |
+| `AGENT_EVIDENCE_SNIPPET_CONTEXT_SENTENCES` | No | Neighbor sentence count for compact snippets |
+| `AGENT_VERIFICATION_MAX_CANDIDATES` | No | Candidate cap for Agent 2 verification prompt |
+| `AGENT_COVERAGE_MAX_CANDIDATES` | No | Candidate cap for Agent 2 coverage prompt |
+| `AGENT_LLM_PAYLOAD_WARN_CHARS` | No | Warning threshold for LLM payload diagnostics |
+| `ENABLE_RERANK` | No | Enables rerank path; guarded if model is missing |
+| `MAX_UPLOAD_BYTES` | No | Upload size limit |
+| `CHUNK_SIZE_TOKENS` | No | Chunk size for processing |
+| `CHUNK_OVERLAP_TOKENS` | No | Chunk overlap for processing |
+
+Frontend configuration:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | Yes | Backend API base URL, usually `http://localhost:8000` |
+
+## Setup
+
+1. Install backend dependencies:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+2. Create `backend/.env` from [backend/.env.example](backend/.env.example) and fill real backend-only values.
+
+3. Install frontend dependencies:
 
 ```powershell
 cd frontend
 npm install
 ```
 
-Create a frontend environment file with:
+4. Create frontend env config with:
 
 ```text
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-Use the actual backend URL if it differs.
+Use the frontend env file pattern expected by Vite, such as `frontend/.env.local`.
 
 ## Running the Project
 
-### Backend API
-
-From `backend/`:
+Backend:
 
 ```powershell
-uvicorn app.main:app --reload
+cd backend
+python -m uvicorn app.main:app --reload
 ```
 
-The expected default URL is `http://localhost:8000` when Uvicorn uses its default port.
-
-Useful endpoints:
-
-```text
-GET http://localhost:8000/api/health
-POST http://localhost:8000/api/chat/ask
-GET http://localhost:8000/api/agent-runs/{agent_run_id}/evidence
-GET http://localhost:8000/api/agent-runs/{agent_run_id}/logs
-```
-
-### Frontend Dev Server
-
-From `frontend/`:
+Frontend:
 
 ```powershell
+cd frontend
 npm run dev
 ```
 
-Vite commonly serves at `http://localhost:5173`. The backend CORS default is configured for that origin.
+Expected local URLs:
 
-### Frontend Document API Client
-
-The frontend document API boundary is implemented in `frontend/src/api/documents.ts`. It calls only the backend document endpoints through `apiClient`: `POST /api/documents/upload`, `GET /api/documents`, and `GET /api/documents/{document_id}`.
-
-Upload progress is normalized so callers can distinguish computable percentages from unknown totals. Document API errors expose safe display messages for backend `detail` text, backend connection failures, and generic request failures.
-
-React Router is mounted through `BrowserRouter`. `App.tsx` exposes `/upload`, `/documents`, `/chat`, `/evidence/:agentRunId`, `/agent-logs`, and `/agent-logs/:agentRunId`; root and unknown paths redirect to `/upload`. Primary navigation links to Upload, Documents, Chat, and Agent Logs without full-page reloads.
-
-### Frontend Reusable Document Components
-
-`frontend/src/components/StatusBadge.tsx` renders the approved `uploaded`, `processing`, `ready`, and `failed` document statuses with visible text and distinct styling.
-
-`frontend/src/components/DocumentCard.tsx` renders document list metadata, including file name, type, upload time, status, chunk count, and failed-processing error text when present.
-
-`frontend/src/components/UploadBox.tsx` provides a reusable native file input with optional drag-and-drop behavior. It uses `frontend/src/utils/fileValidation.ts` to accept PDF, DOCX, TXT, and CSV files case-insensitively and reject unsupported or zero-byte files before handing the file to callers.
-
-`frontend/src/components/DocumentSelector.tsx` provides a reusable ready-only multi-select for chat. It can load documents through `listDocuments()` or receive them from a parent, disables non-ready statuses, exposes selected-ready-document validation helpers, and renders clear loading/error/empty/no-ready messages.
-
-`frontend/src/components/ChatBox.tsx` provides a reusable controlled question form. It blocks empty or whitespace-only questions before submit callbacks run, passes trimmed questions to callers, and supports loading/disabled submit state for later `askQuestion()` integration.
-
-`frontend/src/components/AnswerPanel.tsx` renders answer text, percentage confidence or an unavailable state, file-name-plus-quote citations, and an explicit no-citations state without exposing internal chunk IDs.
-
-`frontend/src/components/EvidencePanel.tsx` renders read-only verified and rejected evidence in separate labeled sections. It includes the approved optional page, verification reason, simple-reasoning, and rejection-reason metadata, with responsive long-content wrapping shared through `frontend/src/styles.css`.
-
-`frontend/src/components/JsonViewer.tsx`, `RetrievalScoreTable.tsx`, `VerificationResultPanel.tsx`, and `SelfCheckPanel.tsx` provide the standalone Plan 15 debug displays for raw step JSON and recognized Agent 1, Agent 2, and Agent 3 outputs. `AgentLogViewer.tsx` composes them into an ordered selectable step workspace with metadata, failure details, raw input/output, empty-state handling, readable timestamps, responsive containment, and accessible focus/selection semantics. The reusable viewer is mounted by `AgentLogsPage` after a successful non-empty logs lookup.
-
-`frontend/src/pages/ChatPage.tsx` assembles ready-document loading and selection, guarded question submission through `askQuestion()`, answer/confidence/citation rendering, lazy evidence loading for the latest returned `agent_run_id`, and an `Inspect agent logs` link for the latest successful answer. Evidence failures remain isolated from the displayed answer.
-
-`frontend/src/pages/EvidenceViewerPage.tsx` is the direct evidence screen at `/evidence/:agentRunId`. It reads the route parameter, handles invalid/loading/error states, and renders the shared verified/rejected evidence panel.
-
-`frontend/src/pages/AgentLogsPage.tsx` is the direct logs screen at `/agent-logs` and `/agent-logs/:agentRunId`. It keeps lookup input and route parameters synchronized, blocks blank or malformed UUIDs before backend requests, uses `getAgentRunLogs()` for valid IDs, ignores stale responses, and handles not-found, backend-error, loading, and empty-step states.
-
-`frontend/src/pages/UploadDocumentPage.tsx` now combines validated file selection, upload progress, safe upload success/error feedback, and a compact recent-documents section that refreshes through `listDocuments()` after successful uploads.
-
-`frontend/src/pages/DocumentListPage.tsx` fetches documents on page load, renders returned items through `DocumentCard`, distinguishes loading, empty, connection-error, list-error, and stale-list refresh-failure states, and provides a guarded manual Refresh action that re-fetches `GET /api/documents` without polling or calling processing/index endpoints.
-
-The upload, document list, chat, direct evidence, and direct Agent Logs pages are mounted in `App.tsx` with compact route-aware navigation for the primary pages. Styling supports visible focus and active states, disabled/busy feedback, structured state panels, long-content wrapping, and narrow layouts down to the 320px minimum viewport.
-
-### Production Frontend Build
-
-From `frontend/`:
-
-```powershell
-npm run build
-```
-
-This runs `tsc --noEmit` and `vite build` according to `frontend/package.json`.
+- Backend: `http://127.0.0.1:8000`
+- Frontend: Vite default, usually `http://localhost:5173`
 
 ## Testing and Validation
 
-Backend tests are under `backend/tests/`. From `backend/`:
-
-```powershell
-pytest
-```
-
-The tests cover settings validation, graph schema validation, entity extraction validation/fallback behavior, health response, upload validation, document metadata services, parser behavior, chunking behavior, processing orchestration, ShopAIKey embedding and chat completion error handling, guarded rerank placeholder behavior, Supabase service behavior including graph, chat, and agent-run helper contracts, Qdrant service behavior, embedding/indexing orchestration, semantic retrieval service behavior, graph retrieval service behavior, hybrid retrieval merge/scoring/ranking/reason/failure behavior, retrieval API semantic and hybrid mode contracts/error behavior, Agent 1 step logging behavior, Agent 1 retrieval callable behavior, Agent 1 schema/output/failure automated-test coverage, Agent 2 verification schema confidence bounds, prompt-content rules, empty-candidate behavior, compact ShopAIKey request construction, strict LLM JSON validation, deterministic evidence safety checks, Agent 2 success/failed step logging, Agent 2 log-insertion failure safety, Agent 3 answer schema/citation/prompt/self-check contracts, Agent 3 callable validation, deterministic insufficient-evidence output, Agent 2 verification input normalization, verified/rejected evidence lookup, verified-only answer-generation provider payloads, draft answer JSON parsing, citation presence and verified-quote enforcement, rejected evidence exclusion, Agent 3 runtime self-check enforcement, Agent 3 success/failed step logging, Agent 3 log-insertion failure safety, Agent 3 public output-shape normalization, Plan 12 chat persistence service behavior, Plan 12 agent-run service behavior, selected document ownership validation, controlled service error public messages, and the development indexing API. Plan 8 Batch05 also completed the required scoring, graph retrieval, and hybrid retrieval test runs plus a service-level hybrid retrieval smoke check against local processed, indexed, graph-built data.
-
-Agent 2 also runs an independent exact-quote coverage review before finalizing
-verified evidence. Agent 3 receives only source quote fields, then performs a
-question-aware claim-grounding review whose public self-check values are derived
-and enforced by application code. Verifier-authored reasons and flags are not
-treated as document evidence. These internal safeguards do not change the public
-Agent 2, Agent 3, chat, evidence, or agent-log API response schemas.
-
-### Cross-Chunk QA Behavior
-
-Agent 1 adds a bounded, document-scoped adjacent source context window around
-retrieval anchors using `RETRIEVAL_CONTEXT_WINDOW` and
-`RETRIEVAL_CONTEXT_MAX_CANDIDATES`. These adjacent chunks are not trusted as
-answers by retrieval alone; they are only extra candidates that still must pass
-Agent 2 candidate membership, exact-quote validation, duplicate filtering, and
-requirement-level coverage review.
-
-For multi-part questions, Agent 2 must split the request into independently
-requested requirements and may mark `missing_information=true` unless every
-requirement has supporting exact source evidence. Agent 3 then answers only
-from verified chunks and runs claim grounding over the final answer and
-reasoning summary. Ordinary exhausted grounding/readiness gaps return the
-existing insufficient-evidence answer with confidence `0.0` and no citations.
-Provider, storage, malformed JSON/schema, persistence, and contract failures
-remain controlled errors rather than being converted into grounded answers.
-
-### Agent Evidence Payload Optimization
-
-Agent 2 no longer sends every full retrieved chunk to ShopAIKey verification
-and coverage prompts. Before each Agent 2 LLM call, candidates are limited and
-compacted into generic, question-term-ranked sentence snippets. The optimizer
-preserves candidate IDs and metadata, never invents text, and still validates
-LLM quotes against the original Agent 1 source candidates rather than the
-shortened prompt snippets. Agent 3 still receives only Agent 2 verified
-evidence, so public chat, evidence, and agent-log response shapes stay the
-same.
-
-Tune `AGENT_EVIDENCE_SNIPPET_MAX_CHARS`, `AGENT_EVIDENCE_SNIPPET_CONTEXT_SENTENCES`,
-`AGENT_VERIFICATION_MAX_CANDIDATES`, and `AGENT_COVERAGE_MAX_CANDIDATES` to
-balance cost and recall. Increase limits when legitimate multi-part answers
-are missed; decrease them when Agent 2 payload diagnostics are consistently
-large and answer quality remains stable.
-
-Agent 2 and Agent 3 log safe LLM payload diagnostics with agent name, phase,
-message character count, candidate count, and retry flag. Logs intentionally do
-not include raw evidence text or provider secrets. Set
-`AGENT_LLM_PAYLOAD_WARN_CHARS` to control when warnings are emitted.
-
-Focused validation for payload optimization:
+Backend:
 
 ```powershell
 cd backend
-pytest tests/test_evidence_payload_optimizer.py tests/test_verification_agent.py tests/test_answer_agent.py tests/test_langgraph_workflow.py tests/test_chat_api.py -q
+python -m pytest -q
 ```
 
-For Plan 10 Agent 2 verification changes, the required targeted backend validation is:
+Focused backend suites:
 
 ```powershell
-cd backend
-pytest tests/test_verification_agent.py -v
+python -m pytest tests/test_answer_agent.py tests/test_verification_agent.py -q
+python -m pytest tests/test_langgraph_workflow.py tests/test_chat_api.py tests/test_agent_runs_api.py -q
+python -m pytest tests/test_evidence_payload_optimizer.py tests/test_hybrid_retrieval_service.py tests/test_scoring.py -q
 ```
 
-For Plan 11 Agent 3 answer changes, the required targeted backend validation is:
+Frontend:
 
 ```powershell
-cd backend
-pytest tests/test_answer_agent.py -v
-```
-
-For evidence-coverage and claim-grounding changes, run:
-
-```powershell
-cd backend
-pytest tests/test_verification_agent.py -q
-pytest tests/test_answer_agent.py -q
-pytest -q
-```
-
-For Plan 12 Batch01 workflow contract and API schema changes, the targeted backend validation is:
-
-```powershell
-cd backend
-pytest tests/test_langgraph_workflow.py tests/test_chat_api.py tests/test_agent_runs_api.py -v
-```
-
-For Plan 12 Batch02 chat and agent-run persistence service changes, the targeted backend validation is:
-
-```powershell
-cd backend
-pytest tests/test_chat_api.py tests/test_agent_runs_api.py tests/test_supabase_service.py -v
-```
-
-For Plan 12 Batch03 LangGraph workflow orchestration changes, the targeted backend validation is:
-
-```powershell
-cd backend
-pytest tests/test_langgraph_workflow.py -v
-```
-
-For Plan 12 Batch04 public API changes, the targeted backend validation is:
-
-```powershell
-cd backend
-pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v
-```
-
-For Plan 12 Batch05 failure handling and single-user safety changes, the targeted backend validation is:
-
-```powershell
-cd backend
-pytest tests/test_chat_api.py tests/test_agent_runs_api.py tests/test_langgraph_workflow.py tests/test_supabase_service.py -v
-```
-
-For Plan 12 Batch06 required automated test changes, the targeted backend validation is:
-
-```powershell
-cd backend
-pytest tests/test_langgraph_workflow.py -v
-pytest tests/test_chat_api.py tests/test_agent_runs_api.py -v
-```
-
-Plan 12 Batch07 also completed live validation of `POST /api/chat/ask` and both agent-run inspection endpoints using configured Supabase, Qdrant, ShopAIKey, and indexed document data. The final targeted results were 9 workflow tests, 68 combined chat/agent-run tests, and 55 Supabase service tests passing; the live chat, evidence, and logs requests returned HTTP 200 after the citation and persisted-output repairs.
-
-Frontend validation commands from `frontend/package.json`:
-
-```powershell
+cd frontend
 npm run build
-npm run preview
 ```
 
-There is no frontend test script in `frontend/package.json`.
+No frontend test runner is configured in `frontend/package.json`.
 
-Plan 14 frontend chat/evidence validation completed with a passing production build and manual browser checks for the primary chat/evidence path, negative validation, safe connection errors, focus visibility, and responsive overflow. The direct evidence URL and evidence-load failure scenario were not manually exercised.
+## Agent Evidence Payload Optimizer
 
-Plan 15 Agent Logs validation completed with 30/30 targeted backend tests and a passing frontend production build; no frontend test script is configured. Real-run and user-provided browser evidence covered the happy path and reproducible negative/responsive checks. Live failed-step, empty-step, and malformed/unknown-output fixture scenarios remain `BLOCKED_BY_USER_ACTION`.
+Agent 2 used to send many full retrieved chunks to ShopAIKey verification and coverage prompts. That can create large `gpt-4o-mini` input-token usage for ordinary RAG questions.
+
+The optimizer in [backend/app/services/evidence_payload_optimizer.py](backend/app/services/evidence_payload_optimizer.py):
+
+- keeps retrieval broad enough for recall,
+- compacts candidate text into generic question-term-ranked sentence windows,
+- preserves candidate IDs and metadata,
+- never invents text,
+- keeps source candidates available for exact quote validation,
+- limits Agent 2 verification and coverage payloads through bounded settings.
+
+Relevant settings:
+
+```text
+AGENT_EVIDENCE_SNIPPET_MAX_CHARS
+AGENT_EVIDENCE_SNIPPET_CONTEXT_SENTENCES
+AGENT_VERIFICATION_MAX_CANDIDATES
+AGENT_COVERAGE_MAX_CANDIDATES
+AGENT_LLM_PAYLOAD_WARN_CHARS
+```
+
+Tune these cautiously. Reducing candidates too aggressively can hurt multi-part and cross-chunk questions. Prefer compacting payload text before lowering retrieval breadth.
 
 ## Development Notes for AI Agents
 
 Read these first:
 
-- `docs/plans/README.md` for the milestone order and planned scope.
-- `docs/plans/Master_Plan.md` for target architecture and non-goals.
-- `backend/app/main.py` to see what API routes are actually mounted.
-- `backend/app/core/config.py` before changing environment behavior.
-- `backend/app/api/documents.py` and `backend/app/services/document_service.py` before changing upload/list/detail behavior.
-- `backend/app/services/document_processing_service.py`, `document_parser.py`, and `chunking_service.py` before changing parsing or chunk persistence.
-- `backend/app/services/embedding_service.py`, `shopaikey_service.py`, `qdrant_service.py`, and `retrieval_service.py` before changing indexing or retrieval behavior.
-- `backend/app/services/hybrid_retrieval_service.py` and `backend/app/utils/scoring.py` before changing hybrid retrieval merge, score component, final ranking, or retrieval reason behavior.
-- `backend/app/agents/schemas.py`, `backend/app/agents/prompts.py`, `backend/app/agents/retrieval_agent.py`, `backend/app/agents/verification_agent.py`, `backend/app/agents/answer_agent.py`, and `backend/app/agents/graph.py` before changing Agent 1 workflow contracts, Agent 2 verification contracts, Agent 3 answer contracts, prompt rules, retrieval-agent behavior, verification-agent behavior, answer evidence/self-check behavior, or LangGraph orchestration contracts.
-- `backend/app/schemas/chat.py` and `backend/app/schemas/agent_runs.py` before changing chat, evidence, or agent-log API response contracts.
-- `backend/app/services/entity_extraction_service.py` and `backend/app/schemas/graph.py` before changing graph extraction behavior.
-- `backend/app/db/migrations/001_initial_schema.sql` before changing persistence contracts.
+1. [docs/plans/Master_Plan.md](docs/plans/Master_Plan.md) for target architecture and constraints.
+2. [backend/app/main.py](backend/app/main.py) to see actual mounted routes.
+3. [backend/app/core/config.py](backend/app/core/config.py) before changing env behavior.
+4. [backend/app/agents/schemas.py](backend/app/agents/schemas.py), [backend/app/agents/prompts.py](backend/app/agents/prompts.py), and [backend/app/agents/graph.py](backend/app/agents/graph.py) before changing agent contracts.
+5. [backend/app/services/hybrid_retrieval_service.py](backend/app/services/hybrid_retrieval_service.py), [backend/app/services/retrieval_context_service.py](backend/app/services/retrieval_context_service.py), and [backend/app/services/evidence_payload_optimizer.py](backend/app/services/evidence_payload_optimizer.py) before changing retrieval/cost behavior.
+6. [frontend/src/api/](frontend/src/api) and [frontend/src/types/](frontend/src/types) before changing API response shapes.
 
-Important coordination rules:
+Coordination rules:
 
-- Keep `SINGLE_USER_ID` filtering intact unless the project explicitly moves to multi-user auth. The MVP plan says no Auth/JWT.
-- Never move backend-only secrets into frontend code. Supabase service role, Qdrant key, and ShopAIKey key must remain backend-only.
-- If you add API routes, update `backend/app/main.py`; adding a router file alone does not expose it.
-- If you change document/chunk schemas, coordinate Pydantic schemas, Supabase SQL, service row builders, tests, and any Qdrant payload expectations.
-- If you wire processing into upload, account for status transitions: `uploaded`, `processing`, `ready`, `failed`.
-- If you change retrieval API behavior, keep `backend/app/api/retrieval.py` thin, preserve safe error responses, and keep semantic retrieval orchestration in `backend/app/services/retrieval_service.py`. The `mode` request field supports `semantic` and `hybrid`; semantic mode remains the default, while hybrid mode delegates to `backend/app/services/hybrid_retrieval_service.py`.
-- If you implement frontend features, preserve the existing routed upload/documents shell and keep `frontend/src/api/client.ts` aligned with backend routes.
-- Ignore generated and dependency folders such as `node_modules/`, `__pycache__/`, `.pytest_cache/`, `dist/`, `build/`, `.venv/`, and `venv/`.
+- Do not hardcode answers, quotes, document names, or Alice-specific behavior in production code.
+- Keep public chat/evidence/log schemas stable unless the task explicitly changes contracts.
+- Agent 3 must not use unverified chunks.
+- Rejected evidence must not appear in final answers or citations.
+- If you change Pydantic schemas, update tests and frontend types where applicable.
+- If you add a router, register it in [backend/app/main.py](backend/app/main.py).
+- If you change persistence shape, coordinate SQL migrations, Supabase service helpers, schemas, and tests.
+- Do not edit generated/dependency folders: `node_modules/`, `dist/`, `build/`, `.pytest_cache/`, `__pycache__/`, `.venv/`, `venv/`.
 
-Validation before claiming completion:
+Before claiming completion:
 
-- Run `pytest` from `backend/` for backend changes.
-- Run `npm run build` from `frontend/` for frontend changes.
-- For provider integrations, prefer mocked tests unless the task explicitly requires live Supabase, Qdrant, or ShopAIKey validation.
-- Do not claim GraphRAG, public LangGraph chat API wiring, chat API routes, evidence viewer, or agent log APIs are implemented unless corresponding routes/services/tests exist in code.
+- Run backend tests for backend changes.
+- Run `npm run build` for frontend changes.
+- For agent/retrieval changes, include targeted tests plus full `python -m pytest -q`.
+- For live validation, report the `agent_run_id` so logs can be inspected.
 
 ## Known Gaps or Unclear Areas
 
-- The backend reads `backend/.env`, but this workspace currently has a root `.env`; root `.env` is not loaded by `SettingsConfigDict` in `backend/app/core/config.py`.
-- Upload stores the original file and metadata but does not automatically trigger parsing/chunking.
-- `document_processing_service.process_document()` exists, builds graph rows after chunk persistence, and is tested, but is not exposed through a route or background worker.
-- The development indexing route exists at `POST /api/documents/{document_id}/index`; its docstring says the frontend must not call it.
-- `backend/app/api/retrieval.py` is mounted in `backend/app/main.py` and exposes `POST /api/retrieval/search`; the frontend chat UI uses the public chat workflow rather than calling retrieval directly.
-- Graph schemas, graph entity extraction, Supabase graph helper contracts, entity persistence, graph relationship expansion, count reporting, safe extraction failure summaries, processing-service graph build integration, and backend-only graph candidate lookup exist in backend code. Public graph APIs are still planned; public chat, evidence, and agent log APIs are mounted.
-- Hybrid retrieval settings, schemas, scoring utilities, graph candidate lookup, candidate merge/scoring/ranking orchestration, deterministic retrieval reasons, guarded rerank behavior, safe hybrid failure handling, and hybrid API mode handling exist. Live rerank provider calls are still not implemented.
-- Agent 1, Agent 2, and Agent 3 runtime callables, validation, evidence safety, self-check behavior, and step logging are implemented. `backend/app/agents/graph.py` executes Agent 1 -> Agent 2 -> Agent 3, owns the `agent_runs` lifecycle, returns Agent 3 answer fields, marks created runs failed on Agent 1/2/3 failures, and preserves the insufficient-evidence path. `POST /api/chat/ask` now provides route-level error mapping, pre-workflow request and selected-document validation, owned-session protections, and user/assistant message persistence around that workflow.
-- `backend/app/schemas/chat.py` and `backend/app/schemas/agent_runs.py` define the mounted chat, evidence, and logs API contracts. `backend/app/api/chat.py` and `backend/app/api/agent_runs.py` expose those contracts through the production application.
-- The database migration includes future chat/agent/graph tables; current services only partially use the graph tables through helper contracts.
-- The frontend now mounts routed upload, document list, chat, direct evidence, and direct agent-log screens with compact navigation and responsive/accessibility styling. Direct retrieval UI remains out of scope for Plan 14.
-- No root-level package manager or unified dev command exists; backend and frontend commands must be run from their own folders.
+- The project is single-user and does not implement full authentication/JWT.
+- Rerank support is guarded but live rerank behavior is not implemented as a normal path.
+- External services are required for full live behavior: Supabase, Qdrant, and ShopAIKey.
+- Frontend has no automated test script.
+- There is no root-level command that starts backend and frontend together.
+- Public graph visualization/API behavior remains limited; graph data is primarily used by backend retrieval.
