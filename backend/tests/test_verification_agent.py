@@ -2204,6 +2204,18 @@ def test_evidence_coverage_prompt_requires_every_requested_part() -> None:
         assert phrase in prompt
 
 
+def test_evidence_coverage_prompt_does_not_require_incidental_scene_setting() -> None:
+    prompt = verification_agent.EVIDENCE_COVERAGE_SYSTEM_PROMPT.lower()
+
+    for phrase in [
+        "incidental scene-setting",
+        "use it only to identify the relevant event",
+        "do not mark the answer missing solely because",
+        "unless the user explicitly asks to verify that premise",
+    ]:
+        assert phrase in prompt
+
+
 def test_verification_prompt_limits_agent_scope() -> None:
     prompt = VERIFICATION_AGENT_SYSTEM_PROMPT.lower()
 

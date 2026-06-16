@@ -134,3 +134,33 @@ def test_optimize_candidates_uses_generic_terms_not_fixture_specific_strings() -
     assert optimized[0].content == (
         "Renewal notices are sent ten business days before expiration."
     )
+
+
+def test_optimize_candidates_preserves_multi_part_answer_evidence() -> None:
+    candidate = _candidate(
+        file_name="alice.txt",
+        content=(
+            "Alice was beginning to get very tired of sitting by her sister on the bank. "
+            "Down, down, down. Would the fall never come to an end? "
+            "There were cupboards and bookshelves here and there; she saw maps and pictures hung upon pegs. "
+            "She took down a jar from one of the shelves as she passed; it was labelled 'ORANGE MARMALADE', "
+            "but to her great disappointment it was empty. "
+            "She did not like to drop the jar for fear of killing somebody, so managed to put it into one of the cupboards."
+        ),
+    )
+
+    optimized = optimize_candidates_for_verification(
+        question=(
+            "What was the label on the jar that Alice took from the shelf "
+            "while falling down the well, and what did it contain?"
+        ),
+        candidates=[candidate],
+        max_candidates=8,
+        snippet_max_chars=170,
+        context_sentences=0,
+    )
+
+    assert optimized[0].content in candidate.content
+    assert len(optimized[0].content) <= 170
+    assert "ORANGE MARMALADE" in optimized[0].content
+    assert "it was empty" in optimized[0].content

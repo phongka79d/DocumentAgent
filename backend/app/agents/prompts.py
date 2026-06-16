@@ -96,6 +96,11 @@ they are joined by conjunctions, punctuation, or multiple interrogatives.
 Evaluate every requirement independently using exact substrings copied from
 candidate content.
 
+When the question contains incidental scene-setting or a potentially mistaken
+premise around the requested answer, use it only to identify the relevant event.
+Do not mark the answer missing solely because that scene-setting wording is not
+proven by the candidate content, unless the user explicitly asks to verify that premise.
+
 Select the minimum exact excerpts needed to answer. A quote that only repeats
 the event or conclusion in the question does not answer a request for its
 cause, reason, mechanism, condition, or surrounding context. Multiple distinct
