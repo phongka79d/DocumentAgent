@@ -465,7 +465,7 @@ def test_run_answer_agent_logs_failed_step_for_provider_failure(
     assert REJECTED_QUOTE not in str(log_call)
 
 
-def test_run_answer_agent_logs_failed_step_for_self_check_failure(
+def test_run_answer_agent_logs_insufficient_step_for_self_check_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     chat_completion = Mock(
@@ -498,22 +498,17 @@ def test_run_answer_agent_logs_failed_step_for_self_check_failure(
         try_log_agent_step,
     )
 
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
-        run_answer_agent(_answer_input_payload())
+    output = run_answer_agent(_answer_input_payload())
 
-    assert exc_info.value.failure_type == "self_check_failed"
+    _assert_insufficient_evidence_output(output)
     try_log_agent_step.assert_called_once()
     log_call = try_log_agent_step.call_args.kwargs
-    assert log_call["status"] == "failed"
-    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
-    assert log_call["output_payload"] == {
-        "error": {
-            "type": "self_check_failed",
-            "message": ANSWER_FAILURE_MESSAGE,
-        }
-    }
-    assert VERIFIED_QUOTE not in str(log_call)
-    assert REJECTED_QUOTE not in str(log_call)
+    assert log_call["status"] == "success"
+    assert log_call["error_message"] is None
+    assert log_call["output_payload"]["fallback_reason"] == "self_check_failed"
+    assert log_call["output_payload"]["final_answer"] == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
+    assert log_call["output_payload"]["citations"] == []
+    assert log_call["output_payload"]["confidence"] == 0.0
 
 
 @pytest.mark.parametrize(
@@ -1007,7 +1002,7 @@ def test_run_answer_agent_caps_confidence_by_grounding_review(
     assert output.confidence == 0.6
 
 
-def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation(
+def test_run_answer_agent_returns_insufficient_for_incorrect_simple_reasoning(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     provider_payload = _draft_answer_payload()
@@ -1046,13 +1041,13 @@ def test_run_answer_agent_rejects_incorrect_simple_reasoning_with_valid_citation
         chat_completion,
     )
 
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
-        run_answer_agent(_answer_input_payload())
+    output = run_answer_agent(_answer_input_payload())
 
+    _assert_insufficient_evidence_output(output)
     assert chat_completion.call_count == 4
 
 
-def test_run_answer_agent_rejects_unsupported_explanation_with_valid_conclusion_citation(
+def test_run_answer_agent_returns_insufficient_for_unsupported_explanation_with_valid_conclusion_citation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     conclusion_quote = (
@@ -1123,10 +1118,9 @@ def test_run_answer_agent_rejects_unsupported_explanation_with_valid_conclusion_
     )
     payload["verification"] = verification.model_dump(mode="json")
 
-    with pytest.raises(AnswerAgentError) as exc_info:
-        run_answer_agent(payload)
+    output = run_answer_agent(payload)
 
-    assert exc_info.value.failure_type == "self_check_failed"
+    _assert_insufficient_evidence_output(output)
 
 
 def test_run_answer_agent_retries_explanatory_answer_after_self_check_failure(
@@ -1243,7 +1237,7 @@ def test_run_answer_agent_retries_factual_answer_after_self_check_failure(
         ),
     ],
 )
-def test_run_answer_agent_raises_self_check_failure_without_returning_ready_answer(
+def test_run_answer_agent_returns_insufficient_evidence_after_retry_grounding_exhaustion(
     monkeypatch: pytest.MonkeyPatch,
     failed_grounding: dict[str, object],
 ) -> None:
@@ -1261,10 +1255,9 @@ def test_run_answer_agent_raises_self_check_failure_without_returning_ready_answ
         chat_completion,
     )
 
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
-        run_answer_agent(_answer_input_payload())
+    output = run_answer_agent(_answer_input_payload())
 
-    assert exc_info.value.failure_type == "self_check_failed"
+    _assert_insufficient_evidence_output(output)
     assert chat_completion.call_count == 4
 
 
@@ -1936,7 +1929,7 @@ def test_run_answer_agent_rejects_draft_copying_rejected_quote_in_reasoning_summ
     chat_completion.assert_called_once()
 
 
-def test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_output(
+def test_run_answer_agent_logs_grounding_exhaustion_as_insufficient_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     chat_completion = Mock(
@@ -1969,33 +1962,40 @@ def test_run_answer_agent_unsupported_self_check_claims_fail_without_ready_outpu
         try_log_agent_step,
     )
 
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE) as exc_info:
-        run_answer_agent(_answer_input_payload())
+    output = run_answer_agent(_answer_input_payload())
 
-    assert exc_info.value.failure_type == "self_check_failed"
+    _assert_insufficient_evidence_output(output)
     assert chat_completion.call_count == 4
     try_log_agent_step.assert_called_once()
     log_call = try_log_agent_step.call_args.kwargs
-    assert log_call["status"] == "failed"
-    assert log_call["error_message"] == ANSWER_FAILURE_MESSAGE
-    assert log_call["output_payload"] == {
-        "error": {
-            "type": "self_check_failed",
-            "message": ANSWER_FAILURE_MESSAGE,
-        }
+    assert log_call["status"] == "success"
+    assert log_call["error_message"] is None
+    assert log_call["output_payload"]["final_answer"] == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
+    assert log_call["output_payload"]["citations"] == []
+    assert log_call["output_payload"]["confidence"] == 0.0
+    assert log_call["output_payload"]["fallback_reason"] == "self_check_failed"
+    assert log_call["output_payload"]["self_check_result"] == {
+        "uses_only_verified_chunks": True,
+        "has_citation": False,
+        "has_unsupported_claims": False,
+        "is_ready": False,
     }
-    assert "final_answer" not in log_call["output_payload"]
-    assert "is_ready" not in json.dumps(log_call["output_payload"])
 
 
 def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_missing_information(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     chat_completion = Mock(side_effect=AssertionError("ShopAIKey must not be called"))
+    try_log_agent_step = Mock()
     monkeypatch.setattr(
         answer_agent_module.shopaikey_service,
         "chat_completion",
         chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
     )
     payload = _answer_input_payload()
     payload["verification"] = _verification_output(
@@ -2006,6 +2006,12 @@ def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_mis
 
     _assert_insufficient_evidence_output(output)
     chat_completion.assert_not_called()
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "success"
+    assert log_call["error_message"] is None
+    assert log_call["output_payload"]["fallback_reason"] == "insufficient_evidence"
+    assert log_call["output_payload"]["confidence"] == 0.0
 
 
 def test_run_answer_agent_returns_insufficient_evidence_without_provider_for_empty_verified_chunks(

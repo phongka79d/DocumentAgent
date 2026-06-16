@@ -565,7 +565,13 @@ def run_answer_agent(
     answer_input = normalize_answer_agent_input(input_data)
     build_answer_evidence_lookup(answer_input.verification)
     if _has_insufficient_evidence(answer_input.verification):
-        return _build_insufficient_evidence_output()
+        insufficient_output = _build_insufficient_evidence_output()
+        _log_insufficient_answer(
+            answer_input,
+            failure_type="insufficient_evidence",
+            output=insufficient_output,
+        )
+        return insufficient_output
 
     try:
         draft_output = _generate_validated_draft_answer(answer_input)
@@ -608,9 +614,13 @@ def run_answer_agent(
             raise
         except AnswerEvidenceValidationError as retry_exc:
             logger.warning("Answer agent self-check retry failed readiness validation.")
-            failure = _AnswerAgentFailure("self_check_failed")
-            _log_failed_answer_self_check(answer_input, failure.failure_type)
-            raise failure from retry_exc
+            insufficient_output = _build_insufficient_evidence_output()
+            _log_insufficient_answer(
+                answer_input,
+                failure_type="self_check_failed",
+                output=insufficient_output,
+            )
+            return insufficient_output
 
     try:
         checked_output = draft_output.model_copy(
@@ -700,6 +710,34 @@ def _log_successful_answer_self_check(
             ],
             "reasoning_summary": final_output.reasoning_summary,
             "confidence": final_output.confidence,
+            "errors": [],
+        },
+        status="success",
+        error_message=None,
+    )
+    _warn_if_agent_3_log_failed(log_attempt)
+
+
+def _log_insufficient_answer(
+    answer_input: AnswerAgentInput,
+    *,
+    failure_type: str,
+    output: AnswerAgentOutput,
+) -> None:
+    log_attempt = agent_log_service.try_log_agent_step(
+        agent_run_id=str(answer_input.agent_run_id),
+        step_name=ANSWER_AGENT_SUCCESS_STEP_NAME,
+        agent_name=ANSWER_AGENT_NAME,
+        input_payload=answer_input.model_dump(mode="json"),
+        output_payload={
+            "final_answer": output.final_answer,
+            "citations": [
+                citation.model_dump(mode="json") for citation in output.citations
+            ],
+            "reasoning_summary": output.reasoning_summary,
+            "confidence": output.confidence,
+            "self_check_result": output.self_check.model_dump(mode="json"),
+            "fallback_reason": failure_type,
             "errors": [],
         },
         status="success",

@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.agents import answer_agent as answer_agent_module
 from app.agents.schemas import Citation
 from app.schemas.chat import ChatAskRequest, ChatAskResponse, ChatCitation
 from app.services import agent_run_service, chat_service
@@ -671,6 +672,52 @@ def test_chat_ask_route_runs_workflow_and_persists_assistant_message(
         answer="Employees may work remotely two days per week.",
         confidence=0.82,
     )
+
+
+def test_chat_ask_returns_200_when_grounding_exhaustion_becomes_insufficient(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, chat_api = _chat_client()
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "prepare_chat_persistence",
+        Mock(
+            return_value=chat_service.ChatPersistenceContext(
+                session={"id": str(SESSION_ID)},
+                user_message={"id": "user-message-id"},
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        chat_api,
+        "run_qa_workflow",
+        Mock(
+            return_value={
+                "answer": answer_agent_module.INSUFFICIENT_EVIDENCE_ANSWER,
+                "confidence": 0.0,
+                "citations": [],
+                "agent_run_id": AGENT_RUN_ID,
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        chat_api.chat_service,
+        "persist_assistant_message",
+        Mock(),
+    )
+
+    response = client.post(
+        "/api/chat/ask",
+        json={
+            "question": "What happened and what result followed?",
+            "document_ids": [str(DOCUMENT_ID)],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["answer"] == answer_agent_module.INSUFFICIENT_EVIDENCE_ANSWER
+    assert response.json()["confidence"] == 0.0
+    assert response.json()["citations"] == []
 
 
 def test_chat_ask_route_persists_user_and_assistant_messages_with_services(

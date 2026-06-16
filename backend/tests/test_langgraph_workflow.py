@@ -493,6 +493,81 @@ def test_run_qa_workflow_marks_success_for_insufficient_evidence(monkeypatch):
     mark_failed.assert_not_called()
 
 
+def test_run_qa_workflow_marks_success_when_grounding_exhaustion_returns_insufficient(
+    monkeypatch,
+):
+    agent_run_id = UUID("00000000-0000-0000-0000-000000000042")
+    document_id = UUID("00000000-0000-0000-0000-000000000043")
+    question = "What happened and what result followed?"
+
+    retrieval = RetrievalAgentOutput(question=question, candidates=[])
+    verification = VerificationAgentOutput(
+        verified_chunks=[
+            VerifiedChunk(
+                chunk_id=UUID("00000000-0000-0000-0000-000000000044"),
+                document_id=document_id,
+                file_name="event.txt",
+                quote="The event was organized in a circle.",
+                page_number=1,
+                verification_reason="Partially answers the question.",
+            )
+        ],
+        rejected_chunks=[],
+        missing_information=False,
+        confidence=0.8,
+    )
+    answer = AnswerAgentOutput(
+        final_answer="The current documents do not provide enough verified evidence.",
+        citations=[],
+        reasoning_summary="Agent 3 grounding exhausted the available verified evidence.",
+        confidence=0.0,
+        self_check=AnswerSelfCheck(
+            uses_only_verified_chunks=True,
+            has_citation=False,
+            has_unsupported_claims=False,
+            is_ready=False,
+        ),
+    )
+
+    create_run = Mock(return_value={"id": str(agent_run_id), "status": "running"})
+    mark_success = Mock(return_value={"id": str(agent_run_id), "status": "success"})
+    mark_failed = Mock()
+
+    monkeypatch.setattr(
+        graph.agent_run_service,
+        "create_running_agent_run",
+        create_run,
+    )
+    monkeypatch.setattr(
+        graph.agent_run_service,
+        "mark_agent_run_success",
+        mark_success,
+    )
+    monkeypatch.setattr(
+        graph.agent_run_service,
+        "mark_agent_run_failed",
+        mark_failed,
+    )
+    monkeypatch.setattr(graph, "run_retrieval_agent", Mock(return_value=retrieval))
+    monkeypatch.setattr(graph, "run_verification_agent", Mock(return_value=verification))
+    monkeypatch.setattr(graph, "run_answer_agent", Mock(return_value=answer))
+
+    result = graph.run_qa_workflow(question, [document_id])
+
+    assert result == {
+        "answer": answer.final_answer,
+        "confidence": 0.0,
+        "citations": [],
+        "agent_run_id": agent_run_id,
+    }
+    mark_success.assert_called_once_with(
+        agent_run_id,
+        final_answer=answer.final_answer,
+        confidence=answer.confidence,
+    )
+    mark_failed.assert_not_called()
+
+
 def _assert_run_qa_workflow_marks_created_run_failed_on_agent_error(
     monkeypatch,
     failing_agent,
