@@ -25,6 +25,53 @@ from app.utils.scoring import (
 MIN_TOP_K = 1
 MAX_TOP_K = 50
 _REASON_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+_REASON_STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "did",
+    "do",
+    "does",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "he",
+    "her",
+    "him",
+    "his",
+    "how",
+    "in",
+    "is",
+    "it",
+    "its",
+    "of",
+    "on",
+    "or",
+    "she",
+    "that",
+    "the",
+    "their",
+    "them",
+    "they",
+    "this",
+    "to",
+    "was",
+    "were",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "why",
+    "with",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -255,10 +302,14 @@ def score_hybrid_candidate(
     preserve_retrieval_reason: bool = False,
 ) -> HybridRetrievalCandidate:
     semantic_similarity = clamp_score(candidate.semantic_similarity)
-    graph_relevance = clamp_score(candidate.graph_relevance)
     keyword_overlap = keyword_overlap_score(
         question,
         candidate.content or candidate.content_preview,
+    )
+    graph_relevance = _aligned_graph_relevance(
+        candidate,
+        question=question,
+        keyword_overlap=keyword_overlap,
     )
     metadata_match = metadata_match_score(question, candidate, document_ids)
     position = recency_or_position_score(candidate)
@@ -295,6 +346,41 @@ def score_hybrid_candidate(
             "retrieval_reason": retrieval_reason,
         }
     )
+
+
+def _aligned_graph_relevance(
+    candidate: HybridRetrievalCandidate,
+    *,
+    question: str,
+    keyword_overlap: float,
+) -> float:
+    graph_relevance = clamp_score(candidate.graph_relevance)
+    if graph_relevance <= 0.0:
+        return 0.0
+
+    # Graph paths are expansion signals, not proof that a chunk answers the
+    # question. Keep a floor so graph-only discovery still contributes, but
+    # damp broad entity paths when the candidate text lacks question terms.
+    text_alignment = max(clamp_score(keyword_overlap), 0.25)
+    entity_specificity = _matched_entity_specificity(candidate, question)
+    return clamp_score(graph_relevance * text_alignment * entity_specificity)
+
+
+def _matched_entity_specificity(
+    candidate: HybridRetrievalCandidate,
+    question: str,
+) -> float:
+    metadata = candidate.metadata if isinstance(candidate.metadata, dict) else {}
+    matched_entity = metadata.get("matched_entity_name")
+    if not isinstance(matched_entity, str) or not matched_entity.strip():
+        return 1.0
+
+    question_terms = set(_reason_tokens(question))
+    entity_terms = set(_reason_tokens(matched_entity))
+    if not question_terms or not entity_terms:
+        return 1.0
+
+    return max(0.25, min(1.0, len(entity_terms & question_terms) / len(question_terms)))
 
 
 def _candidate_from_semantic(candidate: RetrievalResult) -> HybridRetrievalCandidate:
@@ -482,7 +568,11 @@ def _reason_tokens(value: str | None) -> list[str]:
     if not value:
         return []
 
-    return _REASON_TOKEN_PATTERN.findall(value.lower())
+    return [
+        token
+        for token in _REASON_TOKEN_PATTERN.findall(value.lower())
+        if token not in _REASON_STOP_WORDS
+    ]
 
 
 __all__ = [

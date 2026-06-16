@@ -49,6 +49,7 @@ NO_VERIFIED_CHUNKS_CONFIDENCE_CAP = 0.2
 CONTRADICTION_CONFIDENCE_CAP = 0.4
 COVERAGE_FAILURE_CONFIDENCE_CAP = 0.4
 CONTEXT_EXPANSION_CONFIDENCE_CAP = 0.65
+ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR = 0.5
 EVIDENCE_COVERAGE_RESPONSE_FORMAT = {"type": "json_object"}
 COVERAGE_RETRY_INSTRUCTION = """
 The previous response failed evidence coverage validation with category:
@@ -1445,10 +1446,21 @@ def _finalize_verification_output(
         }
 
     try:
-        return VerificationAgentOutput.model_validate(output_payload)
+        validated_output = VerificationAgentOutput.model_validate(output_payload)
     except ValidationError as exc:
         logger.warning("Verification post-processing returned invalid output schema.")
         raise _VerificationAgentFailure("post_processing_validation_error") from exc
+
+    if (
+        validated_output.verified_chunks
+        and not validated_output.missing_information
+        and validated_output.confidence < ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR
+    ):
+        return validated_output.model_copy(
+            update={"confidence": ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR}
+        )
+
+    return validated_output
 
 
 def _log_successful_verification(
@@ -1582,6 +1594,7 @@ __all__ = [
     "AGENT_2_VERIFICATION_STEP_NAME",
     "VERIFICATION_AGENT_NAME",
     "VERIFICATION_FAILURE_MESSAGE",
+    "ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR",
     "VerificationAgentError",
     "run_verification_agent",
 ]

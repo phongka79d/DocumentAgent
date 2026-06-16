@@ -34,6 +34,14 @@ INSUFFICIENT_EVIDENCE_ANSWER = (
     "\u0111\u1ee7 th\u00f4ng tin \u0111\u1ec3 x\u00e1c \u0111\u1ecbnh "
     "c\u00e2u tr\u1ea3 l\u1eddi."
 )
+SELF_CHECK_FAILED_EVIDENCE_ANSWER = (
+    "H\u1ec7 th\u1ed1ng ch\u01b0a th\u1ec3 ho\u00e0n t\u1ea5t t\u1ef1 "
+    "ki\u1ec3m tra c\u00e2u tr\u1ea3 l\u1eddi, nh\u01b0ng t\u00e0i "
+    "li\u1ec7u c\u00f3 c\u00e1c b\u1eb1ng ch\u1ee9ng li\u00ean quan "
+    "\u1edf ph\u1ea7n tr\u00edch d\u1eabn."
+)
+SELF_CHECK_FAILED_REASONING_SUMMARY = "Answer self-check failed after retry."
+SELF_CHECK_FAILED_CITATION_LIMIT = 5
 
 
 class AnswerAgentError(RuntimeError):
@@ -322,6 +330,14 @@ def validate_draft_citation_quotes_against_verified_evidence(
     """Validate that every draft citation quote exactly matches verified evidence."""
     evidence_lookup = build_answer_evidence_lookup(verification)
     for citation in output.citations:
+        citation_pair = (citation.file_name, citation.quote)
+        if (
+            citation_pair in evidence_lookup.rejected_citation_pairs
+            or citation.quote in evidence_lookup.rejected_quotes
+        ):
+            raise AnswerEvidenceValidationError(
+                f"Citation uses rejected evidence: {format_citation(citation)}"
+            )
         if citation.quote not in evidence_lookup.verified_quotes:
             raise AnswerEvidenceValidationError(
                 f"Citation quote is not present in verified evidence: "
@@ -636,9 +652,33 @@ def run_answer_agent(
         raise
     except AnswerEvidenceValidationError as exc:
         logger.warning("Answer agent draft failed evidence validation.")
-        failure = _AnswerAgentFailure(_evidence_validation_failure_type(exc))
-        _log_failed_answer_self_check(answer_input, failure.failure_type)
-        raise failure from exc
+        failure_type = _evidence_validation_failure_type(exc)
+        if not _should_retry_answer_generation_after_evidence_validation_failure(
+            answer_input,
+            failure_type,
+        ):
+            failure = _AnswerAgentFailure(failure_type)
+            _log_failed_answer_self_check(answer_input, failure.failure_type)
+            raise failure from exc
+        try:
+            draft_output = _generate_validated_draft_answer(
+                answer_input,
+                retry_instruction=ANSWER_GENERATION_RETRY_INSTRUCTION,
+            )
+        except _AnswerAgentFailure as retry_exc:
+            _log_failed_answer_self_check(answer_input, retry_exc.failure_type)
+            raise
+        except AnswerEvidenceValidationError as retry_exc:
+            logger.warning("Answer agent draft retry failed evidence validation.")
+            insufficient_output = _build_self_check_failed_evidence_output(
+                answer_input.verification
+            )
+            _log_insufficient_answer(
+                answer_input,
+                failure_type=_evidence_validation_failure_type(retry_exc),
+                output=insufficient_output,
+            )
+            return insufficient_output
 
     try:
         executed_grounding = execute_answer_self_check(
@@ -670,7 +710,9 @@ def run_answer_agent(
             raise
         except AnswerEvidenceValidationError as retry_exc:
             logger.warning("Answer agent self-check retry failed readiness validation.")
-            insufficient_output = _build_insufficient_evidence_output()
+            insufficient_output = _build_self_check_failed_evidence_output(
+                answer_input.verification
+            )
             _log_insufficient_answer(
                 answer_input,
                 failure_type="self_check_failed",
@@ -734,6 +776,16 @@ def _should_retry_answer_generation_after_self_check_failure(
     answer_input: AnswerAgentInput,
 ) -> bool:
     return bool(answer_input.verification.verified_chunks)
+
+
+def _should_retry_answer_generation_after_evidence_validation_failure(
+    answer_input: AnswerAgentInput,
+    failure_type: str,
+) -> bool:
+    return (
+        failure_type == "citation_validation_error"
+        and bool(answer_input.verification.verified_chunks)
+    )
 
 
 def _log_successful_answer_self_check(
@@ -888,6 +940,45 @@ def _build_insufficient_evidence_output() -> AnswerAgentOutput:
             is_ready=False,
         ),
     )
+
+
+def _build_self_check_failed_evidence_output(
+    verification: VerificationAgentOutput,
+) -> AnswerAgentOutput:
+    citations = _citations_from_verified_chunks(verification)
+    if not citations:
+        return _build_insufficient_evidence_output()
+
+    return AnswerAgentOutput(
+        final_answer=SELF_CHECK_FAILED_EVIDENCE_ANSWER,
+        citations=citations,
+        reasoning_summary=SELF_CHECK_FAILED_REASONING_SUMMARY,
+        confidence=0.0,
+        self_check=AnswerSelfCheck(
+            uses_only_verified_chunks=True,
+            has_citation=True,
+            has_unsupported_claims=False,
+            is_ready=False,
+        ),
+    )
+
+
+def _citations_from_verified_chunks(
+    verification: VerificationAgentOutput,
+) -> list[Citation]:
+    citations: list[Citation] = []
+    seen_pairs: set[tuple[str, str]] = set()
+    for chunk in verification.verified_chunks:
+        if chunk.file_name is None:
+            continue
+        citation_pair = (chunk.file_name, chunk.quote)
+        if citation_pair in seen_pairs:
+            continue
+        citations.append(Citation(file_name=chunk.file_name, quote=chunk.quote))
+        seen_pairs.add(citation_pair)
+        if len(citations) >= SELF_CHECK_FAILED_CITATION_LIMIT:
+            break
+    return citations
 
 
 def _validate_citation_presence(citations: list[Citation]) -> None:

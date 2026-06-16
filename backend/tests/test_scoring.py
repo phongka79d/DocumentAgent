@@ -46,6 +46,15 @@ def test_keyword_overlap_score_uses_unique_question_token_coverage() -> None:
     assert score == 2 / 3
 
 
+def test_keyword_overlap_score_ignores_common_question_words() -> None:
+    score = keyword_overlap_score(
+        "What object did the White Rabbit take out of its waistcoat-pocket?",
+        "The passage mentions the White Rabbit and a waistcoat pocket.",
+    )
+
+    assert score == 4 / 7
+
+
 def test_metadata_match_score_combines_document_page_section_and_file_matches() -> None:
     candidate = {
         "document_id": "doc-1",

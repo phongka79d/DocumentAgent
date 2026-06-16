@@ -227,7 +227,7 @@ def test_retrieve_hybrid_merges_duplicate_semantic_and_graph_chunks_once(
     assert [candidate.chunk_id for candidate in response.candidates] == [UUID(chunk_id)]
     candidate = response.candidates[0]
     assert candidate.semantic_similarity == pytest.approx(0.91)
-    assert candidate.graph_relevance == pytest.approx(0.73)
+    assert candidate.graph_relevance == pytest.approx(0.73 * 0.25)
     assert candidate.page_number == 8
     assert candidate.content == "longer graph text with more complete candidate content"
     assert candidate.metadata == {
@@ -280,7 +280,7 @@ def test_retrieve_hybrid_keeps_graph_only_candidate_with_zero_semantic_score(
 
     assert len(response.candidates) == 1
     assert response.candidates[0].semantic_similarity == 0.0
-    assert response.candidates[0].graph_relevance == pytest.approx(0.64)
+    assert response.candidates[0].graph_relevance == pytest.approx(0.64 * 0.25)
 
 
 def test_retrieve_hybrid_generates_semantic_retrieval_reason_without_answer_text(
@@ -466,7 +466,7 @@ def test_retrieve_hybrid_calculates_score_components_for_every_merged_candidate(
     assert len(response.candidates) == 2
     merged_candidate = response.candidates[0]
     assert merged_candidate.semantic_similarity == pytest.approx(0.8)
-    assert merged_candidate.graph_relevance == pytest.approx(0.6)
+    assert merged_candidate.graph_relevance == pytest.approx(0.6 * (2 / 6) * 0.25)
     assert 0.0 < merged_candidate.keyword_overlap <= 1.0
     assert merged_candidate.metadata_match == pytest.approx(1.0)
     assert merged_candidate.recency_or_position_score == pytest.approx(0.85)
@@ -484,7 +484,7 @@ def test_retrieve_hybrid_calculates_score_components_for_every_merged_candidate(
 
     graph_only_candidate = response.candidates[1]
     assert graph_only_candidate.semantic_similarity == 0.0
-    assert graph_only_candidate.graph_relevance == pytest.approx(0.4)
+    assert graph_only_candidate.graph_relevance == pytest.approx(0.4 * 0.25)
     assert 0.0 <= graph_only_candidate.keyword_overlap <= 1.0
     assert 0.0 <= graph_only_candidate.metadata_match <= 1.0
     assert 0.0 <= graph_only_candidate.recency_or_position_score <= 1.0
@@ -680,7 +680,7 @@ def test_retrieve_hybrid_computes_exact_final_ranking_for_mixed_candidate_source
             final_score(
                 {
                     "semantic_similarity": 0.7,
-                    "graph_relevance": 0.6,
+                    "graph_relevance": 0.6 * 0.5,
                     "keyword_overlap": 0.5,
                     "metadata_match": 1.0,
                     "recency_or_position_score": 0.85,
@@ -698,7 +698,7 @@ def test_retrieve_hybrid_computes_exact_final_ranking_for_mixed_candidate_source
             final_score(
                 {
                     "semantic_similarity": 0.0,
-                    "graph_relevance": 0.9,
+                    "graph_relevance": 0.9 * 0.25,
                     "keyword_overlap": 0.25,
                     "metadata_match": 0.4,
                     "recency_or_position_score": 0.0,
@@ -706,6 +706,107 @@ def test_retrieve_hybrid_computes_exact_final_ranking_for_mixed_candidate_source
             ),
         ]
     )
+
+
+def test_retrieve_hybrid_prioritizes_specific_term_match_over_loose_graph_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    document_id = "21212121-2121-2121-2121-212121212121"
+    exact_chunk_id = "61616161-6161-6161-6161-616161616161"
+    loose_graph_chunk_id = "62626262-6262-6262-6262-626262626262"
+    later_related_chunk_id = "63636363-6363-6363-6363-636363636363"
+    question = (
+        "What object did the White Rabbit take out of its waistcoat-pocket "
+        "when it ran by Alice?"
+    )
+    semantic_search = Mock(
+        return_value=SearchResponse(
+            question=question,
+            results=[
+                _semantic_candidate(
+                    exact_chunk_id,
+                    document_id=document_id,
+                    content=(
+                        "Alice saw the White Rabbit take a watch out of its "
+                        "waistcoat-pocket as it ran by."
+                    ),
+                    semantic_similarity=0.45,
+                    file_name="alice.txt",
+                    page_number=None,
+                    section_title=None,
+                    chunk_index=0,
+                ),
+                _semantic_candidate(
+                    loose_graph_chunk_id,
+                    document_id=document_id,
+                    content=(
+                        "Alice attended a tea party where the Hatter talked "
+                        "about a watch."
+                    ),
+                    semantic_similarity=0.49,
+                    file_name="alice.txt",
+                    page_number=None,
+                    section_title=None,
+                    chunk_index=18,
+                ),
+                _semantic_candidate(
+                    later_related_chunk_id,
+                    document_id=document_id,
+                    content=(
+                        "The White Rabbit returned with white kid gloves and "
+                        "a large fan in the other hand."
+                    ),
+                    semantic_similarity=0.43,
+                    file_name="alice.txt",
+                    page_number=None,
+                    section_title=None,
+                    chunk_index=3,
+                ),
+            ],
+        )
+    )
+    graph_retrieval = Mock(
+        return_value=[
+            _graph_candidate(
+                loose_graph_chunk_id,
+                document_id=document_id,
+                content=(
+                    "Alice attended a tea party where the Hatter talked "
+                    "about a watch."
+                ),
+                graph_relevance=0.90,
+                chunk_index=18,
+                metadata={"matched_entity_name": "Alice"},
+            ),
+            _graph_candidate(
+                later_related_chunk_id,
+                document_id=document_id,
+                content=(
+                    "The White Rabbit returned with white kid gloves and "
+                    "a large fan in the other hand."
+                ),
+                graph_relevance=0.90,
+                chunk_index=3,
+                metadata={"matched_entity_name": "Alice"},
+            ),
+        ]
+    )
+    monkeypatch.setattr(
+        hybrid_retrieval_service,
+        "get_settings",
+        lambda: _settings(final_top_k=3),
+    )
+
+    response = hybrid_retrieval_service.retrieve_hybrid(
+        question,
+        document_ids=[UUID(document_id)],
+        semantic_search=semantic_search,
+        graph_retrieval=graph_retrieval,
+    )
+
+    assert response.candidates[0].chunk_id == UUID(exact_chunk_id)
+    assert response.candidates[0].content is not None
+    assert "waistcoat-pocket" in response.candidates[0].content
 
 
 def test_retrieve_hybrid_returns_ranked_candidates_when_rerank_is_disabled(

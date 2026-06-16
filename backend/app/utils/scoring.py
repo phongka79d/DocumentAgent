@@ -9,6 +9,53 @@ from typing import Any
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 _PAGE_RE = re.compile(r"\b(?:page|p)\s*#?\s*(\d+)\b", re.IGNORECASE)
+_STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "did",
+    "do",
+    "does",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "he",
+    "her",
+    "him",
+    "his",
+    "how",
+    "in",
+    "is",
+    "it",
+    "its",
+    "of",
+    "on",
+    "or",
+    "she",
+    "that",
+    "the",
+    "their",
+    "them",
+    "they",
+    "this",
+    "to",
+    "was",
+    "were",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "why",
+    "with",
+}
 _IMPORTANT_SECTION_TERMS = {
     "abstract",
     "executive",
@@ -51,11 +98,11 @@ def clamp_score(value: Any) -> float:
 
 def keyword_overlap_score(question: str | None, chunk_content: str | None) -> float:
     """Score unique question-token coverage in the candidate chunk content."""
-    question_tokens = set(_tokenize(question))
+    question_tokens = set(_content_tokens(question))
     if not question_tokens:
         return 0.0
 
-    chunk_tokens = set(_tokenize(chunk_content))
+    chunk_tokens = set(_content_tokens(chunk_content))
     if not chunk_tokens:
         return 0.0
 
@@ -149,6 +196,10 @@ def _tokenize(value: Any) -> list[str]:
         return []
 
     return _TOKEN_RE.findall(str(value).lower())
+
+
+def _content_tokens(value: Any) -> list[str]:
+    return [token for token in _tokenize(value) if token not in _STOP_WORDS]
 
 
 def _candidate_value(candidate: Any, key: str) -> Any:

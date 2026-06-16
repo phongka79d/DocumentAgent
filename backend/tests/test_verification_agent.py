@@ -2139,6 +2139,65 @@ def test_verification_agent_accepts_complete_multi_part_cross_chunk_coverage(
     ]
 
 
+def test_verification_agent_floors_confidence_for_answerable_verified_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate_payload()
+    candidate["file_name"] = "alice-in-wonderland.txt"
+    candidate["content"] = (
+        "Alice wondered whether she had changed in the night. "
+        "She said she could not be Mabel because she knew many things, "
+        "then tested multiplication, geography, and a recitation."
+    )
+    selected = _coverage_selection(
+        quote="then tested multiplication, geography, and a recitation.",
+        purpose="States the tests Alice used to verify her identity.",
+    )
+    initial_verification = {
+        "verified_chunks": [
+            {
+                "chunk_id": CANDIDATE_CHUNK_ID,
+                "document_id": CANDIDATE_DOCUMENT_ID,
+                "file_name": "alice-in-wonderland.txt",
+                "quote": selected["quote"],
+                "page_number": 0,
+                "verification_reason": selected["purpose"],
+                "supports_simple_reasoning": False,
+            }
+        ],
+        "rejected_chunks": [],
+        "missing_information": False,
+        "confidence": 0.0,
+    }
+    coverage_review = {
+        "answers_question": True,
+        "missing_information": False,
+        "requirements": [
+            {
+                "requirement": "Explain Alice's identity test.",
+                "satisfied": True,
+                "evidence": [selected],
+                "missing_detail": None,
+            }
+        ],
+        "selected_evidence": [selected],
+        "confidence": 0.0,
+    }
+    _mock_two_pass_verification(monkeypatch, initial_verification, coverage_review)
+
+    output = run_verification_agent(
+        {
+            "agent_run_id": AGENT_RUN_ID,
+            "question": "What tests did Alice use to verify her identity?",
+            "candidates": [candidate],
+        }
+    )
+
+    assert output.missing_information is False
+    assert output.verified_chunks
+    assert output.confidence == verification_agent.ANSWERABLE_EVIDENCE_CONFIDENCE_FLOOR
+
+
 def test_verification_agent_reassigns_coverage_selection_to_unique_matching_chunk(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

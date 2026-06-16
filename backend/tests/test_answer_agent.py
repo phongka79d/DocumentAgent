@@ -264,6 +264,27 @@ def _assert_insufficient_evidence_output(output: AnswerAgentOutput) -> None:
     )
 
 
+def _assert_self_check_failed_evidence_output(
+    output: AnswerAgentOutput,
+    *,
+    citations: list[Citation] | None = None,
+) -> None:
+    assert output.final_answer == answer_agent_module.SELF_CHECK_FAILED_EVIDENCE_ANSWER
+    assert output.citations == (
+        [Citation(file_name="contract.pdf", quote=VERIFIED_QUOTE)]
+        if citations is None
+        else citations
+    )
+    assert output.reasoning_summary == "Answer self-check failed after retry."
+    assert output.confidence == 0.0
+    assert output.self_check == AnswerSelfCheck(
+        uses_only_verified_chunks=True,
+        has_citation=True,
+        has_unsupported_claims=False,
+        is_ready=False,
+    )
+
+
 def test_answer_agent_exports_internal_callable_and_error() -> None:
     assert exported_run_answer_agent is run_answer_agent
     assert ExportedAnswerAgentError is AnswerAgentError
@@ -500,14 +521,19 @@ def test_run_answer_agent_logs_insufficient_step_for_self_check_failure(
 
     output = run_answer_agent(_answer_input_payload())
 
-    _assert_insufficient_evidence_output(output)
+    _assert_self_check_failed_evidence_output(output)
     try_log_agent_step.assert_called_once()
     log_call = try_log_agent_step.call_args.kwargs
     assert log_call["status"] == "success"
     assert log_call["error_message"] is None
     assert log_call["output_payload"]["fallback_reason"] == "self_check_failed"
-    assert log_call["output_payload"]["final_answer"] == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
-    assert log_call["output_payload"]["citations"] == []
+    assert (
+        log_call["output_payload"]["final_answer"]
+        == answer_agent_module.SELF_CHECK_FAILED_EVIDENCE_ANSWER
+    )
+    assert log_call["output_payload"]["citations"] == [
+        {"file_name": "contract.pdf", "quote": VERIFIED_QUOTE}
+    ]
     assert log_call["output_payload"]["confidence"] == 0.0
 
 
@@ -561,6 +587,53 @@ def test_run_answer_agent_logs_failed_step_for_invalid_draft_response(
     assert "final_answer" not in log_call["output_payload"]
     assert "is_ready" not in json.dumps(log_call["output_payload"])
     assert provider_content not in str(log_call)
+
+
+def test_run_answer_agent_retries_then_returns_cited_fallback_for_draft_citation_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    invalid_payload = _draft_answer_payload()
+    invalid_payload["citations"] = [
+        {
+            "file_name": "contract.pdf",
+            "quote": "The probation period begins in June and lasts two months.",
+        }
+    ]
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(invalid_payload),
+            json.dumps(invalid_payload),
+        ]
+    )
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    _assert_self_check_failed_evidence_output(output)
+    assert chat_completion.call_count == 2
+    retry_messages = chat_completion.call_args_list[1].args[0]
+    assert (
+        answer_agent_module.ANSWER_GENERATION_RETRY_INSTRUCTION
+        in retry_messages[1]["content"]
+    )
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "success"
+    assert log_call["error_message"] is None
+    assert log_call["output_payload"]["fallback_reason"] == "citation_validation_error"
+    assert log_call["output_payload"]["citations"] == [
+        {"file_name": "contract.pdf", "quote": VERIFIED_QUOTE}
+    ]
 
 
 @pytest.mark.parametrize(
@@ -1100,7 +1173,7 @@ def test_run_answer_agent_returns_insufficient_for_incorrect_simple_reasoning(
 
     output = run_answer_agent(_answer_input_payload())
 
-    _assert_insufficient_evidence_output(output)
+    _assert_self_check_failed_evidence_output(output)
     assert chat_completion.call_count == 4
 
 
@@ -1177,7 +1250,10 @@ def test_run_answer_agent_returns_insufficient_for_unsupported_explanation_with_
 
     output = run_answer_agent(payload)
 
-    _assert_insufficient_evidence_output(output)
+    _assert_self_check_failed_evidence_output(
+        output,
+        citations=[Citation(file_name="alice-in-wonderland.txt", quote=conclusion_quote)],
+    )
 
 
 def test_run_answer_agent_retries_explanatory_answer_after_self_check_failure(
@@ -1314,7 +1390,7 @@ def test_run_answer_agent_returns_insufficient_evidence_after_retry_grounding_ex
 
     output = run_answer_agent(_answer_input_payload())
 
-    _assert_insufficient_evidence_output(output)
+    _assert_self_check_failed_evidence_output(output)
     assert chat_completion.call_count == 4
 
 
@@ -1744,17 +1820,31 @@ def test_run_answer_agent_rejects_draft_citation_quote_not_in_verified_evidence(
             "quote": "The probation term is similar but this quote was fabricated.",
         }
     ]
-    chat_completion = Mock(return_value=json.dumps(provider_payload))
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(provider_payload),
+            json.dumps(provider_payload),
+        ]
+    )
+    try_log_agent_step = Mock()
     monkeypatch.setattr(
         answer_agent_module.shopaikey_service,
         "chat_completion",
         chat_completion,
     )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
 
-    with pytest.raises(AnswerAgentError, match=ANSWER_FAILURE_MESSAGE):
-        run_answer_agent(_answer_input_payload())
+    output = run_answer_agent(_answer_input_payload())
 
-    chat_completion.assert_called_once()
+    _assert_self_check_failed_evidence_output(output)
+    assert chat_completion.call_count == 2
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["status"] == "success"
+    assert log_call["output_payload"]["fallback_reason"] == "citation_validation_error"
 
 
 def test_run_answer_agent_accepts_verified_citation_and_renders_required_format(
@@ -2021,7 +2111,7 @@ def test_run_answer_agent_rejects_draft_citation_from_rejected_chunk(
                     }
                 ],
             },
-            "citation_validation_error",
+            "rejected_evidence_error",
         ),
         (
             {
@@ -2149,19 +2239,33 @@ def test_run_answer_agent_logs_grounding_exhaustion_as_insufficient_evidence(
 
     output = run_answer_agent(_answer_input_payload())
 
-    _assert_insufficient_evidence_output(output)
+    assert output.final_answer == answer_agent_module.SELF_CHECK_FAILED_EVIDENCE_ANSWER
+    assert output.citations == [Citation(file_name="contract.pdf", quote=VERIFIED_QUOTE)]
+    assert output.reasoning_summary == "Answer self-check failed after retry."
+    assert output.confidence == 0.0
+    assert output.self_check == AnswerSelfCheck(
+        uses_only_verified_chunks=True,
+        has_citation=True,
+        has_unsupported_claims=False,
+        is_ready=False,
+    )
     assert chat_completion.call_count == 4
     try_log_agent_step.assert_called_once()
     log_call = try_log_agent_step.call_args.kwargs
     assert log_call["status"] == "success"
     assert log_call["error_message"] is None
-    assert log_call["output_payload"]["final_answer"] == EXPECTED_INSUFFICIENT_EVIDENCE_ANSWER
-    assert log_call["output_payload"]["citations"] == []
+    assert (
+        log_call["output_payload"]["final_answer"]
+        == answer_agent_module.SELF_CHECK_FAILED_EVIDENCE_ANSWER
+    )
+    assert log_call["output_payload"]["citations"] == [
+        {"file_name": "contract.pdf", "quote": VERIFIED_QUOTE}
+    ]
     assert log_call["output_payload"]["confidence"] == 0.0
     assert log_call["output_payload"]["fallback_reason"] == "self_check_failed"
     assert log_call["output_payload"]["self_check_result"] == {
         "uses_only_verified_chunks": True,
-        "has_citation": False,
+        "has_citation": True,
         "has_unsupported_claims": False,
         "is_ready": False,
     }
