@@ -341,6 +341,39 @@ def test_run_answer_agent_accepts_mapping_for_validation(
     assert chat_completion.call_count == 2
 
 
+def test_run_answer_agent_ignores_zero_draft_confidence_when_grounding_passes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    draft_payload = _draft_answer_payload(confidence=0.0)
+    expected_output = AnswerAgentOutput.model_validate(
+        {
+            **draft_payload,
+            "self_check": DRAFT_SELF_CHECK_PLACEHOLDER,
+        }
+    )
+    chat_completion = Mock(
+        side_effect=[
+            json.dumps(draft_payload),
+            json.dumps(
+                _grounding_review_payload(
+                    output=expected_output,
+                    confidence=0.91,
+                )
+            ),
+        ]
+    )
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+
+    output = run_answer_agent(_answer_input_payload())
+
+    assert output.self_check.model_dump() == READY_SELF_CHECK_REQUIRED_VALUES
+    assert output.confidence == pytest.approx(0.82)
+
+
 def test_run_answer_agent_logs_successful_answer_and_self_check(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

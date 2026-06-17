@@ -178,11 +178,46 @@ def _snippet_for_candidate(
 def _content_terms(value: str | None) -> set[str]:
     if not value:
         return set()
-    return {
-        token.lower()
-        for token in _WORD_PATTERN.findall(value)
-        if len(token) > 2
-    }
+    terms: set[str] = set()
+    for token in _WORD_PATTERN.findall(value):
+        lowered = token.lower()
+        if len(lowered) <= 2:
+            continue
+
+        terms.add(lowered)
+        canonical = _canonical_term(lowered)
+        if len(canonical) > 2:
+            terms.add(canonical)
+
+    return terms
+
+
+def _canonical_term(token: str) -> str:
+    if token.endswith("'s") and len(token) > 4:
+        token = token[:-2]
+
+    if token.endswith("ies") and len(token) > 4:
+        return token[:-3] + "y"
+
+    if token.endswith("ves") and len(token) > 4:
+        return token[:-3] + "f"
+
+    if token.endswith("ed") and len(token) > 4:
+        stem = token[:-2]
+        if len(stem) > 3 and stem[-1] == stem[-2]:
+            stem = stem[:-1]
+        return stem
+
+    if token.endswith("ing") and len(token) > 5:
+        stem = token[:-3]
+        if len(stem) > 3 and stem[-1] == stem[-2]:
+            stem = stem[:-1]
+        return stem
+
+    if token.endswith("s") and len(token) > 3:
+        return token[:-1]
+
+    return token
 
 
 def _sentence_score(sentence: str, question_terms: set[str]) -> int:

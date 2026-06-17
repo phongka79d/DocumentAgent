@@ -166,6 +166,49 @@ def test_optimize_candidates_preserves_multi_part_answer_evidence() -> None:
     assert "it was empty" in optimized[0].content
 
 
+def test_optimize_candidates_finds_answer_sentence_after_long_front_matter() -> None:
+    candidate = _candidate(
+        file_name="alice.txt",
+        content=(
+            "Project Gutenberg's Alice's Adventures in Wonderland, by Lewis Carroll\r\n\r\n"
+            "This eBook is for the use of anyone anywhere at no cost and with "
+            "almost no restrictions whatsoever. "
+            "Alice was beginning to get very tired of sitting by her sister on the bank, "
+            "and of having nothing to do: once or twice she had peeped into the book "
+            "her sister was reading, but it had no pictures or conversations in it, "
+            "'and what is the use of a book,' thought Alice 'without pictures or conversation?' "
+            "There was nothing so very remarkable in that; nor did Alice think it so very "
+            "much out of the way to hear the Rabbit say to itself, 'Oh dear! Oh dear!' "
+            + "Unrelated public domain and story setup text. " * 70
+            + "Down, down, down. "
+            "Alice looked at the sides of the well, and noticed that they were filled with "
+            "cupboards and book-shelves; here and there she saw maps and pictures hung upon pegs. "
+            "She took down a jar from one of the shelves as she passed; it was labelled "
+            "'ORANGE MARMALADE', but to her great disappointment it was empty: she did not "
+            "like to drop the jar for fear of killing somebody."
+        ),
+    )
+
+    optimized = optimize_candidates_for_verification(
+        question=(
+            "What was the label on the jar that Alice took from the shelf "
+            "while falling down the well, and what did it contain?"
+        ),
+        candidates=[candidate],
+        max_candidates=8,
+        snippet_max_chars=1800,
+        context_sentences=1,
+    )
+
+    snippet = optimized[0].content
+
+    assert snippet is not None
+    assert "ORANGE MARMALADE" in snippet
+    assert "it was empty" in snippet
+    assert len(snippet) <= 1800
+    assert snippet in candidate.content
+
+
 def test_indirect_when_question_snippet_keeps_date_and_duration_evidence() -> None:
     candidate = _candidate(
         file_name="contract.pdf",
