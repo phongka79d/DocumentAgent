@@ -15,6 +15,7 @@ def expand_retrieval_context(
     *,
     context_window: int,
     max_context_candidates: int,
+    min_parent_score: float = 0.0,
     chunk_lookup: ChunkLookup = supabase_service.list_document_chunks_by_indexes,
 ) -> list[HybridRetrievalCandidate]:
     if context_window <= 0 or max_context_candidates <= 0 or not anchors:
@@ -28,6 +29,8 @@ def expand_retrieval_context(
     ] = {}
 
     for anchor in anchors:
+        if anchor.final_score < min_parent_score:
+            continue
         if anchor.chunk_index is None:
             continue
         for offset in range(-context_window, context_window + 1):

@@ -27,12 +27,14 @@ def _settings(
     semantic_top_k: int = 11,
     graph_top_k: int = 7,
     final_top_k: int = 5,
+    min_final_score: float = 0.0,
     enable_rerank: bool = False,
 ) -> SimpleNamespace:
     return SimpleNamespace(
         retrieval_semantic_top_k=semantic_top_k,
         retrieval_graph_top_k=graph_top_k,
         retrieval_final_top_k=final_top_k,
+        retrieval_min_final_score=min_final_score,
         enable_rerank=enable_rerank,
     )
 
@@ -628,6 +630,50 @@ def test_retrieve_hybrid_sorts_by_final_score_desc_and_uses_configured_final_top
         [candidate.final_score for candidate in response.candidates],
         reverse=True,
     )
+
+
+def test_retrieve_hybrid_filters_candidates_below_min_final_score(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    kept_chunk_id = "abababab-1111-1111-1111-abababababab"
+    filtered_chunk_id = "cdcdcdcd-2222-2222-2222-cdcdcdcdcdcd"
+    semantic_search = Mock(
+        return_value=SearchResponse(
+            question="What object did the White Rabbit carry?",
+            results=[
+                _semantic_candidate(
+                    kept_chunk_id,
+                    content="The White Rabbit carried a watch.",
+                    semantic_similarity=0.9,
+                    chunk_index=0,
+                ),
+                _semantic_candidate(
+                    filtered_chunk_id,
+                    content="Tea party chairs and unrelated chatter.",
+                    semantic_similarity=0.05,
+                    chunk_index=18,
+                ),
+            ],
+        )
+    )
+    graph_retrieval = Mock(return_value=[])
+    settings = _settings(final_top_k=5)
+    settings.retrieval_min_final_score = 0.2
+    monkeypatch.setattr(
+        hybrid_retrieval_service,
+        "get_settings",
+        lambda: settings,
+    )
+
+    response = hybrid_retrieval_service.retrieve_hybrid(
+        "What object did the White Rabbit carry?",
+        semantic_search=semantic_search,
+        graph_retrieval=graph_retrieval,
+    )
+
+    assert [candidate.chunk_id for candidate in response.candidates] == [
+        UUID(kept_chunk_id)
+    ]
 
 
 def test_retrieve_hybrid_computes_exact_final_ranking_for_mixed_candidate_sources(

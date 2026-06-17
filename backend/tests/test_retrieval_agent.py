@@ -221,6 +221,7 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
             retrieval_final_top_k=11,
             retrieval_context_window=1,
             retrieval_context_max_candidates=8,
+            retrieval_context_min_parent_score=0.2,
         ),
     )
     expand_retrieval_context = Mock(
@@ -314,6 +315,7 @@ def test_run_retrieval_agent_validates_input_and_calls_hybrid_retrieval(
         hybrid_response.candidates,
         context_window=1,
         max_context_candidates=8,
+        min_parent_score=0.2,
     )
     expected_log_output = retrieval_agent._build_retrieval_log_output(expected_output)
     log_agent_step.assert_called_once_with(
@@ -381,6 +383,7 @@ def test_run_retrieval_agent_logs_compact_candidates_without_mutating_result(
             retrieval_final_top_k=8,
             retrieval_context_window=1,
             retrieval_context_max_candidates=8,
+            retrieval_context_min_parent_score=0.2,
         ),
     )
 
@@ -438,6 +441,7 @@ def test_run_retrieval_agent_treats_empty_candidates_as_success(
             retrieval_final_top_k=5,
             retrieval_context_window=1,
             retrieval_context_max_candidates=8,
+            retrieval_context_min_parent_score=0.2,
         ),
     )
     expand_retrieval_context = Mock(return_value=[])
@@ -470,6 +474,7 @@ def test_run_retrieval_agent_treats_empty_candidates_as_success(
         [],
         context_window=1,
         max_context_candidates=8,
+        min_parent_score=0.2,
     )
     log_agent_step.assert_called_once_with(
         agent_run_id="11111111-1111-1111-1111-111111111111",
@@ -587,6 +592,7 @@ def test_run_retrieval_agent_rejects_candidate_schema_mismatch_before_logging(
             retrieval_final_top_k=7,
             retrieval_context_window=1,
             retrieval_context_max_candidates=8,
+            retrieval_context_min_parent_score=0.2,
         ),
     )
     monkeypatch.setattr(
@@ -635,6 +641,7 @@ def test_run_retrieval_agent_logs_failed_step_and_raises_controlled_error(
             retrieval_final_top_k=7,
             retrieval_context_window=1,
             retrieval_context_max_candidates=8,
+            retrieval_context_min_parent_score=0.2,
         ),
     )
 
@@ -700,6 +707,7 @@ def test_run_retrieval_agent_reports_failed_log_insert_without_erasing_retrieval
             retrieval_final_top_k=7,
             retrieval_context_window=1,
             retrieval_context_max_candidates=8,
+            retrieval_context_min_parent_score=0.2,
         ),
     )
 

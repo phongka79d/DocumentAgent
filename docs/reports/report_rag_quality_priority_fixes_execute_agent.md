@@ -434,3 +434,228 @@ complete
 - next task ID: (03A)
 - can proceed: yes
 - handoff notes: The chronology path and the chunk_index-aware expectations are aligned, and the Batch02 backend surface now passes.
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+- docs/tasks/task_rag_quality_priority_fixes.md
+
+## Report File
+- docs/reports/report_rag_quality_priority_fixes_execute_agent.md
+
+## Batch
+- Batch03 - Retrieval Precision Gates
+
+## Task
+- (03A) - Add retrieval precision settings
+
+## Status
+- complete
+
+## Source of Truth Used
+- docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md > ## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating > ### Steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Precision Gates
+- Task ID: (03A)
+- Task title: Add retrieval precision settings
+
+## Completed Work
+- Added `retrieval_min_final_score` and `retrieval_context_min_parent_score` to `backend/app/core/config.py` with default `0.2` and `0.0` to `1.0` bounds.
+- Added config test coverage for the new defaults and out-of-range values in `backend/tests/test_config.py`.
+
+## Files Created or Modified
+- backend/app/core/config.py
+- backend/tests/test_config.py
+
+## Tests or Validations Run
+- `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_config.py::test_retrieval_precision_settings_have_bounded_defaults tests/test_config.py::test_retrieval_precision_settings_reject_out_of_range_values -q`: Passed
+- `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_config.py -q`: Passed
+
+## Acceptance Check
+- Task acceptance condition: Settings instantiate with defaults and pass existing config tests.
+- Status: satisfied
+- Evidence: `Settings(_env_file=None)` now exposes both retrieval precision fields with `0.2` defaults, invalid values raise validation errors, and the full config suite passed (`37 passed`).
+
+## Artifacts Produced
+- None
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox updates remain with A2 review flow.
+
+## Key Implementation Decisions
+- Used `pydantic.Field` bounds directly on `Settings` rather than adding a custom validator, which keeps the change local and matches the existing config style.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes
+- handoff notes: Retrieval precision settings are now available for the hybrid retrieval filter task; no retrieval service logic was changed.
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+[docs/tasks/task_rag_quality_priority_fixes.md]
+
+## Report File
+[docs/reports/report_rag_quality_priority_fixes_execute_agent.md]
+
+## Batch
+[Batch03 - Retrieval Precision Gates]
+
+## Task
+(03B) - Filter hybrid candidates below minimum final score
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md > ## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating > ### Steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Precision Gates
+- Task ID: (03B)
+- Task title: Filter hybrid candidates below minimum final score
+
+## Completed Work
+- Implemented `_filter_by_min_final_score()` in `backend/app/services/hybrid_retrieval_service.py`.
+- Applied the new `retrieval_min_final_score` gate before final top-k ranking in `retrieve_hybrid()`.
+- Added `test_retrieve_hybrid_filters_candidates_below_min_final_score` to cover the new filtering behavior.
+- Kept the change scoped to hybrid retrieval; no 03C wiring was touched.
+
+## Files Created or Modified
+- backend/app/services/hybrid_retrieval_service.py
+- backend/tests/test_hybrid_retrieval_service.py
+- docs/reports/report_rag_quality_priority_fixes_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_hybrid_retrieval_service.py::test_retrieve_hybrid_filters_candidates_below_min_final_score -q`: Passed
+- `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_hybrid_retrieval_service.py -q`: Passed (28 passed)
+
+## Acceptance Check
+- Task acceptance condition: Focused hybrid retrieval filter test passes.
+- Status: satisfied
+- Evidence: The targeted test passed after the filter was added; the full hybrid retrieval test file also passed.
+
+## Artifacts Produced
+- None
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox updates remain with A2 review flow.
+
+## Key Implementation Decisions
+- Filter uses an inclusive `>=` comparison so candidates at the configured minimum are retained.
+- The filter runs after scoring and before `_rank_and_limit_candidates()` so top-k ranking only sees eligible candidates.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- Updated the hybrid retrieval test stub to include `retrieval_min_final_score` so existing hybrid tests continue to reflect their pre-filter expectations.
+
+## Workflow Integrity Check
+- No issue identified
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes
+- handoff notes: Hybrid retrieval now drops low final-score candidates before ranking; the full hybrid retrieval test file is green.
+
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+docs/tasks/task_rag_quality_priority_fixes.md
+
+## Report File
+docs/reports/report_rag_quality_priority_fixes_execute_agent.md
+
+## Batch
+Batch03 - Retrieval Precision Gates
+
+## Task
+(03C) - Gate adjacent context expansion by parent score
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md > ## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating > ### Steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Retrieval Precision Gates
+- Task ID: (03C)
+- Task title: Gate adjacent context expansion by parent score
+
+## Completed Work
+- Added a focused regression test to verify weak anchors do not trigger adjacent context expansion below `min_parent_score`.
+- Updated `expand_retrieval_context()` to accept `min_parent_score` and skip weak anchors while still returning the original anchors.
+- Passed `settings.retrieval_context_min_parent_score` through `run_retrieval_agent()`.
+- Updated retrieval-agent and workflow tests to include the new setting and call signature.
+
+## Files Created or Modified
+- backend/app/services/retrieval_context_service.py
+- backend/app/agents/retrieval_agent.py
+- backend/tests/test_retrieval_context_service.py
+- backend/tests/test_retrieval_agent.py
+- backend/tests/test_langgraph_workflow.py
+- docs/reports/report_rag_quality_priority_fixes_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_retrieval_context_service.py::test_expand_retrieval_context_skips_weak_anchor_below_min_parent_score -q`: Passed
+- `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_hybrid_retrieval_service.py tests/test_retrieval_context_service.py tests/test_retrieval_agent.py tests/test_retrieval_api.py -q`: Passed (66 passed, 1 warning)
+
+## Acceptance Check
+- Task acceptance condition: Focused context expansion gate test passes.
+- Status: satisfied
+- Evidence: The weak-anchor regression test passed, and the broader Batch03 retrieval test slice passed.
+
+## Artifacts Produced
+- None
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox updates remain with A2 review flow.
+
+## Key Implementation Decisions
+- Weak anchors are skipped only for adjacent expansion; the anchors themselves remain in the retrieval candidate set.
+- `min_parent_score` defaults to `0.0` so existing callers remain compatible unless they opt into gating.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- Updated retrieval-agent and workflow test settings mocks to include `retrieval_context_min_parent_score`.
+
+## Workflow Integrity Check
+- No issue identified
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes
+- handoff notes: Context expansion now respects parent-score gating without changing the retrieval API contract.

@@ -1105,3 +1105,558 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+`docs/tasks/task_rag_quality_priority_fixes.md`
+
+## Execution Report Reviewed
+`docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+
+## Review Report File
+`docs/review/review_rag_quality_priority_fixes_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Precision Gates
+- Task ID: (03A)
+- Task title: Add retrieval precision settings
+- Task status reported by executor: complete
+- Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating` > `### Steps`
+- Supplemental documents: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The last appended execution report entry is for `(03A)` and matches the requested batch/task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/core/config.py`, `backend/tests/test_config.py`, `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_rag_quality_priority_fixes.md`: in scope - verified `(03A)` requirements, validation command, dependency, and checkbox state.
+- `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`: in scope - reviewed the latest `(03A)` execution report entry and claimed validations.
+- `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md`: in scope - verified Task 3 Step 3 is settings-only and that service behavior belongs to later steps.
+- `backend/app/core/config.py`: in scope - verified both settings exist with default `0.2` and `ge=0.0`, `le=1.0` bounds.
+- `backend/tests/test_config.py`: in scope - verified coverage for defaults and out-of-range validation failures.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains only the two new bounded retrieval settings.
+- file from execution report: `backend/tests/test_config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds focused coverage for the new settings' defaults and bounds.
+
+## Dependency Review
+- Required dependencies: Batch02
+- Dependency status: satisfied
+- Missing or invalid dependency: none; Batch02 is present on the current baseline (`8d82b75` per repository HEAD/user context).
+
+## Architecture Alignment
+- Passed: The implementation keeps `(03A)` limited to configuration and config tests, matching Task 3 Step 3.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `Settings` now defines `retrieval_min_final_score` and `retrieval_context_min_parent_score` as real Pydantic fields with bounded defaults, and the tests instantiate `Settings` to verify both valid and invalid values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The change is declarative settings/config validation only; no runtime answer/retrieval behavior or sample-data shortcuts were added.
+
+## Validations Reviewed
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_config.py::test_retrieval_precision_settings_have_bounded_defaults tests/test_config.py::test_retrieval_precision_settings_reject_out_of_range_values -q`
+- Reported result: Passed
+- Rerun result: not rerun separately
+- Status: accepted as reported
+- Notes: Covered by the broader rerun below.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_config.py -q`
+- Reported result: Passed
+- Rerun result: Passed (`37 passed in 0.11s`)
+- Status: passed
+- Notes: Practical rerun completed as required.
+
+## Acceptance Review
+- Task acceptance: Add the two bounded retrieval precision settings and keep config tests passing.
+- Status: satisfied
+- Evidence: `backend/app/core/config.py` defines both settings at `0.2` with `0.0..1.0` bounds, `backend/tests/test_config.py` covers defaults and invalid values, and the full config suite passes.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(03A)` only
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended and consistent with repository evidence
+- Review report entry: appended at EOF
+- Other: No sibling or future task checkboxes were changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `rg` for `retrieval_min_final_score|retrieval_context_min_parent_score` shows references only in `backend/app/core/config.py` and `backend/tests/test_config.py`, which confirms `(03B)` and `(03C)` service behavior was not implemented early.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_rag_quality_priority_fixes.md",
+  "execution_report_reviewed": "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+  "review_report_file": "docs/review/review_rag_quality_priority_fixes_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Precision Gates",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/tests/test_config.py",
+    "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+    "docs/tasks/task_rag_quality_priority_fixes.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Correction Note - (03A)
+
+Correction: Updated the duplicate progress-tracker checkbox for `(03A) - Add retrieval precision settings` under `#### Batch03` in `docs/tasks/task_rag_quality_priority_fixes.md` from unchecked to checked.
+
+Scope: No code files were modified. `(03B)`, `(03C)`, Batch03, and future task/batch checkboxes were not updated.
+
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+`docs/tasks/task_rag_quality_priority_fixes.md`
+
+## Execution Report Reviewed
+`docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+
+## Review Report File
+`docs/review/review_rag_quality_priority_fixes_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Precision Gates
+- Task ID: (03B)
+- Task title: Filter hybrid candidates below minimum final score
+- Task status reported by executor: complete
+- Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating` > `### Steps`
+- Supplemental documents: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest execution report entry is the `(03B)` entry, and it matches the requested batch/task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/core/config.py`, `backend/app/services/hybrid_retrieval_service.py`, `backend/tests/test_config.py`, `backend/tests/test_hybrid_retrieval_service.py`, `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`, `docs/review/review_rag_quality_priority_fixes_review_agent.md`, `docs/tasks/task_rag_quality_priority_fixes.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_rag_quality_priority_fixes.md`: in scope - verified `(03B)` requirements, dependency on `(03A)`, acceptance rule, and checkbox state.
+- `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`: in scope - reviewed the latest `(03B)` execution report entry and claimed validations.
+- `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md`: in scope - verified Task 3 Step 4 for minimum-score filtering and Step 5/6 remain `(03C)` work.
+- `backend/app/services/hybrid_retrieval_service.py`: in scope - verified `_filter_by_min_final_score()` exists and is applied between scoring and `_rank_and_limit_candidates()`.
+- `backend/tests/test_hybrid_retrieval_service.py`: in scope - verified the focused test removes a weak candidate below `retrieval_min_final_score` and preserves the stronger candidate.
+- `backend/app/core/config.py`: questionable - accepted prior `(03A)` dependency work, reviewed only to confirm `settings.retrieval_min_final_score` exists for `(03B)`.
+- `backend/tests/test_config.py`: questionable - accepted prior `(03A)` dependency coverage, not part of current `(03B)` implementation scope.
+- `backend/app/services/retrieval_context_service.py`: in scope - reviewed for early `(03C)` implementation evidence; no task-specific changes found in git for this file.
+- `backend/app/agents/retrieval_agent.py`: in scope - reviewed for early `(03C)` wiring evidence; no task-specific changes found in git for this file.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/hybrid_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new score gate helper and the pre-ranking filter call in `retrieve_hybrid()`.
+- file from execution report: `backend/tests/test_hybrid_retrieval_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds focused coverage and updates the local settings stub with `retrieval_min_final_score`.
+- file from execution report: `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The `(03B)` execution report is appended and consistent with the observed code/tests.
+
+## Dependency Review
+- Required dependencies: (03A)
+- Dependency status: satisfied
+- Missing or invalid dependency: none; accepted prior `(03A)` work provides `settings.retrieval_min_final_score`.
+
+## Architecture Alignment
+- Passed: `retrieve_hybrid()` now scores, filters by `settings.retrieval_min_final_score`, then ranks/limits candidates, which matches the source plan ordering.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_filter_by_min_final_score()` performs a real list filter on `candidate.final_score >= min_final_score`, and `retrieve_hybrid()` passes filtered candidates into `_rank_and_limit_candidates()` before reranking.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The runtime logic uses the configured settings value and candidate scores; it does not special-case fixture text, IDs, or expected answers.
+
+## Validations Reviewed
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_hybrid_retrieval_service.py::test_retrieve_hybrid_filters_candidates_below_min_final_score -q`
+- Reported result: Passed
+- Rerun result: Passed (`1 passed in 1.30s`)
+- Status: passed
+- Notes: Confirms the focused weak-candidate removal behavior required by `(03B)`.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_hybrid_retrieval_service.py -q`
+- Reported result: Passed (28 passed)
+- Rerun result: Passed (`28 passed in 1.38s`)
+- Status: passed
+- Notes: Confirms the wider hybrid retrieval surface still passes with the new filter.
+
+## Acceptance Review
+- Task acceptance: Add `_filter_by_min_final_score`, apply it before final top-k ranking, and prove weak candidates are removed.
+- Status: satisfied
+- Evidence: The helper exists, `retrieve_hybrid()` filters scored candidates before `_rank_and_limit_candidates()`, and the focused test leaves only the strong candidate in the response.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(03B)` only
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended and consistent with repository evidence
+- Review report entry: appended at EOF
+- Other: `(03C)`, Batch03 completion, and future task/batch checkboxes were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- No early `(03C)` work was implemented: `git diff` shows no changes in `backend/app/services/retrieval_context_service.py` or `backend/app/agents/retrieval_agent.py`, and the plan's context-expansion/wiring steps remain untouched.
+- The helper does not special-case `min_final_score <= 0.0`, but the inclusive `>=` filter is behaviorally equivalent for the bounded setting range used here.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_rag_quality_priority_fixes.md",
+  "execution_report_reviewed": "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+  "review_report_file": "docs/review/review_rag_quality_priority_fixes_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Precision Gates",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/tests/test_config.py",
+    "backend/tests/test_hybrid_retrieval_service.py",
+    "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+    "docs/review/review_rag_quality_priority_fixes_review_agent.md",
+    "docs/tasks/task_rag_quality_priority_fixes.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+`docs/tasks/task_rag_quality_priority_fixes.md`
+
+## Execution Report Reviewed
+`docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+
+## Review Report File
+`docs/review/review_rag_quality_priority_fixes_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Retrieval Precision Gates
+- Task ID: (03C)
+- Task title: Gate adjacent context expansion by parent score
+- Task status reported by executor: complete
+- Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating` > `### Steps`
+- Supplemental documents: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The last appended execution report entry is the `(03C)` entry, and it matches the requested batch/task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/agents/retrieval_agent.py`, `backend/app/core/config.py`, `backend/app/services/hybrid_retrieval_service.py`, `backend/app/services/retrieval_context_service.py`, `backend/tests/test_config.py`, `backend/tests/test_hybrid_retrieval_service.py`, `backend/tests/test_langgraph_workflow.py`, `backend/tests/test_retrieval_agent.py`, `backend/tests/test_retrieval_context_service.py`, `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`, `docs/review/review_rag_quality_priority_fixes_review_agent.md`, `docs/tasks/task_rag_quality_priority_fixes.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_rag_quality_priority_fixes.md`: in scope - verified `(03C)` requirements, dependency, acceptance rule, and updated only the two `(03C)` checkboxes after acceptance.
+- `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`: in scope - reviewed the latest `(03C)` execution report entry and claimed validations.
+- `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md`: in scope - verified Task 3 Steps 2, 5, 6, 7, and 8 for the weak-anchor gate, retrieval-agent wiring, and required validations.
+- `backend/app/services/retrieval_context_service.py`: in scope - verified `expand_retrieval_context()` accepts `min_parent_score`, skips adjacent expansion for weak anchors, and still returns original anchors.
+- `backend/app/agents/retrieval_agent.py`: in scope - verified `run_retrieval_agent()` passes `settings.retrieval_context_min_parent_score` into context expansion.
+- `backend/tests/test_retrieval_context_service.py`: in scope - verified the focused test proves weak anchors return unchanged and `chunk_lookup` is not called.
+- `backend/tests/test_retrieval_agent.py`: in scope - necessary call-signature/test-mock maintenance to cover the new setting and assert the extra argument is passed.
+- `backend/tests/test_langgraph_workflow.py`: in scope - necessary call-signature/test-mock maintenance so the workflow integration test continues to wrap `expand_retrieval_context()` with the added keyword argument.
+- `backend/app/core/config.py`: questionable - accepted prior uncommitted `(03A)` baseline that provides the setting consumed by `(03C)`; distinguished from current task review scope.
+- `backend/tests/test_config.py`: questionable - accepted prior uncommitted `(03A)` coverage only.
+- `backend/app/services/hybrid_retrieval_service.py`: questionable - accepted prior uncommitted `(03B)` baseline; not reviewed as current `(03C)` implementation scope.
+- `backend/tests/test_hybrid_retrieval_service.py`: questionable - accepted prior uncommitted `(03B)` coverage only.
+- `docs/review/review_rag_quality_priority_fixes_review_agent.md`: questionable - contains prior accepted `(03A)` and `(03B)` reviews; current append is review bookkeeping, not executor scope.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval_context_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the `min_parent_score` parameter and the weak-anchor guard before adjacent lookup.
+- file from execution report: `backend/app/agents/retrieval_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Wires `settings.retrieval_context_min_parent_score` into `expand_retrieval_context()`.
+- file from execution report: `backend/tests/test_retrieval_context_service.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Focused regression test asserts `expanded == [anchor]` and `chunk_lookup.assert_not_called()`.
+- file from execution report: `backend/tests/test_retrieval_agent.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Signature and settings-stub maintenance is required because the retrieval agent now passes an extra keyword argument.
+- file from execution report: `backend/tests/test_langgraph_workflow.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Signature maintenance is required because the workflow test's wrapper now needs to forward `min_parent_score`.
+- file from execution report: `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The `(03C)` execution report is appended and consistent with repository evidence.
+
+## Dependency Review
+- Required dependencies: (03A)
+- Dependency status: satisfied
+- Missing or invalid dependency: none; accepted prior uncommitted `(03A)` work provides `settings.retrieval_context_min_parent_score`, and accepted prior uncommitted `(03B)` work is present but treated as baseline, not reviewed scope.
+
+## Architecture Alignment
+- Passed: The change keeps retrieval scoring untouched, gates only adjacent context expansion, preserves anchor candidates, and does not change the public retrieval API schema.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `expand_retrieval_context()` now accepts `min_parent_score`, skips lookup work only for anchors below that threshold, and still returns the sorted list built from `[*anchors, *context_candidates]`, so weak anchors remain in the result set.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The runtime behavior is driven by anchor `final_score` and the configured threshold; no fixture IDs, question text, or answer strings are special-cased in production code.
+
+## Validations Reviewed
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_retrieval_context_service.py::test_expand_retrieval_context_skips_weak_anchor_below_min_parent_score -q`
+- Reported result: Passed
+- Rerun result: Passed (`1 passed in 1.60s`)
+- Status: passed
+- Notes: Confirms weak anchors do not expand context and the focused regression remains green.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_hybrid_retrieval_service.py tests/test_retrieval_context_service.py tests/test_retrieval_agent.py tests/test_retrieval_api.py -q`
+- Reported result: Passed (66 passed, 1 warning)
+- Rerun result: Passed (`66 passed, 1 warning in 2.98s`)
+- Status: passed
+- Notes: Matches the executor's broader Batch03 retrieval slice; warning is an existing `StarletteDeprecationWarning` from `fastapi.testclient`.
+- Command/check: `cd backend; .\.venv\Scripts\python.exe -m pytest tests/test_langgraph_workflow.py::test_run_qa_workflow_answers_multi_part_question_across_adjacent_chunks -q`
+- Reported result: not reported by executor
+- Rerun result: Passed (`1 passed in 1.97s`)
+- Status: passed
+- Notes: Additional reviewer validation to confirm the `test_langgraph_workflow.py` signature maintenance is real and in scope.
+
+## Acceptance Review
+- Task acceptance: Add `min_parent_score` gating to adjacent context expansion, pass the retrieval setting from the retrieval agent, and prove weak anchors do not trigger lookup while remaining in results.
+- Status: satisfied
+- Evidence: The focused service test and the production code both show that anchors below threshold skip neighbor lookup, `run_retrieval_agent()` passes `settings.retrieval_context_min_parent_score`, and the broader retrieval slice passes unchanged.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(03C)` only in both task-list locations
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended and consistent with repository evidence
+- Review report entry: appended at EOF
+- Other: Batch03 was not marked complete, and no future task or batch checkboxes were updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Accepted prior uncommitted `(03A)` and `(03B)` work is present in the git diff and was treated as baseline only, per instruction; the current acceptance decision is based on the distinct `(03C)` retrieval-context, retrieval-agent, and test-maintenance changes.
+- The `backend/tests/test_retrieval_agent.py` and `backend/tests/test_langgraph_workflow.py` edits are appropriately scoped maintenance because the new keyword argument would otherwise leave the mocks/wrappers with stale call signatures.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_rag_quality_priority_fixes.md",
+  "execution_report_reviewed": "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+  "review_report_file": "docs/review/review_rag_quality_priority_fixes_review_agent.md",
+  "selected_batch": "Batch03 - Retrieval Precision Gates",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/agents/retrieval_agent.py",
+    "backend/app/core/config.py",
+    "backend/app/services/hybrid_retrieval_service.py",
+    "backend/app/services/retrieval_context_service.py",
+    "backend/tests/test_config.py",
+    "backend/tests/test_hybrid_retrieval_service.py",
+    "backend/tests/test_langgraph_workflow.py",
+    "backend/tests/test_retrieval_agent.py",
+    "backend/tests/test_retrieval_context_service.py",
+    "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+    "docs/review/review_rag_quality_priority_fixes_review_agent.md",
+    "docs/tasks/task_rag_quality_priority_fixes.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

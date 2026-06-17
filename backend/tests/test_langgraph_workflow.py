@@ -501,12 +501,14 @@ def test_run_qa_workflow_answers_multi_part_question_across_adjacent_chunks(
         *,
         context_window,
         max_context_candidates,
+        min_parent_score,
     ):
         return original_expand(
             question_value,
             anchors,
             context_window=context_window,
             max_context_candidates=max_context_candidates,
+            min_parent_score=min_parent_score,
             chunk_lookup=fake_chunk_lookup,
         )
 
@@ -711,6 +713,7 @@ def test_run_qa_workflow_answers_multi_part_question_across_adjacent_chunks(
             retrieval_final_top_k=1,
             retrieval_context_window=1,
             retrieval_context_max_candidates=4,
+            retrieval_context_min_parent_score=0.2,
         ),
     )
     monkeypatch.setattr(

@@ -259,6 +259,8 @@ Backend settings are loaded from `backend/.env`. Do not commit real secret value
 | `RETRIEVAL_FINAL_TOP_K` | No | Final hybrid retrieval result count |
 | `RETRIEVAL_CONTEXT_WINDOW` | No | Adjacent chunk window around retrieval anchors |
 | `RETRIEVAL_CONTEXT_MAX_CANDIDATES` | No | Max adjacent context candidates |
+| `RETRIEVAL_MIN_FINAL_SCORE` | No | Minimum final score for returned hybrid retrieval candidates |
+| `RETRIEVAL_CONTEXT_MIN_PARENT_SCORE` | No | Minimum parent candidate score required for adjacent context expansion |
 | `AGENT_EVIDENCE_SNIPPET_MAX_CHARS` | No | Max compact evidence snippet size sent to Agent 2 |
 | `AGENT_EVIDENCE_SNIPPET_CONTEXT_SENTENCES` | No | Neighbor sentence count for compact snippets |
 | `AGENT_VERIFICATION_MAX_CANDIDATES` | No | Candidate cap for Agent 2 verification prompt |

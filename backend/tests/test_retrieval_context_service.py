@@ -84,6 +84,31 @@ def test_expand_retrieval_context_returns_anchors_when_disabled() -> None:
     chunk_lookup.assert_not_called()
 
 
+def test_expand_retrieval_context_skips_weak_anchor_below_min_parent_score() -> None:
+    anchor = _candidate(chunk_id=ANCHOR_ID, chunk_index=5, final_score=0.1)
+    chunk_lookup = Mock(
+        return_value=[
+            _row(
+                chunk_id=NEXT_ID,
+                chunk_index=6,
+                content="Adjacent context that should not be pulled in.",
+            )
+        ]
+    )
+
+    expanded = retrieval_context_service.expand_retrieval_context(
+        "What happened?",
+        [anchor],
+        context_window=1,
+        max_context_candidates=2,
+        min_parent_score=0.2,
+        chunk_lookup=chunk_lookup,
+    )
+
+    assert expanded == [anchor]
+    chunk_lookup.assert_not_called()
+
+
 def test_expand_retrieval_context_adds_adjacent_chunks_once_per_document() -> None:
     anchors = [
         _candidate(chunk_id=ANCHOR_ID, chunk_index=5),

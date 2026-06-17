@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     retrieval_final_top_k: int = Field(default=8, ge=1, le=50)
     retrieval_context_window: int = Field(default=1, ge=0, le=3)
     retrieval_context_max_candidates: int = Field(default=8, ge=0, le=50)
+    retrieval_min_final_score: float = Field(default=0.2, ge=0.0, le=1.0)
+    retrieval_context_min_parent_score: float = Field(default=0.2, ge=0.0, le=1.0)
     agent_evidence_snippet_max_chars: int = Field(default=1800, ge=1, le=20000)
     agent_evidence_snippet_context_sentences: int = Field(default=1, ge=0, le=5)
     agent_verification_max_candidates: int = Field(default=8, ge=1, le=50)

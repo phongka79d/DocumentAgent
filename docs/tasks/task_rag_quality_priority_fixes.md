@@ -258,7 +258,7 @@ The live report showed 13-14 retrieved candidates for simple questions, many of 
 
 ### Tasks
 
-- [ ] (03A): Add retrieval precision settings
+- [x] (03A): Add retrieval precision settings
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating` > `### Steps`
   - Source Requirements:
     - Add `retrieval_min_final_score`.
@@ -274,7 +274,7 @@ The live report showed 13-14 retrieved candidates for simple questions, many of 
   - Blocked Condition: None.
   - Files: `backend/app/core/config.py`
 
-- [ ] (03B): Filter hybrid candidates below minimum final score
+- [x] (03B): Filter hybrid candidates below minimum final score
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating` > `### Steps`
   - Source Requirements:
     - Add `test_retrieve_hybrid_filters_candidates_below_min_final_score`.
@@ -290,7 +290,7 @@ The live report showed 13-14 retrieved candidates for simple questions, many of 
   - Blocked Condition: None.
   - Files: `backend/app/services/hybrid_retrieval_service.py`, `backend/tests/test_hybrid_retrieval_service.py`
 
-- [ ] (03C): Gate adjacent context expansion by parent score
+- [x] (03C): Gate adjacent context expansion by parent score
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 3: Priority 3 - Improve Retrieval Precision With Score Gating` > `### Steps`
   - Source Requirements:
     - Add `test_expand_retrieval_context_skips_weak_anchor_below_min_parent_score`.
@@ -659,9 +659,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch03
 
-- [ ] (03A): Add retrieval precision settings
-- [ ] (03B): Filter hybrid candidates below minimum final score
-- [ ] (03C): Gate adjacent context expansion by parent score
+- [x] (03A): Add retrieval precision settings
+- [x] (03B): Filter hybrid candidates below minimum final score
+- [x] (03C): Gate adjacent context expansion by parent score
 
 #### Batch04
 

@@ -41,6 +41,13 @@ def test_retrieval_context_settings_have_bounded_defaults() -> None:
     assert settings.retrieval_context_max_candidates == 8
 
 
+def test_retrieval_precision_settings_have_bounded_defaults() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.retrieval_min_final_score == 0.2
+    assert settings.retrieval_context_min_parent_score == 0.2
+
+
 @pytest.mark.parametrize(
     ("field_name", "value"),
     [
@@ -55,6 +62,23 @@ def test_retrieval_context_settings_reject_out_of_range_values(
     value: int,
 ) -> None:
     with pytest.raises(ValueError):
+        Settings(_env_file=None, **{field_name: value})
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("retrieval_min_final_score", -0.1),
+        ("retrieval_min_final_score", 1.1),
+        ("retrieval_context_min_parent_score", -0.1),
+        ("retrieval_context_min_parent_score", 1.1),
+    ],
+)
+def test_retrieval_precision_settings_reject_out_of_range_values(
+    field_name: str,
+    value: float,
+) -> None:
+    with pytest.raises(ValidationError):
         Settings(_env_file=None, **{field_name: value})
 
 

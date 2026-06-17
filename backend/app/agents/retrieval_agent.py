@@ -42,6 +42,7 @@ def run_retrieval_agent(
             hybrid_response.candidates,
             context_window=settings.retrieval_context_window,
             max_context_candidates=settings.retrieval_context_max_candidates,
+            min_parent_score=settings.retrieval_context_min_parent_score,
         )
     except Exception:
         _log_failed_retrieval(validated_input)

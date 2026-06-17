@@ -170,7 +170,14 @@ def retrieve_hybrid(
         document_ids=document_ids,
     )
 
-    ranked_candidates = _rank_and_limit_candidates(scored_candidates, resolved_final_top_k)
+    filtered_candidates = _filter_by_min_final_score(
+        scored_candidates,
+        settings.retrieval_min_final_score,
+    )
+    ranked_candidates = _rank_and_limit_candidates(
+        filtered_candidates,
+        resolved_final_top_k,
+    )
     reranked_candidates = shopaikey_service.rerank_candidates(
         trimmed_question,
         ranked_candidates,
@@ -292,6 +299,17 @@ def _rank_and_limit_candidates(
         key=lambda candidate: candidate.final_score,
         reverse=True,
     )[:final_top_k]
+
+
+def _filter_by_min_final_score(
+    candidates: list[HybridRetrievalCandidate],
+    min_final_score: float,
+) -> list[HybridRetrievalCandidate]:
+    return [
+        candidate
+        for candidate in candidates
+        if candidate.final_score >= min_final_score
+    ]
 
 
 def score_hybrid_candidate(
