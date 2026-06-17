@@ -100,7 +100,7 @@ The live report found a fully grounded direct answer with Agent 2 confidence `0.
   - Blocked Condition: None.
   - Files: `backend/tests/test_answer_agent.py`
 
-- [ ] (01B): Implement grounded confidence calibration helper
+- [x] (01B): Implement grounded confidence calibration helper
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 1: Priority 1 - Fix Grounded Answer Confidence Calibration` > `### Steps`
   - Source Requirements:
     - Add `final_grounded_answer_confidence`.
@@ -649,7 +649,7 @@ Optional future tracks are outside the mandatory chain.
 #### Batch01
 
 - [x] (01A): Add failing confidence calibration test
-- [ ] (01B): Implement grounded confidence calibration helper
+- [x] (01B): Implement grounded confidence calibration helper
 
 #### Batch02
 

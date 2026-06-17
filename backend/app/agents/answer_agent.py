@@ -221,6 +221,27 @@ def execute_answer_self_check(
     )
 
 
+def final_grounded_answer_confidence(
+    *,
+    draft_confidence: float,
+    verification_confidence: float,
+    grounding_confidence: float,
+    self_check: AnswerSelfCheck,
+) -> float:
+    """Calibrate the final confidence after verification and grounding."""
+    evidence_confidence = min(verification_confidence, grounding_confidence)
+    if (
+        self_check.is_ready
+        and self_check.uses_only_verified_chunks
+        and self_check.has_citation
+        and not self_check.has_unsupported_claims
+        and draft_confidence <= 0.0
+    ):
+        return evidence_confidence
+
+    return min(draft_confidence, evidence_confidence)
+
+
 def normalize_answer_agent_input(
     input_data: AnswerAgentInput | Mapping[str, Any],
 ) -> AnswerAgentInput:
@@ -451,10 +472,11 @@ def run_answer_agent(
         checked_output = draft_output.model_copy(
             update={
                 "self_check": executed_grounding.self_check,
-                "confidence": min(
-                    draft_output.confidence,
-                    answer_input.verification.confidence,
-                    executed_grounding.confidence,
+                "confidence": final_grounded_answer_confidence(
+                    draft_confidence=draft_output.confidence,
+                    verification_confidence=answer_input.verification.confidence,
+                    grounding_confidence=executed_grounding.confidence,
+                    self_check=executed_grounding.self_check,
                 ),
             }
         )
@@ -701,6 +723,7 @@ __all__ = [
     "build_answer_evidence_lookup",
     "enforce_answer_self_check",
     "execute_answer_self_check",
+    "final_grounded_answer_confidence",
     "format_citation",
     "normalize_answer_self_check",
     "normalize_answer_agent_input",

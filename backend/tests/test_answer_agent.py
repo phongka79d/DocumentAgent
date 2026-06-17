@@ -861,12 +861,12 @@ def test_run_answer_agent_executes_self_check_for_grounded_draft_without_provide
     assert chat_completion.call_count == 2
 
 
-def test_run_answer_agent_preserves_lower_draft_confidence_for_ready_answer(
+def test_run_answer_agent_preserves_positive_lower_draft_confidence_for_ready_answer(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     chat_completion = Mock(
         side_effect=[
-            json.dumps(_draft_answer_payload(confidence=0.0)),
+            json.dumps(_draft_answer_payload(confidence=0.41)),
             json.dumps(_grounding_review_payload()),
         ]
     )
@@ -878,7 +878,7 @@ def test_run_answer_agent_preserves_lower_draft_confidence_for_ready_answer(
 
     output = run_answer_agent(_answer_input_payload())
 
-    assert output.confidence == 0.0
+    assert output.confidence == pytest.approx(0.41)
 
 
 def test_answer_generation_payload_diagnostics_log_safe_metadata_only(
