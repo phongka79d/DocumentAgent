@@ -159,7 +159,7 @@ The live report found that the system retrieved and verified enough evidence for
 
 ### Tasks
 
-- [ ] (02A): Preserve `chunk_index` in verified evidence schema and verifier output
+- [x] (02A): Preserve `chunk_index` in verified evidence schema and verifier output
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 2: Priority 2 - Add Deterministic Simple Chronology Answering` > `### Steps`
   - Source Requirements:
     - Add optional `chunk_index` to `VerifiedChunk`.
@@ -175,7 +175,7 @@ The live report found that the system retrieved and verified enough evidence for
   - Blocked Condition: None.
   - Files: `backend/app/agents/schemas.py`, `backend/app/agents/verification_agent.py`, `backend/tests/test_verification_agent.py`
 
-- [ ] (02B): Include `chunk_index` in Agent 3 evidence payload
+- [x] (02B): Include `chunk_index` in Agent 3 evidence payload
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 2: Priority 2 - Add Deterministic Simple Chronology Answering` > `### Steps`
   - Source Requirements:
     - Add `test_answer_generation_payload_includes_verified_chunk_index`.
@@ -190,7 +190,7 @@ The live report found that the system retrieved and verified enough evidence for
   - Blocked Condition: None.
   - Files: `backend/app/services/answer_prompt_service.py`, `backend/tests/test_answer_prompt_service.py`
 
-- [ ] (02C): Add deterministic chronology answer path
+- [x] (02C): Add deterministic chronology answer path
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 2: Priority 2 - Add Deterministic Simple Chronology Answering` > `### Steps`
   - Source Requirements:
     - Add `test_run_answer_agent_answers_simple_chronology_without_provider`.
@@ -653,9 +653,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch02
 
-- [ ] (02A): Preserve `chunk_index` in verified evidence schema and verifier output
-- [ ] (02B): Include `chunk_index` in Agent 3 evidence payload
-- [ ] (02C): Add deterministic chronology answer path
+- [x] (02A): Preserve `chunk_index` in verified evidence schema and verifier output
+- [x] (02B): Include `chunk_index` in Agent 3 evidence payload
+- [x] (02C): Add deterministic chronology answer path
 
 #### Batch03
 

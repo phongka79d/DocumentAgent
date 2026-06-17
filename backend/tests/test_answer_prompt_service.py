@@ -14,6 +14,7 @@ from app.agents.schemas import (
     VerificationAgentOutput,
 )
 from app.services.answer_prompt_service import (
+    answer_evidence_payload,
     build_answer_generation_messages,
     build_answer_generation_payload,
     build_answer_self_check_messages,
@@ -100,6 +101,7 @@ def test_generation_payload_is_compact_verified_evidence_only() -> None:
                 "file_name": "contract.pdf",
                 "quote": VERIFIED_QUOTE,
                 "page_number": 3,
+                "chunk_index": None,
             }
         ],
     }
@@ -109,6 +111,39 @@ def test_generation_payload_is_compact_verified_evidence_only() -> None:
     assert "document_id" not in serialized
     assert "verification_reason" not in serialized
     assert REJECTED_QUOTE not in serialized
+
+
+def test_answer_generation_payload_includes_verified_chunk_index() -> None:
+    verification = VerificationAgentOutput.model_validate(
+        {
+            "verified_chunks": [
+                {
+                    "chunk_id": VERIFIED_CHUNK_ID,
+                    "document_id": DOCUMENT_ID,
+                    "file_name": "contract.pdf",
+                    "quote": VERIFIED_QUOTE,
+                    "page_number": 3,
+                    "chunk_index": 0,
+                    "verification_reason": "Directly answers the probation period.",
+                    "supports_simple_reasoning": True,
+                }
+            ],
+            "rejected_chunks": [],
+            "missing_information": False,
+            "confidence": 0.82,
+        }
+    )
+
+    payload = answer_evidence_payload(verification)
+
+    assert payload == [
+        {
+            "file_name": "contract.pdf",
+            "quote": VERIFIED_QUOTE,
+            "page_number": 3,
+            "chunk_index": 0,
+        }
+    ]
 
 
 def test_generation_messages_use_prompt_and_compact_json_payload() -> None:
@@ -143,6 +178,7 @@ def test_self_check_payload_omits_irrelevant_rejected_evidence_and_drops_interna
             "file_name": "contract.pdf",
             "quote": VERIFIED_QUOTE,
             "page_number": 3,
+            "chunk_index": None,
         }
     ]
     assert payload["rejected_chunks"] == []

@@ -166,6 +166,7 @@ class VerifiedChunk(BaseModel):
     file_name: str | None
     quote: str = Field(min_length=1)
     page_number: int | None
+    chunk_index: int | None = None
     verification_reason: str = Field(min_length=1)
     supports_simple_reasoning: bool = False
 

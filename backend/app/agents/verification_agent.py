@@ -672,7 +672,12 @@ def _canonicalize_verified_chunk_quote(
         selected_candidate.content,
     )
     if canonical_quote is not None:
-        return verified_chunk.model_copy(update={"quote": canonical_quote})
+        return verified_chunk.model_copy(
+            update={
+                "quote": canonical_quote,
+                "chunk_index": selected_candidate.chunk_index,
+            }
+        )
 
     matching_evidence: list[tuple[RetrievalCandidate, str]] = []
     for candidate in input_data.candidates:
@@ -694,6 +699,7 @@ def _canonicalize_verified_chunk_quote(
             "file_name": matching_candidate.file_name,
             "quote": matching_quote,
             "page_number": matching_candidate.page_number,
+            "chunk_index": matching_candidate.chunk_index,
         }
     )
 
@@ -908,6 +914,7 @@ def _apply_coverage_review(
                 file_name=candidate.file_name,
                 quote=selection.quote,
                 page_number=candidate.page_number,
+                chunk_index=candidate.chunk_index,
                 verification_reason=selection.purpose,
                 supports_simple_reasoning=selection.supports_simple_reasoning,
             )

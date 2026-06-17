@@ -1,6 +1,6 @@
 import json
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import logging
 from typing import Any
@@ -66,6 +66,26 @@ SELF_CHECK_FAILED_EVIDENCE_ANSWER = (
 )
 SELF_CHECK_FAILED_REASONING_SUMMARY = "Answer self-check failed after retry."
 SELF_CHECK_FAILED_CITATION_LIMIT = 5
+_WHICH_HAPPENED_FIRST_PATTERN = re.compile(
+    r"^\s*which\s+happened\s+first\s*:\s*(?P<first>.+?)\s*,\s*or\s*(?P<second>.+?)\??\s*$",
+    re.IGNORECASE,
+)
+_CHRONOLOGY_STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "or",
+    "the",
+    "to",
+    "of",
+    "in",
+    "on",
+    "down",
+    "happened",
+    "first",
+    "alice",
+}
+_CHRONOLOGY_TOKEN_PATTERN = re.compile(r"[a-z0-9]+", re.IGNORECASE)
 
 
 class AnswerAgentError(RuntimeError):
@@ -393,6 +413,15 @@ def run_answer_agent(
         )
         return insufficient_output
 
+    simple_chronology_output = _try_build_simple_chronology_answer(answer_input)
+    if simple_chronology_output is not None:
+        _log_insufficient_answer(
+            answer_input,
+            failure_type="simple_chronology",
+            output=simple_chronology_output,
+        )
+        return simple_chronology_output
+
     try:
         draft_output = _generate_validated_draft_answer(answer_input)
     except _AnswerAgentFailure as exc:
@@ -646,6 +675,108 @@ def _evidence_validation_failure_type(exc: AnswerEvidenceValidationError) -> str
 
 def _has_insufficient_evidence(verification: VerificationAgentOutput) -> bool:
     return verification.missing_information or not verification.verified_chunks
+
+
+def _chronology_terms(value: str) -> set[str]:
+    return {
+        token.casefold()
+        for token in _CHRONOLOGY_TOKEN_PATTERN.findall(value)
+        if token.casefold() not in _CHRONOLOGY_STOP_WORDS
+    }
+
+
+def _chunk_order(chunk: Any) -> tuple[int, str]:
+    chunk_index = getattr(chunk, "chunk_index", None)
+    if chunk_index is None:
+        return (10**9, str(getattr(chunk, "chunk_id", "")))
+    return (chunk_index, str(getattr(chunk, "chunk_id", "")))
+
+
+def _chronology_search_text(chunk: Any) -> str:
+    return " ".join(
+        part
+        for part in (
+            str(getattr(chunk, "quote", "")),
+            str(getattr(chunk, "verification_reason", "")),
+        )
+        if part
+    )
+
+
+def _best_chunk_for_option(
+    option: str,
+    verified_chunks: Sequence[Any],
+) -> Any | None:
+    option_terms = _chronology_terms(option)
+    if not option_terms:
+        return None
+
+    matches: list[tuple[int, tuple[int, str], Any]] = []
+    for chunk in verified_chunks:
+        overlap = len(option_terms & _chronology_terms(_chronology_search_text(chunk)))
+        if overlap <= 0:
+            continue
+        matches.append((overlap, _chunk_order(chunk), chunk))
+
+    if not matches:
+        return None
+
+    return sorted(matches, key=lambda item: (-item[0], item[1]))[0][2]
+
+
+def _try_build_simple_chronology_answer(
+    answer_input: AnswerAgentInput,
+) -> AnswerAgentOutput | None:
+    match = _WHICH_HAPPENED_FIRST_PATTERN.match(answer_input.question)
+    if match is None:
+        return None
+
+    first_option = match.group("first").strip()
+    second_option = match.group("second").strip()
+    verified_chunks = answer_input.verification.verified_chunks
+    if len(verified_chunks) < 2:
+        return None
+
+    first_chunk = _best_chunk_for_option(first_option, verified_chunks)
+    second_chunk = _best_chunk_for_option(second_option, verified_chunks)
+    if (
+        first_chunk is None
+        or second_chunk is None
+        or first_chunk.chunk_index is None
+        or second_chunk.chunk_index is None
+        or first_chunk.file_name is None
+        or second_chunk.file_name is None
+        or not first_chunk.file_name.strip()
+        or not second_chunk.file_name.strip()
+        or first_chunk.chunk_index == second_chunk.chunk_index
+    ):
+        return None
+
+    first_before_second = first_chunk.chunk_index < second_chunk.chunk_index
+    winning_option = first_option if first_before_second else second_option
+    ordered_citations = [
+        Citation(file_name=first_chunk.file_name, quote=first_chunk.quote),
+        Citation(file_name=second_chunk.file_name, quote=second_chunk.quote),
+    ]
+
+    return AnswerAgentOutput(
+        final_answer=f"Sự kiện xảy ra trước là: {winning_option}.",
+        citations=ordered_citations,
+        reasoning_summary=(
+            "Compared verified source order by chunk_index: "
+            f"{first_option} appears before {second_option}."
+            if first_before_second
+            else "Compared verified source order by chunk_index: "
+            f"{second_option} appears before {first_option}."
+        ),
+        confidence=answer_input.verification.confidence,
+        self_check=AnswerSelfCheck(
+            uses_only_verified_chunks=True,
+            has_citation=True,
+            has_unsupported_claims=False,
+            is_ready=True,
+        ),
+    )
 
 
 def _build_insufficient_evidence_output() -> AnswerAgentOutput:

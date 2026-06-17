@@ -79,6 +79,7 @@ def test_agent_run_evidence_response_reuses_agent_2_chunk_shapes() -> None:
                 "file_name": "contract.pdf",
                 "quote": "Probation starts on June 1, 2026.",
                 "page_number": 3,
+                "chunk_index": None,
                 "verification_reason": "The chunk directly states the date.",
                 "supports_simple_reasoning": True,
             }
@@ -355,6 +356,7 @@ def test_agent_run_service_fetches_agent_2_evidence_from_persisted_step(
                 "file_name": "contract.pdf",
                 "quote": "Probation starts on June 1, 2026.",
                 "page_number": 3,
+                "chunk_index": None,
                 "verification_reason": "Direct support.",
                 "supports_simple_reasoning": True,
             }

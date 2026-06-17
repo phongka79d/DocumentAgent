@@ -111,9 +111,11 @@ The workflow in [backend/app/agents/graph.py](backend/app/agents/graph.py) runs:
 2. **Agent 2: Evidence Verification**
    - [backend/app/agents/verification_agent.py](backend/app/agents/verification_agent.py)
    - Verifies candidate membership, exact quote support, requirement-level coverage, missing information, and confidence.
+   - Preserves verified chunk source order through `chunk_index` when retrieval candidates provide it.
 3. **Agent 3: Answer and Self-Check**
    - [backend/app/agents/answer_agent.py](backend/app/agents/answer_agent.py)
    - Generates the answer from verified evidence only, validates citations, runs claim grounding, and fails safely when evidence is insufficient.
+   - Answers supported "Which happened first: A, or B?" questions deterministically from verified `chunk_index` order before calling ShopAIKey.
 
 Run lifecycle and step logs are persisted through [backend/app/services/agent_run_service.py](backend/app/services/agent_run_service.py) and [backend/app/services/agent_log_service.py](backend/app/services/agent_log_service.py).
 

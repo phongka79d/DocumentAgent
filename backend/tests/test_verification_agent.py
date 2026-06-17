@@ -221,6 +221,36 @@ def test_verified_chunk_defaults_missing_simple_reasoning_permission_to_false(
     assert output.verified_chunks[0].supports_simple_reasoning is False
 
 
+def test_verification_agent_preserves_chunk_index_on_verified_chunks() -> None:
+    candidate = _candidate_payload(chunk_index=7)
+    input_data = VerificationAgentInput.model_validate(
+        _verification_input_payload(candidates=[candidate])
+    )
+    output = VerificationAgentOutput.model_validate(
+        {
+            "verified_chunks": [
+                {
+                    "chunk_id": CANDIDATE_CHUNK_ID,
+                    "document_id": CANDIDATE_DOCUMENT_ID,
+                    "file_name": "contract.pdf",
+                    "quote": "probation starts on june 1, 2026 and lasts two months.",
+                    "page_number": 3,
+                    "verification_reason": "Direct evidence.",
+                    "supports_simple_reasoning": True,
+                }
+            ],
+            "rejected_chunks": [],
+            "missing_information": False,
+            "confidence": 0.9,
+        }
+    )
+
+    validated = verification_agent._validate_candidate_quotes(output, input_data)
+
+    assert validated.verified_chunks[0].chunk_index == 7
+    assert validated.verified_chunks[0].quote == candidate["content"]
+
+
 def test_parse_coverage_review_normalizes_non_answerable_minimal_payload() -> None:
     review = verification_agent._parse_coverage_review(
         '{"answers_question": false, "missing_information": true}'
@@ -985,6 +1015,7 @@ def test_verification_agent_accepts_direct_answer_and_rejects_weak_evidence(
                     "the employee completes a two-month probation period."
                 ),
                 "page_number": 3,
+                "chunk_index": 5,
                 "verification_reason": (
                     "This chunk directly states the official work start date "
                     "and the probation period."
@@ -1118,6 +1149,7 @@ def test_verification_agent_logs_success_with_final_verification_result(
                 "file_name": "contract.pdf",
                 "quote": "Probation starts on June 1, 2026 and lasts two months.",
                 "page_number": 3,
+                "chunk_index": 5,
                 "verification_reason": (
                     "This chunk states the probation start and duration."
                 ),

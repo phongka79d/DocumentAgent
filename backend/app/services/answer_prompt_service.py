@@ -97,6 +97,7 @@ def answer_evidence_payload(
             "file_name": chunk.file_name,
             "quote": chunk.quote,
             "page_number": chunk.page_number,
+            "chunk_index": chunk.chunk_index,
         }
         for chunk in verification.verified_chunks
     ]

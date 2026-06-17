@@ -1578,6 +1578,7 @@ def test_build_answer_generation_payload_contains_question_and_verified_evidence
                 "file_name": "contract.pdf",
                 "quote": VERIFIED_QUOTE,
                 "page_number": 3,
+                "chunk_index": None,
             }
         ],
     }
@@ -1642,6 +1643,7 @@ def test_answer_grounding_payload_excludes_verifier_authored_metadata() -> None:
             "file_name": "contract.pdf",
             "quote": VERIFIED_QUOTE,
             "page_number": 3,
+            "chunk_index": None,
         }
     ]
     assert payload["rejected_chunks"] == []
@@ -1677,6 +1679,7 @@ def test_run_answer_agent_sends_verified_evidence_only_to_provider(
             "file_name": "contract.pdf",
             "quote": VERIFIED_QUOTE,
             "page_number": 3,
+            "chunk_index": None,
         }
     ]
     assert "rejected_chunks" not in user_payload
@@ -1768,11 +1771,13 @@ def test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified
             "file_name": "contract.pdf",
             "quote": start_date_quote,
             "page_number": 1,
+            "chunk_index": None,
         },
         {
             "file_name": "contract.pdf",
             "quote": duration_quote,
             "page_number": 1,
+            "chunk_index": None,
         },
     ]
     assert "rejected_chunks" not in answer_generation_payload
@@ -1780,6 +1785,84 @@ def test_run_answer_agent_returns_grounded_simple_reasoning_answer_from_verified
     assert duration_chunk_id not in answer_generation_messages[1]["content"]
     assert REJECTED_QUOTE not in answer_generation_messages[1]["content"]
     assert chat_completion.call_count == 2
+
+
+def test_run_answer_agent_answers_simple_chronology_without_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chat_completion = Mock(side_effect=AssertionError("ShopAIKey must not be called"))
+    try_log_agent_step = Mock()
+    monkeypatch.setattr(
+        answer_agent_module.shopaikey_service,
+        "chat_completion",
+        chat_completion,
+    )
+    monkeypatch.setattr(
+        answer_agent_module.agent_log_service,
+        "try_log_agent_step",
+        try_log_agent_step,
+    )
+    payload = _answer_input_payload()
+    payload["question"] = (
+        "Which happened first: Alice saw the White Rabbit, "
+        "or Alice fell down the rabbit-hole?"
+    )
+    payload["verification"] = _verification_output(
+        verified_chunks=[
+            {
+                "chunk_id": VERIFIED_CHUNK_ID,
+                "document_id": DOCUMENT_ID,
+                "file_name": "alice.txt",
+                "quote": "suddenly a White Rabbit with pink eyes ran close by her.",
+                "page_number": 1,
+                "chunk_index": 0,
+                "verification_reason": "Alice saw the White Rabbit.",
+                "supports_simple_reasoning": True,
+            },
+            {
+                "chunk_id": "55555555-5555-5555-5555-555555555555",
+                "document_id": DOCUMENT_ID,
+                "file_name": "alice.txt",
+                "quote": "down she came upon a heap of sticks and dry leaves, and the fall was over.",
+                "page_number": 1,
+                "chunk_index": 1,
+                "verification_reason": "Alice fell down the rabbit-hole.",
+                "supports_simple_reasoning": True,
+            },
+        ]
+    ).model_dump(mode="json")
+
+    output = run_answer_agent(payload)
+
+    assert output.final_answer == "Sự kiện xảy ra trước là: Alice saw the White Rabbit."
+    assert output.reasoning_summary == (
+        "Compared verified source order by chunk_index: "
+        "Alice saw the White Rabbit appears before Alice fell down the rabbit-hole."
+    )
+    assert output.confidence == pytest.approx(0.82)
+    assert output.citations == [
+        Citation(
+            file_name="alice.txt",
+            quote="suddenly a White Rabbit with pink eyes ran close by her.",
+        ),
+        Citation(
+            file_name="alice.txt",
+            quote=(
+                "down she came upon a heap of sticks and dry leaves, "
+                "and the fall was over."
+            ),
+        ),
+    ]
+    assert output.self_check == AnswerSelfCheck(
+        uses_only_verified_chunks=True,
+        has_citation=True,
+        has_unsupported_claims=False,
+        is_ready=True,
+    )
+    chat_completion.assert_not_called()
+    try_log_agent_step.assert_called_once()
+    log_call = try_log_agent_step.call_args.kwargs
+    assert log_call["output_payload"]["fallback_reason"] == "simple_chronology"
 
 
 def test_parse_and_validate_draft_answer_rejects_invalid_json_safely() -> None:
