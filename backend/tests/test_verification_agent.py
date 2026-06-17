@@ -24,7 +24,7 @@ from app.agents.schemas import (
 from app.agents import verification_agent
 from app.agents.verification_agent import VerificationAgentError, run_verification_agent
 from app.core.config import Settings
-from app.services import agent_log_service
+from app.services import agent_log_service, verification_prompt_service
 
 
 AGENT_RUN_ID = "11111111-1111-1111-1111-111111111111"
@@ -317,6 +317,39 @@ def _default_coverage_review(
         verification_agent,
         "_run_coverage_review",
         passthrough_review,
+    )
+
+
+@pytest.fixture(autouse=True)
+def _disable_optimizer_llm_for_verification_agent_tests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def deterministic_optimizer(
+        *,
+        question,
+        candidates,
+        max_candidates,
+        snippet_max_chars,
+        context_sentences,
+    ):
+        del question, context_sentences
+        return [
+            candidate.model_copy(
+                update={
+                    "content": (
+                        None
+                        if candidate.content is None
+                        else candidate.content[:snippet_max_chars].rstrip()
+                    )
+                }
+            )
+            for candidate in candidates[:max_candidates]
+        ]
+
+    monkeypatch.setattr(
+        verification_prompt_service,
+        "optimize_candidates_for_verification",
+        deterministic_optimizer,
     )
 
 

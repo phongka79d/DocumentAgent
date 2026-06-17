@@ -1,63 +1,20 @@
 from __future__ import annotations
 
-import re
+import json
 
 from app.agents.schemas import RetrievalCandidate
+from app.services import shopaikey_service
 
 
-_WORD_PATTERN = re.compile(r"[\w']+", re.UNICODE)
-_SENTENCE_BOUNDARY_PATTERN = re.compile("(?<=[.!?\u3002\uff01\uff1f])\\s+")
-_DATE_OR_DURATION_PATTERN = re.compile(
-    r"\b(?:"
-    r"\d{1,4}[-/]\d{1,2}(?:[-/]\d{1,4})?"
-    r"|(?:january|february|march|april|may|june|july|august|september|"
-    r"october|november|december)\s+\d{1,2},?\s+\d{4}"
-    r"|\d+\s+(?:day|days|week|weeks|month|months|year|years)"
-    r"|\d+\s+(?:ngay|ngày|tuan|tuần|thang|tháng|nam|năm)"
-    r")\b",
-    re.IGNORECASE,
-)
-_TEMPORAL_QUESTION_TERMS = frozenset(
-    {
-        "when",
-        "date",
-        "day",
-        "month",
-        "year",
-        "start",
-        "starts",
-        "started",
-        "begin",
-        "begins",
-        "began",
-        "duration",
-        "period",
-        "official",
-        "bao",
-        "gio",
-        "ngay",
-        "ngày",
-        "thang",
-        "tháng",
-        "nam",
-        "năm",
-        "bat",
-        "bắt",
-        "dau",
-        "đầu",
-        "thoi",
-        "thời",
-        "gian",
-        "thu",
-        "thử",
-        "viec",
-        "việc",
-        "chinh",
-        "chính",
-        "thuc",
-        "thức",
-        "giờ",
-    }
+OPTIMIZER_SYSTEM_PROMPT = (
+    "You optimize RAG evidence payloads for verification. For each candidate "
+    "chunk, extract the most relevant continuous sentence window or snippet "
+    "that helps answer the user's question. The optimized_content must be "
+    "copied from the candidate content, must not exceed snippet_max_chars, and "
+    "must be null when the candidate has no usable content. Return only JSON "
+    'matching {"optimized_snippets":[{"chunk_id":"string",'
+    '"optimized_content":"string or null"}]}. Include one result for each '
+    "candidate chunk_id."
 )
 
 
@@ -70,14 +27,57 @@ def optimize_candidates_for_verification(
     context_sentences: int,
 ) -> list[RetrievalCandidate]:
     selected_candidates = candidates[:max_candidates]
+    if not selected_candidates:
+        return []
+
+    try:
+        response_content = shopaikey_service.chat_completion(
+            [
+                {
+                    "role": "system",
+                    "content": OPTIMIZER_SYSTEM_PROMPT,
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "question": question,
+                            "snippet_max_chars": snippet_max_chars,
+                            "context_sentences": context_sentences,
+                            "candidates": [
+                                {
+                                    "chunk_id": str(candidate.chunk_id),
+                                    "content": candidate.content,
+                                    "file_name": candidate.file_name,
+                                    "page_number": candidate.page_number,
+                                    "section_title": candidate.section_title,
+                                    "chunk_index": candidate.chunk_index,
+                                }
+                                for candidate in selected_candidates
+                            ],
+                        },
+                        ensure_ascii=False,
+                    ),
+                },
+            ],
+            response_format={"type": "json_object"},
+        )
+        optimized_content_by_chunk_id = _parse_optimized_content(
+            response_content,
+            snippet_max_chars=snippet_max_chars,
+        )
+    except Exception:
+        return _fallback_truncated_candidates(
+            selected_candidates,
+            snippet_max_chars=snippet_max_chars,
+        )
+
     return [
         candidate.model_copy(
             update={
-                "content": _snippet_for_candidate(
-                    question=question,
-                    content=candidate.content,
-                    snippet_max_chars=snippet_max_chars,
-                    context_sentences=context_sentences,
+                "content": optimized_content_by_chunk_id.get(
+                    str(candidate.chunk_id),
+                    _truncate_content(candidate.content, snippet_max_chars),
                 )
             }
         )
@@ -85,166 +85,60 @@ def optimize_candidates_for_verification(
     ]
 
 
-def _snippet_for_candidate(
+def _parse_optimized_content(
+    response_content: str,
     *,
-    question: str,
-    content: str | None,
     snippet_max_chars: int,
-    context_sentences: int,
-) -> str | None:
+) -> dict[str, str | None]:
+    response_payload = json.loads(response_content)
+    if not isinstance(response_payload, dict):
+        raise ValueError("Optimizer response must be a JSON object.")
+
+    optimized_snippets = response_payload.get("optimized_snippets")
+    if not isinstance(optimized_snippets, list):
+        raise ValueError("Optimizer response must include optimized_snippets.")
+
+    optimized_content_by_chunk_id: dict[str, str | None] = {}
+    for item in optimized_snippets:
+        if not isinstance(item, dict):
+            continue
+
+        chunk_id = item.get("chunk_id")
+        if not isinstance(chunk_id, str) or not chunk_id:
+            continue
+
+        optimized_content = item.get("optimized_content")
+        if optimized_content is not None and not isinstance(optimized_content, str):
+            continue
+
+        optimized_content_by_chunk_id[chunk_id] = _truncate_content(
+            optimized_content,
+            snippet_max_chars,
+        )
+
+    return optimized_content_by_chunk_id
+
+
+def _fallback_truncated_candidates(
+    candidates: list[RetrievalCandidate],
+    *,
+    snippet_max_chars: int,
+) -> list[RetrievalCandidate]:
+    return [
+        candidate.model_copy(
+            update={
+                "content": _truncate_content(candidate.content, snippet_max_chars),
+            }
+        )
+        for candidate in candidates
+    ]
+
+
+def _truncate_content(content: str | None, snippet_max_chars: int) -> str | None:
     if content is None:
         return None
 
-    normalized_content = content.strip()
-    if len(normalized_content) <= snippet_max_chars:
-        return normalized_content
-
-    sentence_spans = _sentence_spans(normalized_content)
-    if not sentence_spans:
-        return normalized_content[:snippet_max_chars].rstrip()
-
-    question_terms = _content_terms(question)
-    scored_indexes = sorted(
-        range(len(sentence_spans)),
-        key=lambda index: (
-            _sentence_score(
-                normalized_content[
-                    sentence_spans[index][0] : sentence_spans[index][1]
-                ],
-                question_terms,
-            ),
-            -index,
-        ),
-        reverse=True,
-    )
-    best_index = scored_indexes[0]
-    start_index = max(0, best_index - context_sentences)
-    end_index = min(len(sentence_spans), best_index + context_sentences + 1)
-
-    while start_index > 0 or end_index < len(sentence_spans):
-        start_char = sentence_spans[start_index][0]
-        end_char = sentence_spans[end_index - 1][1]
-        if end_char - start_char >= snippet_max_chars:
-            break
-
-        left_score = (
-            _sentence_score(
-                normalized_content[
-                    sentence_spans[start_index - 1][0] : sentence_spans[
-                        start_index - 1
-                    ][1]
-                ],
-                question_terms,
-            )
-            if start_index > 0
-            else -1
-        )
-        right_score = (
-            _sentence_score(
-                normalized_content[
-                    sentence_spans[end_index][0] : sentence_spans[end_index][1]
-                ],
-                question_terms,
-            )
-            if end_index < len(sentence_spans)
-            else -1
-        )
-
-        if right_score > left_score and end_index < len(sentence_spans):
-            next_end = sentence_spans[end_index][1]
-            if next_end - start_char > snippet_max_chars:
-                break
-            end_index += 1
-        elif start_index > 0:
-            next_start = sentence_spans[start_index - 1][0]
-            if end_char - next_start > snippet_max_chars:
-                break
-            start_index -= 1
-        else:
-            break
-
-    snippet = normalized_content[
-        sentence_spans[start_index][0] : sentence_spans[end_index - 1][1]
-    ].strip()
-    if len(snippet) <= snippet_max_chars:
-        return snippet
-
-    best_sentence = normalized_content[
-        sentence_spans[best_index][0] : sentence_spans[best_index][1]
-    ].strip()
-    return best_sentence[:snippet_max_chars].rstrip()
-
-
-def _content_terms(value: str | None) -> set[str]:
-    if not value:
-        return set()
-    terms: set[str] = set()
-    for token in _WORD_PATTERN.findall(value):
-        lowered = token.lower()
-        if len(lowered) <= 2:
-            continue
-
-        terms.add(lowered)
-        canonical = _canonical_term(lowered)
-        if len(canonical) > 2:
-            terms.add(canonical)
-
-    return terms
-
-
-def _canonical_term(token: str) -> str:
-    if token.endswith("'s") and len(token) > 4:
-        token = token[:-2]
-
-    if token.endswith("ies") and len(token) > 4:
-        return token[:-3] + "y"
-
-    if token.endswith("ves") and len(token) > 4:
-        return token[:-3] + "f"
-
-    if token.endswith("ed") and len(token) > 4:
-        stem = token[:-2]
-        if len(stem) > 3 and stem[-1] == stem[-2]:
-            stem = stem[:-1]
-        return stem
-
-    if token.endswith("ing") and len(token) > 5:
-        stem = token[:-3]
-        if len(stem) > 3 and stem[-1] == stem[-2]:
-            stem = stem[:-1]
-        return stem
-
-    if token.endswith("s") and len(token) > 3:
-        return token[:-1]
-
-    return token
-
-
-def _sentence_score(sentence: str, question_terms: set[str]) -> int:
-    signal_score = 0
-    if question_terms & _TEMPORAL_QUESTION_TERMS and _DATE_OR_DURATION_PATTERN.search(
-        sentence
-    ):
-        signal_score += 4
-    if not question_terms:
-        return signal_score
-    sentence_terms = _content_terms(sentence)
-    return len(sentence_terms & question_terms) + signal_score
-
-
-def _sentence_spans(content: str) -> list[tuple[int, int]]:
-    spans: list[tuple[int, int]] = []
-    cursor = 0
-    for part in _SENTENCE_BOUNDARY_PATTERN.split(content):
-        if not part:
-            continue
-        start = content.find(part, cursor)
-        if start < 0:
-            continue
-        end = start + len(part)
-        spans.append((start, end))
-        cursor = end
-    return spans
+    return content[:snippet_max_chars].rstrip()
 
 
 __all__ = ["optimize_candidates_for_verification"]

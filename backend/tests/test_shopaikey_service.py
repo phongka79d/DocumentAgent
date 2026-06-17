@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -98,6 +99,80 @@ def test_rerank_candidates_enabled_without_required_config_fails_safely(
     assert "SHOPAIKEY_RERANK_MODEL" in message
     assert secret_key not in message
     shopaikey_service.httpx.post.assert_not_called()
+
+
+def test_rerank_candidates_enabled_uses_chat_completion_json_and_reorders_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = SimpleNamespace(
+        chunk_id="11111111-1111-4111-8111-111111111111",
+        content="General policy background.",
+        content_preview=None,
+        file_name="policy.pdf",
+        page_number=1,
+        section_title="Overview",
+        final_score=0.9,
+    )
+    second = SimpleNamespace(
+        chunk_id="22222222-2222-4222-8222-222222222222",
+        content="Refunds are available for 30 days with a receipt.",
+        content_preview=None,
+        file_name="policy.pdf",
+        page_number=2,
+        section_title="Refunds",
+        final_score=0.4,
+    )
+    third = SimpleNamespace(
+        chunk_id="33333333-3333-4333-8333-333333333333",
+        content="Shipping terms are listed separately.",
+        content_preview=None,
+        file_name="shipping.pdf",
+        page_number=3,
+        section_title="Shipping",
+        final_score=0.7,
+    )
+    response = Mock()
+    response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps(
+                        {
+                            "ranked_chunk_ids": [
+                                second.chunk_id,
+                                first.chunk_id,
+                                third.chunk_id,
+                            ]
+                        }
+                    )
+                }
+            }
+        ]
+    }
+    response.raise_for_status = Mock()
+    post = Mock(return_value=response)
+
+    monkeypatch.setattr(
+        shopaikey_service,
+        "get_settings",
+        lambda: _settings(enable_rerank=True, rerank_model="gpt-4o-mini"),
+    )
+    monkeypatch.setattr(shopaikey_service.httpx, "post", post)
+
+    result = shopaikey_service.rerank_candidates(
+        "What is the refund period?",
+        [first, second, third],
+        top_n=2,
+    )
+
+    assert result == [second, first]
+    post.assert_called_once()
+    request_url = post.call_args.args[0]
+    request_json = post.call_args.kwargs["json"]
+    assert request_url == "https://api.shopaikey.test/v1/chat/completions"
+    assert request_json["model"] == "gpt-4o-mini"
+    assert request_json["response_format"] == {"type": "json_object"}
+    assert "Refunds are available for 30 days" in request_json["messages"][1]["content"]
 
 
 @pytest.mark.parametrize(
@@ -344,7 +419,7 @@ def test_chat_completion_posts_openai_style_request_with_configured_values(
     }
     response.raise_for_status = Mock()
     post = Mock(return_value=response)
-    messages = [{"role": "user", "content": "Extract graph entities."}]
+    messages = [{"role": "user", "content": "Extract graph entities in json format."}]
     response_format = {"type": "json_object"}
 
     monkeypatch.setattr(

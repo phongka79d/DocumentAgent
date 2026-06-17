@@ -19,6 +19,7 @@ def test_settings_allow_missing_supabase_values_for_basic_app_usage() -> None:
     assert settings.shopaikey_chat_model is None
     assert settings.shopaikey_embedding_model is None
     assert settings.graph_extraction_enabled is True
+    assert settings.enable_rerank is True
     assert settings.qdrant_url is None
     assert settings.qdrant_api_key is None
     assert settings.qdrant_collection is None
@@ -249,6 +250,38 @@ def test_require_shopaikey_chat_settings_returns_values_when_configured() -> Non
         "api_key": "shopaikey-key",
         "base_url": "https://api.shopaikey.com/v1",
         "chat_model": "gpt-5-mini",
+    }
+
+
+def test_require_shopaikey_rerank_settings_raises_clear_error_without_secret_values() -> None:
+    settings = Settings(
+        _env_file=None,
+        shopaikey_api_key="private-shopaikey-value",
+        shopaikey_base_url="https://api.shopaikey.com/v1",
+        enable_rerank=True,
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        settings.require_shopaikey_rerank_settings()
+
+    message = str(exc_info.value)
+    assert "SHOPAIKEY_RERANK_MODEL" in message
+    assert "private-shopaikey-value" not in message
+
+
+def test_require_shopaikey_rerank_settings_returns_values_when_configured() -> None:
+    settings = Settings(
+        _env_file=None,
+        shopaikey_api_key="shopaikey-key",
+        shopaikey_base_url="https://api.shopaikey.com/v1",
+        shopaikey_rerank_model="gpt-4o-mini",
+        enable_rerank=True,
+    )
+
+    assert settings.require_shopaikey_rerank_settings() == {
+        "api_key": "shopaikey-key",
+        "base_url": "https://api.shopaikey.com/v1",
+        "rerank_model": "gpt-4o-mini",
     }
 
 

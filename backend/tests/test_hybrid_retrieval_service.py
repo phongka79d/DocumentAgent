@@ -935,6 +935,69 @@ def test_retrieve_hybrid_returns_ranked_candidates_when_rerank_is_disabled(
     assert all(candidate.final_score > 0.0 for candidate in response.candidates)
 
 
+def test_retrieve_hybrid_uses_rerank_for_final_top_n_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    low_score_relevant_chunk_id = "abababab-abab-abab-abab-abababababab"
+    high_score_less_relevant_chunk_id = "bcbcbcbc-bcbc-bcbc-bcbc-bcbcbcbcbcbc"
+    semantic_search = Mock(
+        return_value=SearchResponse(
+            question="Which candidate should the LLM reranker choose?",
+            results=[
+                _semantic_candidate(
+                    low_score_relevant_chunk_id,
+                    content="The LLM-relevant candidate appears first in merge order.",
+                    semantic_similarity=0.2,
+                    chunk_index=5,
+                    page_number=None,
+                    section_title=None,
+                ),
+                _semantic_candidate(
+                    high_score_less_relevant_chunk_id,
+                    content="A higher local score candidate should not be preselected.",
+                    semantic_similarity=0.9,
+                    chunk_index=5,
+                    page_number=None,
+                    section_title=None,
+                ),
+            ],
+        )
+    )
+    graph_retrieval = Mock(return_value=[])
+    rerank_inputs: list[HybridRetrievalCandidate] = []
+
+    def fake_rerank_candidates(question, candidates, *, top_n):
+        assert question == "Which candidate should the LLM reranker choose?"
+        assert top_n == 1
+        rerank_inputs.extend(candidates)
+        return [candidates[0]]
+
+    monkeypatch.setattr(
+        hybrid_retrieval_service,
+        "get_settings",
+        lambda: _settings(final_top_k=1, enable_rerank=True),
+    )
+    monkeypatch.setattr(
+        hybrid_retrieval_service.shopaikey_service,
+        "rerank_candidates",
+        fake_rerank_candidates,
+    )
+
+    response = hybrid_retrieval_service.retrieve_hybrid(
+        "Which candidate should the LLM reranker choose?",
+        semantic_search=semantic_search,
+        graph_retrieval=graph_retrieval,
+    )
+
+    assert [candidate.chunk_id for candidate in rerank_inputs] == [
+        UUID(low_score_relevant_chunk_id),
+        UUID(high_score_less_relevant_chunk_id),
+    ]
+    assert [candidate.chunk_id for candidate in response.candidates] == [
+        UUID(low_score_relevant_chunk_id)
+    ]
+
+
 def test_retrieve_hybrid_explicit_final_top_k_overrides_configured_value(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

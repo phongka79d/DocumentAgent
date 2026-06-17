@@ -1,10 +1,14 @@
+import json
 import sys
 from pathlib import Path
 from uuid import UUID
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.agents.schemas import RetrievalCandidate
+from app.services import evidence_payload_optimizer
 from app.services.evidence_payload_optimizer import optimize_candidates_for_verification
 
 
@@ -40,284 +44,166 @@ def _candidate(
     )
 
 
-def test_optimize_candidates_keeps_relevant_sentence_window_without_inventing_text() -> None:
-    candidate = _candidate(
+def test_optimize_candidates_uses_single_llm_batch_response_without_reordering(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = _candidate(
+        chunk_id=UUID("11111111-1111-4111-8111-000000000001"),
         content=(
             "The document starts with unrelated background. "
             "The refund period lasts 30 days after purchase. "
-            "Customers must provide the original receipt. "
-            "The final paragraph is unrelated."
+            "Customers must provide the original receipt."
+        ),
+    )
+    second = _candidate(
+        chunk_id=UUID("11111111-1111-4111-8111-000000000002"),
+        content="Payment policy evidence appears in this chunk.",
+    )
+    third = _candidate(
+        chunk_id=UUID("11111111-1111-4111-8111-000000000003"),
+        content="This candidate should not be sent because max_candidates is two.",
+    )
+    calls: list[tuple[list[dict[str, object]], dict[str, str] | None]] = []
+
+    def fake_chat_completion(messages, response_format=None):
+        calls.append((messages, response_format))
+        request_payload = json.loads(messages[1]["content"])
+        assert request_payload["question"] == (
+            "What is the refund period and what proof is required?"
         )
+        assert request_payload["snippet_max_chars"] == 140
+        assert request_payload["context_sentences"] == 1
+        assert [item["chunk_id"] for item in request_payload["candidates"]] == [
+            str(first.chunk_id),
+            str(second.chunk_id),
+        ]
+        assert str(third.chunk_id) not in messages[1]["content"]
+        return json.dumps(
+            {
+                "optimized_snippets": [
+                    {
+                        "chunk_id": str(first.chunk_id),
+                        "optimized_content": (
+                            "The refund period lasts 30 days after purchase. "
+                            "Customers must provide the original receipt."
+                        ),
+                    },
+                    {
+                        "chunk_id": str(second.chunk_id),
+                        "optimized_content": "Payment policy evidence appears in this chunk.",
+                    },
+                ]
+            }
+        )
+
+    monkeypatch.setattr(
+        evidence_payload_optimizer.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
     )
 
     optimized = optimize_candidates_for_verification(
         question="What is the refund period and what proof is required?",
-        candidates=[candidate],
-        max_candidates=8,
+        candidates=[first, second, third],
+        max_candidates=2,
         snippet_max_chars=140,
         context_sentences=1,
     )
 
-    assert len(optimized) == 1
-    assert optimized[0].chunk_id == candidate.chunk_id
-    assert optimized[0].document_id == candidate.document_id
-    assert optimized[0].file_name == candidate.file_name
-    assert optimized[0].page_number == candidate.page_number
-    assert optimized[0].section_title == candidate.section_title
-    assert optimized[0].chunk_index == candidate.chunk_index
-    assert "refund period lasts 30 days" in optimized[0].content
-    assert "original receipt" in optimized[0].content
-    assert optimized[0].content in candidate.content
-
-
-def test_optimize_candidates_limits_candidate_count_without_reordering() -> None:
-    candidates = [
-        _candidate(
-            chunk_id=UUID(f"11111111-1111-4111-8111-{index:012d}"),
-            content=f"Candidate {index} includes payment policy evidence.",
-        )
-        for index in range(5)
+    assert len(calls) == 1
+    assert calls[0][1] == {"type": "json_object"}
+    assert [candidate.chunk_id for candidate in optimized] == [
+        first.chunk_id,
+        second.chunk_id,
     ]
+    assert optimized[0].document_id == first.document_id
+    assert optimized[0].file_name == first.file_name
+    assert optimized[0].page_number == first.page_number
+    assert optimized[0].section_title == first.section_title
+    assert optimized[0].chunk_index == first.chunk_index
+    assert optimized[0].content == (
+        "The refund period lasts 30 days after purchase. "
+        "Customers must provide the original receipt."
+    )
+    assert optimized[1].content == "Payment policy evidence appears in this chunk."
+
+
+def test_optimize_candidates_allows_llm_to_mark_empty_content_as_null(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate(content=None)
+
+    def fake_chat_completion(messages, response_format=None):
+        return json.dumps(
+            {
+                "optimized_snippets": [
+                    {
+                        "chunk_id": str(candidate.chunk_id),
+                        "optimized_content": None,
+                    }
+                ]
+            }
+        )
+
+    monkeypatch.setattr(
+        evidence_payload_optimizer.shopaikey_service,
+        "chat_completion",
+        fake_chat_completion,
+    )
 
     optimized = optimize_candidates_for_verification(
-        question="payment policy",
-        candidates=candidates,
-        max_candidates=3,
+        question="What is the policy?",
+        candidates=[candidate],
+        max_candidates=8,
         snippet_max_chars=120,
         context_sentences=0,
     )
 
-    assert [candidate.chunk_id for candidate in optimized] == [
-        candidate.chunk_id for candidate in candidates[:3]
-    ]
+    assert optimized[0].content is None
 
 
-def test_optimize_candidates_caps_snippet_length_and_keeps_source_substring() -> None:
-    candidate = _candidate(
-        content=(
-            "Noise sentence before the useful part. "
-            "Warranty coverage includes replacement parts and labor for two years after purchase. "
-            "Noise sentence after the useful part."
-        )
+def test_optimize_candidates_truncates_original_content_when_llm_call_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate(content="0123456789 " * 20)
+
+    def fail_chat_completion(messages, response_format=None):
+        raise RuntimeError("provider unavailable")
+
+    monkeypatch.setattr(
+        evidence_payload_optimizer.shopaikey_service,
+        "chat_completion",
+        fail_chat_completion,
     )
 
     optimized = optimize_candidates_for_verification(
-        question="How long does warranty coverage last?",
-        candidates=[candidate],
-        max_candidates=8,
-        snippet_max_chars=70,
-        context_sentences=1,
-    )
-
-    assert optimized[0].content in candidate.content
-    assert len(optimized[0].content) <= 70
-    assert "Warranty coverage" in optimized[0].content
-
-
-def test_optimize_candidates_uses_generic_terms_not_fixture_specific_strings() -> None:
-    candidate = _candidate(
-        content=(
-            "General introduction. "
-            "Renewal notices are sent ten business days before expiration. "
-            "Closing note."
-        )
-    )
-
-    optimized = optimize_candidates_for_verification(
-        question="When are renewal notices sent?",
-        candidates=[candidate],
-        max_candidates=8,
-        snippet_max_chars=80,
-        context_sentences=0,
-    )
-
-    assert optimized[0].content == (
-        "Renewal notices are sent ten business days before expiration."
-    )
-
-
-def test_optimize_candidates_preserves_multi_part_answer_evidence() -> None:
-    candidate = _candidate(
-        file_name="alice.txt",
-        content=(
-            "Alice was beginning to get very tired of sitting by her sister on the bank. "
-            "Down, down, down. Would the fall never come to an end? "
-            "There were cupboards and bookshelves here and there; she saw maps and pictures hung upon pegs. "
-            "She took down a jar from one of the shelves as she passed; it was labelled 'ORANGE MARMALADE', "
-            "but to her great disappointment it was empty. "
-            "She did not like to drop the jar for fear of killing somebody, so managed to put it into one of the cupboards."
-        ),
-    )
-
-    optimized = optimize_candidates_for_verification(
-        question=(
-            "What was the label on the jar that Alice took from the shelf "
-            "while falling down the well, and what did it contain?"
-        ),
-        candidates=[candidate],
-        max_candidates=8,
-        snippet_max_chars=170,
-        context_sentences=0,
-    )
-
-    assert optimized[0].content in candidate.content
-    assert len(optimized[0].content) <= 170
-    assert "ORANGE MARMALADE" in optimized[0].content
-    assert "it was empty" in optimized[0].content
-
-
-def test_optimize_candidates_finds_answer_sentence_after_long_front_matter() -> None:
-    candidate = _candidate(
-        file_name="alice.txt",
-        content=(
-            "Project Gutenberg's Alice's Adventures in Wonderland, by Lewis Carroll\r\n\r\n"
-            "This eBook is for the use of anyone anywhere at no cost and with "
-            "almost no restrictions whatsoever. "
-            "Alice was beginning to get very tired of sitting by her sister on the bank, "
-            "and of having nothing to do: once or twice she had peeped into the book "
-            "her sister was reading, but it had no pictures or conversations in it, "
-            "'and what is the use of a book,' thought Alice 'without pictures or conversation?' "
-            "There was nothing so very remarkable in that; nor did Alice think it so very "
-            "much out of the way to hear the Rabbit say to itself, 'Oh dear! Oh dear!' "
-            + "Unrelated public domain and story setup text. " * 70
-            + "Down, down, down. "
-            "Alice looked at the sides of the well, and noticed that they were filled with "
-            "cupboards and book-shelves; here and there she saw maps and pictures hung upon pegs. "
-            "She took down a jar from one of the shelves as she passed; it was labelled "
-            "'ORANGE MARMALADE', but to her great disappointment it was empty: she did not "
-            "like to drop the jar for fear of killing somebody."
-        ),
-    )
-
-    optimized = optimize_candidates_for_verification(
-        question=(
-            "What was the label on the jar that Alice took from the shelf "
-            "while falling down the well, and what did it contain?"
-        ),
-        candidates=[candidate],
-        max_candidates=8,
-        snippet_max_chars=1800,
-        context_sentences=1,
-    )
-
-    snippet = optimized[0].content
-
-    assert snippet is not None
-    assert "ORANGE MARMALADE" in snippet
-    assert "it was empty" in snippet
-    assert len(snippet) <= 1800
-    assert snippet in candidate.content
-
-
-def test_indirect_when_question_snippet_keeps_date_and_duration_evidence() -> None:
-    candidate = _candidate(
-        file_name="contract.pdf",
-        section_title="Probation",
-        content=(
-            "The employee began trial employment on 01/06/2026. "
-            "Trial employment lasts 2 months. "
-            "After completion, official work status may be considered. "
-            + "General workplace policy sentence. " * 80
-        ),
-    )
-
-    optimized = optimize_candidates_for_verification(
-        question="When can I start official work?",
+        question="What is the policy?",
         candidates=[candidate],
         max_candidates=1,
-        snippet_max_chars=150,
+        snippet_max_chars=25,
         context_sentences=0,
     )
 
-    snippet = optimized[0].content
-
-    assert snippet is not None
-    assert "01/06/2026" in snippet
-    assert "2 months" in snippet
-    assert "official work status" in snippet
-    assert len(snippet) <= 150
+    assert optimized[0].content == candidate.content[:25].rstrip()
 
 
-def test_vietnamese_official_work_question_keeps_date_duration_and_condition() -> None:
-    candidate = _candidate(
-        file_name="hop-dong.txt",
-        section_title="Thoi gian thu viec",
-        content=(
-            "Nguoi lao dong bat dau thu viec tu ngay 01/06/2026. "
-            "Thoi gian thu viec keo dai 2 thang. "
-            "Sau khi hoan thanh thu viec, nguoi lao dong co the duoc xet lam viec chinh thuc. "
-            + "Noi quy chung cua cong ty. " * 80
-        ),
+def test_optimize_candidates_truncates_original_content_when_llm_json_is_invalid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = _candidate(content="The useful evidence is after this prefix.")
+
+    monkeypatch.setattr(
+        evidence_payload_optimizer.shopaikey_service,
+        "chat_completion",
+        lambda messages, response_format=None: "not json",
     )
 
     optimized = optimize_candidates_for_verification(
-        question="Toi co the lam viec chinh thuc vao thang may?",
+        question="What is the policy?",
         candidates=[candidate],
         max_candidates=1,
-        snippet_max_chars=230,
+        snippet_max_chars=18,
         context_sentences=0,
     )
 
-    snippet = optimized[0].content
-
-    assert snippet is not None
-    assert "01/06/2026" in snippet
-    assert "2 thang" in snippet
-    assert "lam viec chinh thuc" in snippet
-    assert len(snippet) <= 230
-
-
-def test_vietnamese_when_question_prioritizes_date_and_duration_under_tight_budget() -> None:
-    candidate = _candidate(
-        file_name="hop-dong.txt",
-        section_title="Thoi gian thu viec",
-        content=(
-            "Nguoi lao dong bat dau thu viec tu ngay 01/06/2026. "
-            "Thoi gian thu viec keo dai 2 thang. "
-            "Sau khi hoan thanh thu viec, nguoi lao dong co the duoc xet lam viec chinh thuc. "
-            + "Noi quy chung cua cong ty. " * 80
-        ),
-    )
-
-    optimized = optimize_candidates_for_verification(
-        question="Bao gio toi duoc xet chinh thuc?",
-        candidates=[candidate],
-        max_candidates=1,
-        snippet_max_chars=95,
-        context_sentences=0,
-    )
-
-    snippet = optimized[0].content
-
-    assert snippet is not None
-    assert "01/06/2026" in snippet
-    assert "2 thang" in snippet
-    assert len(snippet) <= 95
-
-
-def test_accented_vietnamese_month_question_prioritizes_date_and_duration() -> None:
-    candidate = _candidate(
-        file_name="hop-dong.txt",
-        section_title="Thời gian thử việc",
-        content=(
-            "Người lao động bắt đầu thử việc từ ngày 01/06/2026. "
-            "Thời gian thử việc kéo dài 2 tháng. "
-            "Sau khi hoàn thành thử việc, người lao động có thể được xét làm việc chính thức. "
-            + "Nội quy chung của công ty. " * 80
-        ),
-    )
-
-    optimized = optimize_candidates_for_verification(
-        question="Tôi có thể làm việc chính thức vào tháng mấy?",
-        candidates=[candidate],
-        max_candidates=1,
-        snippet_max_chars=95,
-        context_sentences=0,
-    )
-
-    snippet = optimized[0].content
-
-    assert snippet is not None
-    assert "01/06/2026" in snippet
-    assert "2 tháng" in snippet
-    assert len(snippet) <= 95
+    assert optimized[0].content == "The useful evidenc"

@@ -170,23 +170,25 @@ def retrieve_hybrid(
         document_ids=document_ids,
     )
 
-    filtered_candidates = _filter_by_min_final_score(
-        scored_candidates,
-        settings.retrieval_min_final_score,
-    )
-    ranked_candidates = _rank_and_limit_candidates(
-        filtered_candidates,
-        resolved_final_top_k,
-    )
-    reranked_candidates = shopaikey_service.rerank_candidates(
-        trimmed_question,
-        ranked_candidates,
-        top_n=resolved_final_top_k,
-    )
+    if settings.enable_rerank:
+        final_candidates = shopaikey_service.rerank_candidates(
+            trimmed_question,
+            scored_candidates,
+            top_n=resolved_final_top_k,
+        )
+    else:
+        filtered_candidates = _filter_by_min_final_score(
+            scored_candidates,
+            settings.retrieval_min_final_score,
+        )
+        final_candidates = _rank_and_limit_candidates(
+            filtered_candidates,
+            resolved_final_top_k,
+        )
 
     return HybridSearchResponse(
         question=trimmed_question,
-        candidates=reranked_candidates,
+        candidates=final_candidates,
     )
 
 
