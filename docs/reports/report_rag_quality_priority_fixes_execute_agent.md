@@ -659,3 +659,74 @@ complete
 - next task ID: (04A)
 - can proceed: yes
 - handoff notes: Context expansion now respects parent-score gating without changing the retrieval API contract.
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+[docs/tasks/task_rag_quality_priority_fixes.md]
+
+## Report File
+[docs/reports/report_rag_quality_priority_fixes_execute_agent.md]
+
+## Batch
+[Batch04 - Exact Citation Display]
+
+## Task
+[(04A)] - Add frontend citation formatter
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md > ## Task 4: Priority 4 - Render Exact MVP Citation Format > ### Steps
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Exact Citation Display
+- Task ID: (04A)
+- Task title: Add frontend citation formatter
+
+## Completed Work
+- Added the exported `formatCitation(citation: ChatCitation): string` helper directly below `formatConfidence()` in `frontend/src/components/AnswerPanel.tsx`.
+- Kept the scope limited to the formatter helper only; citation rendering and CSS remain unchanged for task (04B).
+
+## Files Created or Modified
+- frontend/src/components/AnswerPanel.tsx
+
+## Tests or Validations Run
+- `cd frontend; npm run build`: Passed
+- Evidence: `tsc --noEmit && vite build` completed successfully.
+
+## Acceptance Check
+- Task acceptance condition: TypeScript build accepts the exported helper.
+- Status: satisfied
+- Evidence: The frontend production build succeeded after adding the exported helper.
+
+## Artifacts Produced
+- Exported frontend citation formatter helper.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox updates remain with A2 after review.
+
+## Key Implementation Decisions
+- Kept the change minimal and limited to the exported helper requested by task (04A).
+- Deferred all visible citation markup and CSS work to task (04B) as instructed.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: The citation formatter is available for the rendering change in the next task.

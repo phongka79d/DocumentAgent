@@ -18,6 +18,10 @@ function formatConfidence(confidence: number | null): string {
   return `${Math.round(confidence * 100)}%`;
 }
 
+export function formatCitation(citation: ChatCitation): string {
+  return `${citation.file_name}: "${citation.quote}"`;
+}
+
 export function AnswerPanel({
   agentRunId,
   answer,

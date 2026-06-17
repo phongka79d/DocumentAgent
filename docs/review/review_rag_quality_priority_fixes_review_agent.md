@@ -1660,3 +1660,160 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+`docs/tasks/task_rag_quality_priority_fixes.md`
+
+## Execution Report Reviewed
+`docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+
+## Review Report File
+`docs/review/review_rag_quality_priority_fixes_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Exact Citation Display
+- Task ID: (04A)
+- Task title: Add frontend citation formatter
+- Task status reported by executor: complete
+- Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 4: Priority 4 - Render Exact MVP Citation Format` > `### Steps`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The last appended execution report entry is for `(04A)` and matches the requested batch and task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`
+  - `frontend/src/components/AnswerPanel.tsx`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_rag_quality_priority_fixes.md`: in scope - task requirements, dependencies, acceptance, and progress tracker locations for `(04A)`.
+- `docs/reports/report_rag_quality_priority_fixes_execute_agent.md`: in scope - latest execution report selection and claimed validation.
+- `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md`: in scope - exact formatter requirement and explicit separation from visible citation rendering work.
+- `frontend/src/components/AnswerPanel.tsx`: in scope - exported helper added directly below `formatConfidence()`; visible citation markup unchanged.
+- `frontend/src/styles.css`: in scope - existing citation selectors unchanged; no early `(04B)` CSS added.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/components/AnswerPanel.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The only code diff is the exported formatter helper addition.
+
+## Dependency Review
+- Required dependencies: Batch03 complete.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed: Frontend change stays inside `AnswerPanel.tsx` and preserves the current citation rendering structure for the follow-up task.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `frontend/src/components/AnswerPanel.tsx` exports `formatCitation(citation: ChatCitation): string` immediately below `formatConfidence()` and returns `${citation.file_name}: "${citation.quote}"`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The helper formats the passed citation fields directly and does not special-case any file names or quotes.
+
+## Validations Reviewed
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: `tsc --noEmit && vite build` completed successfully during review.
+
+## Acceptance Review
+- Task acceptance: Add exported `formatCitation(citation: ChatCitation): string` below `formatConfidence()` and keep visible citation rendering for `(04B)`.
+- Status: satisfied
+- Evidence: The helper is present at `frontend/src/components/AnswerPanel.tsx:21`, `formatConfidence()` remains above it at `frontend/src/components/AnswerPanel.tsx:13`, and the citation markup still uses `.answer-panel__citation-file` and `.answer-panel__citation-quote` at `frontend/src/components/AnswerPanel.tsx:77` and `frontend/src/components/AnswerPanel.tsx:80`.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked in the Batch04 task entry and the Batch04 progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch04 remains incomplete.
+- Execution report entry: present and appended.
+- Review report entry: appended by this review.
+- Other: `(04B)` and all later tasks remain unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `(04B)` was not implemented early. There is no visible citation markup replacement and no `.answer-panel__citation-text` CSS in the current diff or source.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_rag_quality_priority_fixes.md",
+  "execution_report_reviewed": "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+  "review_report_file": "docs/review/review_rag_quality_priority_fixes_review_agent.md",
+  "selected_batch": "Batch04 - Exact Citation Display",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_rag_quality_priority_fixes_execute_agent.md",
+    "frontend/src/components/AnswerPanel.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

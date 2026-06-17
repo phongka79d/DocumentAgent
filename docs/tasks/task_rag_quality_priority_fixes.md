@@ -356,7 +356,7 @@ The backend already returns structured citations and hides raw IDs, but the fron
 
 ### Tasks
 
-- [ ] (04A): Add frontend citation formatter
+- [x] (04A): Add frontend citation formatter
   - Source of Truth: `docs/superpowers/plans/2026-06-17-rag-quality-priority-fixes.md` > `## Task 4: Priority 4 - Render Exact MVP Citation Format` > `### Steps`
   - Source Requirements:
     - Add `formatCitation(citation: ChatCitation): string`.
@@ -665,7 +665,7 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch04
 
-- [ ] (04A): Add frontend citation formatter
+- [x] (04A): Add frontend citation formatter
 - [ ] (04B): Render citation as one exact visible string
 
 #### Batch05
