@@ -1,2 +1,0 @@
-Document Agent sample text.
-This TXT fixture contains extractable text.
