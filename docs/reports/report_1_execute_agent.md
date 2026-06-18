@@ -825,3 +825,254 @@ complete
 - next task ID: (05A)
 - can proceed: yes
 - handoff notes: The fixed token chunker is ready for Batch05 ingestion wiring.
+
+---
+
+# Task Execution Report - 05A
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch05 - LangGraph Ingestion
+
+## Task
+(05A) - Add ingestion state and nodes
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.1: Add ingestion state and nodes`
+- `docs/plans/Master_Plan.md` > `## 8.2. IngestionState`
+- `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_1.md`
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch05 - LangGraph Ingestion
+- Task ID: (05A)
+- Task title: Add ingestion state and nodes
+
+## Completed Work
+- Added `IngestionState` with the required identifier, metadata, chunking, embedding, qdrant, status, and error fields while excluding `original_file_bytes`, `upload_file_path`, and large binary data.
+- Implemented the ingestion node functions: `load_document_record_node`, `mark_processing_node`, `parse_document_node`, `chunk_document_node`, `save_chunks_node`, `embed_chunks_node`, `upsert_qdrant_node`, `mark_ready_node`, and `mark_failed_node`.
+- Kept the node layer deterministic and state-driven, with partial-state returns and explicit failed-status handling for fatal errors.
+- Added tests that cover state shape, document loading, processing updates, parsing, chunking, chunk persistence, embedding, the save-before-upsert dependency, Qdrant payload creation, ready updates, and failed-state handling.
+
+## Files Created or Modified
+- `backend/app/graphs/__init__.py`
+- `backend/app/graphs/ingestion_state.py`
+- `backend/app/graphs/ingestion_nodes.py`
+- `backend/tests/test_ingestion_graph.py`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_ingestion_graph.py -v` - Passed (11 tests)
+
+## Acceptance Check
+- Task acceptance condition: Nodes use small graph state, save chunks before vector upsert, and mark fatal failures clearly.
+- Status: satisfied
+- Evidence: The targeted pytest file passed. Tests verify the state excludes large binary fields, `save_chunks_node` attaches chunk IDs before `upsert_qdrant_node`, `upsert_qdrant_node` rejects chunks without saved IDs, and fatal node paths return `status=failed` with a clear error message.
+
+## Artifacts Produced
+- Ingestion state module in `backend/app/graphs/ingestion_state.py`
+- Ingestion node module in `backend/app/graphs/ingestion_nodes.py`
+- Ingestion graph tests in `backend/tests/test_ingestion_graph.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are reserved for A2 after review
+
+## Key Implementation Decisions
+- Used a `TypedDict` state so the LangGraph contract stays explicit and small.
+- Made each node return partial state updates and fail closed with a `status=failed` payload instead of leaking exceptions.
+- Saved chunk rows before Qdrant upsert and reused the inserted chunk IDs as Qdrant point IDs so payloads stay stable and deterministic.
+- Included `text` in Qdrant payloads alongside the chunk metadata required by the plan.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- Aligned the parse test expectation with the parser metadata returned by the parsed document.
+- Added the `text` field to Qdrant payloads so the node output matches the source-of-truth payload contract.
+
+## Workflow Integrity Check
+- No issue identified. The work stayed within Batch05 task (05A) and did not add the compiled graph or any route integration.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: Ingestion state and node functions are in place; the compiled graph and route wiring can build on these modules in the next task.
+
+---
+
+# Task Execution Report - 05A
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch05 - LangGraph Ingestion
+
+## Task
+(05A) - Add ingestion state and nodes
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.1: Add ingestion state and nodes`
+- `docs/plans/Master_Plan.md` > `## 8.2. IngestionState`
+- `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_1.md`
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch05 - LangGraph Ingestion
+- Task ID: (05A)
+- Task title: Add ingestion state and nodes
+
+## Completed Work
+- Split the Supabase `document_chunks` insert payload from the Qdrant payload so `save_chunks_node` now inserts only approved chunk table columns.
+- Removed `text` and `file_name` from the `save_chunks_node` insert path and kept them reserved for the Qdrant payload built in `upsert_qdrant_node`.
+- Added a regression assertion in `backend/tests/test_ingestion_graph.py` that fails if the insert payload includes keys outside the approved `document_chunks` shape.
+- Preserved the ingestion node behavior for loading records, parsing, chunking, embedding, Qdrant upsert, ready/fail updates, and fatal error handling.
+
+## Files Created or Modified
+- `backend/app/graphs/ingestion_nodes.py`
+- `backend/tests/test_ingestion_graph.py`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_ingestion_graph.py -v` - Passed (11 tests)
+
+## Acceptance Check
+- Task acceptance condition: Nodes use small graph state, save chunks before vector upsert, and mark fatal failures clearly.
+- Status: satisfied
+- Evidence: The targeted pytest file passed, and the save-chunks regression test now verifies the inserted `document_chunks` rows do not include `text` or `file_name` while Qdrant payload construction still uses those fields.
+
+## Artifacts Produced
+- Updated ingestion node module with separated insert and Qdrant payload builders.
+- Updated ingestion graph regression test for schema-bound save payloads.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated repair run; checkbox and batch updates remain reserved for A2 after review
+
+## Key Implementation Decisions
+- Introduced a dedicated `_document_chunk_insert_payload` helper for Supabase inserts and a dedicated `_qdrant_payload` helper for vector payloads.
+- Kept `save_chunks_node` independent from Qdrant-only payload fields so the database insert path cannot drift into vector payload shape.
+- Added a test that guards the `document_chunks` schema boundary by asserting inserted rows stay within the approved column set.
+
+## Risks or Open Issues
+- None identified for this repair.
+
+## Minor Issues Fixed During Execution
+- Corrected the payload coupling that caused `text` and `file_name` to leak into `document_chunks` inserts.
+
+## Workflow Integrity Check
+- No issue identified. The repair stayed within Batch05 task (05A) and did not add the compiled graph or any route integration.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: no
+- handoff notes: Awaiting A2 acceptance of the payload split repair before Batch05 can advance.
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch05 - LangGraph Ingestion
+
+## Task
+(05B) - Build ingestion graph and route integration
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.2: Build ingestion graph`
+- `docs/plans/Master_Plan.md` > `## 8.1. Ingestion Graph Flow`
+- `docs/plans/Master_Plan.md` > `## 19. Re-indexing Flow`
+- `docs/plans/Master_Plan.md` > `## 23.2. Ingestion Errors`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_1.md`
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch05 - LangGraph Ingestion
+- Task ID: (05B)
+- Task title: Build ingestion graph and route integration
+
+## Completed Work
+- Added `backend/app/graphs/ingestion_graph.py` with the compiled LangGraph ingestion flow in the required order from `load_document_record` through `mark_ready`, plus failure routing into `mark_failed`.
+- Wired the document index and reindex route helpers to invoke the compiled ingestion graph with only `{"document_id": "..."}` as graph input.
+- Moved the reindex cleanup orchestration so old Qdrant vectors and old chunks are deleted before graph invocation, matching the source contract.
+- Added graph-order coverage that verifies the success path order and the fatal parse-failure route into `mark_failed`.
+- Added route integration coverage that verifies the index route passes only the document ID into the graph and the reindex route performs cleanup before graph invocation.
+- Kept scope limited to graph compilation and document route integration; no Batch06 retrieval/chat work was introduced.
+
+## Files Created or Modified
+- `backend/app/graphs/ingestion_graph.py`
+- `backend/app/graphs/__init__.py`
+- `backend/app/api/routes/documents.py`
+- `backend/tests/test_ingestion_graph.py`
+- `backend/tests/test_api_documents.py`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_ingestion_graph.py tests/test_api_documents.py -v` - Passed (25 tests)
+
+## Acceptance Check
+- Task acceptance condition: Graph invokes nodes in order; index route passes only document ID; failed parse marks document failed; ready path stores required metadata.
+- Status: satisfied
+- Evidence: The new graph-order tests passed, the index route test confirmed the graph input is only `{"document_id": "..."}`, the parse-failure test confirmed routing into `mark_failed`, and the ready-path behavior remains covered by the existing node tests.
+
+## Artifacts Produced
+- Compiled ingestion graph module.
+- Updated document route integration for index and reindex flows.
+- New graph-order and route-integration regression tests.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates remain reserved for A2 after review
+
+## Key Implementation Decisions
+- Used conditional edges plus a safe node wrapper so fatal node exceptions are converted into failure state and routed to `mark_failed` instead of skipping the failure path.
+- Kept `run_document_index` as a direct graph invocation helper and made `run_document_reindex` own the cleanup-plus-graph orchestration so the route integration stays explicit.
+- Added the graph builder export from `backend/app/graphs/__init__.py` so the compiled workflow can be imported from the package namespace without exposing Batch06 behavior.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- Expanded the route test fake Supabase client to seed `document_chunks` rows for the reindex cleanup scenario.
+- Updated the graph module to read node functions from the module namespace so monkeypatched test nodes are actually exercised by the compiled graph.
+
+## Workflow Integrity Check
+- No issue identified. The work stayed within Batch05 task (05B) and did not expand into retrieval, chat, or other Batch06 behavior.
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes
+- handoff notes: Batch05 implementation is complete from the execution-agent side; A2 still owns checkbox updates after review.

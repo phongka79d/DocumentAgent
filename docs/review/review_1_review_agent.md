@@ -1923,3 +1923,597 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch05 - LangGraph Ingestion
+- Task ID: (05A)
+- Task title: Add ingestion state and nodes
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.1: Add ingestion state and nodes`; `docs/plans/Master_Plan.md` > `## 8.2. IngestionState`; `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The last appended execution report is the `(05A)` entry for Batch05. Prior Batch04 work was treated only as dependency context and not re-reviewed as accepted batch scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`
+- untracked files: `backend/app/graphs/__init__.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/ingestion_nodes.py`, `backend/tests/test_ingestion_graph.py`
+
+## Files Reviewed
+- `backend/app/graphs/__init__.py`: in scope - export surface for the new ingestion modules only.
+- `backend/app/graphs/ingestion_state.py`: in scope - reviewed against Master Plan section 8.2 state contract.
+- `backend/app/graphs/ingestion_nodes.py`: in scope - main implementation under review; contains the acceptance-blocking schema mismatch.
+- `backend/tests/test_ingestion_graph.py`: in scope - rerun passed, but fake clients allow schema drift that production Supabase would reject.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(05A)` report entry reviewed for accuracy.
+- `docs/tasks/task_1.md`: in scope - `(05A)` task definition and progress tracking reviewed.
+- `docs/plans/Plan_1.md`: in scope - cited Batch05 task section reviewed.
+- `docs/plans/Master_Plan.md`: in scope - cited ingestion-state, ingestion-node, Qdrant payload, and ingestion-error sections reviewed.
+- `docs/database/supabase_schema.sql`: in scope - used to verify the real `document_chunks` row contract.
+- `backend/app/services/documents.py`: in scope - dependency context for document row loading.
+- `backend/app/chunking/token_chunker.py`: in scope - dependency context for chunk output shape.
+- `backend/app/models/schemas.py`: in scope - dependency context for document status contract.
+- `backend/app/parsing/__init__.py`: in scope - dependency context for parser resolution used by `parse_document_node`.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Export-only module for the new ingestion package.
+- file from execution report: `backend/app/graphs/ingestion_state.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: State definition is present and small-state aligned.
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Present, but `save_chunks_node` does not match the real `document_chunks` schema.
+- file from execution report: `backend/tests/test_ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Present and reruns green, but coverage does not guard against invalid Supabase insert columns.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest `(05A)` report entry appended as expected.
+
+## Dependency Review
+- Required dependencies: `(02B)`, `(03B)`, `(04A)`, `(04B)`
+- Dependency status: satisfied for review purposes; the required prior modules exist and provide the service, parser, and chunker interfaces consumed by `(05A)`.
+- Missing or invalid dependency: none identified.
+
+## Architecture Alignment
+- Passed:
+  - `IngestionState` keeps identifiers and metadata only and excludes large binary fields.
+  - The node set implemented for `(05A)` matches the required node list.
+  - `upsert_qdrant_node` preserves the required save-before-upsert dependency by requiring chunk IDs before point creation.
+- Failed:
+  - `save_chunks_node` reuses `_chunk_payload()` for Supabase inserts, but that helper includes `text` and `file_name` fields that belong to Qdrant payloads, not the `document_chunks` table contract.
+- Uncertain:
+  - None material beyond the failed schema alignment above.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: The nodes are implemented and the reported pytest rerun passes, but the database write path is not production-real because it constructs `document_chunks` insert rows with fields that are not present in the SQL schema.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No answer/data overfitting or fixture-driven runtime hardcoding was found in the `(05A)` implementation.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_ingestion_graph.py -v`
+- Reported result: Passed (11 tests)
+- Rerun result: Passed (11 tests)
+- Status: warning
+- Notes: The rerun confirms the current tests pass, but the fake Supabase client accepts arbitrary insert keys and therefore does not validate the real schema contract.
+- Command/check: manual schema cross-check of `backend/app/graphs/ingestion_nodes.py` against `docs/database/supabase_schema.sql`
+- Reported result: not covered by execution report
+- Rerun result: failed
+- Status: failed
+- Notes: `_chunk_payload()` includes `text` and `file_name` ([backend/app/graphs/ingestion_nodes.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_nodes.py:162)), `save_chunks_node()` inserts that payload directly into `document_chunks` ([backend/app/graphs/ingestion_nodes.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_nodes.py:348)), and the actual table schema does not define `text` or `file_name` columns ([docs/database/supabase_schema.sql](/c:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql:25)).
+
+## Acceptance Review
+- Task acceptance: Nodes use small graph state, save chunks before vector upsert, and mark fatal failures clearly.
+- Status: partially satisfied
+- Evidence: The state shape and node set are present, and error returns use `status = failed`. However, the save-chunks path is not acceptable because it would fail against the approved `document_chunks` schema in live use.
+
+## Progress Tracking
+- Selected task checkbox: unchecked
+- Checkbox updated by reviewer: no
+- Batch status: Batch05 remains incomplete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: Per instruction, only `(05A)` was reviewed; `(05B)` and batch completion were not updated.
+
+## Report Accuracy
+- partial
+- Mismatches:
+  - The execution report marks acceptance as satisfied, but repository evidence shows `save_chunks_node` builds invalid Supabase insert rows for the approved `document_chunks` schema.
+  - The execution report does not disclose that the current test double permits fields that the real schema does not.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- `save_chunks_node` inserts Qdrant-only payload fields into `document_chunks`, so live ingestion would fail when writing chunk rows. `_chunk_payload()` adds `text` and `file_name` ([backend/app/graphs/ingestion_nodes.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_nodes.py:162)), `save_chunks_node()` inserts that payload directly ([backend/app/graphs/ingestion_nodes.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_nodes.py:348)), and the approved SQL schema for `document_chunks` has no `text` or `file_name` columns ([docs/database/supabase_schema.sql](/c:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql:25)).
+
+### Minor
+- None.
+
+### Warnings
+- The current `(05A)` tests are too permissive for the database boundary because the fake Supabase insert path accepts arbitrary keys; this allowed the schema mismatch above to pass local validation.
+
+### Observations
+- Scope stayed within `(05A)`. No compiled ingestion graph, route integration, or `(05B)` work was found in the reviewed files.
+- Prior Batch04 parser/chunker files were dependency context only and are distinguishable from the new untracked Batch05 graph files.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/app/graphs/ingestion_nodes.py` (`save_chunks_node` payload construction)
+- change: Split the Supabase `document_chunks` insert row shape from the Qdrant payload shape. `save_chunks_node` must insert only columns that exist in `document_chunks`; reserve `text` and `file_name` for the Qdrant payload built in `upsert_qdrant_node`.
+- validation: Rerun `cd backend; python -m pytest tests/test_ingestion_graph.py -v` and add/adjust a test that fails when `save_chunks_node` tries to insert keys outside the approved `document_chunks` schema.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch05 - LangGraph Ingestion",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/__init__.py",
+    "backend/app/graphs/ingestion_state.py",
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/tests/test_ingestion_graph.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/database/supabase_schema.sql",
+    "backend/app/services/documents.py",
+    "backend/app/chunking/token_chunker.py",
+    "backend/app/models/schemas.py",
+    "backend/app/parsing/__init__.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "manual schema cross-check of save_chunks_node against document_chunks SQL schema"
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "save_chunks_node inserts `text` and `file_name` into document_chunks even though those columns do not exist in the approved schema"
+  ],
+  "warnings": [
+    "The current ingestion-graph tests use a fake Supabase client that does not enforce the real document_chunks schema"
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - LangGraph Ingestion
+- Task ID: (05A)
+- Task title: Add ingestion state and nodes
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.1: Add ingestion state and nodes`; `docs/plans/Master_Plan.md` > `## 8.2. IngestionState`; `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The latest matching execution entry is the repair report appended after the prior A2 rejection. The prior `(05A)` review in `docs/review/review_1_review_agent.md` was read as repair context only. `(05B)` was not reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/graphs/__init__.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/ingestion_nodes.py`, `backend/tests/test_ingestion_graph.py`
+
+## Files Reviewed
+- `docs/tasks/task_1.md`: in scope - reviewed `(05A)` task definition and progress tracker; updated only the `(05A)` entries after acceptance.
+- `docs/reports/report_1_execute_agent.md`: in scope - reviewed the latest `(05A)` repair entry.
+- `docs/review/review_1_review_agent.md`: in scope - reviewed the prior `(05A)` rejection and repair instructions being verified.
+- `backend/app/graphs/ingestion_nodes.py`: in scope - verified the Supabase insert payload is now separate from the Qdrant payload.
+- `backend/tests/test_ingestion_graph.py`: in scope - verified the new regression assertions and reran the full task validation.
+- `backend/app/graphs/ingestion_state.py`: in scope - confirmed the required small-state contract remains intact after repair.
+- `backend/app/graphs/__init__.py`: in scope - export surface only; no extra graph or route integration added.
+- `docs/database/supabase_schema.sql`: in scope - used to verify the real `document_chunks` column contract.
+- `docs/plans/Plan_1.md`: in scope - reviewed `### Task 5.1: Add ingestion state and nodes`.
+- `docs/plans/Master_Plan.md`: in scope - reviewed `## 8.2. IngestionState` and `## 8.3. Ingestion Node Responsibilities`.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair implemented as reported; insert and vector payload builders are now distinct.
+- file from execution report: `backend/tests/test_ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Regression assertions exist and cover the approved `document_chunks` boundary.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest `(05A)` repair entry was appended, not overwritten.
+
+## Dependency Review
+- Required dependencies: `(02B)`, `(03B)`, `(04A)`, `(04B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none identified
+
+## Architecture Alignment
+- Passed:
+  - `IngestionState` still keeps only identifiers and metadata, not large binary fields.
+  - `save_chunks_node` now builds Supabase insert rows from `_document_chunk_insert_payload`, which matches the approved `document_chunks` schema ([backend/app/graphs/ingestion_nodes.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_nodes.py:159)).
+  - `upsert_qdrant_node` now builds vector payloads from `_qdrant_payload`, keeping `file_name` and `text` in the Qdrant path where the plan requires them ([backend/app/graphs/ingestion_nodes.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_nodes.py:182)).
+  - `save_chunks_node` still runs before `upsert_qdrant_node` in the node contract, and `upsert_qdrant_node` still requires chunk IDs before point creation.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The repair removed the earlier schema drift in production code instead of masking it in tests. The Supabase insert helper omits `text` and `file_name`, while the Qdrant payload helper still includes them for vector metadata.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The repair is structural and schema-driven. No fixture-specific runtime logic or answer/data overfitting was introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_ingestion_graph.py -v`
+- Reported result: Passed (11 tests)
+- Rerun result: Passed (11 tests)
+- Status: passed
+- Notes: Reran the task-required validation successfully.
+- Command/check: manual schema cross-check of `save_chunks_node` and Qdrant payload builders against `docs/database/supabase_schema.sql`
+- Reported result: covered by repair report narrative
+- Rerun result: passed
+- Status: passed
+- Notes: `document_chunks` insert rows now contain only approved columns, while `file_name` and `text` remain in the Qdrant payload path. The regression assertions in [backend/tests/test_ingestion_graph.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/tests/test_ingestion_graph.py:489) explicitly fail if `text` or `file_name` leak back into inserted rows.
+
+## Acceptance Review
+- Task acceptance: Nodes use small graph state, save chunks before vector upsert, and mark fatal failures clearly.
+- Status: satisfied
+- Evidence: The prior rejection reason is resolved, the required pytest slice passes, the save-chunks path is schema-aligned, the vector payload still satisfies the Qdrant contract, and no `(05B)` graph or route work was introduced.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch05 remains incomplete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: Updated only the selected `(05A)` entries in `docs/tasks/task_1.md`; `(05B)` and future task checkboxes were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The latest repair report correctly flipped `can proceed` to `no` pending A2 review. With this acceptance, the next task may now proceed, but Batch05 itself is still not complete.
+- The current worktree still contains untracked Batch05 implementation files, so repository evidence depended on direct file inspection plus rerun validation rather than staged diff alone.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch05 - LangGraph Ingestion",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/tasks/task_1.md",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "backend/app/graphs/__init__.py",
+    "backend/app/graphs/ingestion_state.py",
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/tests/test_ingestion_graph.py",
+    "docs/database/supabase_schema.sql"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - LangGraph Ingestion
+- Task ID: (05B)
+- Task title: Build ingestion graph and route integration
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.2: Build ingestion graph`; `docs/plans/Master_Plan.md` > `## 8.1. Ingestion Graph Flow`; `docs/plans/Master_Plan.md` > `## 19. Re-indexing Flow`; `docs/plans/Master_Plan.md` > `## 23.2. Ingestion Errors`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: The latest execution entry in `docs/reports/report_1_execute_agent.md` is the `(05B)` report appended after the accepted `(05A)` repair. Prior uncommitted `(05A)` graph-state/node files were treated as accepted dependency context only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/api/routes/documents.py`, `backend/tests/test_api_documents.py`, `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/graphs/__init__.py`, `backend/app/graphs/ingestion_graph.py`, `backend/tests/test_ingestion_graph.py`
+
+## Files Reviewed
+- `backend/app/graphs/ingestion_graph.py`: in scope - new `(05B)` graph compiler; verified ordered nodes and fatal routing in [backend/app/graphs/ingestion_graph.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_graph.py:64).
+- `backend/app/graphs/__init__.py`: in scope - new `(05B)` package export surface for the compiled graph in [backend/app/graphs/__init__.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/__init__.py:3).
+- `backend/app/api/routes/documents.py`: in scope - `(05B)` route integration and reindex cleanup orchestration in [backend/app/api/routes/documents.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/api/routes/documents.py:100) and [backend/app/api/routes/documents.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/api/routes/documents.py:176).
+- `backend/tests/test_ingestion_graph.py`: in scope - mixed file; preexisting node tests from accepted `(05A)` were dependency context, while new `(05B)` graph-order and failure-routing tests begin at [backend/tests/test_ingestion_graph.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/tests/test_ingestion_graph.py:712) and [backend/tests/test_ingestion_graph.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/tests/test_ingestion_graph.py:832).
+- `backend/tests/test_api_documents.py`: in scope - `(05B)` index/reindex route integration coverage at [backend/tests/test_api_documents.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/tests/test_api_documents.py:472) and [backend/tests/test_api_documents.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/tests/test_api_documents.py:510).
+- `backend/app/graphs/ingestion_nodes.py`: in scope - accepted `(05A)` dependency context only; relied on existing ready-path metadata behavior already covered by [backend/tests/test_ingestion_graph.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/tests/test_ingestion_graph.py:660).
+- `backend/app/graphs/ingestion_state.py`: in scope - accepted `(05A)` dependency context only.
+- `docs/tasks/task_1.md`: in scope - reviewed `(05B)` task definition and updated only the selected task entries after acceptance.
+- `docs/reports/report_1_execute_agent.md`: in scope - reviewed the latest `(05B)` execution entry.
+- `docs/plans/Plan_1.md`: in scope - reviewed `### Task 5.2: Build ingestion graph`.
+- `docs/plans/Master_Plan.md`: in scope - reviewed `## 8.1. Ingestion Graph Flow`, `## 19. Re-indexing Flow`, and `## 23.2. Ingestion Errors`.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Graph flow and fatal routing are implemented as reported.
+- file from execution report: `backend/app/graphs/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Export-only surface; no Batch06 behavior introduced.
+- file from execution report: `backend/app/api/routes/documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Index and reindex routes now call the graph with only `document_id`, and reindex performs cleanup before invocation.
+- file from execution report: `backend/tests/test_ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new `(05B)` graph-order and failure-route regression tests plus prior `(05A)` dependency tests.
+- file from execution report: `backend/tests/test_api_documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new route integration tests for index and reindex behavior.
+
+## Dependency Review
+- Required dependencies: `(05A)`, `(03C)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none identified. Prior accepted `(05A)` graph-state/node work is present and usable, and `(03C)` document routes exist for the new wiring points.
+
+## Architecture Alignment
+- Passed:
+  - The compiled graph follows the required `START -> load_document_record -> mark_processing -> parse_document -> chunk_document -> save_chunks -> embed_chunks -> upsert_qdrant -> mark_ready -> END` flow with fatal routing to `mark_failed` in [backend/app/graphs/ingestion_graph.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_graph.py:100).
+  - The index route invokes the graph with only `{"document_id": "..."}` via `_invoke_ingestion_graph` in [backend/app/api/routes/documents.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/api/routes/documents.py:100).
+  - The reindex route fetches the document, deletes old Qdrant vectors and old chunks, then invokes the graph in [backend/app/api/routes/documents.py](/c:/Users/ACER/OtherProjects/DocumentAgent/backend/app/api/routes/documents.py:109).
+  - Ready-path metadata storage remains handled by the accepted `(05A)` `mark_ready_node`, and this task correctly routes successful graph execution into that node.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The route stubs from Batch03 were replaced by real graph invocation and cleanup orchestration, and the compiled graph is implemented rather than mocked in production code.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-bound runtime behavior, fixed document IDs, or sample-data overfitting was introduced in the production graph or route paths.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_ingestion_graph.py tests/test_api_documents.py -v`
+- Reported result: Passed (25 tests)
+- Rerun result: Passed (25 tests)
+- Status: passed
+- Notes: Reran the exact reported validation successfully.
+- Command/check: manual source-of-truth cross-check against `docs/tasks/task_1.md`, `docs/plans/Plan_1.md`, and cited `docs/plans/Master_Plan.md` sections
+- Reported result: covered by execution report narrative
+- Rerun result: passed
+- Status: passed
+- Notes: The implemented graph order, failure routing, index input shape, reindex cleanup ordering, and ready-path dependency match the selected task requirements.
+
+## Acceptance Review
+- Task acceptance: Graph invokes nodes in order; index route passes only document ID; failed parse marks document failed; ready path stores required metadata.
+- Status: satisfied
+- Evidence: The ordered graph is implemented and covered by the new tests, the route helpers invoke the graph with only `document_id`, fatal parse failure routes into `mark_failed`, and the success path still reaches the existing ready-metadata update node.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch05 not marked complete
+- Execution report entry: appended
+- Review report entry: appended
+- Other: Updated only the selected `(05B)` entries in `docs/tasks/task_1.md`; Batch05 completion and future task checkboxes were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- This review intentionally distinguished `(05B)` from prior accepted uncommitted `(05A)` work: `ingestion_state.py`, `ingestion_nodes.py`, and the earlier node-focused parts of `backend/tests/test_ingestion_graph.py` were dependency context only, while the new graph compiler, route wiring, and added graph/route tests were the acceptance surface for `(05B)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch05 - LangGraph Ingestion",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/ingestion_graph.py",
+    "backend/app/graphs/__init__.py",
+    "backend/app/api/routes/documents.py",
+    "backend/tests/test_ingestion_graph.py",
+    "backend/tests/test_api_documents.py",
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/app/graphs/ingestion_state.py",
+    "docs/tasks/task_1.md",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/plans/Plan_1.md",
+    "docs/plans/Master_Plan.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

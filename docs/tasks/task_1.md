@@ -582,7 +582,7 @@ Indexing is the core backend workflow that turns uploaded stored documents into 
 
 ### Tasks
 
-- [ ] (05A): Add ingestion state and nodes
+- [x] (05A): Add ingestion state and nodes
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.1: Add ingestion state and nodes`; `docs/plans/Master_Plan.md` > `## 8.2. IngestionState`; `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities`
   - Source Requirements:
     - Define `IngestionState` with fields from Master Plan section 8.2.
@@ -614,7 +614,7 @@ Indexing is the core backend workflow that turns uploaded stored documents into 
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live indexing without external credentials and prepared resources.
   - Files: `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/ingestion_nodes.py`, `backend/tests/test_ingestion_graph.py`
 
-- [ ] (05B): Build ingestion graph and route integration
+- [x] (05B): Build ingestion graph and route integration
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 5: LangGraph Ingestion` > `### Task 5.2: Build ingestion graph`; `docs/plans/Master_Plan.md` > `## 8.1. Ingestion Graph Flow`; `docs/plans/Master_Plan.md` > `## 19. Re-indexing Flow`; `docs/plans/Master_Plan.md` > `## 23.2. Ingestion Errors`
   - Source Requirements:
     - Compile the graph in the exact required order.
@@ -1209,8 +1209,8 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch05
 
-- [ ] (05A): Add ingestion state and nodes
-- [ ] (05B): Build ingestion graph and route integration
+- [x] (05A): Add ingestion state and nodes
+- [x] (05B): Build ingestion graph and route integration
 
 #### Batch06
 

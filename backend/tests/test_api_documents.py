@@ -179,10 +179,12 @@ class FakeSupabaseClient:
         self,
         *,
         documents: list[dict[str, object]] | None = None,
+        document_chunks: list[dict[str, object]] | None = None,
         bucket_name: str = "documents",
     ) -> None:
         self.tables: dict[str, list[dict[str, object]]] = {
-            "documents": list(documents or [])
+            "documents": list(documents or []),
+            "document_chunks": list(document_chunks or []),
         }
         self.events: list[tuple[object, ...]] = []
         self._bucket = FakeStorageBucket()
@@ -209,6 +211,16 @@ class FakeQdrantClient:
             }
         )
         return {"status": "ok"}
+
+
+class FakeIngestionGraph:
+    def __init__(self, result: dict[str, object] | None = None) -> None:
+        self.result = result or {"status": "ready"}
+        self.invocations: list[dict[str, object]] = []
+
+    def invoke(self, state: dict[str, object]) -> dict[str, object]:
+        self.invocations.append(dict(state))
+        return dict(self.result)
 
 
 def test_list_documents_returns_document_models_in_created_order(monkeypatch):
@@ -468,7 +480,7 @@ def test_index_route_invokes_runner_with_document_id_only(monkeypatch):
             )
         ]
     )
-    captured: dict[str, object] = {}
+    fake_graph = FakeIngestionGraph()
 
     _patch_route_settings(monkeypatch, settings)
     monkeypatch.setattr(
@@ -476,12 +488,11 @@ def test_index_route_invokes_runner_with_document_id_only(monkeypatch):
         "_resolve_supabase_client",
         lambda supabase_client=None: fake_client,
     )
-
-    def _fake_runner(document_id: UUID, *, settings: Settings) -> None:
-        captured["document_id"] = document_id
-        captured["settings"] = settings
-
-    monkeypatch.setattr(documents_route, "run_document_index", _fake_runner)
+    monkeypatch.setattr(
+        documents_route,
+        "build_ingestion_graph",
+        lambda settings=None: fake_graph,
+    )
 
     app = _test_app(settings)
 
@@ -493,8 +504,85 @@ def test_index_route_invokes_runner_with_document_id_only(monkeypatch):
         "document_id": str(FIXED_DOCUMENT_ID),
         "status": "processing",
     }
-    assert captured["document_id"] == FIXED_DOCUMENT_ID
-    assert captured["settings"] == settings
+    assert fake_graph.invocations == [{"document_id": str(FIXED_DOCUMENT_ID)}]
+
+
+def test_reindex_route_cleans_old_vectors_and_chunks_before_graph_invocation(monkeypatch):
+    settings = _test_settings()
+    row = _document_row(
+        document_id=FIXED_DOCUMENT_ID,
+        file_hash="reindex-me",
+        qdrant_collection="custom_collection",
+        status="ready",
+    )
+    fake_client = FakeSupabaseClient(
+        documents=[row],
+        document_chunks=[
+            {
+                "id": "chunk-1",
+                "document_id": str(FIXED_DOCUMENT_ID),
+                "chunk_index": 0,
+                "content": "old chunk",
+            }
+        ],
+    )
+    fake_graph = FakeIngestionGraph()
+    call_order: list[object] = []
+
+    def _delete_vectors(
+        document_id: UUID,
+        *,
+        settings: Settings,
+        qdrant_collection: str | None = None,
+        qdrant_client=None,
+    ) -> None:
+        call_order.append(("vectors", document_id, qdrant_collection))
+
+    def _delete_chunks(
+        document_id: UUID,
+        *,
+        settings: Settings,
+        supabase_client=None,
+    ) -> None:
+        call_order.append(("chunks", document_id))
+
+    def _invoke_graph(state: dict[str, object]) -> dict[str, object]:
+        call_order.append(("graph", dict(state)))
+        fake_graph.invocations.append(dict(state))
+        return dict(fake_graph.result)
+
+    fake_graph.invoke = _invoke_graph  # type: ignore[method-assign]
+
+    _patch_route_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        document_service,
+        "_resolve_supabase_client",
+        lambda supabase_client=None: fake_client,
+    )
+    monkeypatch.setattr(documents_route, "delete_document_vectors", _delete_vectors)
+    monkeypatch.setattr(documents_route, "delete_document_chunks", _delete_chunks)
+    monkeypatch.setattr(
+        documents_route,
+        "build_ingestion_graph",
+        lambda settings=None: fake_graph,
+    )
+
+    app = _test_app(settings)
+
+    with TestClient(app) as test_client:
+        response = test_client.post(f"/api/documents/{FIXED_DOCUMENT_ID}/reindex")
+
+    assert response.status_code == 202
+    assert response.json() == {
+        "document_id": str(FIXED_DOCUMENT_ID),
+        "status": "processing",
+    }
+    assert call_order == [
+        ("vectors", FIXED_DOCUMENT_ID, "custom_collection"),
+        ("chunks", FIXED_DOCUMENT_ID),
+        ("graph", {"document_id": str(FIXED_DOCUMENT_ID)}),
+    ]
+    assert fake_graph.invocations == [{"document_id": str(FIXED_DOCUMENT_ID)}]
 
 
 def test_delete_route_deletes_qdrant_before_storage_before_row(monkeypatch):

@@ -9,6 +9,7 @@ from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
 from app.core.errors import safe_http_exception
+from app.graphs.ingestion_graph import build_ingestion_graph
 from app.models.schemas import DocumentListResponse, DocumentResponse, UploadDocumentResponse
 from app.services import documents as document_service
 from app.services.hashing import compute_sha256
@@ -96,14 +97,32 @@ def delete_document_chunks(
     client.table(DOCUMENT_CHUNKS_TABLE).delete().eq("document_id", str(document_id)).execute()
 
 
+def _invoke_ingestion_graph(document_id: UUID, *, settings: Settings) -> dict[str, Any]:
+    graph = build_ingestion_graph(settings=settings)
+    return graph.invoke({"document_id": str(document_id)})
+
+
 def run_document_index(document_id: UUID, *, settings: Settings) -> Any:
-    _ = document_id, settings
-    return None
+    return _invoke_ingestion_graph(document_id, settings=settings)
 
 
 def run_document_reindex(document_id: UUID, *, settings: Settings) -> Any:
-    _ = document_id, settings
-    return None
+    document = _get_document_or_404(document_id, settings=settings)
+    delete_document_vectors(
+        document.id,
+        settings=settings,
+        qdrant_collection=document.qdrant_collection,
+    )
+    delete_document_chunks(document.id, settings=settings)
+    return _invoke_ingestion_graph(document.id, settings=settings)
+
+
+def _raise_if_ingestion_failed(result: Any) -> None:
+    if isinstance(result, Mapping) and result.get("status") == "failed":
+        raise safe_http_exception(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            str(result.get("error_message") or "Document ingestion failed"),
+        )
 
 
 @router.get("", response_model=DocumentListResponse)
@@ -159,25 +178,16 @@ def index_document(document_id: UUID) -> dict[str, str]:
     settings = _resolve_settings()
     document = _get_document_or_404(document_id, settings=settings)
     result = run_document_index(document.id, settings=settings)
-    if result is not None:
-        return result
+    _raise_if_ingestion_failed(result)
     return _processing_response(document.id)
 
 
 @router.post("/{document_id}/reindex", status_code=status.HTTP_202_ACCEPTED)
 def reindex_document(document_id: UUID) -> dict[str, str]:
     settings = _resolve_settings()
-    document = _get_document_or_404(document_id, settings=settings)
-    delete_document_vectors(
-        document.id,
-        settings=settings,
-        qdrant_collection=document.qdrant_collection,
-    )
-    delete_document_chunks(document.id, settings=settings)
-    result = run_document_reindex(document.id, settings=settings)
-    if result is not None:
-        return result
-    return _processing_response(document.id)
+    result = run_document_reindex(document_id, settings=settings)
+    _raise_if_ingestion_failed(result)
+    return _processing_response(document_id)
 
 
 @router.delete("/{document_id}", response_model=DocumentResponse)
