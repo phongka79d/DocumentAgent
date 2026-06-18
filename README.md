@@ -2,7 +2,7 @@
 
 RagDocument Phase 1 is a personal, single-user document RAG MVP.
 
-This repository is currently through Batch05. The accepted behavior is:
+This repository is currently through Batch06. The accepted behavior is:
 
 - a FastAPI backend titled `RagDocument API`
 - `GET /api/health` returning `{"status": "ok"}`
@@ -19,16 +19,19 @@ This repository is currently through Batch05. The accepted behavior is:
 - a deterministic fixed-token chunker under `backend/app/chunking/` using 500-token chunks, 150-token overlap, and chunk metadata required for ingestion
 - a LangGraph ingestion workflow under `backend/app/graphs/` that loads existing document rows, marks processing, parses, chunks, saves chunks, embeds, upserts Qdrant vectors, marks ready, and marks fatal failures as failed with clear errors
 - index and reindex document routes that invoke the ingestion graph with only the document ID; reindex deletes old Qdrant vectors and old Supabase chunks before rebuilding
+- retrieval helpers that embed questions, query Qdrant with optional document filters, rerank with Jina, fall back to Qdrant scores, and expand neighboring chunks with deduplication and context caps
+- a LangGraph query workflow under `backend/app/graphs/` that validates questions, retrieves context, reranks, expands neighbors, generates grounded answers with source citations, and optionally saves messages without failing chat responses
+- a `POST /api/chat` route that accepts `question`, optional `document_ids`, and `save_message`, invokes the query graph, and returns `answer` plus `sources`
 
 The current backend uses safe local-development defaults for its settings layer. External service clients are constructed only when their factories are called. Upload route tests use local fakes/mocks; live Supabase, Qdrant, ShopAIKey, and Jina validation still requires real user-provided credentials, and the Supabase SQL and storage bucket must be applied manually before live document workflow validation.
 
-Index and reindex endpoints now run the ingestion graph against stored originals. Retrieval, chat, frontend UI, and end-to-end workflow validation are not implemented yet.
+Index and reindex endpoints now run the ingestion graph against stored originals. Retrieval and chat are implemented with mock-backed tests; frontend UI and end-to-end live workflow validation are not implemented yet.
 
 ## Validation
 
-Run the current backend config and service factory checks with:
+Run the current backend checks with:
 
 ```bash
 cd backend
-python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_parsers.py tests/test_chunker.py tests/test_ingestion_graph.py -v
+python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_parsers.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
 ```

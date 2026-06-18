@@ -701,7 +701,7 @@ The MVP is useful only when indexed chunks can be retrieved, grounded into an an
 
 ### Tasks
 
-- [ ] (06A): Add retrieval service
+- [x] (06A): Add retrieval service
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.1: Add retrieval service`; `docs/plans/Master_Plan.md` > `## 11. Retrieval Configuration`; `docs/plans/Master_Plan.md` > `## 12. Optional Document Filtering in Chat`; `docs/plans/Master_Plan.md` > `## 13. Neighbor Context Expansion`
   - Source Requirements:
     - Qdrant retrieval uses `RETRIEVAL_SEMANTIC_TOP_K` with default 40.
@@ -731,7 +731,7 @@ The MVP is useful only when indexed chunks can be retrieved, grounded into an an
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live retrieval without configured external services and indexed data.
   - Files: `backend/app/services/chunks.py`, `backend/app/services/retrieval.py`, `backend/tests/test_query_graph.py`
 
-- [ ] (06B): Add query state, nodes, and graph
+- [x] (06B): Add query state, nodes, and graph
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.2: Add query state, nodes, and graph`; `docs/plans/Master_Plan.md` > `## 10.2. QueryState`; `docs/plans/Master_Plan.md` > `## 10.3. Query Node Responsibilities`; `docs/plans/Master_Plan.md` > `## 25. Answer Prompt`; `docs/plans/Master_Plan.md` > `## 26. Source Citation Format`
   - Source Requirements:
     - Define `QueryState` with fields from Master Plan section 10.2.
@@ -763,7 +763,7 @@ The MVP is useful only when indexed chunks can be retrieved, grounded into an an
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live answer generation without credentials or indexed data.
   - Files: `backend/app/graphs/query_state.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_graph.py`, `backend/tests/test_query_graph.py`
 
-- [ ] (06C): Add chat route
+- [x] (06C): Add chat route
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.3: Add chat route`; `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`; `docs/plans/Master_Plan.md` > `## 21.3. Chat Request`; `docs/plans/Master_Plan.md` > `## 21.4. Chat Response`
   - Source Requirements:
     - Add `POST /api/chat`.
@@ -1214,9 +1214,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch06
 
-- [ ] (06A): Add retrieval service
-- [ ] (06B): Add query state, nodes, and graph
-- [ ] (06C): Add chat route
+- [x] (06A): Add retrieval service
+- [x] (06B): Add query state, nodes, and graph
+- [x] (06C): Add chat route
 
 #### Batch07
 

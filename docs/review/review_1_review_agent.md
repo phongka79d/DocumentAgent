@@ -2517,3 +2517,748 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Execution Report Reviewed
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Review Report File
+[docs/review/review_1_review_agent.md](docs/review/review_1_review_agent.md)
+
+## Final Outcome
+REJECTED_WITH_WARNINGS
+
+## Reviewed Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06A)
+- Task title: Add retrieval service
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.1: Add retrieval service`; `docs/plans/Master_Plan.md` > `## 11. Retrieval Configuration`; `docs/plans/Master_Plan.md` > `## 12. Optional Document Filtering in Chat`; `docs/plans/Master_Plan.md` > `## 13. Neighbor Context Expansion`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(06A)` entry appended to `docs/reports/report_1_execute_agent.md`. Prior Batch05 changes are already committed and were not re-reviewed as part of this task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`
+- untracked files: `backend/app/services/chunks.py`, `backend/app/services/retrieval.py`, `backend/tests/test_query_graph.py`
+
+## Files Reviewed
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(06A)` execution report appended and matched the selected task.
+- `backend/app/services/chunks.py`: in scope - adds Supabase chunk lookup helpers required by `(06A)`.
+- `backend/app/services/retrieval.py`: in scope - adds retrieval, rerank fallback, neighbor expansion, and orchestration helpers required by `(06A)`.
+- `backend/tests/test_query_graph.py`: in scope - adds the targeted retrieval tests referenced by the task and report.
+- `backend/app/core/config.py`: in scope - confirms retrieval defaults `40/5/1/8` match plan requirements.
+- `backend/app/services/qdrant_client.py`: in scope - confirms retrieval uses the established Qdrant client factory from `(02B)`.
+- `backend/app/services/jina_client.py`: in scope - confirms rerank uses the established Jina client factory from `(02B)`.
+- `backend/app/services/shopaikey_client.py`: in scope - confirms embeddings use the established ShopAIKey client factory from `(02B)`.
+- `docs/tasks/task_1.md`: in scope - verified `(06A)` requirements, dependencies, validation command, and checkbox state.
+- `docs/plans/Plan_1.md`: in scope - verified Task 6.1 scope and acceptance expectations.
+- `docs/plans/Master_Plan.md`: in scope - verified retrieval defaults, document filtering behavior, neighbor expansion rules, and chunk-table schema.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/chunks.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: implements chunk lookup helpers aligned to `document_chunks` schema.
+- file from execution report: `backend/app/services/retrieval.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: implementation matches retrieval/filter/fallback/neighbor-expansion scope.
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: tests cover several required behaviors, but not all claimed mocked dependencies or orchestration paths.
+
+## Dependency Review
+- Required dependencies: `(02B)`, `(05B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; both dependency tasks are already checked off in `docs/tasks/task_1.md` and the new code reuses their client factories and ingestion payload conventions.
+
+## Architecture Alignment
+- Passed: Retrieval defaults in config match the plan; Qdrant filtering uses payload filters; rerank falls back to Qdrant-score sorting; neighbor expansion keeps reranked chunks first, deduplicates, and caps context; the work stays out of `(06B)` graph/chat scope.
+- Failed: None in the implementation itself.
+- Uncertain: Live retrieval against external services and indexed data remains unverified, which is consistent with the task's blocked condition for live checks.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/services/retrieval.py` implements real embedding, Qdrant query, Jina rerank/fallback, neighbor lookup, and orchestration functions; `backend/app/services/chunks.py` implements real Supabase lookups against `document_chunks`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: runtime logic uses settings-driven limits and client factories; no fixture-specific IDs, answers, or dataset-order shortcuts were added to production code.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_query_graph.py -v`
+- Reported result: Passed
+- Rerun result: Passed, 4 tests
+- Status: partial
+- Notes: the rerun confirms filter behavior, empty-document-id behavior, rerank fallback, and neighbor cap/dedup behavior. It does not exercise `chunks.get_chunks_by_document_and_indexes()` or `retrieval.retrieve_context_chunks()`, despite the report claiming mocked Supabase and ShopAIKey coverage.
+
+## Acceptance Review
+- Task acceptance: Filters pass to Qdrant; Jina failure falls back; neighbor expansion caps and deduplicates context.
+- Status: partially satisfied
+- Evidence: the required pytest run passed and the implementation is architecturally aligned, but acceptance evidence is incomplete because the execution report overstates dependency coverage and the test file does not cover the chunk lookup/orchestration paths it claims.
+
+## Progress Tracking
+- Selected task checkbox: unchecked
+- Checkbox updated by reviewer: no
+- Batch status: unchanged
+- Execution report entry: appended correctly
+- Review report entry: appended
+- Other: Checkbox remains unchecked because the final outcome is not `ACCEPTED`.
+
+## Report Accuracy
+- partial
+- Mismatches:
+  - `docs/reports/report_1_execute_agent.md:1131` claims the 4 retrieval tests passed with mocked Qdrant, Supabase, ShopAIKey, and Jina clients.
+  - `backend/tests/test_query_graph.py:172-415` contains four tests that exercise Qdrant filter behavior, empty `document_ids`, Jina fallback, and neighbor expansion; none of those tests call `retrieval.retrieve_context_chunks()` and none instantiate `FakeShopAIKeyClient` or `FakeSupabaseClient`.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- Validation coverage is narrower than the execution report claims. The current tests never exercise the chunk lookup helper in `backend/app/services/chunks.py` or the orchestration path in `backend/app/services/retrieval.py` that uses ShopAIKey embeddings and the injected downstream clients, so the report's acceptance evidence is overstated. See `docs/reports/report_1_execute_agent.md:1131`, `backend/tests/test_query_graph.py:57-141`, and `backend/tests/test_query_graph.py:172-415`.
+
+### Minor
+- None.
+
+### Warnings
+- Batch05 implementation is already committed and outside the current git diff; this review considered only the `(06A)` report append plus the three untracked `(06A)` files.
+
+### Observations
+- The production retrieval code itself is scope-correct and aligned with the cited plan sections.
+- The required targeted pytest command reruns cleanly in the local environment.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/tests/test_query_graph.py`
+  - change: Add mock-backed tests that actually exercise `chunks.get_chunks_by_document_and_indexes()` and `retrieval.retrieve_context_chunks()` so the chunk lookup and orchestration paths claimed for `(06A)` are verified.
+  - validation: Re-run `cd backend; python -m pytest tests/test_query_graph.py -v` and confirm the new tests pass.
+  - blocks next task: yes
+- target: `docs/reports/report_1_execute_agent.md`
+  - change: Update the `(06A)` acceptance evidence so it matches the tests that actually ran, or keep the current wording only after the missing mock-backed tests are added.
+  - validation: Cross-check the report text against `backend/tests/test_query_graph.py` and the pytest output.
+  - blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED_WITH_WARNINGS",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch06 - Retrieval and Chat Graph",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "backend/app/services/chunks.py",
+    "backend/app/services/retrieval.py",
+    "backend/tests/test_query_graph.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": false,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "Execution report overstates test coverage for mocked Supabase and ShopAIKey paths; chunk lookup and retrieval orchestration are not exercised by the current tests."
+  ],
+  "warnings": [
+    "Prior Batch05 work is already committed and was not part of the current `(06A)` diff review."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Execution Report Reviewed
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Review Report File
+[docs/review/review_1_review_agent.md](docs/review/review_1_review_agent.md)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06A)
+- Task title: Add retrieval service
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.1: Add retrieval service`; `docs/plans/Master_Plan.md` > `## 11. Retrieval Configuration`; `docs/plans/Master_Plan.md` > `## 12. Optional Document Filtering in Chat`; `docs/plans/Master_Plan.md` > `## 13. Neighbor Context Expansion`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(06A) Repair` entry appended to `docs/reports/report_1_execute_agent.md`, specifically to verify the prior `REJECTED_WITH_WARNINGS` repair instructions.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/services/chunks.py`, `backend/app/services/retrieval.py`, `backend/tests/test_query_graph.py`
+
+## Files Reviewed
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(06A) Repair` entry addresses the prior A2 warning and matches the new test coverage.
+- `docs/review/review_1_review_agent.md`: in scope - prior `(06A)` A2 review provided the repair instructions being verified.
+- `backend/app/services/chunks.py`: in scope - unchanged production helper remains aligned with the task and is now exercised directly by tests.
+- `backend/app/services/retrieval.py`: in scope - unchanged production helper remains aligned with the task and is now exercised through orchestration tests.
+- `backend/tests/test_query_graph.py`: in scope - now includes direct chunk lookup coverage and full retrieval orchestration coverage.
+- `docs/tasks/task_1.md`: in scope - verified task requirements and updated only the `(06A)` checkbox after acceptance.
+- `docs/plans/Plan_1.md`: in scope - verified Task 6.1 implementation and validation expectations.
+- `docs/plans/Master_Plan.md`: in scope - verified retrieval defaults, optional document filtering, and neighbor expansion rules.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: contains the two added tests requested by the prior review and the original retrieval behavior tests.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: repair evidence now matches the actual tests and pytest output.
+
+## Dependency Review
+- Required dependencies: `(02B)`, `(05B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Retrieval defaults remain `40/5/1/8`; document filtering uses Qdrant payload filters; rerank fallback remains Qdrant-score sorting; neighbor expansion still keeps reranked chunks first, deduplicates, and caps context; no `(06B)` or `(06C)` work was introduced.
+- Failed: None.
+- Uncertain: Live external-service retrieval is still unverified, which is consistent with the task's stated user-action dependency and mock-based validation approach.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/services/chunks.py` and `backend/app/services/retrieval.py` remain real production implementations, and the repair added tests that now exercise both the direct chunk lookup path and the orchestration path using injected fake clients.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: runtime logic remains settings-driven and client-injected; the tests use fixtures without introducing task-specific hardcoding into production paths.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_query_graph.py -v`
+- Reported result: Passed (6 tests)
+- Rerun result: Passed (6 tests)
+- Status: satisfied
+- Notes: rerun confirmed the added `test_get_chunks_by_document_and_indexes_uses_supabase_lookup_order` and `test_retrieve_context_chunks_orchestrates_search_rerank_and_neighbor_expansion`, along with the original filter, fallback, and neighbor-cap/dedup tests.
+
+## Acceptance Review
+- Task acceptance: Filters pass to Qdrant; Jina failure falls back; neighbor expansion caps and deduplicates context.
+- Status: satisfied
+- Evidence: the repaired test file now directly verifies chunk lookup ordering and full retrieval orchestration, and the required pytest validation passed with 6 tests.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended correctly
+- Review report entry: appended
+- Other: No sibling or future task checkboxes were changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live retrieval remains dependent on configured external services and indexed documents; the accepted validation for this task is mock-backed and aligned with the task definition.
+
+### Observations
+- The repair closes the exact gap called out in the prior A2 review.
+- The work remains within `(06A)` scope and is ready for `(06B)` to consume.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch06 - Retrieval and Chat Graph",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "docs/tasks/task_1.md",
+    "backend/app/services/chunks.py",
+    "backend/app/services/retrieval.py",
+    "backend/tests/test_query_graph.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live retrieval remains dependent on configured external services and indexed documents; this task's accepted validation is mock-backed by design."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Correction Note - (06A)
+
+After the accepted `(06A)` review, A2 corrected the mirrored Batch06 task ID tracker entry in `docs/tasks/task_1.md` from unchecked to checked:
+
+- `#### Batch06` > `- [x] (06A): Add retrieval service`
+
+No implementation files, `(06B)`, `(06C)`, Batch06 batch status, or future task checkboxes were modified.
+
+---
+
+# Task Review Report - (06B)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Execution Report Reviewed
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Review Report File
+[docs/review/review_1_review_agent.md](docs/review/review_1_review_agent.md)
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06B)
+- Task title: Add query state, nodes, and graph
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.2: Add query state, nodes, and graph`; `docs/plans/Master_Plan.md` > `## 10.2. QueryState`; `docs/plans/Master_Plan.md` > `## 10.3. Query Node Responsibilities`; `docs/plans/Master_Plan.md` > `## 25. Answer Prompt`; `docs/plans/Master_Plan.md` > `## 26. Source Citation Format`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06B)
+- Reviewed task ID: (06B)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(06B)` entry. Prior accepted uncommitted `(06A)` retrieval work was treated as dependency context only and not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/__init__.py`, `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_state.py`, `backend/app/services/chunks.py`, `backend/app/services/retrieval.py`, `backend/tests/test_query_graph.py`
+
+## Files Reviewed
+- `backend/app/graphs/query_state.py`: in scope - matches the `QueryState` fields defined in Master Plan section 10.2.
+- `backend/app/graphs/query_nodes.py`: in scope - implements the required prepare, retrieve, rerank, neighbor expansion, answer generation, and optional message save nodes.
+- `backend/app/graphs/query_graph.py`: in scope - compiles the deterministic query graph in the required node order and stops on error.
+- `backend/app/graphs/__init__.py`: in scope - exports the new query graph APIs introduced by `(06B)`.
+- `backend/tests/test_query_graph.py`: in scope - contains retained `(06A)` retrieval coverage plus the `(06B)` state, node, and graph tests.
+- `backend/app/services/chunks.py`: in scope - dependency context only from accepted `(06A)`; provides neighbor chunk lookup used by `(06B)`.
+- `backend/app/services/retrieval.py`: in scope - dependency context only from accepted `(06A)`; provides embedding, Qdrant retrieval, reranking, and neighbor expansion helpers consumed by `(06B)`.
+- `backend/app/models/schemas.py`: in scope - confirms the returned source citation fields align with `SourceCitation` and `ChatResponse` contracts from `(03A)`.
+- `docs/tasks/task_1.md`: in scope - verified `(06B)` requirements, dependencies, validation command, and updated only the selected task entries after acceptance.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(06B)` execution report matches the repository evidence.
+- `docs/plans/Plan_1.md`: in scope - verified Task 6.2 scope, acceptance, and required validation.
+- `docs/plans/Master_Plan.md`: in scope - verified `QueryState`, node responsibilities, answer prompt, citation format, retrieval defaults, and optional message persistence.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/query_state.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `QueryState` fields match the cited plan section exactly.
+- file from execution report: `backend/app/graphs/query_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: node implementations match the required responsibilities and exact system prompt.
+- file from execution report: `backend/app/graphs/query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: graph order matches the plan and routing stops execution when `error_message` is set.
+- file from execution report: `backend/app/graphs/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: package exports are limited to the new `(06B)` graph/state/node surfaces.
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: tests cover state shape, node behavior, graph order, validation, empty retrieval behavior, source building, and message-save failure handling.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: latest `(06B)` report accurately reflects the implementation and validation run.
+
+## Dependency Review
+- Required dependencies: `(06A)`, `(03A)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; accepted `(06A)` retrieval helpers are present and reused, and `(03A)` response schemas already define the citation shape consumed by this task.
+
+## Architecture Alignment
+- Passed: `QueryState` matches Master Plan section 10.2; node responsibilities match section 10.3; the query graph order matches the documented flow; the answer system prompt matches the exact plan text; returned sources include the required citation fields; message-save failures are swallowed without failing the query flow; no `(06C)` route or endpoint work was introduced.
+- Failed: none.
+- Uncertain: live ShopAIKey-backed answer generation remains mock-validated only, which is consistent with the task's blocked condition for missing credentials or indexed data.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: production code performs real normalization, embedding, Qdrant retrieval, Jina reranking, neighbor expansion, prompt construction, citation building, and optional Supabase message persistence with non-fatal error handling.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: runtime behavior is settings-driven and data-driven; no fixture-specific answers, IDs, filenames, or dataset-order shortcuts were introduced into production code.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_query_graph.py -v`
+- Reported result: Passed (18 tests)
+- Rerun result: Passed (18 tests)
+- Status: satisfied
+- Notes: rerun covered retained `(06A)` retrieval tests plus `(06B)` tests for state shape, node behavior, graph order, blank-question validation, empty retrieval behavior, source construction, and message-save failure handling.
+
+## Acceptance Review
+- Task acceptance: Query graph validates input, uses only retrieved context, returns grounded answers and sources, and ignores message-save failures.
+- Status: satisfied
+- Evidence: `prepare_query_node` rejects blank questions, `generate_answer_node` builds the prompt from retrieved context and returns the required source fields, `save_message_optional_node` swallows insert failures, and the compiled graph executes the required node order with early termination on validation errors.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended correctly
+- Review report entry: appended
+- Other: Updated only the selected `(06B)` task entries in `docs/tasks/task_1.md`; `(06C)` and Batch06 completion status remain unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live answer generation still depends on configured ShopAIKey credentials and indexed documents; accepted validation for this task is mock-backed by design.
+
+### Observations
+- `(06B)` stays within scope and does not pre-implement `(06C)` route work.
+- The shared `backend/tests/test_query_graph.py` file now carries both accepted `(06A)` coverage and new `(06B)` coverage, so task-level diff review still requires separating retained dependency tests from new query-graph tests.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch06 - Retrieval and Chat Graph",
+  "selected_task_id": "(06B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/query_state.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/graphs/query_graph.py",
+    "backend/app/graphs/__init__.py",
+    "backend/tests/test_query_graph.py",
+    "backend/app/services/chunks.py",
+    "backend/app/services/retrieval.py",
+    "backend/app/models/schemas.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/tasks/task_1.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live answer generation still depends on configured ShopAIKey credentials and indexed documents; accepted validation for this task is mock-backed by design."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06C)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06C)
+- Task title: Add chat route
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.3: Add chat route`; `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`; `docs/plans/Master_Plan.md` > `## 21.3. Chat Request`; `docs/plans/Master_Plan.md` > `## 21.4. Chat Response`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06C)
+- Reviewed task ID: (06C)
+- Correct selection: yes
+- Notes: Reviewed only the latest `(06C)` execution entry. Prior accepted uncommitted `(06A)` and `(06B)` files were used only as dependency context and were not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/__init__.py`, `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/api/routes/chat.py`, `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_state.py`, `backend/app/services/chunks.py`, `backend/app/services/retrieval.py`, `backend/tests/test_api_chat.py`, `backend/tests/test_query_graph.py`
+
+## Files Reviewed
+- `backend/app/api/routes/chat.py`: in scope - implements `POST /api/chat`, request/response schema boundary, graph invocation, and error translation.
+- `backend/tests/test_api_chat.py`: in scope - targeted route tests cover graph invocation, optional `document_ids`, default `save_message=false`, response shape, and graph-error handling.
+- `backend/app/main.py`: in scope - integration check only; unchanged because the pre-existing optional router hook already includes `app.api.routes.chat` when the module exists.
+- `backend/app/graphs/query_graph.py`: in scope - dependency context only from accepted `(06B)`; confirms the route calls the compiled query graph surface expected by the task.
+- `backend/app/graphs/query_nodes.py`: in scope - dependency context only from accepted `(06B)`; confirms graph error payloads are string `error_message` values and source payloads match the route contract.
+- `backend/app/graphs/query_state.py`: in scope - dependency context only from accepted `(06B)`; confirms graph state includes `answer`, `sources`, and `error_message` fields consumed by the route.
+- `backend/app/models/schemas.py`: in scope - confirms `ChatRequest` and `ChatResponse` match the cited request/response contract.
+- `docs/tasks/task_1.md`: in scope - verified `(06C)` requirements, dependency, validation command, and updated only the selected task checkboxes after acceptance.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(06C)` execution report matched the implementation except for one error-handling phrasing note.
+- `docs/plans/Plan_1.md`: in scope - verified Task 6.3 scope and required validation.
+- `docs/plans/Master_Plan.md`: in scope - verified required endpoint, chat request shape, and chat response citation shape.
+- `backend/app/graphs/__init__.py`: out of scope - prior accepted `(06B)` export change present in git diff; not required for `(06C)` route behavior because the route imports `build_query_graph` directly from `app.graphs.query_graph`.
+- `backend/app/services/chunks.py`: out of scope - prior accepted `(06A)` dependency context only.
+- `backend/app/services/retrieval.py`: out of scope - prior accepted `(06A)` dependency context only.
+- `backend/tests/test_query_graph.py`: out of scope - prior accepted `(06A)` and `(06B)` dependency validation only.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/api/routes/chat.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: route implementation matches the required endpoint and schema-backed response shape.
+- file from execution report: `backend/tests/test_api_chat.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: tests cover the route behaviors named by the task acceptance criteria.
+- file from execution report: `backend/app/main.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: the task plan lists app wiring, but the existing optional router hook already provided that integration, so no new edit was necessary and the route tests confirm `/api/chat` is reachable.
+
+## Dependency Review
+- Required dependencies: `(06B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; accepted `(06B)` graph files are present and the route successfully invokes that compiled graph surface in the rerun validation.
+
+## Architecture Alignment
+- Passed: Added `POST /api/chat`; request validation is handled by `ChatRequest`; `document_ids` remains optional; `save_message` defaults to `false`; the route passes JSON-safe request data into the query graph; the response is trimmed to the public `answer` and `sources` contract; route inclusion is satisfied through the existing optional-router pattern rather than a new `main.py` edit.
+- Failed: none.
+- Uncertain: live chat still depends on configured external services and indexed documents; the accepted route validation is mock-backed by design.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/api/routes/chat.py` builds the real query graph, invokes it with request payload data, validates the response through `ChatResponse`, and exposes the endpoint through the FastAPI app used by the rerun tests.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: production route behavior is schema-driven and graph-driven; no fixture answers, IDs, or test-only paths were introduced into runtime logic.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_api_chat.py tests/test_query_graph.py -v`
+- Reported result: Passed (22 tests)
+- Rerun result: Passed (22 tests)
+- Status: satisfied
+- Notes: rerun covered the new chat-route tests plus the accepted `(06A)` and `(06B)` query-graph dependency tests.
+
+## Acceptance Review
+- Task acceptance: Chat route invokes query graph and returns answer plus sources.
+- Status: satisfied
+- Evidence: rerun tests verified graph invocation, optional `document_ids`, default `save_message=false`, and the schema-backed `answer` plus `sources` response shape at `/api/chat`.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended correctly
+- Review report entry: appended
+- Other: Updated only the selected `(06C)` task entries in `docs/tasks/task_1.md`; Batch06 completion and future task checkboxes remain unchanged.
+
+## Report Accuracy
+- partial
+- Mismatches:
+  - The execution report says graph failure states are translated into a "safe HTTP 500 response instead of leaking internal graph state." The route does trim internal graph state, but it still returns the graph `error_message` text directly as the HTTP `detail`, and the test suite explicitly asserts that behavior.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- The route currently exposes graph error text in the HTTP 500 `detail`. This does not violate the stated `(06C)` acceptance contract, but the execution report overstates how generic that failure translation is.
+- Live chat remains dependent on configured external services and indexed documents; accepted validation for this task is mock-backed by design.
+
+### Observations
+- `backend/app/main.py` did not need a new edit because the optional router inclusion pattern from earlier accepted work already covered `app.api.routes.chat`.
+- The selected task stayed within `(06C)` scope; uncommitted `(06A)` and `(06B)` files remained dependency context only.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch06 - Retrieval and Chat Graph",
+  "selected_task_id": "(06C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/routes/chat.py",
+    "backend/tests/test_api_chat.py",
+    "backend/app/main.py",
+    "backend/app/graphs/query_graph.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/graphs/query_state.py",
+    "backend/app/models/schemas.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/tasks/task_1.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "The route currently exposes graph error text in the HTTP 500 detail; the execution report overstates how generic that failure translation is.",
+    "Live chat remains dependent on configured external services and indexed documents; this task's accepted validation is mock-backed by design."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

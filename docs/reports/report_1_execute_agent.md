@@ -1076,3 +1076,337 @@ complete
 - next task ID: (06A)
 - can proceed: yes
 - handoff notes: Batch05 implementation is complete from the execution-agent side; A2 still owns checkbox updates after review.
+
+
+---
+
+# Task Execution Report - (06A)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch06 - Retrieval and Chat Graph
+
+## Task
+(06A) - Add retrieval service
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_1.md > Batch 6: Retrieval and Chat Graph > Task 6.1: Add retrieval service
+- docs/plans/Master_Plan.md > 11. Retrieval Configuration
+- docs/plans/Master_Plan.md > 12. Optional Document Filtering in Chat
+- docs/plans/Master_Plan.md > 13. Neighbor Context Expansion
+
+## Supplemental Documents Used
+- docs/plans/Plan_1.md
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06A)
+- Task title: Add retrieval service
+
+## Completed Work
+- Implemented `backend/app/services/chunks.py` with Supabase chunk lookup by document id and chunk index.
+- Implemented `backend/app/services/retrieval.py` with Qdrant semantic retrieval, optional document-id filtering, Jina rerank, Qdrant-score fallback, neighbor expansion, and orchestration helpers for future query nodes.
+- Completed `backend/tests/test_query_graph.py` with mock-backed coverage for filter behavior, rerank fallback, neighbor deduplication, and context caps.
+
+## Files Created or Modified
+- `backend/app/services/chunks.py`
+- `backend/app/services/retrieval.py`
+- `backend/tests/test_query_graph.py`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_graph.py -v` - Passed
+
+## Acceptance Check
+- Task acceptance condition: Filters pass to Qdrant; Jina failure falls back; neighbor expansion caps and deduplicates context.
+- Status: satisfied
+- Evidence: Targeted pytest run passed all 4 retrieval tests with mocked Qdrant, Supabase, ShopAIKey, and Jina clients.
+
+## Artifacts Produced
+- Retrieval service modules for chunk lookup and retrieval orchestration.
+- Query retrieval tests covering the required Batch06 behaviors.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after ACCEPTED review.
+
+## Key Implementation Decisions
+- Used Qdrant `query_points` with a `MatchAny` payload filter when document IDs are provided and no filter when the list is empty.
+- Kept rerank fallback deterministic by sorting on Qdrant score when Jina fails or returns no usable rankings.
+- Preserved reranked chunks first during neighbor expansion, then added adjacent chunks from Supabase, deduplicated by chunk ID, and capped the final context list.
+
+## Risks or Open Issues
+- Live retrieval still depends on configured Qdrant, ShopAIKey, and Jina credentials plus indexed documents; the automated verification used mocks only.
+
+## Minor Issues Fixed During Execution
+- Normalized Qdrant point objects so both dict-like and object-like test doubles are handled correctly.
+- Adjusted the neighbor-expansion test fixture to match the actual previous/next window ordering.
+
+## Workflow Integrity Check
+- No issue identified. The work stayed inside Batch06 task (06A) and did not add query state, query nodes, a query graph, prompt generation, answer generation, or chat routes.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes
+- handoff notes: Retrieval/chunk service functions are ready for query-graph wiring in the next task.
+
+
+---
+
+# Task Execution Report - (06A) Repair
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch06 - Retrieval and Chat Graph
+
+## Task
+(06A) - Add retrieval service
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_1.md > Batch 6: Retrieval and Chat Graph > Task 6.1: Add retrieval service
+- docs/plans/Master_Plan.md > 11. Retrieval Configuration
+- docs/plans/Master_Plan.md > 12. Optional Document Filtering in Chat
+- docs/plans/Master_Plan.md > 13. Neighbor Context Expansion
+
+## Supplemental Documents Used
+- docs/plans/Plan_1.md
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06A)
+- Task title: Add retrieval service
+
+## Completed Work
+- Added mock-backed coverage for `chunks.get_chunks_by_document_and_indexes()` so the chunk lookup path is exercised directly with Supabase-style filtering and ordering.
+- Added mock-backed coverage for `retrieval.retrieve_context_chunks()` so the orchestration path exercises ShopAIKey embedding, Qdrant search, Jina rerank, and neighbor expansion through the real chunk lookup helper.
+- Kept the repair inside `(06A)` scope and left query state, query nodes, query graph, prompts, answer generation, and chat routes untouched.
+
+## Files Created or Modified
+- `backend/tests/test_query_graph.py`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_graph.py -v` - Passed (6 tests)
+
+## Acceptance Check
+- Task acceptance condition: Filters pass to Qdrant; Jina failure falls back; neighbor expansion caps and deduplicates context.
+- Status: satisfied
+- Evidence: The updated test file now includes `test_get_chunks_by_document_and_indexes_uses_supabase_lookup_order` and `test_retrieve_context_chunks_orchestrates_search_rerank_and_neighbor_expansion`, and the fresh pytest run passed all 6 retrieval tests.
+
+## Artifacts Produced
+- Direct chunk lookup coverage.
+- Retrieval orchestration coverage.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Verified the chunk lookup helper through its real Supabase-style filter/order path instead of a patched stub.
+- Verified retrieval orchestration by passing fake Qdrant, ShopAIKey, Jina, and Supabase clients through `retrieve_context_chunks()`.
+
+## Risks or Open Issues
+- Live retrieval still depends on configured external services and indexed documents; validation used mocks only.
+
+## Minor Issues Fixed During Execution
+- Reworked the retrieval tests to cover the real chunk lookup and orchestration paths instead of only lower-level retrieval helpers.
+
+## Workflow Integrity Check
+- No issue identified. The repair stayed within Batch06 task (06A) and did not add query state, query nodes, a query graph, prompt generation, answer generation, or chat routes.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes
+- handoff notes: A2's warnings are addressed by the new coverage; the next task can wire the query graph on top of the retrieval helpers.
+
+---
+
+# Task Execution Report - (06B)
+
+## Source Task File
+[docs/tasks/task_1.md]
+
+## Report File
+[docs/reports/report_1_execute_agent.md]
+
+## Batch
+[Batch06 - Retrieval and Chat Graph]
+
+## Task
+[(06B)] - [Add query state, nodes, and graph]
+
+## Status
+complete
+
+## Source of Truth Used
+- [docs/plans/Plan_1.md > ## Batch 6: Retrieval and Chat Graph > ### Task 6.2: Add query state, nodes, and graph]
+- [docs/plans/Master_Plan.md > ## 10.2. QueryState]
+- [docs/plans/Master_Plan.md > ## 10.3. Query Node Responsibilities]
+- [docs/plans/Master_Plan.md > ## 25. Answer Prompt]
+- [docs/plans/Master_Plan.md > ## 26. Source Citation Format]
+
+## Supplemental Documents Used
+- [docs/plans/Plan_1.md]
+- [docs/plans/Master_Plan.md]
+
+## Selected Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06B)
+- Task title: Add query state, nodes, and graph
+
+## Completed Work
+- Implemented `QueryState` with the required query, retrieval, generation, source, and error fields.
+- Added query nodes for prepare, Qdrant retrieval, Jina rerank, neighbor expansion, answer generation, and optional message save.
+- Wired a compiled LangGraph query flow that stops on validation errors and preserves the existing retrieval service behavior from `(06A)`.
+- Used the exact grounding system prompt from the plan and returned source citations with the required fields.
+- Made message-save failures non-fatal so chat responses still return normally.
+- Extended the query test file with coverage for state shape, node behavior, graph order, validation, empty retrieval, source building, and message-save failure handling.
+
+## Files Created or Modified
+- `backend/app/graphs/query_state.py`
+- `backend/app/graphs/query_nodes.py`
+- `backend/app/graphs/query_graph.py`
+- `backend/app/graphs/__init__.py`
+- `backend/tests/test_query_graph.py`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_graph.py -v` - Passed (18 tests)
+
+## Acceptance Check
+- Task acceptance condition: Query graph validates input, uses only retrieved context, returns grounded answers and sources, and ignores message-save failures.
+- Status: satisfied
+- Evidence: The new query graph modules were implemented, and the targeted pytest run passed all 18 query graph tests, including validation, empty-retrieval behavior, source citation construction, and message-save failure handling.
+
+## Artifacts Produced
+- Query state module.
+- Query node module.
+- Compiled query graph module.
+- Passing query graph test run.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Kept the graph deterministic and linear, with routing on `error_message` rather than introducing route wiring outside the task scope.
+- Reused the existing `(06A)` retrieval helpers so embedding, Qdrant retrieval, Jina reranking, and neighbor expansion stay in one place.
+- Saved messages through the optional node only, and swallowed insert failures so chat completion is not blocked by history persistence.
+
+## Risks or Open Issues
+- Live answer generation still depends on configured ShopAIKey credentials and indexed documents at runtime.
+
+## Minor Issues Fixed During Execution
+- Extended the existing retrieval test doubles to support insert-style message saving and chat completions without breaking the preserved `(06A)` coverage.
+
+## Workflow Integrity Check
+- No issue identified. The task stayed within `(06B)` only; no chat route, router wiring, or FastAPI endpoint was added.
+
+## Notes for Next Task
+- next task ID: (06C)
+- can proceed: yes
+- handoff notes: The chat route can now call the compiled query graph and reuse the new source citation shape without additional graph work.
+
+---
+
+# Task Execution Report - (06C)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+[Batch06 - Retrieval and Chat Graph]
+
+## Task
+(06C) - Add chat route
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 6: Retrieval and Chat Graph` > `### Task 6.3: Add chat route`
+- `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`
+- `docs/plans/Master_Plan.md` > `## 21.3. Chat Request`
+- `docs/plans/Master_Plan.md` > `## 21.4. Chat Response`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_1.md`
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch06 - Retrieval and Chat Graph
+- Task ID: (06C)
+- Task title: Add chat route
+
+## Completed Work
+- Added `POST /api/chat` in `backend/app/api/routes/chat.py`.
+- Validated requests with `ChatRequest`, including optional `document_ids` and default `save_message=false`.
+- Invoked the compiled query graph with the request payload from the route boundary.
+- Returned only the public chat contract (`answer` and `sources`) via `ChatResponse`, trimming internal graph state.
+- Translated graph failure states into a safe HTTP 500 response instead of leaking internal graph state.
+- Confirmed the existing app router hook already included the chat module, so `backend/app/main.py` did not need an additional edit.
+- Added API tests covering graph invocation, optional document IDs, default `save_message=false`, response shape, and graph-error handling.
+
+## Files Created or Modified
+- `backend/app/api/routes/chat.py`
+- `backend/tests/test_api_chat.py`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_api_chat.py -v` - Failed initially during collection because `app.api.routes.chat` did not exist yet, which confirmed the test-first setup.
+- `cd backend; python -m pytest tests/test_api_chat.py tests/test_query_graph.py -v` - Passed (22 tests).
+
+## Acceptance Check
+- Task acceptance condition: Chat route invokes query graph and returns answer plus sources.
+- Status: satisfied
+- Evidence: The new route tests passed, including response-shape validation against the compiled query graph contract.
+
+## Artifacts Produced
+- Chat API route module.
+- Chat API route tests.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Passed only JSON-safe request data into the query graph with `request.model_dump(mode="json")`.
+- Trimmed the graph result to `answer` and `sources` before response-model validation so internal query state does not leak through the API.
+- Used safe HTTP 500 translation for graph failures to keep the API contract clean.
+
+## Risks or Open Issues
+- Live chat still depends on configured external services and indexed documents, but that was outside the mocked-route validation scope for this task.
+
+## Minor Issues Fixed During Execution
+- Adjusted the response-shape test to use UUID chunk IDs so it matches the plan’s citation format.
+
+## Workflow Integrity Check
+- No issue identified. `backend/app/main.py` already had the optional chat router hook in place, so the task only needed the new route module and tests.
+
+## Notes for Next Task
+- next task ID: (07A)
+- can proceed: yes
+- handoff notes: Frontend work can now target `/api/chat` and rely on the schema-backed `answer` plus `sources` response.
