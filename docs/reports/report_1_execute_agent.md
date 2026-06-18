@@ -661,3 +661,167 @@ complete
 - next task ID: (04A)
 - can proceed: yes
 - handoff notes: Document lifecycle routes are now in place and covered by mocked tests; Batch04 can build parser and chunking work on top of this API surface.
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch04 - Parsing and Chunking
+
+## Task
+(04A) - Add parser interface and registry
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 4: Parsing and Chunking` > `### Task 4.1: Add parser interface and registry`
+- `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities` > `#### parse_document_node`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_1.md`
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch04 - Parsing and Chunking
+- Task ID: (04A)
+- Task title: Add parser interface and registry
+
+## Completed Work
+- Added a new `app.parsing` package with a common parser base, normalized parsed-document types, and parse error classes.
+- Implemented PDF, DOCX, TXT, and Markdown parsers behind a shared interface.
+- Added a registry that resolves parsers by supported extension or MIME type and exposes supported maps.
+- Added parser tests covering UTF-8 fallback, Markdown normalization, registry mappings, unsupported type errors, and empty extraction failures.
+
+## Files Created or Modified
+- `backend/app/parsing/__init__.py`
+- `backend/app/parsing/base.py`
+- `backend/app/parsing/pdf.py`
+- `backend/app/parsing/docx.py`
+- `backend/app/parsing/text.py`
+- `backend/app/parsing/markdown.py`
+- `backend/app/parsing/registry.py`
+- `backend/tests/test_parsers.py`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_parsers.py -v` - Passed (`12 passed, 1 skipped`); the PDF smoke test was skipped locally because `fitz` was not installed in this environment.
+
+## Acceptance Check
+- Task acceptance condition: TXT and Markdown parser tests pass; registry maps supported file types; empty extracted text raises a parse error.
+- Status: satisfied
+- Evidence: Targeted pytest passed, registry assertions passed, and empty extraction raises `EmptyExtractedTextError`.
+
+## Artifacts Produced
+- Parser package modules under `backend/app/parsing/`
+- Targeted parser test file `backend/tests/test_parsers.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox updates are left to A2 after accepted review, and Batch04 is not complete yet.
+
+## Key Implementation Decisions
+- Used extension-first parser resolution so stored file names drive parser selection when both extension and MIME type are available.
+- Kept PDF and DOCX imports lazy so the package loads cleanly even when those libraries are absent locally.
+- Normalized text line endings and rejected whitespace-only extraction as empty text.
+
+## Risks or Open Issues
+- Local environment did not have `fitz`, so the PDF smoke test was skipped during validation; the PDF parser path is implemented and will raise a clear parse error if the dependency is missing at runtime.
+
+## Minor Issues Fixed During Execution
+- Removed an incorrect import from the initial PDF parser draft and corrected the UTF-8 fallback test data.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: Parser interface and registry are in place for the chunker task to consume.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch04 - Parsing and Chunking
+
+## Task
+(04B) - Add fixed token chunker
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 4: Parsing and Chunking` > `### Task 4.2: Add fixed token chunker`
+- `docs/plans/Master_Plan.md` > `## 17. Chunking`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_1.md`
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch04 - Parsing and Chunking
+- Task ID: (04B)
+- Task title: Add fixed token chunker
+
+## Completed Work
+- Added `backend/app/chunking/token_chunker.py` with `BaseChunker` and `FixedTokenChunker`.
+- Implemented default chunk sizing from settings-compatible defaults: 500 tokens chunk size, 150 tokens overlap, 350 tokens step.
+- Returned chunk metadata with `chunk_index`, `content`, `content_hash`, `token_count`, `chunk_type`, `heading`, `section_path`, `page_start`, `page_end`, `token_start`, and `token_end`.
+- Added deterministic empty-text rejection with a clear chunking error.
+- Added focused tests for sequential indexes, 150-token overlap, metadata fields, and failure cases.
+
+## Files Created or Modified
+- `backend/app/chunking/__init__.py`
+- `backend/app/chunking/token_chunker.py`
+- `backend/tests/test_chunker.py`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_chunker.py -v` - Passed
+
+## Acceptance Check
+- Task acceptance condition: Chunk indexes are sequential; overlap is 150 tokens for multi-chunk output; empty text errors clearly.
+- Status: satisfied
+- Evidence: The required pytest target passed with 4 tests green, including sequential chunk indexes, 150-token overlap, metadata assertions, and empty-text failure coverage.
+
+## Artifacts Produced
+- Fixed token chunker module in `backend/app/chunking/token_chunker.py`
+- Chunker tests in `backend/tests/test_chunker.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are reserved for A2 after review
+
+## Key Implementation Decisions
+- Used a tokenizer protocol plus an injected tokenizer path so tests can validate the algorithm without depending on tiktoken behavior.
+- Kept the production default tokenizer lazy and deterministic, with `cl100k_base` as the fallback encoding.
+- Derived page ranges from byte spans so chunk metadata stays stable and future ingestion work can reuse the output directly.
+
+## Risks or Open Issues
+- None for this task. Smart section chunking remains intentionally deferred to later phases.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified. The work stayed within Batch04 and did not modify parser task files or ingestion graph logic.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes
+- handoff notes: The fixed token chunker is ready for Batch05 ingestion wiring.

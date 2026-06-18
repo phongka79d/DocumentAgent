@@ -1485,3 +1485,441 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Parsing and Chunking
+- Task ID: (04A)
+- Task title: Add parser interface and registry
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 4: Parsing and Chunking` > `### Task 4.1: Add parser interface and registry`; `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities` > `#### parse_document_node`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The latest execution report entry is the requested `(04A)` record.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_1_execute_agent.md`
+- untracked files:
+  - `backend/app/parsing/__init__.py`
+  - `backend/app/parsing/base.py`
+  - `backend/app/parsing/pdf.py`
+  - `backend/app/parsing/docx.py`
+  - `backend/app/parsing/text.py`
+  - `backend/app/parsing/markdown.py`
+  - `backend/app/parsing/registry.py`
+  - `backend/tests/test_parsers.py`
+- notes: Prior Batch03 task work is already tracked in the repository state; the new Batch04 scope is isolated to the parser package, its tests, and the appended execution report entry.
+
+## Files Reviewed
+- `docs/tasks/task_1.md`: in scope - reviewed `(04A)` task definition, dependency, and progress tracker entries.
+- `docs/reports/report_1_execute_agent.md`: in scope - reviewed the latest `(04A)` execution report entry.
+- `docs/plans/Plan_1.md`: in scope - reviewed `### Task 4.1: Add parser interface and registry`.
+- `docs/plans/Master_Plan.md`: in scope - reviewed `#### parse_document_node` normalized parser output requirements.
+- `backend/app/parsing/__init__.py`: in scope - verified public parser package exports.
+- `backend/app/parsing/base.py`: in scope - verified common parser interface, normalized output helpers, and parse errors.
+- `backend/app/parsing/pdf.py`: in scope - verified PyMuPDF-backed PDF parser with lazy import and page extraction.
+- `backend/app/parsing/docx.py`: in scope - verified python-docx-backed DOCX parser with paragraph extraction.
+- `backend/app/parsing/text.py`: in scope - verified UTF-8 with fallback decoding behavior.
+- `backend/app/parsing/markdown.py`: in scope - verified Markdown-as-text parsing.
+- `backend/app/parsing/registry.py`: in scope - verified extension/MIME registry resolution and supported maps.
+- `backend/tests/test_parsers.py`: in scope - verified parser behavior and registry coverage.
+- `backend/app/services/validation.py`: in scope - reviewed MIME-type constants consumed by the parser registry.
+- `backend/app/services/documents.py`: in scope - reviewed existing document storage-path and metadata contract used by downstream parsing.
+- `backend/app/parsing/__pycache__/`: questionable - present locally but ignored by `.gitignore`; not part of the task deliverable.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/parsing/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New parser package entry point.
+- file from execution report: `backend/app/parsing/base.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Common interface and normalized output helpers.
+- file from execution report: `backend/app/parsing/pdf.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Real PDF extraction path implemented with PyMuPDF import guard.
+- file from execution report: `backend/app/parsing/docx.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Real DOCX extraction path implemented with python-docx import guard.
+- file from execution report: `backend/app/parsing/text.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: UTF-8 with fallback decoding path implemented.
+- file from execution report: `backend/app/parsing/markdown.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Markdown is parsed as text per task requirement.
+- file from execution report: `backend/app/parsing/registry.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Extension-first, MIME fallback parser resolution implemented.
+- file from execution report: `backend/tests/test_parsers.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers TXT, Markdown, registry mappings, unsupported types, empty extraction, DOCX, and optional PDF smoke.
+
+## Dependency Review
+- Required dependencies: `(03A)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; `(03A)` is already accepted in `docs/tasks/task_1.md`, and the parser work reuses its upload MIME constants without altering prior Batch03 behavior.
+
+## Architecture Alignment
+- Passed:
+  - Parser output is normalized to `text`, `pages`, and `metadata` exactly as the task and Master Plan specify.
+  - Registry selection supports extension-first lookup with MIME fallback, matching the future `parse_document_node` contract.
+  - PDF and DOCX parser dependencies are imported lazily, keeping module import-time behavior aligned with existing lazy service-factory patterns.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Parser modules perform actual byte decoding or library-backed extraction, `build_parsed_document()` enforces normalized payload shape, and registry resolution is driven by declared extension and MIME maps instead of test-only shortcuts.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime behavior depends on file bytes, normalized file name extension, and MIME type. No fixture-specific names, IDs, or answer strings are embedded in production parser logic.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_parsers.py -v`
+- Reported result: Passed (`12 passed, 1 skipped`)
+- Rerun result: Passed (`12 passed, 1 skipped`)
+- Status: passed
+- Notes: The skipped PDF smoke test is due to missing local `fitz` import availability in this environment; TXT, Markdown, registry, empty extraction, and DOCX coverage all executed.
+
+## Acceptance Review
+- Task acceptance: Add parser interface and registry
+- Status: satisfied
+- Evidence: TXT and Markdown parser tests pass from in-memory bytes, registry mappings for supported extensions and MIME types pass, and whitespace-only extracted text raises `EmptyExtractedTextError`.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch04 remains incomplete because `(04B)` is still unchecked.
+- Execution report entry: appended and reviewed.
+- Review report entry: appended by this review.
+- Other: Updated only task `(04A)` entries in `docs/tasks/task_1.md`, including the main task list and the mirrored progress tracker row for the same task.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Local PDF smoke coverage is still conditional on PyMuPDF import availability in the environment, even though the parser implementation and import guard are present.
+
+### Observations
+- `backend/app/parsing/__pycache__/` exists locally but is ignored by `.gitignore` and is not part of the reviewed deliverable.
+- The repository evidence cleanly separates this Batch04 task from the already accepted Batch03 changes.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch04 - Parsing and Chunking",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "backend/app/parsing/__init__.py",
+    "backend/app/parsing/base.py",
+    "backend/app/parsing/pdf.py",
+    "backend/app/parsing/docx.py",
+    "backend/app/parsing/text.py",
+    "backend/app/parsing/markdown.py",
+    "backend/app/parsing/registry.py",
+    "backend/tests/test_parsers.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Local PDF smoke coverage remains conditional on PyMuPDF import availability in the environment."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Parsing and Chunking
+- Task ID: (04B)
+- Task title: Add fixed token chunker
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 4: Parsing and Chunking` > `### Task 4.2: Add fixed token chunker`; `docs/plans/Master_Plan.md` > `## 17. Chunking`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The requested `(04B)` entry is the latest matching execution report entry. Accepted but uncommitted `(04A)` parser changes were treated only as dependency context and not re-reviewed as selected scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_1_execute_agent.md`
+  - `docs/review/review_1_review_agent.md`
+  - `docs/tasks/task_1.md`
+- untracked files:
+  - `backend/app/chunking/__init__.py`
+  - `backend/app/chunking/token_chunker.py`
+  - `backend/tests/test_chunker.py`
+  - `backend/app/parsing/__init__.py`
+  - `backend/app/parsing/base.py`
+  - `backend/app/parsing/pdf.py`
+  - `backend/app/parsing/docx.py`
+  - `backend/app/parsing/text.py`
+  - `backend/app/parsing/markdown.py`
+  - `backend/app/parsing/registry.py`
+  - `backend/tests/test_parsers.py`
+- notes: The chunker files are the selected `(04B)` scope. The parser package and `test_parsers.py` are prior accepted `(04A)` batch context that remains uncommitted in the worktree.
+
+## Files Reviewed
+- `docs/tasks/task_1.md`: in scope - reviewed `(04B)` task definition, dependency, acceptance, and progress tracker entries.
+- `docs/reports/report_1_execute_agent.md`: in scope - reviewed the `(04B)` execution report entry.
+- `docs/plans/Plan_1.md`: in scope - reviewed `### Task 4.2: Add fixed token chunker`.
+- `docs/plans/Master_Plan.md`: in scope - reviewed `## 17. Chunking` defaults and pseudo-code.
+- `backend/app/chunking/__init__.py`: in scope - verified package exports for the new chunker module.
+- `backend/app/chunking/token_chunker.py`: in scope - verified base class, fixed-window chunking logic, metadata emission, settings defaults, and error handling.
+- `backend/tests/test_chunker.py`: in scope - verified sequential-index, overlap, metadata, and failure-case coverage.
+- `backend/app/parsing/base.py`: in scope - reviewed accepted `(04A)` parsed-document contract consumed by the chunker.
+- `backend/app/core/config.py`: in scope - verified chunk size and overlap defaults are 500 and 150.
+- `backend/app/services/hashing.py`: in scope - verified `content_hash` computation path.
+- `backend/pyproject.toml`: in scope - verified `tiktoken` is declared as a backend dependency.
+- `backend/app/chunking/__pycache__/`: questionable - local runtime artifact, ignored by git, not part of the deliverable.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/chunking/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Convenience export for the new chunker package.
+- file from execution report: `backend/app/chunking/token_chunker.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements the required chunker behavior.
+- file from execution report: `backend/tests/test_chunker.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers the acceptance-critical chunking behavior.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the appended `(04B)` execution report entry.
+
+## Dependency Review
+- Required dependencies: `(04A)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; the accepted parser contract from `(04A)` exists in `backend/app/parsing/base.py` and is consumed without altering prior parser behavior.
+
+## Architecture Alignment
+- Passed:
+  - `BaseChunker` and `FixedTokenChunker` are implemented as required and leave room for future chunker variants.
+  - Default chunk size and overlap are sourced from `Settings`, matching the 500/150/350 plan contract.
+  - Output records include all required metadata fields: `chunk_index`, `content`, `content_hash`, `token_count`, `chunk_type`, `heading`, `section_path`, `page_start`, `page_end`, `token_start`, and `token_end`.
+  - The implementation remains deterministic and stays within Batch04 scope.
+- Failed:
+  - None.
+- Uncertain:
+  - The default tokenizer runtime path depends on local `tiktoken` availability. The dependency is declared in `backend/pyproject.toml`, but it is not importable in this review environment.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code computes chunk windows over encoded tokens, validates chunk window configuration, hashes chunk content, derives page ranges from parsed-page spans, and raises real chunking errors for invalid or empty input.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime behavior is driven by parsed document text, token counts, settings defaults, and tokenizer output. No fixture-specific content, IDs, or sample strings are embedded in production logic.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_chunker.py -v`
+- Reported result: Passed
+- Rerun result: Passed (`4 passed`)
+- Status: passed
+- Notes: This is the task-required validation and it succeeded.
+- Command/check: injected-tokenizer smoke using a two-page parsed document through `FixedTokenChunker`
+- Reported result: not reported
+- Rerun result: Passed; chunks reported sequential indexes and page ranges spanning pages 1-2 where expected.
+- Status: passed
+- Notes: Confirms the chunker works against the accepted `(04A)` parsed-document shape beyond the pytest assertions.
+- Command/check: default-tokenizer smoke using `FixedTokenChunker` without an injected tokenizer
+- Reported result: not reported
+- Rerun result: local environment raised `ChunkingError: tiktoken is required for fixed token chunking`
+- Status: warning
+- Notes: `backend/pyproject.toml` declares `tiktoken`, so this reflects the current interpreter environment rather than a source-code contract failure.
+
+## Acceptance Review
+- Task acceptance: Add fixed token chunker
+- Status: satisfied
+- Evidence: Chunk indexes are sequential, multi-chunk overlap is 150 tokens, defaults match the source plan, required metadata fields are present, and empty text raises a clear chunking error.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged; Batch04 was not marked complete by explicit instruction for this review pass.
+- Execution report entry: appended and reviewed.
+- Review report entry: appended by this review.
+- Other: Updated only the selected `(04B)` task entries in `docs/tasks/task_1.md`, including the mirrored progress tracker row.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- The local review interpreter does not currently have importable `tiktoken`, so the default tokenizer path could not be rerun directly without environment setup.
+- Accepted `(04A)` parser files remain uncommitted in the same batch and were treated as dependency context only.
+
+### Observations
+- The injected-tokenizer tests are meaningful for the fixed-window algorithm and the chunk metadata contract.
+- `backend/app/chunking/__pycache__/` exists locally but is ignored by git and not part of the reviewed deliverable.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, per explicit review instruction this pass does not update the Batch04 checkbox
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch04 - Parsing and Chunking",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "docs/tasks/task_1.md",
+    "backend/app/chunking/__init__.py",
+    "backend/app/chunking/token_chunker.py",
+    "backend/tests/test_chunker.py",
+    "backend/app/parsing/base.py",
+    "backend/app/core/config.py",
+    "backend/app/services/hashing.py",
+    "backend/pyproject.toml"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "The local review interpreter does not currently have importable tiktoken, so the default tokenizer path could not be rerun directly without environment setup.",
+    "Accepted (04A) parser files remain uncommitted in the same batch and were treated as dependency context only."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

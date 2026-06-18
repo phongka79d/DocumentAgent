@@ -473,7 +473,7 @@ The ingestion graph needs deterministic parser and chunker services before it ca
 
 ### Tasks
 
-- [ ] (04A): Add parser interface and registry
+- [x] (04A): Add parser interface and registry
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 4: Parsing and Chunking` > `### Task 4.1: Add parser interface and registry`; `docs/plans/Master_Plan.md` > `## 8.3. Ingestion Node Responsibilities` > `#### parse_document_node`
   - Source Requirements:
     - Normalize parser output to text, pages, and metadata.
@@ -501,7 +501,7 @@ The ingestion graph needs deterministic parser and chunker services before it ca
   - Blocked Condition: None
   - Files: `backend/app/parsing/base.py`, `backend/app/parsing/pdf.py`, `backend/app/parsing/docx.py`, `backend/app/parsing/text.py`, `backend/app/parsing/markdown.py`, `backend/app/parsing/registry.py`, `backend/tests/test_parsers.py`
 
-- [ ] (04B): Add fixed token chunker
+- [x] (04B): Add fixed token chunker
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 4: Parsing and Chunking` > `### Task 4.2: Add fixed token chunker`; `docs/plans/Master_Plan.md` > `## 17. Chunking`
   - Source Requirements:
     - Implement `BaseChunker` and `FixedTokenChunker`.
@@ -1204,8 +1204,8 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch04
 
-- [ ] (04A): Add parser interface and registry
-- [ ] (04B): Add fixed token chunker
+- [x] (04A): Add parser interface and registry
+- [x] (04B): Add fixed token chunker
 
 #### Batch05
 
