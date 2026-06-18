@@ -116,7 +116,7 @@ All backend API, service, graph, and test work depends on a consistent package l
 
 ### Tasks
 
-- [ ] (01A): Initialize FastAPI backend package
+- [x] (01A): Initialize FastAPI backend package
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 1: Backend Foundation` > `### Task 1.1: Initialize FastAPI backend package`
   - Source Requirements:
     - Create the backend package and test scaffold.
@@ -146,7 +146,7 @@ All backend API, service, graph, and test work depends on a consistent package l
   - Blocked Condition: None
   - Files: `backend/pyproject.toml`, `backend/app/__init__.py`, `backend/app/main.py`, `backend/app/api/__init__.py`, `backend/app/api/routes/__init__.py`, `backend/app/api/routes/health.py`, `backend/tests/conftest.py`, `backend/tests/test_config.py`
 
-- [ ] (01B): Add settings and optional admin token gate
+- [x] (01B): Add settings and optional admin token gate
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 1: Backend Foundation` > `### Task 1.2: Add settings and optional admin token gate`; `docs/plans/Master_Plan.md` > `## 2. MVP Design Principles` > `### 2.1. Single-User by Default`; `docs/plans/Master_Plan.md` > `## 22. Updated .env`
   - Source Requirements:
     - Implement all required settings fields from the phase plan.
@@ -1188,8 +1188,8 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch01
 
-- [ ] (01A): Initialize FastAPI backend package
-- [ ] (01B): Add settings and optional admin token gate
+- [x] (01A): Initialize FastAPI backend package
+- [x] (01B): Add settings and optional admin token gate
 
 #### Batch02
 
