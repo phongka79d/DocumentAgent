@@ -230,7 +230,7 @@ The document, chunk, storage, embedding, vector, and reranking layers need a sha
 
 ### Tasks
 
-- [ ] (02A): Create Supabase schema document
+- [x] (02A): Create Supabase schema document
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 2: Database and Storage Contract` > `### Task 2.1: Create Supabase schema document`; `docs/plans/Master_Plan.md` > `## 15. Supabase Postgres Schema`
   - Source Requirements:
     - Add SQL for `documents`, `document_chunks`, and optional `messages`.
@@ -254,7 +254,7 @@ The document, chunk, storage, embedding, vector, and reranking layers need a sha
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for actually applying the SQL to Supabase.
   - Files: `docs/database/supabase_schema.sql`
 
-- [ ] (02B): Add external service client factories
+- [x] (02B): Add external service client factories
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 2: Database and Storage Contract` > `### Task 2.2: Add service clients`; `docs/plans/Master_Plan.md` > `## 3. Technology Stack`; `docs/plans/Master_Plan.md` > `## 22. Updated .env`
   - Source Requirements:
     - Implement lazy client factories that read from `Settings`.
@@ -1193,8 +1193,8 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch02
 
-- [ ] (02A): Create Supabase schema document
-- [ ] (02B): Add external service client factories
+- [x] (02A): Create Supabase schema document
+- [x] (02B): Add external service client factories
 
 #### Batch03
 

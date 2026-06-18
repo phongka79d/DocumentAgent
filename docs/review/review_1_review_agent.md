@@ -534,3 +534,365 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (02A)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Database and Storage Contract
+- Task ID: (02A)
+- Task title: Create Supabase schema document
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 2: Database and Storage Contract` > `### Task 2.1: Create Supabase schema document`; `docs/plans/Master_Plan.md` > `## 15. Supabase Postgres Schema`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02A)
+- Reviewed task ID: (02A)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is for `(02A)` and matches the requested Batch02 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`
+- untracked files: `docs/database/supabase_schema.sql`
+
+## Files Reviewed
+- `docs/reports/report_1_execute_agent.md`: in scope - latest execution report includes the `(02A)` entry under review.
+- `docs/tasks/task_1.md`: in scope - selected task definition, dependency state, and progress tracker were verified.
+- `docs/database/supabase_schema.sql`: in scope - SQL artifact matches the task deliverable.
+- `docs/plans/Plan_1.md`: in scope - Batch02 task contract and required indexes were verified.
+- `docs/plans/Master_Plan.md`: in scope - section 15 table definitions and exclusions were verified.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/database/supabase_schema.sql`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Present as the only untracked task artifact and contains only the schema SQL required by `(02A)`.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff is a clean append of the `(02A)` execution report. No unrelated Batch01 implementation files appear in the current diff.
+
+## Dependency Review
+- Required dependencies: `(01A)`, `(01B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Schema is limited to the MVP Supabase contract with only `documents`, `document_chunks`, and optional `messages`, matching Plan_1 Batch02 and Master Plan section 15.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `docs/database/supabase_schema.sql` contains concrete SQL DDL for exactly three tables and seven indexes.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The schema mirrors the plan-defined DDL and index set without extra task-specific shortcuts.
+
+## Validations Reviewed
+- Command/check: `Get-Content docs/database/supabase_schema.sql`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: pass
+- Notes: File content was read directly during review.
+- Command/check: `Select-String -Path docs/database/supabase_schema.sql -Pattern 'users|profiles|organizations|roles|conversations|document_relations'`
+- Reported result: Passed, no matches
+- Rerun result: Passed, no matches
+- Status: pass
+- Notes: Confirms the forbidden tables/relations are excluded.
+- Command/check: `Get-Item docs/database/supabase_schema.sql`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: pass
+- Notes: Confirms the artifact exists at the expected path.
+
+## Acceptance Review
+- Task acceptance: SQL contains only the three MVP tables and required indexes.
+- Status: satisfied
+- Evidence: The schema contains `documents`, `document_chunks`, `messages`, and the seven required indexes from Plan_1 lines 288-294. No user/profile/organization/role/conversation/document relation tables are present.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still unchecked
+- Execution report entry: appended and matches repository evidence
+- Review report entry: appended at EOF
+- Other: Updated the `(02A)` task entry and the `(02A)` progress-tracker entry only; no sibling or batch checkboxes were changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live Supabase application was not claimed as validated. The execution report correctly leaves running the SQL in Supabase as user action for later live validation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch02 - Database and Storage Contract",
+  "selected_task_id": "(02A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "docs/database/supabase_schema.sql"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (02B)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch02 - Database and Storage Contract
+- Task ID: (02B)
+- Task title: Add external service client factories
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 2: Database and Storage Contract` > `### Task 2.2: Add service clients`; `docs/plans/Master_Plan.md` > `## 3. Technology Stack`; `docs/plans/Master_Plan.md` > `## 22. Updated .env`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (02B)
+- Reviewed task ID: (02B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the `(02B)` report and matches the requested Batch02 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/tests/test_config.py`, `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/services/__init__.py`, `backend/app/services/jina_client.py`, `backend/app/services/qdrant_client.py`, `backend/app/services/shopaikey_client.py`, `backend/app/services/supabase_client.py`, `docs/database/supabase_schema.sql`
+
+## Files Reviewed
+- `backend/app/core/config.py`: in scope - settings contract includes the backend-only Supabase, ShopAIKey, Qdrant, and Jina values consumed by the factories.
+- `backend/app/services/__init__.py`: in scope - package marker only, no eager client construction.
+- `backend/app/services/supabase_client.py`: in scope - lazy factory resolves settings at call time and passes backend Supabase service credentials only when constructing the client.
+- `backend/app/services/qdrant_client.py`: in scope - lazy factory resolves settings at call time and disables compatibility probing during construction.
+- `backend/app/services/shopaikey_client.py`: in scope - lazy factory resolves settings at call time for the OpenAI-compatible ShopAIKey client.
+- `backend/app/services/jina_client.py`: in scope - lazy wrapper constructs an `httpx.Client` at factory-call time and carries the configured rerank model.
+- `backend/tests/test_config.py`: in scope - tests cover import-time safety and constructor-time settings resolution without network access.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(02B)` execution report append matches the repository evidence.
+- `docs/tasks/task_1.md`: questionable - contains prior accepted `(02A)` checkbox updates plus the reviewer-owned `(02B)` checkbox updates; no sibling or batch completion state was changed.
+- `docs/database/supabase_schema.sql`: out of scope - prior accepted `(02A)` artifact present in the same worktree and used only to verify the `(02A)` dependency is already available.
+- `docs/plans/Plan_1.md`: in scope - Batch02 service-client requirements were verified.
+- `docs/plans/Master_Plan.md`: in scope - technology stack and required environment settings were verified.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Present as an untracked file with only the service package docstring.
+- file from execution report: `backend/app/services/supabase_client.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses `config_module.get_settings()` inside `create_supabase_client()` rather than at import time.
+- file from execution report: `backend/app/services/qdrant_client.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses `config_module.get_settings()` inside `create_qdrant_client()` and sets `check_compatibility=False`.
+- file from execution report: `backend/app/services/shopaikey_client.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses `config_module.get_settings()` inside `create_shopaikey_client()` and reads backend-only API settings.
+- file from execution report: `backend/app/services/jina_client.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Wraps an `httpx.Client` and exposes the configured rerank model without making a request during import.
+- file from execution report: `backend/tests/test_config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Added import-safety and factory-construction tests with monkeypatched settings and constructors.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff is an append-only `(02B)` execution report entry.
+
+## Dependency Review
+- Required dependencies: `(01B)`, `(02A)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; the settings layer exists in `backend/app/core/config.py`, and the prior accepted `(02A)` schema artifact remains present as `docs/database/supabase_schema.sql`.
+
+## Architecture Alignment
+- Passed: All service factories live under `backend/app/services`, read from `Settings` at construction time, and keep provider credentials in backend-only modules. No frontend files were changed.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Each provider module contains a concrete factory function, and the Jina wrapper is a real `httpx.Client` carrier rather than a placeholder. The tests exercise import-time behavior and constructor invocation directly.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime code reads provider URLs, keys, and the Jina model from `Settings`; placeholder values are confined to tests and to documented config defaults from the source plan.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_config.py -v`
+- Reported result: Passed
+- Rerun result: Passed, 13 tests passed
+- Status: pass
+- Notes: Rerun during review confirmed the new service-factory tests and the existing config tests all pass locally.
+
+## Acceptance Review
+- Task acceptance: Client factory tests pass without contacting Supabase, Qdrant, ShopAIKey, or Jina.
+- Status: satisfied
+- Evidence: `backend/tests/test_config.py` verifies that importing the service modules does not construct clients, and each factory is monkeypatched so only constructor arguments are asserted. The required pytest target passed during review.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still unchecked
+- Execution report entry: appended and matches repository evidence
+- Review report entry: appended at EOF
+- Other: Updated only the `(02B)` task entry and the `(02B)` Batch02 progress-tracker entry. Pre-existing `(02A)` worktree changes were left intact.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live provider validation was not claimed as passed. The execution report correctly leaves real Supabase, Qdrant, ShopAIKey, and Jina credential checks as later user-provided validation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch02 - Database and Storage Contract",
+  "selected_task_id": "(02B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/__init__.py",
+    "backend/app/services/jina_client.py",
+    "backend/app/services/qdrant_client.py",
+    "backend/app/services/shopaikey_client.py",
+    "backend/app/services/supabase_client.py",
+    "backend/tests/test_config.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/tasks/task_1.md",
+    "docs/database/supabase_schema.sql"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

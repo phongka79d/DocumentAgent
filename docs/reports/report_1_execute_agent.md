@@ -242,3 +242,165 @@ partial
 - next task ID: A2
 - can proceed: yes
 - handoff notes: README repair is complete; A2 should handle the progress-tracker checkbox consistency check.
+
+---
+
+# Task Execution Report - 02A
+
+## Source Task File
+[docs/tasks/task_1.md](docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](docs/reports/report_1_execute_agent.md)
+
+## Batch
+Batch02 - Database and Storage Contract
+
+## Task
+(02A) - Create Supabase schema document
+
+## Status
+complete
+
+## Source of Truth Used
+- [docs/plans/Plan_1.md](docs/plans/Plan_1.md)
+- [docs/plans/Master_Plan.md](docs/plans/Master_Plan.md)
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Database and Storage Contract
+- Task ID: (02A)
+- Task title: Create Supabase schema document
+
+## Completed Work
+- Created `docs/database/supabase_schema.sql` with only the MVP `documents`, `document_chunks`, and `messages` tables.
+- Added the required indexes from the phase plan and excluded all forbidden user/profile/org/role/conversation/relation tables.
+
+## Files Created or Modified
+- docs/database/supabase_schema.sql
+- docs/reports/report_1_execute_agent.md
+
+## Tests or Validations Run
+- `Get-Content docs/database/supabase_schema.sql`: Passed
+- `Select-String -Path docs/database/supabase_schema.sql -Pattern 'users|profiles|organizations|roles|conversations|document_relations'`: Passed, no matches
+- `Get-Item docs/database/supabase_schema.sql`: Passed
+
+## Acceptance Check
+- Task acceptance condition: SQL contains only the three MVP tables and required indexes.
+- Status: satisfied
+- Evidence: The file contains exactly `documents`, `document_chunks`, `messages`, and the seven required indexes, with no forbidden tables present.
+
+## Artifacts Produced
+- `docs/database/supabase_schema.sql`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch progress updates are deferred to A2 after review
+
+## Key Implementation Decisions
+- Kept the schema file limited to the exact MVP tables and indexes from the source plan.
+
+## Risks or Open Issues
+- User still needs to run `docs/database/supabase_schema.sql` in Supabase before any live database validation.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes
+- handoff notes: The Supabase schema artifact is ready for the follow-on service client factory task.
+
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+- `docs/tasks/task_1.md`
+
+## Report File
+- `docs/reports/report_1_execute_agent.md`
+
+## Batch
+- Batch02 - Database and Storage Contract
+
+## Task
+- (02B) - Add external service client factories
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 2: Database and Storage Contract` > `### Task 2.2: Add service clients`
+- `docs/plans/Master_Plan.md` > `## 3. Technology Stack`
+- `docs/plans/Master_Plan.md` > `## 22. Updated .env`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Database and Storage Contract
+- Task ID: (02B)
+- Task title: Add external service client factories
+
+## Completed Work
+- Added lazy backend client factories for Supabase, Qdrant, ShopAIKey, and Jina.
+- Kept all client creation out of module import paths.
+- Added tests that monkeypatch settings and stub constructors so the factories can be constructed without contacting external services.
+- Implemented the Jina client as a thin `httpx.Client` wrapper that also carries the rerank model.
+
+## Files Created or Modified
+- `backend/app/services/__init__.py`
+- `backend/app/services/supabase_client.py`
+- `backend/app/services/qdrant_client.py`
+- `backend/app/services/shopaikey_client.py`
+- `backend/app/services/jina_client.py`
+- `backend/tests/test_config.py`
+- `docs/reports/report_1_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_config.py -v`: Passed
+  - Evidence: 13 tests passed, including import-time safety and factory-construction coverage, with no external service calls.
+
+## Acceptance Check
+- Task acceptance condition: Client factory tests pass without contacting Supabase, Qdrant, ShopAIKey, or Jina.
+- Status: satisfied
+- Evidence: The new tests verify lazy settings lookup and constructor invocation without network access, and the targeted pytest command passed.
+
+## Artifacts Produced
+- `backend/app/services/__init__.py`
+- `backend/app/services/supabase_client.py`
+- `backend/app/services/qdrant_client.py`
+- `backend/app/services/shopaikey_client.py`
+- `backend/app/services/jina_client.py`
+- Updated `backend/tests/test_config.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review
+
+## Key Implementation Decisions
+- Resolved settings at factory-call time through `app.core.config.get_settings()` so the factories stay lazy and easy to monkeypatch in tests.
+- Set `QdrantClient(check_compatibility=False)` to avoid any startup compatibility probe.
+- Implemented Jina with a thin `httpx.Client` wrapper because the local workspace does not have a Jina SDK installed.
+
+## Risks or Open Issues
+- Live service validation still depends on real Supabase, Qdrant, ShopAIKey, and Jina credentials from the user.
+
+## Minor Issues Fixed During Execution
+- Removed the generated `backend/app/services/__pycache__` directory after the test run.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes
+- handoff notes: Service client factories are now in place and verified locally without contacting external services.

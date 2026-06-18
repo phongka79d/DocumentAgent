@@ -1,7 +1,10 @@
+import importlib
+
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
+from app.core import config as config_module
 from app.core.config import Settings
 from app.core.security import require_admin_token
 from app.main import create_app
@@ -138,3 +141,137 @@ def test_require_admin_token_rejects_wrong_token_when_configured():
 
     assert excinfo.value.status_code == 401
     assert excinfo.value.detail == "Invalid or missing X-Admin-API-Token"
+
+
+class _CallCapture:
+    def __init__(self, result=None):
+        self.result = object() if result is None else result
+        self.args = None
+        self.kwargs = None
+
+    def __call__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        return self.result
+
+
+def _service_settings() -> Settings:
+    return Settings(
+        _env_file=None,
+        SUPABASE_URL="https://example.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY="service-role-key",
+        SHOPAIKEY_API_KEY="shopai-key",
+        SHOPAIKEY_BASE_URL="https://api.shopaikey.com/v1",
+        QDRANT_URL="https://qdrant.example.com",
+        QDRANT_API_KEY="qdrant-key",
+        JINA_API_KEY="jina-key",
+        JINA_RERANK_MODEL="jina-reranker-v2-base-multilingual",
+    )
+
+
+def test_service_client_modules_import_without_creating_clients(monkeypatch):
+    import httpx
+    import openai
+    import qdrant_client
+    import supabase
+
+    def _fail(*args, **kwargs):
+        raise AssertionError("client created during module import")
+
+    monkeypatch.setattr(supabase, "create_client", _fail)
+    monkeypatch.setattr(qdrant_client, "QdrantClient", _fail)
+    monkeypatch.setattr(openai, "OpenAI", _fail)
+    monkeypatch.setattr(httpx, "Client", _fail)
+
+    import app.services.supabase_client as supabase_module
+    import app.services.qdrant_client as qdrant_module
+    import app.services.shopaikey_client as shopaikey_module
+    import app.services.jina_client as jina_module
+
+    importlib.reload(supabase_module)
+    importlib.reload(qdrant_module)
+    importlib.reload(shopaikey_module)
+    importlib.reload(jina_module)
+
+
+def test_supabase_client_factory_reads_settings_without_network_calls(monkeypatch):
+    _clear_settings_env(monkeypatch)
+    settings = _service_settings()
+    monkeypatch.setattr(config_module, "get_settings", lambda: settings)
+
+    from app.services import supabase_client as module
+
+    capture = _CallCapture()
+    monkeypatch.setattr(module, "create_client", capture)
+
+    client = module.create_supabase_client()
+
+    assert client is capture.result
+    assert capture.args == (
+        settings.SUPABASE_URL,
+        settings.SUPABASE_SERVICE_ROLE_KEY,
+    )
+    assert capture.kwargs == {}
+
+
+def test_qdrant_client_factory_reads_settings_without_network_calls(monkeypatch):
+    _clear_settings_env(monkeypatch)
+    settings = _service_settings()
+    monkeypatch.setattr(config_module, "get_settings", lambda: settings)
+
+    from app.services import qdrant_client as module
+
+    capture = _CallCapture()
+    monkeypatch.setattr(module, "QdrantClient", capture)
+
+    client = module.create_qdrant_client()
+
+    assert client is capture.result
+    assert capture.args == ()
+    assert capture.kwargs == {
+        "url": settings.QDRANT_URL,
+        "api_key": settings.QDRANT_API_KEY,
+        "check_compatibility": False,
+    }
+
+
+def test_shopaikey_client_factory_reads_settings_without_network_calls(monkeypatch):
+    _clear_settings_env(monkeypatch)
+    settings = _service_settings()
+    monkeypatch.setattr(config_module, "get_settings", lambda: settings)
+
+    from app.services import shopaikey_client as module
+
+    capture = _CallCapture()
+    monkeypatch.setattr(module, "OpenAI", capture)
+
+    client = module.create_shopaikey_client()
+
+    assert client is capture.result
+    assert capture.args == ()
+    assert capture.kwargs == {
+        "api_key": settings.SHOPAIKEY_API_KEY,
+        "base_url": settings.SHOPAIKEY_BASE_URL,
+    }
+
+
+def test_jina_client_factory_reads_settings_without_network_calls(monkeypatch):
+    _clear_settings_env(monkeypatch)
+    settings = _service_settings()
+    monkeypatch.setattr(config_module, "get_settings", lambda: settings)
+
+    from app.services import jina_client as module
+
+    capture = _CallCapture()
+    monkeypatch.setattr(module.httpx, "Client", capture)
+
+    client = module.create_jina_client()
+
+    assert client.http_client is capture.result
+    assert client.model == settings.JINA_RERANK_MODEL
+    assert capture.args == ()
+    assert capture.kwargs["base_url"] == module.DEFAULT_JINA_RERANK_BASE_URL
+    assert capture.kwargs["headers"] == {
+        "Authorization": f"Bearer {settings.JINA_API_KEY}",
+        "Accept": "application/json",
+    }
