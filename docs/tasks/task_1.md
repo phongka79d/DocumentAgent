@@ -335,7 +335,7 @@ The MVP needs durable document records and explicit upload/index lifecycle opera
 
 ### Tasks
 
-- [ ] (03A): Add schemas, hashing, and upload validation
+- [x] (03A): Add schemas, hashing, and upload validation
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 3: Upload and Document APIs` > `### Task 3.1: Add schemas, hashing, and validation`; `docs/plans/Master_Plan.md` > `## 6.1. Upload Validation`; `docs/plans/Master_Plan.md` > `## 21.3. Chat Request`; `docs/plans/Master_Plan.md` > `## 21.4. Chat Response`
   - Source Requirements:
     - Define document, upload, chat, and citation request/response schemas.
@@ -362,7 +362,7 @@ The MVP needs durable document records and explicit upload/index lifecycle opera
   - Blocked Condition: None
   - Files: `backend/app/models/schemas.py`, `backend/app/services/hashing.py`, `backend/app/services/validation.py`, `backend/tests/test_hashing.py`, `backend/tests/test_validation.py`
 
-- [ ] (03B): Implement document service
+- [x] (03B): Implement document service
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 3: Upload and Document APIs` > `### Task 3.2: Implement document service`; `docs/plans/Master_Plan.md` > `## 6.2. Duplicate Upload Behavior`; `docs/plans/Master_Plan.md` > `## 14. Supabase Storage Design`; `docs/plans/Master_Plan.md` > `## 20. Document Deletion Flow`
   - Source Requirements:
     - Implement document listing, lookup, duplicate lookup, creation, storage upload, and deletion service functions.
@@ -388,7 +388,7 @@ The MVP needs durable document records and explicit upload/index lifecycle opera
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live Supabase storage/database validation without configured project and bucket.
   - Files: `backend/app/services/documents.py`, `backend/tests/test_api_documents.py`
 
-- [ ] (03C): Implement document routes
+- [x] (03C): Implement document routes
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 3: Upload and Document APIs` > `### Task 3.3: Implement document routes`; `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`; `docs/plans/Master_Plan.md` > `## 21.2. Optional Endpoints`; `docs/plans/Master_Plan.md` > `## 7. Indexing Flow`; `docs/plans/Master_Plan.md` > `## 20. Document Deletion Flow`
   - Source Requirements:
     - Add upload, list, detail, index, reindex, delete, and chunk-inspection endpoints.
@@ -1198,9 +1198,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch03
 
-- [ ] (03A): Add schemas, hashing, and upload validation
-- [ ] (03B): Implement document service
-- [ ] (03C): Implement document routes
+- [x] (03A): Add schemas, hashing, and upload validation
+- [x] (03B): Implement document service
+- [x] (03C): Implement document routes
 
 #### Batch04
 

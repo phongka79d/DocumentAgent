@@ -896,3 +896,592 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Upload and Document APIs
+- Task ID: (03A)
+- Task title: Add schemas, hashing, and upload validation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 3: Upload and Document APIs` > `### Task 3.1: Add schemas, hashing, and validation`; `docs/plans/Master_Plan.md` > `## 6.1. Upload Validation`; `docs/plans/Master_Plan.md` > `## 21.3. Chat Request`; `docs/plans/Master_Plan.md` > `## 21.4. Chat Response`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the `(03A)` report and matches the requested Batch03 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/models/__init__.py`, `backend/app/models/schemas.py`, `backend/app/services/hashing.py`, `backend/app/services/validation.py`, `backend/tests/test_hashing.py`, `backend/tests/test_validation.py`
+
+## Files Reviewed
+- `backend/app/models/__init__.py`: in scope - minimal package marker added alongside the new schema module.
+- `backend/app/models/schemas.py`: in scope - defines the `(03A)` document, upload, chat, response, and citation schemas with typed fields and strict Pydantic config.
+- `backend/app/services/hashing.py`: in scope - computes a real SHA-256 hex digest directly from the provided upload bytes.
+- `backend/app/services/validation.py`: in scope - enforces empty-file, max-size, supported-extension, MIME acceptance, and obvious extension/MIME conflict checks for PDF, DOCX, TXT, and Markdown uploads.
+- `backend/tests/test_hashing.py`: in scope - verifies a deterministic SHA-256 digest for a fixed byte payload.
+- `backend/tests/test_validation.py`: in scope - verifies accepted PDF, DOCX, TXT, MD, and Markdown uploads plus empty, oversized, unsupported, and mismatched rejection cases.
+- `backend/app/core/config.py`: in scope - prior `(01B)` dependency reviewed to confirm `MAX_UPLOAD_BYTES` exists and is the default source for validation.
+- `backend/app/main.py`: out of scope - reviewed to confirm no `(03C)` document or chat route implementation was added early.
+- `backend/app/services/__init__.py`: out of scope - reviewed as prior Batch02 package scaffolding only; no `(03B)` document-service implementation was added there.
+- `backend/app/services/jina_client.py`: out of scope - prior Batch02 client factory reviewed only as a dependency reference.
+- `backend/app/services/qdrant_client.py`: out of scope - prior Batch02 client factory reviewed only as a dependency reference.
+- `backend/app/services/shopaikey_client.py`: out of scope - prior Batch02 client factory reviewed only as a dependency reference.
+- `backend/app/services/supabase_client.py`: out of scope - prior Batch02 client factory reviewed only as a dependency reference.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(03A)` execution report append matches the repository evidence.
+- `docs/tasks/task_1.md`: questionable - contains the reviewer-owned `(03A)` checkbox updates only; sibling tasks and the Batch03 batch checkbox remain unchanged.
+- `docs/plans/Plan_1.md`: in scope - Batch03 schema, hashing, and validation requirements were verified.
+- `docs/plans/Master_Plan.md`: in scope - upload-validation rules and chat request/response shapes were verified.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/models/__init__.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Present as an untracked package marker alongside the new schema module.
+- file from execution report: `backend/app/models/schemas.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains `DocumentResponse`, `DocumentListResponse`, `UploadDocumentResponse`, `ChatRequest`, `ChatResponse`, and `SourceCitation`.
+- file from execution report: `backend/app/services/hashing.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses `hashlib.sha256(file_bytes).hexdigest()` directly.
+- file from execution report: `backend/app/services/validation.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Supports `.pdf`, `.docx`, `.txt`, `.md`, and `.markdown`, normalizes MIME parameters, and rejects clear type conflicts.
+- file from execution report: `backend/tests/test_hashing.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Confirms deterministic hashing against a fixed expected digest.
+- file from execution report: `backend/tests/test_validation.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers accepted and rejected upload cases required by the task.
+
+## Dependency Review
+- Required dependencies: `(01B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; `backend/app/core/config.py` provides `MAX_UPLOAD_BYTES`, and the prior Batch01/Batch02 work remains intact without needing repair in this review.
+
+## Architecture Alignment
+- Passed: The implementation stays within the approved Batch03 boundary by adding only models, hashing, validation, and focused tests. No `(03B)` document service exists, no `backend/app/api/routes/documents.py` file exists, and `backend/app/main.py` still only conditionally includes future routers without implementing them.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/services/hashing.py` performs a direct SHA-256 computation over the byte payload, and `backend/app/services/validation.py` performs concrete extension and MIME checks rather than placeholder branching.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime code derives file size from `len(file_bytes)`, reads the upload limit from `Settings` when not provided, and does not special-case fixture names or test-only values.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_hashing.py tests/test_validation.py -v`
+- Reported result: Passed
+- Rerun result: Passed, 10 tests passed
+- Status: pass
+- Notes: Rerun confirmed deterministic hashing plus accepted/rejected upload cases.
+- Command/check: `cd backend; python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py -v`
+- Reported result: Passed
+- Rerun result: Passed, 23 tests passed
+- Status: pass
+- Notes: Extended rerun confirmed the new `(03A)` work coexists with the prior config and service-factory coverage.
+
+## Acceptance Review
+- Task acceptance: Hashing is deterministic; invalid uploads are rejected; supported file names are accepted.
+- Status: satisfied
+- Evidence: The schema module defines all required `(03A)` request/response types, the hashing helper is a direct SHA-256 over bytes, the validator covers empty/oversized/unsupported/mismatched uploads with support for PDF, DOCX, TXT, and Markdown, and the declared pytest slice passed during review.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still unchecked
+- Execution report entry: appended and matches repository evidence
+- Review report entry: appended at EOF
+- Other: Updated only the `(03A)` task entry and the `(03A)` Batch03 progress-tracker entry. `(03B)`, `(03C)`, and the Batch03 batch checkbox were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The implementation files for `(03A)` are currently untracked in the worktree, so acceptance is based on direct file inspection plus passing local tests rather than on staged git diff hunks.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch03 - Upload and Document APIs",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/models/__init__.py",
+    "backend/app/models/schemas.py",
+    "backend/app/services/hashing.py",
+    "backend/app/services/validation.py",
+    "backend/tests/test_hashing.py",
+    "backend/tests/test_validation.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/tasks/task_1.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Upload and Document APIs
+- Task ID: (03B)
+- Task title: Implement document service
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 3: Upload and Document APIs` > `### Task 3.2: Implement document service`; `docs/plans/Master_Plan.md` > `## 6.2. Duplicate Upload Behavior`; `docs/plans/Master_Plan.md` > `## 14. Supabase Storage Design`; `docs/plans/Master_Plan.md` > `## 20. Document Deletion Flow`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the `(03B)` report for Batch03 and matches the requested task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/models/__init__.py`, `backend/app/models/schemas.py`, `backend/app/services/documents.py`, `backend/app/services/hashing.py`, `backend/app/services/validation.py`, `backend/tests/test_api_documents.py`, `backend/tests/test_hashing.py`, `backend/tests/test_validation.py`
+
+## Files Reviewed
+- `backend/app/services/documents.py`: in scope - implements `list_documents`, `get_document`, `find_document_by_hash`, `upload_original_file`, `create_uploaded_document`, `register_uploaded_document`, and `delete_document_and_file`; storage path helpers enforce `documents/{document_id}/original/{file_name}`.
+- `backend/tests/test_api_documents.py`: in scope - uses Supabase and Qdrant fakes to verify listing, lookup, upload, duplicate handling, storage path use, and deletion flow ordering.
+- `backend/app/main.py`: out of scope - reviewed only to confirm no `(03C)` route implementation was added early; it still contains only the health route plus optional future router inclusion hooks.
+- `backend/app/models/__init__.py`: questionable - pre-existing accepted `(03A)` change in the current uncommitted worktree; reviewed only as a dependency boundary.
+- `backend/app/models/schemas.py`: questionable - pre-existing accepted `(03A)` schema dependency for `DocumentResponse`; not counted as new `(03B)` scope.
+- `backend/app/services/hashing.py`: questionable - pre-existing accepted `(03A)` change; not part of this service-task implementation.
+- `backend/app/services/validation.py`: questionable - pre-existing accepted `(03A)` change; not part of this service-task implementation.
+- `backend/tests/test_hashing.py`: questionable - pre-existing accepted `(03A)` test file; not part of `(03B)` scope.
+- `backend/tests/test_validation.py`: questionable - pre-existing accepted `(03A)` test file; not part of `(03B)` scope.
+- `backend/app/services/supabase_client.py`: out of scope - reviewed as a required `(02B)` dependency for lazy client construction.
+- `backend/app/services/qdrant_client.py`: out of scope - reviewed as a required `(02B)` dependency for lazy client construction.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(03B)` execution report append matches the repository evidence and does not claim live Supabase/storage validation.
+- `docs/tasks/task_1.md`: in scope - updated only the selected `(03B)` task checkbox and the matching Batch03 progress-tracker checkbox.
+- `docs/plans/Plan_1.md`: in scope - Task 3.2 requirements were verified.
+- `docs/plans/Master_Plan.md`: in scope - duplicate upload, storage path, and deletion flow requirements were verified.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New service module exists in the expected location and contains the required service functions.
+- file from execution report: `backend/tests/test_api_documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Test file exists and covers service behavior using fakes rather than live external services.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the latest `(03B)` execution report entry with mocked-validation caveats.
+
+## Dependency Review
+- Required dependencies: `(02B)`, `(03A)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; lazy client factories from `(02B)` are present, and the `(03A)` schema/hash/validation files exist as prior accepted uncommitted work.
+
+## Architecture Alignment
+- Passed: The implementation centralizes document database and storage operations in `backend/app/services/documents.py`, keeps client construction lazy, and stops short of implementing any `(03C)` API route file or endpoint. Route directory inspection showed only `__init__.py` and `health.py` under `backend/app/api/routes`.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The service constructs real document models from returned rows, resolves storage bucket operations through the Supabase client, builds Qdrant deletion filters by `document_id`, and deletes storage plus the document row after Qdrant cleanup.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Storage paths are derived from a generated UUID plus sanitized file name, duplicate lookup uses `file_hash`, and deletion uses the stored `document_id` and `storage_path` instead of fixture-specific values.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_api_documents.py tests/test_config.py tests/test_hashing.py tests/test_validation.py -v`
+- Reported result: Passed
+- Rerun result: Passed, 30 tests passed
+- Status: pass
+- Notes: Rerun confirmed document service coverage plus the existing Batch01/Batch02/03A checks.
+- Command/check: `rg --files backend\app\api\routes backend\tests`
+- Reported result: not reported
+- Rerun result: `backend/app/api/routes` contains only `__init__.py` and `health.py`; no `documents.py` route file exists
+- Status: pass
+- Notes: Confirms `(03C)` API route work was not implemented early.
+
+## Acceptance Review
+- Task acceptance: Duplicate behavior returns existing document metadata and prevents duplicate storage/database/vector work; required service functions exist; storage path format and deletion ordering are preserved.
+- Status: satisfied
+- Evidence: `register_uploaded_document()` checks `file_hash` before upload or insert and returns `duplicate=True` with the existing document on duplicates, `build_document_storage_path()` and `_extract_document_id_from_storage_path()` enforce `documents/{document_id}/original/{file_name}`, and `delete_document_and_file()` performs Qdrant deletion before storage removal and document-row deletion.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still unchecked
+- Execution report entry: appended and matches repository evidence
+- Review report entry: appended at EOF
+- Other: Updated only the `(03B)` task entry and the `(03B)` Batch03 progress-tracker entry. `(03C)` and the Batch03 batch checkbox were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(03A)` files remain untracked in the same worktree. They were treated as prior accepted dependency context and not re-scoped as `(03B)` implementation work.
+- Live Supabase database and storage validation remains user-blocked and was not claimed as passed by the execution report.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch03 - Upload and Document APIs",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/documents.py",
+    "backend/tests/test_api_documents.py",
+    "backend/app/models/__init__.py",
+    "backend/app/models/schemas.py",
+    "backend/app/services/hashing.py",
+    "backend/app/services/validation.py",
+    "backend/tests/test_hashing.py",
+    "backend/tests/test_validation.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "docs/tasks/task_1.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Supabase storage/database validation remains blocked until the user applies the schema and configures the storage bucket."
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Upload and Document APIs
+- Task ID: (03C)
+- Task title: Implement document routes
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 3: Upload and Document APIs` > `### Task 3.3: Implement document routes`; `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`; `docs/plans/Master_Plan.md` > `## 21.2. Optional Endpoints`; `docs/plans/Master_Plan.md` > `## 7. Indexing Flow`; `docs/plans/Master_Plan.md` > `## 20. Document Deletion Flow`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the `(03C)` report for Batch03 and matches the requested task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/main.py`, `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/app/api/routes/documents.py`, `backend/app/models/__init__.py`, `backend/app/models/schemas.py`, `backend/app/services/documents.py`, `backend/app/services/hashing.py`, `backend/app/services/validation.py`, `backend/tests/test_api_documents.py`, `backend/tests/test_hashing.py`, `backend/tests/test_validation.py`
+
+## Files Reviewed
+- `backend/app/api/routes/documents.py`: in scope - implements the required upload, list, detail, index, reindex, delete, and chunk-inspection endpoints under the `/documents` router with stubbed index/reindex runners.
+- `backend/app/main.py`: in scope - includes the optional `app.api.routes.documents` router under the `/api` prefix and registers all required document endpoints in the app.
+- `backend/tests/test_api_documents.py`: in scope - contains the prior accepted `(03B)` service tests plus the new `(03C)` route tests for upload validation, duplicate upload response, index invocation shape, and delete cleanup through the service path.
+- `backend/app/services/documents.py`: questionable - prior accepted uncommitted `(03B)` dependency; reviewed here only to confirm route deletion delegates to service cleanup and preserves Qdrant cleanup before row deletion.
+- `backend/app/models/__init__.py`: questionable - prior accepted uncommitted `(03A)` dependency context only.
+- `backend/app/models/schemas.py`: questionable - prior accepted uncommitted `(03A)` dependency that supplies `DocumentResponse`, `DocumentListResponse`, and `UploadDocumentResponse`.
+- `backend/app/services/hashing.py`: questionable - prior accepted uncommitted `(03A)` dependency used by the upload route.
+- `backend/app/services/validation.py`: questionable - prior accepted uncommitted `(03A)` dependency used by the upload route validation gate.
+- `backend/tests/test_hashing.py`: out of scope - prior accepted `(03A)` test file; not part of the `(03C)` implementation.
+- `backend/tests/test_validation.py`: out of scope - prior accepted `(03A)` test file; not part of the `(03C)` implementation.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(03C)` execution report append matches the repository evidence and explicitly limits validation to local mocked checks.
+- `docs/tasks/task_1.md`: in scope - updated only the selected `(03C)` task checkbox and the matching Batch03 progress-tracker checkbox.
+- `docs/plans/Plan_1.md`: in scope - Task 3.3 requirements were verified.
+- `docs/plans/Master_Plan.md`: in scope - required/optional endpoint, indexing-flow boundary, and deletion-flow requirements were verified.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/api/routes/documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New route module exists in the expected location and defines all required Batch03 document endpoints.
+- file from execution report: `backend/app/main.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: App factory includes the document router under `/api` when the module exists.
+- file from execution report: `backend/tests/test_api_documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The file contains both prior `(03B)` service tests and the new `(03C)` route tests; the route-specific cases match the task acceptance targets.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the `(03C)` execution report entry and does not claim live Supabase or Qdrant endpoint validation.
+
+## Dependency Review
+- Required dependencies: `(03A)`, `(03B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none; the accepted `(03A)` schema/hash/validation files and accepted `(03B)` document service are present in the worktree and match the route contracts used by `(03C)`.
+
+## Architecture Alignment
+- Passed: The document lifecycle API is exposed under `/api`, upload remains separate from indexing, index and reindex stay as local stub/injection points until Batch05, and no `/api/chat` route or ingestion graph implementation was added early.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `upload_document()` performs real validation and duplicate-aware service registration, `index_document()` and `reindex_document()` call dedicated runner hooks with `document_id` plus settings only, `delete_document()` delegates to the `(03B)` service cleanup path, and `get_document_chunks()` reads actual chunk rows from the `document_chunks` table.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The route module resolves settings at request time, uses validated upload metadata, passes through real `document_id` values, and does not special-case fixture data or sample filenames in runtime behavior.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_api_documents.py -v`
+- Reported result: Passed
+- Rerun result: Passed, 11 tests passed
+- Status: pass
+- Notes: Fresh rerun covered both the existing `(03B)` service checks and the new `(03C)` route checks.
+- Command/check: route introspection via `create_app()`
+- Reported result: not reported
+- Rerun result: `/api/documents/upload`, `/api/documents`, `/api/documents/{document_id}`, `/api/documents/{document_id}/index`, `/api/documents/{document_id}/reindex`, `/api/documents/{document_id}`, and `/api/documents/{document_id}/chunks` are all registered under `/api`
+- Status: pass
+- Notes: Confirms app integration, not just module-level route definitions.
+- Command/check: `rg -n "/api/chat|LangGraph|ingestion graph|run_document_index|run_document_reindex" backend\app`
+- Reported result: not reported
+- Rerun result: only the local stub runner declarations/usages in `backend/app/api/routes/documents.py` matched; no `/api/chat` route or ingestion-graph implementation was found in `backend/app`
+- Status: pass
+- Notes: Confirms Batch05 ingestion and Batch06 chat route work were not implemented early.
+
+## Acceptance Review
+- Task acceptance: Route tests validate upload, duplicate handling, index graph input shape, and delete cleanup ordering.
+- Status: satisfied
+- Evidence: The upload route rejects invalid files before calling the service and does not trigger indexing, the duplicate upload response returns the existing `document_id`, `status`, and `duplicate=true`, the index route invokes only the injected runner with `document_id` plus settings, and the delete route goes through `document_service.delete_document_and_file()`, whose implementation performs Qdrant cleanup before storage and document-row deletion.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still unchecked
+- Execution report entry: appended and matches repository evidence
+- Review report entry: appended at EOF
+- Other: Updated only the `(03C)` task entry and the `(03C)` Batch03 progress-tracker entry. The Batch03 batch checkbox was intentionally left unchanged per instruction.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `backend/tests/test_api_documents.py` now mixes accepted `(03B)` service coverage with new `(03C)` route coverage in one untracked file. That is acceptable here, but the file should continue to be reviewed by task slice rather than by filename alone.
+- The delete-order guarantee is established by the delegated `(03B)` service implementation and exercised through the route tests; the route layer itself correctly avoids reimplementing cleanup.
+- Live Supabase and Qdrant endpoint validation remains blocked by external setup and was not claimed as passed by the execution report.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, the Batch03 batch checkbox was intentionally not updated in this review pass
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch03 - Upload and Document APIs",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/routes/documents.py",
+    "backend/app/main.py",
+    "backend/tests/test_api_documents.py",
+    "backend/app/services/documents.py",
+    "backend/app/models/__init__.py",
+    "backend/app/models/schemas.py",
+    "backend/app/services/hashing.py",
+    "backend/app/services/validation.py",
+    "backend/tests/test_hashing.py",
+    "backend/tests/test_validation.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "docs/tasks/task_1.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "Live Supabase and Qdrant endpoint validation remains blocked until the user provides external setup and credentials."
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

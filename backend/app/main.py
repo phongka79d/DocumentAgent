@@ -7,6 +7,10 @@ from app.core.config import Settings, get_settings
 from app.api.routes.health import router as health_router
 
 DEFAULT_FRONTEND_ORIGIN = "http://localhost:5173"
+OPTIONAL_API_ROUTE_MODULES = (
+    "app.api.routes.documents",
+    "app.api.routes.chat",
+)
 
 
 def _get_frontend_origin(settings: Settings) -> str:
@@ -37,8 +41,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(health_router, prefix="/api")
-    _include_optional_router(app, "app.api.routes.documents")
-    _include_optional_router(app, "app.api.routes.chat")
+    for module_name in OPTIONAL_API_ROUTE_MODULES:
+        _include_optional_router(app, module_name)
     return app
 
 
