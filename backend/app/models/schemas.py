@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -46,6 +46,30 @@ class DocumentListResponse(APIModel):
     documents: list[DocumentResponse] = Field(default_factory=list)
 
 
+class DocumentChunkResponse(APIModel):
+    id: str = Field(min_length=1)
+    document_id: str = Field(min_length=1)
+    chunk_index: int
+    content: str = Field(min_length=1)
+    content_hash: str | None = None
+    token_count: int | None = None
+    chunk_type: str | None = None
+    heading: str | None = None
+    section_path: list[str] = Field(default_factory=list)
+    page_start: int | None = None
+    page_end: int | None = None
+    token_start: int | None = None
+    token_end: int | None = None
+    qdrant_point_id: str | None = None
+    metadata: dict[str, Any] | None = None
+    created_at: datetime | None = None
+
+
+class DocumentChunkListResponse(APIModel):
+    document_id: str = Field(min_length=1)
+    chunks: list[DocumentChunkResponse] = Field(default_factory=list)
+
+
 class UploadDocumentResponse(APIModel):
     document_id: UUID
     status: DocumentStatus
@@ -74,3 +98,15 @@ class ChatResponse(APIModel):
     answer: str = Field(min_length=1)
     sources: list[SourceCitation] = Field(default_factory=list)
 
+
+class MessageResponse(APIModel):
+    id: UUID
+    question: str = Field(min_length=1)
+    answer: str = Field(min_length=1)
+    sources: list[SourceCitation] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime | None = None
+
+
+class MessageListResponse(APIModel):
+    messages: list[MessageResponse] = Field(default_factory=list)

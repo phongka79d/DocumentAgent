@@ -1182,6 +1182,20 @@ def test_save_message_optional_node_inserts_question_answer_sources_and_metadata
             "sources": sources,
             "save_message": True,
             "document_ids": [DOC_A],
+            "context_chunks": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "page_start": 3,
+                    "page_end": 4,
+                    "heading": "Pricing",
+                    "qdrant_score": 0.91,
+                    "rerank_score": 0.99,
+                    "content": "Pricing is based on usage tiers.",
+                }
+            ],
             "retrieved_chunks": [
                 {
                     "document_id": DOC_A,
@@ -1209,7 +1223,7 @@ def test_save_message_optional_node_inserts_question_answer_sources_and_metadata
     assert saved_row["sources"] == sources
     assert saved_row["metadata"]["document_ids"] == [DOC_A]
     assert saved_row["metadata"]["prepared_query"] == "What does the document say about pricing?"
-    assert saved_row["metadata"]["context_chunk_count"] == 0
+    assert saved_row["metadata"]["context_chunk_count"] == 1
 
 
 def test_save_message_optional_node_ignores_insert_failure():

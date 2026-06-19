@@ -10,7 +10,13 @@ from qdrant_client.http import models as qdrant_models
 from app.core.config import Settings, get_settings
 from app.core.errors import safe_http_exception
 from app.graphs.ingestion_graph import build_ingestion_graph
-from app.models.schemas import DocumentListResponse, DocumentResponse, UploadDocumentResponse
+from app.models.schemas import (
+    DocumentChunkListResponse,
+    DocumentListResponse,
+    DocumentResponse,
+    UploadDocumentResponse,
+)
+from app.services.chunks import list_chunks_by_document
 from app.services import documents as document_service
 from app.services.hashing import compute_sha256
 from app.services.qdrant_client import create_qdrant_client
@@ -199,19 +205,9 @@ def delete_document(document_id: UUID) -> DocumentResponse:
         raise _document_not_found(document_id) from exc
 
 
-@router.get("/{document_id}/chunks")
-def get_document_chunks(document_id: UUID) -> dict[str, Any]:
+@router.get("/{document_id}/chunks", response_model=DocumentChunkListResponse)
+def get_document_chunks(document_id: UUID) -> DocumentChunkListResponse:
     settings = _resolve_settings()
     _get_document_or_404(document_id, settings=settings)
-    client = create_supabase_client(settings)
-    response = (
-        client.table(DOCUMENT_CHUNKS_TABLE)
-        .select("*")
-        .eq("document_id", str(document_id))
-        .order("chunk_index")
-        .execute()
-    )
-    return {
-        "document_id": str(document_id),
-        "chunks": _response_rows(response),
-    }
+    chunks = list_chunks_by_document(document_id, settings=settings)
+    return DocumentChunkListResponse(document_id=str(document_id), chunks=chunks)

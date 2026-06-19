@@ -10,6 +10,7 @@ DEFAULT_FRONTEND_ORIGIN = "http://localhost:5173"
 OPTIONAL_API_ROUTE_MODULES = (
     "app.api.routes.documents",
     "app.api.routes.chat",
+    "app.api.routes.messages",
 )
 
 

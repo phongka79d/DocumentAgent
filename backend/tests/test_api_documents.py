@@ -10,8 +10,9 @@ from fastapi.testclient import TestClient
 from app.api.routes import documents as documents_route
 from app.core.config import Settings
 from app.main import create_app
-from app.models.schemas import DocumentResponse
+from app.models.schemas import DocumentChunkResponse, DocumentResponse
 from app.services.hashing import compute_sha256
+from app.services import chunks as chunk_service
 from app.services import documents as document_service
 
 
@@ -63,6 +64,46 @@ def _document_row(
         "created_at": created_at
         or datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
         "updated_at": datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
+    }
+
+
+def _chunk_row(
+    *,
+    document_id: UUID,
+    chunk_id: UUID,
+    chunk_index: int,
+    content: str,
+    content_hash: str = "chunk-hash",
+    token_count: int = 42,
+    chunk_type: str = "smart_section",
+    heading: str | None = "Overview",
+    section_path: list[str] | None = None,
+    page_start: int | None = 1,
+    page_end: int | None = 1,
+    token_start: int | None = 0,
+    token_end: int | None = 42,
+    qdrant_point_id: str | None = "point-1",
+    metadata: dict[str, object] | None = None,
+    created_at: datetime | str | None = None,
+) -> dict[str, object]:
+    return {
+        "id": chunk_id,
+        "document_id": str(document_id),
+        "chunk_index": chunk_index,
+        "content": content,
+        "content_hash": content_hash,
+        "token_count": token_count,
+        "chunk_type": chunk_type,
+        "heading": heading,
+        "section_path": section_path if section_path is not None else ["Overview"],
+        "page_start": page_start,
+        "page_end": page_end,
+        "token_start": token_start,
+        "token_end": token_end,
+        "qdrant_point_id": qdrant_point_id,
+        "metadata": metadata if metadata is not None else {"source": "test"},
+        "created_at": created_at
+        or datetime(2026, 6, 18, 8, 30, tzinfo=timezone.utc),
     }
 
 
@@ -221,6 +262,13 @@ class FakeIngestionGraph:
     def invoke(self, state: dict[str, object]) -> dict[str, object]:
         self.invocations.append(dict(state))
         return dict(self.result)
+
+
+def _unexpected_provider_client_factory(name: str):
+    def _factory(*args, **kwargs):
+        pytest.fail(f"{name} client should not be called")
+
+    return _factory
 
 
 def test_list_documents_returns_document_models_in_created_order(monkeypatch):
@@ -621,3 +669,212 @@ def test_delete_route_deletes_qdrant_before_storage_before_row(monkeypatch):
         ("delete", "documents", [("id", str(FIXED_DOCUMENT_ID))])
     ]
     assert fake_client.tables["documents"] == []
+
+
+def test_list_chunks_by_document_returns_ordered_document_chunk_responses_and_normalizes_ids():
+    settings = _test_settings()
+    first_chunk_id = UUID("44444444-4444-4444-4444-444444444444")
+    second_chunk_id = UUID("55555555-5555-5555-5555-555555555555")
+    fake_client = FakeSupabaseClient(
+        documents=[
+            _document_row(
+                document_id=FIXED_DOCUMENT_ID,
+                file_hash="chunk-source",
+                status="ready",
+            )
+        ],
+        document_chunks=[
+            _chunk_row(
+                document_id=FIXED_DOCUMENT_ID,
+                chunk_id=second_chunk_id,
+                chunk_index=1,
+                content="chunk one",
+                heading="Second",
+                section_path=["Section 2"],
+                metadata={"source": "second"},
+            ),
+            _chunk_row(
+                document_id=FIXED_DOCUMENT_ID,
+                chunk_id=first_chunk_id,
+                chunk_index=0,
+                content="chunk zero",
+                heading="First",
+                section_path=["Section 1"],
+                metadata={"source": "first"},
+            ),
+        ],
+    )
+
+    chunks = chunk_service.list_chunks_by_document(
+        FIXED_DOCUMENT_ID,
+        settings=settings,
+        supabase_client=fake_client,
+    )
+
+    assert all(isinstance(chunk, DocumentChunkResponse) for chunk in chunks)
+    assert [chunk.chunk_index for chunk in chunks] == [0, 1]
+    assert [chunk.id for chunk in chunks] == [str(first_chunk_id), str(second_chunk_id)]
+    assert [chunk.document_id for chunk in chunks] == [
+        str(FIXED_DOCUMENT_ID),
+        str(FIXED_DOCUMENT_ID),
+    ]
+    assert chunks[0].heading == "First"
+    assert chunks[0].section_path == ["Section 1"]
+    assert chunks[0].metadata == {"source": "first"}
+
+
+def test_list_chunks_by_document_returns_empty_list_when_document_has_no_chunks():
+    settings = _test_settings()
+    fake_client = FakeSupabaseClient(
+        documents=[
+            _document_row(
+                document_id=FIXED_DOCUMENT_ID,
+                file_hash="chunk-source",
+                status="ready",
+            )
+        ],
+        document_chunks=[],
+    )
+
+    chunks = chunk_service.list_chunks_by_document(
+        FIXED_DOCUMENT_ID,
+        settings=settings,
+        supabase_client=fake_client,
+    )
+
+    assert chunks == []
+
+
+def test_get_document_chunks_route_returns_typed_rows_and_does_not_call_external_providers(monkeypatch):
+    settings = _test_settings()
+    first_chunk_id = UUID("66666666-6666-6666-6666-666666666666")
+    second_chunk_id = UUID("77777777-7777-7777-7777-777777777777")
+    fake_client = FakeSupabaseClient(
+        documents=[
+            _document_row(
+                document_id=FIXED_DOCUMENT_ID,
+                file_hash="route-source",
+                status="ready",
+            )
+        ],
+        document_chunks=[
+            _chunk_row(
+                document_id=FIXED_DOCUMENT_ID,
+                chunk_id=second_chunk_id,
+                chunk_index=1,
+                content="chunk one",
+                heading="Second",
+                section_path=["Section 2"],
+                metadata={"source": "second"},
+            ),
+            _chunk_row(
+                document_id=FIXED_DOCUMENT_ID,
+                chunk_id=first_chunk_id,
+                chunk_index=0,
+                content="chunk zero",
+                heading="First",
+                section_path=["Section 1"],
+                metadata={"source": "first"},
+            ),
+        ],
+    )
+
+    _patch_route_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        document_service,
+        "_resolve_supabase_client",
+        lambda supabase_client=None: fake_client,
+    )
+    monkeypatch.setattr(
+        chunk_service,
+        "_resolve_supabase_client",
+        lambda supabase_client=None: fake_client,
+    )
+    monkeypatch.setattr(
+        "app.services.qdrant_client.create_qdrant_client",
+        _unexpected_provider_client_factory("Qdrant"),
+    )
+    monkeypatch.setattr(
+        "app.services.shopaikey_client.create_shopaikey_client",
+        _unexpected_provider_client_factory("ShopAIKey"),
+    )
+    monkeypatch.setattr(
+        "app.services.jina_client.create_jina_client",
+        _unexpected_provider_client_factory("Jina"),
+    )
+
+    app = _test_app(settings)
+
+    with TestClient(app) as test_client:
+        response = test_client.get(f"/api/documents/{FIXED_DOCUMENT_ID}/chunks")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["document_id"] == str(FIXED_DOCUMENT_ID)
+    assert [chunk["chunk_index"] for chunk in payload["chunks"]] == [0, 1]
+    assert payload["chunks"][0]["id"] == str(first_chunk_id)
+    assert payload["chunks"][0]["document_id"] == str(FIXED_DOCUMENT_ID)
+    assert payload["chunks"][0]["content"] == "chunk zero"
+    assert payload["chunks"][0]["section_path"] == ["Section 1"]
+    assert set(payload["chunks"][0]) == {
+        "id",
+        "document_id",
+        "chunk_index",
+        "content",
+        "content_hash",
+        "token_count",
+        "chunk_type",
+        "heading",
+        "section_path",
+        "page_start",
+        "page_end",
+        "token_start",
+        "token_end",
+        "qdrant_point_id",
+        "metadata",
+        "created_at",
+    }
+
+
+def test_get_document_chunks_route_returns_404_for_unknown_document_without_external_provider_calls(monkeypatch):
+    settings = _test_settings()
+    fake_client = FakeSupabaseClient(documents=[], document_chunks=[])
+
+    _patch_route_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        document_service,
+        "_resolve_supabase_client",
+        lambda supabase_client=None: fake_client,
+    )
+    monkeypatch.setattr(
+        chunk_service,
+        "_resolve_supabase_client",
+        lambda supabase_client=None: fake_client,
+    )
+    monkeypatch.setattr(
+        documents_route,
+        "list_chunks_by_document",
+        lambda *args, **kwargs: pytest.fail(
+            "chunk lookup should not run when the document is missing"
+        ),
+    )
+    monkeypatch.setattr(
+        "app.services.qdrant_client.create_qdrant_client",
+        _unexpected_provider_client_factory("Qdrant"),
+    )
+    monkeypatch.setattr(
+        "app.services.shopaikey_client.create_shopaikey_client",
+        _unexpected_provider_client_factory("ShopAIKey"),
+    )
+    monkeypatch.setattr(
+        "app.services.jina_client.create_jina_client",
+        _unexpected_provider_client_factory("Jina"),
+    )
+
+    app = _test_app(settings)
+
+    with TestClient(app) as test_client:
+        response = test_client.get(f"/api/documents/{THIRD_DOCUMENT_ID}/chunks")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == f"Document {THIRD_DOCUMENT_ID} not found"

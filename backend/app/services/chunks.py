@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 from uuid import UUID
 
 from app.core.config import Settings, get_settings
+from app.models.schemas import DocumentChunkResponse
 from app.services.supabase_client import create_supabase_client
 
 DOCUMENT_CHUNKS_TABLE = "document_chunks"
@@ -58,6 +59,29 @@ def _normalize_row(row: Mapping[str, Any]) -> dict[str, Any]:
     if document_id is not None:
         normalized["document_id"] = str(document_id)
     return normalized
+
+
+def _normalize_section_path(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, (str, bytes)):
+        text = str(value).strip()
+        return [text] if text else []
+    if isinstance(value, Sequence):
+        path: list[str] = []
+        for item in value:
+            text = str(item).strip()
+            if text:
+                path.append(text)
+        return path
+    text = str(value).strip()
+    return [text] if text else []
+
+
+def _chunk_from_row(row: Mapping[str, Any]) -> DocumentChunkResponse:
+    normalized = _normalize_row(row)
+    normalized["section_path"] = _normalize_section_path(normalized.get("section_path"))
+    return DocumentChunkResponse.model_validate(normalized)
 
 
 def get_chunks_by_document_and_indexes(
@@ -118,3 +142,21 @@ def get_last_chunk_by_document(
     )
     rows = [_normalize_row(row) for row in _response_rows(response)]
     return rows[0] if rows else None
+
+
+def list_chunks_by_document(
+    document_id: UUID | str,
+    *,
+    settings: Settings | None = None,
+    supabase_client: Any | None = None,
+) -> list[DocumentChunkResponse]:
+    _resolve_settings(settings)
+    client = _resolve_supabase_client(supabase_client)
+    response = (
+        client.table(DOCUMENT_CHUNKS_TABLE)
+        .select("*")
+        .eq("document_id", str(document_id))
+        .order("chunk_index")
+        .execute()
+    )
+    return [_chunk_from_row(row) for row in _response_rows(response)]
