@@ -86,6 +86,9 @@ class SourceCitation(APIModel):
     heading: str | None = None
     qdrant_score: float | None = None
     rerank_score: float | None = None
+    section_path: list[str] = Field(default_factory=list)
+    content_preview: str = ""
+    is_neighbor_context: bool = False
 
 
 class ChatRequest(APIModel):

@@ -31,8 +31,13 @@ ALL_SETTINGS_FIELDS = {
     "JINA_RERANK_MODEL",
     "RETRIEVAL_SEMANTIC_TOP_K",
     "RETRIEVAL_FINAL_TOP_K",
+    "RETRIEVAL_CONTEXT_MODE",
     "RETRIEVAL_CONTEXT_WINDOW",
+    "RETRIEVAL_SECTION_SIBLING_WINDOW",
     "RETRIEVAL_CONTEXT_MAX_CANDIDATES",
+    "CHUNKING_STRATEGY",
+    "HEADER_SCORE_THRESHOLD",
+    "TABLE_CHUNK_MAX_TOKENS",
     "CHUNK_SIZE_TOKENS",
     "CHUNK_OVERLAP_TOKENS",
     "MAX_UPLOAD_BYTES",
@@ -96,8 +101,13 @@ def test_settings_load_defaults_from_master_plan(monkeypatch):
     assert settings.ENABLE_RERANK is True
     assert settings.RETRIEVAL_SEMANTIC_TOP_K == 40
     assert settings.RETRIEVAL_FINAL_TOP_K == 5
+    assert settings.RETRIEVAL_CONTEXT_MODE == "section_aware"
     assert settings.RETRIEVAL_CONTEXT_WINDOW == 1
+    assert settings.RETRIEVAL_SECTION_SIBLING_WINDOW == 1
     assert settings.RETRIEVAL_CONTEXT_MAX_CANDIDATES == 8
+    assert settings.CHUNKING_STRATEGY == "smart_section"
+    assert settings.HEADER_SCORE_THRESHOLD == 4
+    assert settings.TABLE_CHUNK_MAX_TOKENS == 500
     assert settings.CHUNK_SIZE_TOKENS == 500
     assert settings.CHUNK_OVERLAP_TOKENS == 150
     assert settings.MAX_UPLOAD_BYTES == 25000000
@@ -111,6 +121,8 @@ def test_settings_read_environment_overrides(monkeypatch):
     monkeypatch.setenv("FRONTEND_ORIGIN", "https://frontend.example")
     monkeypatch.setenv("ADMIN_API_TOKEN", "secret-token")
     monkeypatch.setenv("ENABLE_RERANK", "false")
+    monkeypatch.setenv("RETRIEVAL_CONTEXT_MODE", "neighbor")
+    monkeypatch.setenv("RETRIEVAL_SECTION_SIBLING_WINDOW", "2")
     monkeypatch.setenv("RETRIEVAL_FINAL_TOP_K", "7")
     monkeypatch.setenv("MAX_OUTPUT_TOKENS", "2048")
 
@@ -120,6 +132,8 @@ def test_settings_read_environment_overrides(monkeypatch):
     assert settings.FRONTEND_ORIGIN == "https://frontend.example"
     assert settings.ADMIN_API_TOKEN == "secret-token"
     assert settings.ENABLE_RERANK is False
+    assert settings.RETRIEVAL_CONTEXT_MODE == "neighbor"
+    assert settings.RETRIEVAL_SECTION_SIBLING_WINDOW == 2
     assert settings.RETRIEVAL_FINAL_TOP_K == 7
     assert settings.MAX_OUTPUT_TOKENS == 2048
 

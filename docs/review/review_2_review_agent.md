@@ -2204,3 +2204,574 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Retrieval Context Tuning
+- Task ID: (05A)
+- Task title: Add section-aware neighbor expansion
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_2.md > ## Batch 5: Retrieval Context Tuning > ### Task 5.1: Add section-aware neighbor expansion
+- Supplemental documents: docs/plans/Master_Plan.md
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: Reviewed the latest appended `(05A)` execution entry only, per user instruction.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/core/config.py; backend/app/services/retrieval.py; backend/tests/test_config.py; backend/tests/test_query_graph.py; docs/reports/report_2_execute_agent.md; docs/tasks/task_2.md
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - source task definition and reviewer-only checkbox update for accepted `(05A)`.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(05A)` execution report plus diff hygiene check.
+- `docs/plans/Plan_2.md`: in scope - authoritative requirements for Batch 5 Task 5.1.
+- `docs/plans/Master_Plan.md`: in scope - neighbor expansion baseline rules.
+- `backend/app/core/config.py`: in scope - adds `RETRIEVAL_CONTEXT_MODE` and `RETRIEVAL_SECTION_SIBLING_WINDOW`.
+- `backend/app/services/retrieval.py`: in scope - implements legacy and section-aware expansion ordering, dedupe, cap, and neighbor marking.
+- `backend/tests/test_config.py`: in scope - validates new retrieval settings and env overrides.
+- `backend/tests/test_query_graph.py`: in scope - validates section-aware ordering, boundary hints, cap/dedupe, and preserved legacy neighbor mode.
+- `backend/app/services/chunks.py`: in scope - confirms neighbor candidate lookup order is by `chunk_index`.
+- `backend/app/graphs/query_nodes.py`: in scope - confirms no `(05B)` citation-shape changes were implemented early.
+- `backend/app/models/schemas.py`: in scope - confirms `SourceCitation` remained unchanged for `(05A)`.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/core/config.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: settings added exactly as required.
+- file from execution report: backend/app/services/retrieval.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: mode split, ordering, dedupe, cap, and `is_neighbor_context` marking are implemented here.
+- file from execution report: backend/tests/test_config.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: directly relevant config coverage.
+- file from execution report: backend/tests/test_query_graph.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: task-specific retrieval behavior coverage added.
+- file from execution report: docs/reports/report_2_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: latest `(05A)` entry is appended; report accuracy has one warning noted below.
+
+## Dependency Review
+- Required dependencies: Batch04 smart-section chunk metadata; existing retrieval helpers/tests.
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: top reranked chunks are appended first; boundary hints are processed before neighbor expansion; same-section siblings are appended before generic neighbors in `section_aware` mode; legacy `neighbor` mode remains separately callable; `(05B)` schema/frontend work was not implemented.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `expand_neighbor_context` dispatches to real legacy/section-aware implementations, both query real chunk lookups and use shared dedupe/cap logic; tests exercise actual ordering behavior.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: logic depends on normalized chunk metadata, retrieval hints, settings, and fetched neighbor rows; no fixture-specific IDs or query text are embedded in runtime behavior.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_config.py tests/test_query_graph.py -v`
+- Reported result: passed (36 passed, 1 warning)
+- Rerun result: passed (36 passed, 1 warning about `.pytest_cache` permission)
+- Status: pass
+- Notes: covers required `(05A)` query-graph validation and directly relevant config tests.
+- Command/check: `git diff --check`
+- Reported result: passed
+- Rerun result: failed - `docs/reports/report_2_execute_agent.md:984: new blank line at EOF.`
+- Status: warning
+- Notes: this is a report-accuracy issue in the execution log, not a functional `(05A)` implementation failure.
+
+## Acceptance Review
+- Task acceptance: top reranked chunks remain first; boundary hints are honored; same-section neighbors precede generic neighbors; dedupe and max-candidate cap hold; `RETRIEVAL_CONTEXT_MODE=neighbor` preserves prior behavior; added boundary/neighbor chunks are marked for `(05B)`; no `(05B)` citation schema/frontend work was implemented.
+- Status: satisfied
+- Evidence: `backend/app/services/retrieval.py` appends reranked chunks before hints/neighbors, uses `is_neighbor_context=True` for boundary and expansion-added chunks, and separates section-aware vs legacy logic; `backend/tests/test_query_graph.py` covers boundary hints, same-section preference, cap/dedupe, and legacy neighbor behavior.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: latest `(05A)` entry appended and reviewed
+- Review report entry: appended at EOF
+- Other: `(05B)` remains unchecked; no batch/global checklist updates made.
+
+## Report Accuracy
+- partial
+- Mismatches: the latest execution report claims `git diff --check` passed, but the rerun currently fails on a trailing blank line at EOF in `docs/reports/report_2_execute_agent.md`.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- `git diff --check` is reported as passing in the latest execution report, but the current rerun fails on `docs/reports/report_2_execute_agent.md:984` due to a new blank line at EOF.
+
+### Observations
+- `backend/tests/test_config.py` includes a small carry-forward sync for existing Batch04 defaults in addition to the new Batch05 retrieval settings; this is still directly relevant to config coverage.
+- `backend/app/graphs/query_nodes.py` and `backend/app/models/schemas.py` remain unchanged, so `(05B)` richer citation metadata was not implemented early.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch05 - Retrieval Context Tuning",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/services/retrieval.py",
+    "backend/tests/test_config.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Latest execution report says git diff --check passed, but current rerun fails on docs/reports/report_2_execute_agent.md:984 due to a new blank line at EOF."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Retrieval Context Tuning
+- Task ID: (05B)
+- Task title: Add richer citation metadata
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_2.md > ## Batch 5: Retrieval Context Tuning > ### Task 5.2: Add richer citation metadata
+- Supplemental documents: docs/plans/Master_Plan.md (provided, not needed for the final decision)
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: Reviewed the latest appended `(05B)` execution entry only, while distinguishing previously accepted uncommitted `(05A)` changes in the same batch.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/core/config.py; backend/app/graphs/query_nodes.py; backend/app/models/schemas.py; backend/app/services/retrieval.py; backend/tests/test_config.py; backend/tests/test_query_graph.py; docs/reports/report_2_execute_agent.md; docs/review/review_2_review_agent.md; docs/tasks/task_2.md; frontend/src/api/types.ts
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - selected task definition plus reviewer-only checkbox update for accepted `(05B)`.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(05B)` execution report entry; also contains prior `(05A)` report and one unrelated older malformed `(01B)` source-task link elsewhere in the file.
+- `docs/plans/Plan_2.md`: in scope - authoritative requirements for Batch 5 Task 5.2.
+- `backend/app/models/schemas.py`: in scope - extends `SourceCitation` with richer citation metadata fields.
+- `backend/app/graphs/query_nodes.py`: in scope - populates richer citation metadata from context chunks.
+- `backend/tests/test_query_graph.py`: in scope - validates richer citation metadata while preserving already accepted `(05A)` retrieval tests.
+- `frontend/src/api/types.ts`: in scope - widens frontend citation typing for richer source objects.
+- `frontend/src/components/SourceList.tsx`: in scope - reviewed unchanged to confirm Phase 1 source labels remain intact.
+- `backend/app/core/config.py`: out of scope - prior accepted `(05A)` dependency work only.
+- `backend/app/services/retrieval.py`: out of scope - prior accepted `(05A)` dependency work that supplies `is_neighbor_context`.
+- `backend/tests/test_config.py`: out of scope - prior accepted `(05A)` validation work only.
+- `docs/review/review_2_review_agent.md`: questionable - contains the already accepted `(05A)` review plus this new `(05B)` append, but no implementation changes.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/models/schemas.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `SourceCitation` includes `section_path`, `content_preview`, and `is_neighbor_context` without removing prior fields.
+- file from execution report: backend/app/graphs/query_nodes.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: source citations now normalize `section_path`, derive a 240-character preview from chunk content, and carry forward neighbor-context flags.
+- file from execution report: backend/tests/test_query_graph.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: tests cover generated source metadata and saved-message persistence while preserving accepted `(05A)` assertions.
+- file from execution report: frontend/src/api/types.ts
+- present in git/repo: yes
+- matches task scope: yes
+- notes: frontend accepts richer citation objects without forcing a component rewrite.
+
+## Dependency Review
+- Required dependencies: accepted `(05A)` neighbor-expansion work, existing `SourceCitation` schema, and frontend source list.
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: richer metadata is added at the backend response boundary in `query_nodes`, typed in `SourceCitation`, and surfaced to the frontend type layer without changing retrieval ordering or the existing source-label renderer.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/graphs/query_nodes.py` derives values from actual chunk payloads (`section_path`, `content`/`text`, `is_neighbor_context`) and emits them into the returned `sources`; `backend/app/models/schemas.py` and `frontend/src/api/types.ts` expose the new shape; tests assert both response contents and saved message persistence.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: metadata comes from per-chunk fields and truncation logic, not fixture IDs, fixed filenames, or query-specific branches.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_query_graph.py -v`
+- Reported result: passed (22 passed, 1 warning)
+- Rerun result: passed (22 passed, 1 warning about `.pytest_cache` permissions)
+- Status: pass
+- Notes: directly covers the selected task's backend citation metadata behavior.
+- Command/check: `cd frontend && npm run build`
+- Reported result: passed
+- Rerun result: passed
+- Status: pass
+- Notes: confirms the frontend type surface accepts the richer citation object while `SourceList.tsx` remains unchanged.
+- Command/check: `git diff --check`
+- Reported result: rerun pending after report append
+- Rerun result: passed with LF/CRLF conversion warnings only
+- Status: pass
+- Notes: no whitespace error currently blocks acceptance.
+
+## Acceptance Review
+- Task acceptance: `SourceCitation` gained the required metadata, backend source construction populates `section_path`, `content_preview`, and `is_neighbor_context`, existing citation fields remain present, frontend typing accepts the richer object, and existing source labels remain in the Phase 1 format.
+- Status: satisfied
+- Evidence: `backend/app/models/schemas.py`, `backend/app/graphs/query_nodes.py`, `backend/tests/test_query_graph.py`, `frontend/src/api/types.ts`, and unchanged `frontend/src/components/SourceList.tsx` together satisfy the task definition.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: latest `(05B)` entry appended and reviewed
+- Review report entry: appended at EOF
+- Other: previously accepted `(05A)` remains checked; no sibling or future task checkboxes were changed.
+
+## Report Accuracy
+- partial
+- Mismatches: the `(05B)` execution entry is accurate against current code and rerun validations, but the same changed report file still contains an unrelated older malformed `(01B)` source-task link outside the selected task entry.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- `docs/reports/report_2_execute_agent.md` includes an unrelated older malformed `(01B)` source-task link in the current diff; it does not affect the `(05B)` implementation or validation outcome.
+
+### Observations
+- The current batch diff still includes accepted `(05A)` retrieval-context work in `backend/app/core/config.py`, `backend/app/services/retrieval.py`, and `backend/tests/test_config.py`; those changes were distinguished from this `(05B)` review and not re-reviewed as the selected task.
+- The frontend label formatter in `frontend/src/components/SourceList.tsx` is unchanged and still formats only file, chunk, and page data, which preserves the Phase 1 citation label shape.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch05 - Retrieval Context Tuning",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/models/schemas.py",
+    "backend/app/services/retrieval.py",
+    "backend/tests/test_config.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md",
+    "frontend/src/api/types.ts"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "docs/reports/report_2_execute_agent.md still contains an unrelated older malformed (01B) source-task link in the current diff."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - Batch05 Repair
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Retrieval Context Tuning
+- Task ID: repair for accepted (05A), (05B)
+- Task title: Restore out-of-scope (01B) report hunk flagged by A3
+- Task status reported by executor: complete
+- Source of Truth: A3 audit JSON repair instruction plus docs/tasks/task_2.md > ## Mandatory Batch05 - Retrieval Context Tuning
+- Supplemental documents: none
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: latest A1 repair entry after A3 feedback
+- Reviewed task ID: repair for accepted (05A), (05B)
+- Correct selection: yes
+- Notes: Reviewed only the latest repair entry and the live Batch05 diff state, per user instruction.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/core/config.py; backend/app/graphs/query_nodes.py; backend/app/models/schemas.py; backend/app/services/retrieval.py; backend/tests/test_config.py; backend/tests/test_query_graph.py; docs/reports/report_2_execute_agent.md; docs/review/review_2_review_agent.md; docs/tasks/task_2.md; frontend/src/api/types.ts
+- untracked files: none
+
+## Files Reviewed
+- `docs/reports/report_2_execute_agent.md`: in scope - repaired file and latest A1 repair report entry.
+- `docs/review/review_2_review_agent.md`: in scope - confirmed existing Batch05 review entries remain present before this append.
+- `docs/tasks/task_2.md`: in scope - confirmed Batch05 accepted task IDs and no repair-driven checkbox change was required.
+- `backend/app/core/config.py`: in scope - existing accepted Batch05 implementation still present; no repair edit required.
+- `backend/app/graphs/query_nodes.py`: in scope - existing accepted Batch05 implementation still present; no repair edit required.
+- `backend/app/models/schemas.py`: in scope - existing accepted Batch05 implementation still present; no repair edit required.
+- `backend/app/services/retrieval.py`: in scope - existing accepted Batch05 implementation still present; no repair edit required.
+- `backend/tests/test_config.py`: in scope - existing accepted Batch05 validation file still present; no repair edit required.
+- `backend/tests/test_query_graph.py`: in scope - existing accepted Batch05 validation file still present; no repair edit required.
+- `frontend/src/api/types.ts`: in scope - existing accepted Batch05 implementation still present; no repair edit required.
+
+## Reported Files Cross-Check
+- file from execution report: docs/reports/report_2_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: the malformed `(01B)` historical link is repaired, and the Batch05 `(05A)`/`(05B)` execution entries remain present.
+
+## Dependency Review
+- Required dependencies: accepted Batch05 `(05A)` and `(05B)` entries and their existing in-progress batch diff.
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: the repair was limited to the A3-flagged historical report hunk and did not expand implementation scope.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: the exact malformed historical path is no longer present in the report diff, while the correct absolute path remains in the file and the Batch05 report entries remain intact.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: repair is a literal restoration of the A3-cited historical link target and does not introduce new logic or data handling.
+
+## Validations Reviewed
+- Command/check: `git diff -- docs/reports/report_2_execute_agent.md`
+- Reported result: passed; no `(01B)` Source Task File link change remains
+- Rerun result: passed; current diff shows only appended Batch05 report content and no malformed `(01B)` link hunk
+- Status: pass
+- Notes: confirmed the bad `DocumentAgentdocs/tasks/task_2.md` path is absent from both the file and the current diff.
+- Command/check: `rg -n "Task Execution Report - \\(05A\\)|Task Execution Report - \\(05B\\)" docs/reports/report_2_execute_agent.md`
+- Reported result: Batch05 execution entries preserved
+- Rerun result: passed; `(05A)` and `(05B)` execution entries remain present in the report file
+- Status: pass
+- Notes: required execution entries are still available after the repair append.
+- Command/check: `rg -n "Task Review Report - \\(05A\\)|Task Review Report - \\(05B\\)|Batch05" docs/review/review_2_review_agent.md`
+- Reported result: Batch05 review entries preserved
+- Rerun result: passed; prior `(05A)` and `(05B)` review entries remain present
+- Status: pass
+- Notes: this review append does not replace earlier review records.
+- Command/check: `git diff --check`
+- Reported result: passed
+- Rerun result: passed with LF/CRLF conversion warnings only
+- Status: pass
+- Notes: no whitespace or patch-format issue blocks the repair.
+- Command/check: `git status --short`
+- Reported result: repair stayed within Batch05 scope
+- Rerun result: passed; all listed modified files are Batch05 implementation/report/review/task-tracking files, with no README or unrelated batch file changes
+- Status: pass
+- Notes: no out-of-scope changed path remains in status.
+
+## Acceptance Review
+- Task acceptance: A1 fixed the specific A3 scope issue, kept Batch05 execution and review entries intact, reran the required diff validation, and did not expand scope beyond the current batch.
+- Status: satisfied
+- Evidence: repaired report file, clean `git diff --check`, Batch05-only `git status --short`, and preserved `(05A)`/`(05B)` report and review entries.
+
+## Progress Tracking
+- Selected task checkbox: not applicable
+- Checkbox updated by reviewer: no
+- Batch status: unchanged
+- Execution report entry: latest Batch05 repair entry appended and reviewed
+- Review report entry: appended at EOF
+- Other: existing accepted `(05A)` and `(05B)` task checkboxes were left unchanged, as required by the repair scope.
+
+## Report Accuracy
+- accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `README.md` is not present in `git status --short`, which matches the A3 repair instruction.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if the orchestrator chooses to update batch tracking separately
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch05 - Retrieval Context Tuning",
+  "selected_task_id": "repair for accepted (05A), (05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/models/schemas.py",
+    "backend/app/services/retrieval.py",
+    "backend/tests/test_config.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md",
+    "frontend/src/api/types.ts"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

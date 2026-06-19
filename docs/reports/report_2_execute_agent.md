@@ -897,3 +897,240 @@ Removed only the extra blank line at EOF from:
 ## Notes
 - No behavior changes.
 - No task checkbox or batch status updates were made.
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch05 - Retrieval Context Tuning
+
+## Task
+(05A) - Add section-aware neighbor expansion
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_2.md > ## Batch 5: Retrieval Context Tuning > ### Task 5.1: Add section-aware neighbor expansion
+- docs/plans/Master_Plan.md > ## 13. Neighbor Context Expansion
+
+## Supplemental Documents Used
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch05 - Retrieval Context Tuning
+- Task ID: (05A)
+- Task title: Add section-aware neighbor expansion
+
+## Completed Work
+- Implemented `RETRIEVAL_CONTEXT_MODE=section_aware` and `RETRIEVAL_SECTION_SIBLING_WINDOW=1` in backend settings.
+- Split retrieval expansion into legacy `neighbor` mode and new section-aware expansion.
+- Kept reranked chunks first, then added hinted boundary chunks, same-section neighbors, and remaining generic neighbors while deduplicating and enforcing the context cap.
+- Marked boundary and neighbor-added chunks with `is_neighbor_context` for later citation metadata.
+- Repaired the in-progress config and query tests so validation covers the new defaults and legacy mode behavior.
+
+## Files Created or Modified
+- backend/app/core/config.py
+- backend/app/services/retrieval.py
+- backend/tests/test_config.py
+- backend/tests/test_query_graph.py
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_config.py tests/test_query_graph.py -v`: Passed (36 passed, 1 warning)
+- `git diff --check`: Passed; only LF-to-CRLF warnings from Git on already-modified files
+
+## Acceptance Check
+- Task acceptance condition: top reranked chunks stay first; same-section neighbors are preferred; boundary hints work; cap and deduplication hold; legacy neighbor mode remains unchanged.
+- Status: satisfied
+- Evidence:
+  - `tests/test_query_graph.py::test_expand_neighbor_context_section_aware_prefers_same_section_neighbors_before_generic_neighbors`
+  - `tests/test_query_graph.py::test_expand_neighbor_context_adds_llm_requested_end_boundary_chunk`
+  - `tests/test_query_graph.py::test_expand_neighbor_context_keeps_reranked_chunks_first_deduplicates_and_caps_context`
+  - `tests/test_query_graph.py::test_expand_neighbor_context_node_adds_neighbors_and_deduplicates`
+
+## Artifacts Produced
+- `docs/reports/report_2_execute_agent.md` appended with this execution report
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: user instructed not to update task checkboxes; Batch05 still has (05B) pending
+
+## Key Implementation Decisions
+- Used a mode switch so `neighbor` behavior remains available unchanged while `section_aware` becomes the default.
+- Reused `is_neighbor_context=True` for boundary and expansion-added chunks so 05B can derive richer citation metadata later.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- Repaired the partial timeout syntax break in `backend/tests/test_query_graph.py`.
+- Brought `backend/tests/test_config.py` back in sync with the existing batch 4 settings.
+
+## Workflow Integrity Check
+- No source-of-truth conflict or dependency block identified.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: `expand_neighbor_context` already flags boundary and neighbor-added context chunks with `is_neighbor_context`, which 05B can use for citation metadata.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+[docs/tasks/task_2.md](docs/tasks/task_2.md)
+
+## Report File
+[docs/reports/report_2_execute_agent.md](docs/reports/report_2_execute_agent.md)
+
+## Batch
+Batch05 - Retrieval Context Tuning
+
+## Task
+(05B) - Add richer citation metadata
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 5: Retrieval Context Tuning` > `### Task 5.2: Add richer citation metadata`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch05 - Retrieval Context Tuning
+- Task ID: (05B)
+- Task title: Add richer citation metadata
+
+## Completed Work
+- Extended backend `SourceCitation` with `section_path`, `content_preview`, and `is_neighbor_context`.
+- Populated `section_path` and a 240-character `content_preview` from context chunks in `backend/app/graphs/query_nodes.py`.
+- Propagated `is_neighbor_context` from context chunks produced by the 05A boundary/neighbor expansion path.
+- Updated backend query-graph tests and widened the frontend citation type surface.
+- Preserved the existing Phase 1 source label formatter by leaving `frontend/src/components/SourceList.tsx` unchanged.
+- Preserved the accepted 05A retrieval-order work already present in `backend/tests/test_query_graph.py`.
+
+## Files Created or Modified
+- `backend/app/models/schemas.py`
+- `backend/app/graphs/query_nodes.py`
+- `backend/tests/test_query_graph.py`
+- `frontend/src/api/types.ts`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_graph.py -v`: Passed (22 passed, 1 warning from pytest cache permissions).
+- `cd frontend; npm run build`: Passed after rerun with elevated execution; first attempt failed with `spawn EPERM` from `esbuild` under the sandbox.
+- `git diff --check`: Ran before the report append and flagged the pre-existing blank line at EOF in `docs/reports/report_2_execute_agent.md`; will rerun after append.
+
+## Acceptance Check
+- Task acceptance condition: Backend source citation tests pass; frontend build accepts richer objects; existing source labels remain unchanged.
+- Status: satisfied
+- Evidence: Query-graph tests passed, frontend production build passed, and the source label formatter was left untouched.
+
+## Artifacts Produced
+- `docs/reports/report_2_execute_agent.md` appended with this execution report
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: user instructed not to update task checkboxes; Batch05 still has other tasks outside this execution
+
+## Key Implementation Decisions
+- Kept the source label formatter unchanged so Phase 1 labels remain stable.
+- Used explicit normalization in the query node so richer citation metadata is emitted consistently from context chunks.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- Fixed an accidental newline-escaping syntax break in `backend/tests/test_query_graph.py` while editing the test assertions.
+
+## Workflow Integrity Check
+- No source-of-truth conflict identified; accepted 05A work was preserved.
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes
+- handoff notes: Batch05 citation metadata is now wired through backend generation and frontend typing.
+
+---
+
+# Task Execution Report - Batch05 Repair
+
+## Source Task File
+[docs/tasks/task_2.md](docs/tasks/task_2.md)
+
+## Report File
+[docs/reports/report_2_execute_agent.md](docs/reports/report_2_execute_agent.md)
+
+## Batch
+Batch05 - Retrieval Context Tuning
+
+## Task
+A3 scope repair for accepted task IDs (05A) and (05B)
+
+## Status
+complete
+
+## Source of Truth Used
+- A3 audit JSON for Batch05 - Retrieval Context Tuning
+- `docs/tasks/task_2.md` > `## Mandatory Batch05 - Retrieval Context Tuning`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Retrieval Context Tuning
+- Task ID: repair for accepted (05A), (05B)
+- Task title: Restore out-of-scope (01B) report hunk flagged by A3
+
+## Completed Work
+- Restored the older `(01B)` Source Task File link in `docs/reports/report_2_execute_agent.md` from the malformed path missing `/docs` back to `C:/Users/ACER/OtherProjects/DocumentAgent/docs/tasks/task_2.md`.
+- Left Batch05 implementation, task checkboxes, review files, and README.md unchanged.
+
+## Files Created or Modified
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `git diff -- docs/reports/report_2_execute_agent.md`: Passed; no `(01B)` Source Task File link change remains in the report diff.
+- `git diff --check`: Passed.
+
+## Acceptance Check
+- Task acceptance condition: Repair only the A3-listed out-of-scope `(01B)` report link hunk and keep Batch05 report entries intact.
+- Status: satisfied
+- Evidence: The required report diff validation no longer shows a `(01B)` link change, and `git diff --check` passes.
+
+## Artifacts Produced
+- `docs/reports/report_2_execute_agent.md` appended with this repair execution report.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: user explicitly instructed not to update task checkboxes or start a new task during this repair.
+
+## Key Implementation Decisions
+- Limited the repair to the single malformed historical report link identified by A3.
+
+## Risks or Open Issues
+- A2 still needs to rerun its validation pass, and A3 still needs to rerun the batch audit.
+
+## Minor Issues Fixed During Execution
+- None beyond the A3-listed scope issue.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issue, or architecture concern identified for this repair.
+- README.md was not modified.
+
+## Notes for Next Task
+- next task ID: none started
+- can proceed: yes, after A2 validation and A3 audit are rerun
+- handoff notes: Batch05 accepted task entries for (05A) and (05B) remain present; the out-of-scope older `(01B)` link change has been repaired.

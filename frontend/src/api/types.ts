@@ -79,6 +79,9 @@ export interface SourceCitation {
   heading: string | null;
   qdrant_score: number | null;
   rerank_score: number | null;
+  section_path?: string[];
+  content_preview?: string;
+  is_neighbor_context?: boolean;
 }
 
 export interface ChatResponse {

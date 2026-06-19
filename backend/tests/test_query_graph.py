@@ -19,14 +19,21 @@ DOC_A = "11111111-1111-1111-1111-111111111111"
 DOC_B = "22222222-2222-2222-2222-222222222222"
 
 
-def _test_settings() -> Settings:
+def _test_settings(
+    *,
+    context_mode: str = "section_aware",
+    context_window: int = 1,
+    section_sibling_window: int = 1,
+) -> Settings:
     return Settings(
         _env_file=None,
         SUPABASE_STORAGE_BUCKET="documents",
         QDRANT_COLLECTION="document_chunks_v1",
         RETRIEVAL_SEMANTIC_TOP_K=40,
         RETRIEVAL_FINAL_TOP_K=5,
-        RETRIEVAL_CONTEXT_WINDOW=1,
+        RETRIEVAL_CONTEXT_MODE=context_mode,
+        RETRIEVAL_CONTEXT_WINDOW=context_window,
+        RETRIEVAL_SECTION_SIBLING_WINDOW=section_sibling_window,
         RETRIEVAL_CONTEXT_MAX_CANDIDATES=8,
         ENABLE_RERANK=True,
         SHOPAIKEY_API_KEY="shopai-key",
@@ -37,7 +44,6 @@ def _test_settings() -> Settings:
         QDRANT_URL="https://qdrant.example.com",
         QDRANT_API_KEY="qdrant-key",
     )
-
 
 @dataclass
 class FakeQdrantClient:
@@ -57,7 +63,6 @@ class FakeQdrantClient:
             }
         )
         return SimpleNamespace(points=list(self.points)[:limit])
-
 
 @dataclass
 class FakeSupabaseQuery:
@@ -147,7 +152,6 @@ class FakeSupabaseQuery:
 
         raise AssertionError(f"Unsupported fake operation: {self.operation}")
 
-
 @dataclass
 class FakeSupabaseClient:
     tables: dict[str, list[dict[str, object]]] = field(default_factory=dict)
@@ -155,7 +159,6 @@ class FakeSupabaseClient:
 
     def table(self, table_name: str) -> FakeSupabaseQuery:
         return FakeSupabaseQuery(self, table_name)
-
 
 @dataclass
 class FakeHttpResponse:
@@ -191,7 +194,6 @@ class FakeEmbeddingEndpoint:
             data=[SimpleNamespace(embedding=vector) for vector in self.vectors]
         )
 
-
 @dataclass
 class FakeShopAIKeyClient:
     vectors: list[list[float]] | None = None
@@ -203,7 +205,6 @@ class FakeShopAIKeyClient:
             self.chat = SimpleNamespace(
                 completions=FakeChatCompletionsEndpoint(self.chat_response)
             )
-
 
 @dataclass
 class FakeChatCompletionsEndpoint:
@@ -749,10 +750,85 @@ def test_expand_neighbor_context_adds_llm_requested_end_boundary_chunk():
     ]
 
 
+
+def test_expand_neighbor_context_section_aware_prefers_same_section_neighbors_before_generic_neighbors():
+    settings = _test_settings(context_window=2, section_sibling_window=1)
+    fake_client = FakeSupabaseClient(
+        tables={
+            "document_chunks": [
+                {
+                    "id": "chunk-0",
+                    "document_id": DOC_A,
+                    "chunk_index": 0,
+                    "content": "intro chunk",
+                    "section_path": ["Intro"],
+                    "file_name": "alpha.pdf",
+                },
+                {
+                    "id": "chunk-1",
+                    "document_id": DOC_A,
+                    "chunk_index": 1,
+                    "content": "same section previous",
+                    "section_path": ["Pricing"],
+                    "file_name": "alpha.pdf",
+                },
+                {
+                    "id": "chunk-3",
+                    "document_id": DOC_A,
+                    "chunk_index": 3,
+                    "content": "same section next",
+                    "section_path": ["Pricing"],
+                    "file_name": "alpha.pdf",
+                },
+                {
+                    "id": "chunk-4",
+                    "document_id": DOC_A,
+                    "chunk_index": 4,
+                    "content": "generic later",
+                    "section_path": ["Appendix"],
+                    "file_name": "alpha.pdf",
+                },
+            ]
+        }
+    )
+    reranked_chunks = [
+        {
+            "chunk_id": "chunk-2",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 2,
+            "section_path": ["Pricing"],
+            "content": "anchor chunk",
+            "qdrant_score": 0.95,
+            "rerank_score": 0.99,
+        }
+    ]
+
+    context_chunks = retrieval.expand_neighbor_context(
+        reranked_chunks,
+        settings=settings,
+        supabase_client=fake_client,
+    )
+
+    assert [chunk["chunk_id"] for chunk in context_chunks] == [
+        "chunk-2",
+        "chunk-1",
+        "chunk-3",
+        "chunk-0",
+        "chunk-4",
+    ]
+    assert context_chunks[0].get("is_neighbor_context") is None
+    assert all(chunk["is_neighbor_context"] is True for chunk in context_chunks[1:])
+    assert len(fake_client.query_log) == 1
+    assert fake_client.query_log[0]["filters"] == [
+        ("document_id", DOC_A),
+        ("chunk_index", [0, 1, 3, 4]),
+    ]
+
 def test_expand_neighbor_context_keeps_reranked_chunks_first_deduplicates_and_caps_context(
     monkeypatch,
 ):
-    settings = _test_settings()
+    settings = _test_settings(context_mode="neighbor")
     reranked_chunks = [
         {
             "chunk_id": "chunk-1",
@@ -1008,7 +1084,7 @@ def test_jina_rerank_node_uses_prepared_query_and_returns_reranked_chunks():
 
 
 def test_expand_neighbor_context_node_adds_neighbors_and_deduplicates():
-    settings = _test_settings()
+    settings = _test_settings(context_mode="neighbor")
     fake_client = FakeSupabaseClient(
         tables={
             "document_chunks": [
@@ -1080,6 +1156,7 @@ def test_expand_neighbor_context_node_adds_neighbors_and_deduplicates():
 
 def test_generate_answer_node_builds_sources_and_uses_only_context():
     settings = _test_settings()
+    long_content = ("Pricing is based on usage tiers. " * 10).strip()
     context_chunks = [
         {
             "document_id": DOC_A,
@@ -1089,9 +1166,10 @@ def test_generate_answer_node_builds_sources_and_uses_only_context():
             "page_start": 3,
             "page_end": 4,
             "heading": "Pricing",
+            "section_path": ["Pricing", "Tier 1"],
             "qdrant_score": 0.91,
             "rerank_score": 0.99,
-            "content": "Pricing is based on usage tiers.",
+            "content": long_content,
         },
         {
             "document_id": DOC_A,
@@ -1101,6 +1179,8 @@ def test_generate_answer_node_builds_sources_and_uses_only_context():
             "page_start": 5,
             "page_end": 5,
             "heading": None,
+            "section_path": ["Pricing", "Enterprise"],
+            "is_neighbor_context": True,
             "qdrant_score": 0.87,
             "rerank_score": 0.95,
             "content": "Enterprise pricing is custom.",
@@ -1139,9 +1219,18 @@ def test_generate_answer_node_builds_sources_and_uses_only_context():
         "page_start",
         "page_end",
         "heading",
+        "section_path",
+        "content_preview",
+        "is_neighbor_context",
         "qdrant_score",
         "rerank_score",
     } == set(result["sources"][0])
+    assert result["sources"][0]["section_path"] == ["Pricing", "Tier 1"]
+    assert result["sources"][0]["content_preview"] == long_content[:240]
+    assert result["sources"][0]["is_neighbor_context"] is False
+    assert result["sources"][1]["section_path"] == ["Pricing", "Enterprise"]
+    assert result["sources"][1]["content_preview"] == "Enterprise pricing is custom."
+    assert result["sources"][1]["is_neighbor_context"] is True
 
     chat_call = fake_client.chat.completions.calls[0]
     assert chat_call["model"] == settings.SHOPAIKEY_CHAT_MODEL
@@ -1169,6 +1258,9 @@ def test_save_message_optional_node_inserts_question_answer_sources_and_metadata
             "page_start": 3,
             "page_end": 4,
             "heading": "Pricing",
+            "section_path": ["Pricing", "Tier 1"],
+            "content_preview": "Pricing is based on usage tiers.",
+            "is_neighbor_context": True,
             "qdrant_score": 0.91,
             "rerank_score": 0.99,
         }
@@ -1191,6 +1283,8 @@ def test_save_message_optional_node_inserts_question_answer_sources_and_metadata
                     "page_start": 3,
                     "page_end": 4,
                     "heading": "Pricing",
+                    "section_path": ["Pricing", "Tier 1"],
+                    "is_neighbor_context": True,
                     "qdrant_score": 0.91,
                     "rerank_score": 0.99,
                     "content": "Pricing is based on usage tiers.",
@@ -1205,6 +1299,8 @@ def test_save_message_optional_node_inserts_question_answer_sources_and_metadata
                     "page_start": 3,
                     "page_end": 4,
                     "heading": "Pricing",
+                    "section_path": ["Pricing", "Tier 1"],
+                    "is_neighbor_context": True,
                     "qdrant_score": 0.91,
                     "rerank_score": 0.99,
                     "content": "Pricing is based on usage tiers.",

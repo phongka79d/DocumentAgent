@@ -67,6 +67,32 @@ def _normalize_float(value: Any) -> float | None:
         return None
 
 
+def _normalize_section_path(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, (str, bytes)):
+        text = _normalize_text(value)
+        return [text] if text is not None else []
+    if isinstance(value, Sequence):
+        normalized: list[str] = []
+        for item in value:
+            text = _normalize_text(item)
+            if text is not None:
+                normalized.append(text)
+        return normalized
+    text = _normalize_text(value)
+    return [text] if text is not None else []
+
+
+def _chunk_content_preview(chunk: Mapping[str, Any]) -> str:
+    content = chunk.get("content")
+    if content is None:
+        content = chunk.get("text")
+    if content is None:
+        return ""
+    return str(content)[:240]
+
+
 def _normalize_document_ids(
     document_ids: Sequence[UUID | str] | UUID | str | bytes | None,
 ) -> list[str]:
@@ -163,6 +189,10 @@ def _source_citation_from_chunk(chunk: Mapping[str, Any]) -> dict[str, Any]:
     if document_id is None or chunk_id is None or chunk_index is None:
         raise ValueError("context chunks must include document_id, chunk_id, and chunk_index")
 
+    section_path = _normalize_section_path(chunk.get("section_path"))
+    content_preview = _chunk_content_preview(chunk)
+    is_neighbor_context = bool(chunk.get("is_neighbor_context"))
+
     return {
         "document_id": document_id,
         "chunk_id": chunk_id,
@@ -173,6 +203,9 @@ def _source_citation_from_chunk(chunk: Mapping[str, Any]) -> dict[str, Any]:
         "heading": chunk.get("heading"),
         "qdrant_score": _normalize_float(chunk.get("qdrant_score")),
         "rerank_score": _normalize_float(chunk.get("rerank_score")),
+        "section_path": section_path,
+        "content_preview": content_preview,
+        "is_neighbor_context": is_neighbor_context,
     }
 
 

@@ -34,7 +34,9 @@ class Settings(BaseSettings):
 
     RETRIEVAL_SEMANTIC_TOP_K: int = 40
     RETRIEVAL_FINAL_TOP_K: int = 5
+    RETRIEVAL_CONTEXT_MODE: str = "section_aware"
     RETRIEVAL_CONTEXT_WINDOW: int = 1
+    RETRIEVAL_SECTION_SIBLING_WINDOW: int = 1
     RETRIEVAL_CONTEXT_MAX_CANDIDATES: int = 8
 
     CHUNKING_STRATEGY: str = "smart_section"

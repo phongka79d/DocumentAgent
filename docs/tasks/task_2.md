@@ -709,7 +709,7 @@ Smart section chunks improve retrieval only if query context and citations expos
 
 ### Tasks
 
-- [ ] (05A): Add section-aware neighbor expansion
+- [x] (05A): Add section-aware neighbor expansion
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 5: Retrieval Context Tuning` > `### Task 5.1: Add section-aware neighbor expansion`
   - Source Requirements:
     - Add settings `RETRIEVAL_CONTEXT_MODE=section_aware` and `RETRIEVAL_SECTION_SIBLING_WINDOW=1`.
@@ -744,7 +744,7 @@ Smart section chunks improve retrieval only if query context and citations expos
   - Blocked Condition: None.
   - Files: `backend/app/core/config.py`, `backend/app/services/retrieval.py`, `backend/tests/test_query_graph.py`
 
-- [ ] (05B): Add richer citation metadata
+- [x] (05B): Add richer citation metadata
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 5: Retrieval Context Tuning` > `### Task 5.2: Add richer citation metadata`
   - Source Requirements:
     - Extend `SourceCitation` with optional `section_path`, `content_preview`, and `is_neighbor_context`.
@@ -1056,8 +1056,8 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch05
 
-- [ ] (05A): Add section-aware neighbor expansion
-- [ ] (05B): Add richer citation metadata
+- [x] (05A): Add section-aware neighbor expansion
+- [x] (05B): Add richer citation metadata
 
 #### Batch06
 
