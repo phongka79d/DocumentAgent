@@ -1,4 +1,6 @@
 import importlib
+import tomllib
+from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
@@ -39,9 +41,31 @@ ALL_SETTINGS_FIELDS = {
 }
 
 
+def _project_dependencies() -> set[str]:
+    pyproject_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    project_data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    dependencies = project_data["project"]["dependencies"]
+    return {
+        dependency.split("[", 1)[0]
+        .split("<", 1)[0]
+        .split(">", 1)[0]
+        .split("=", 1)[0]
+        .strip()
+        .lower()
+        for dependency in dependencies
+    }
+
+
 def _clear_settings_env(monkeypatch):
     for name in ALL_SETTINGS_FIELDS:
         monkeypatch.delenv(name, raising=False)
+
+
+def test_jina_reranker_uses_httpx_without_conflicting_jina_sdk_dependency():
+    dependencies = _project_dependencies()
+
+    assert "httpx" in dependencies
+    assert "jina" not in dependencies
 
 
 def test_health_endpoint_returns_ok(client):

@@ -18,7 +18,6 @@ dependencies = [
   "qdrant-client>=1.10,<2.0",
   "langgraph>=0.2,<1.0",
   "openai>=1.40,<2.0",
-  "jina>=3.28,<4.0",
   "pymupdf>=1.24,<2.0",
   "python-docx>=1.1,<2.0",
   "tiktoken>=0.7,<1.0",
@@ -32,10 +31,14 @@ dev = [
   "respx>=0.21,<1.0",
 ]
 
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:The default value of `allowed_objects` will change in a future version.*:langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
+]
+
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["app*"]
-
