@@ -550,7 +550,7 @@ Phase 2 retrieval quality depends on chunks carrying heading and section metadat
 
 ### Tasks
 
-- [ ] (04A): Add deterministic header scoring
+- [x] (04A): Add deterministic header scoring
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.1: Add deterministic header scoring`
   - Source Requirements:
     - Implement `score_heading_candidate(block, previous_block, next_block)`.
@@ -579,7 +579,7 @@ Phase 2 retrieval quality depends on chunks carrying heading and section metadat
   - Blocked Condition: None.
   - Files: `backend/app/chunking/heading_detection.py`, `backend/tests/test_heading_detection.py`
 
-- [ ] (04B): Add smart section chunker
+- [x] (04B): Add smart section chunker
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.2: Add smart section chunker`
   - Source Requirements:
     - Add settings `CHUNKING_STRATEGY=smart_section`, `HEADER_SCORE_THRESHOLD=4`, and `TABLE_CHUNK_MAX_TOKENS=500`.
@@ -617,7 +617,7 @@ Phase 2 retrieval quality depends on chunks carrying heading and section metadat
   - Blocked Condition: None.
   - Files: `backend/app/chunking/section_chunker.py`, `backend/app/chunking/token_chunker.py`, `backend/app/core/config.py`, `backend/tests/test_chunker.py`
 
-- [ ] (04C): Integrate chunking strategy into ingestion
+- [x] (04C): Integrate chunking strategy into ingestion
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.3: Integrate chunking strategy into ingestion`
   - Source Requirements:
     - Replace direct `FixedTokenChunker` construction with a strategy resolver.
@@ -1050,9 +1050,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch04
 
-- [ ] (04A): Add deterministic header scoring
-- [ ] (04B): Add smart section chunker
-- [ ] (04C): Integrate chunking strategy into ingestion
+- [x] (04A): Add deterministic header scoring
+- [x] (04B): Add smart section chunker
+- [x] (04C): Integrate chunking strategy into ingestion
 
 #### Batch05
 

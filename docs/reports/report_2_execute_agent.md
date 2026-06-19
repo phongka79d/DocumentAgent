@@ -628,3 +628,272 @@ complete
 - next task ID: (04A)
 - can proceed: yes
 - handoff notes: HTML upload validation and parser support are complete; Batch04 can now build on the structured block output for header scoring.
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+[docs/tasks/task_2.md]
+
+## Report File
+[docs/reports/report_2_execute_agent.md]
+
+## Batch
+[Batch04 - Header Scoring and Smart Section Chunking]
+
+## Task
+[(04A)] - Add deterministic header scoring
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.1: Add deterministic header scoring`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Header Scoring and Smart Section Chunking
+- Task ID: (04A)
+- Task title: Add deterministic header scoring
+
+## Completed Work
+- Implemented `score_heading_candidate(block, previous_block, next_block)` with the requested deterministic scoring rules for heading type, Markdown markers, numbered headings, TOC metadata, short no-punctuation text, uppercase text, bold metadata, larger font size, sentence punctuation penalties, and long-text penalties.
+- Implemented `is_heading_candidate(block, threshold=4)` with the requested default threshold behavior.
+- Added focused tests covering explicit headings, Markdown markers, numbered headings, TOC metadata, short text, uppercase text, bold metadata, larger font size, sentence punctuation, long uppercase paragraphs, and the default threshold.
+
+## Files Created or Modified
+- `backend/app/chunking/heading_detection.py`
+- `backend/tests/test_heading_detection.py`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_heading_detection.py -v`: Passed
+- Initial red run before implementation: Failed with `ModuleNotFoundError: No module named 'app.chunking.heading_detection'`; this confirmed the test was exercising the missing module.
+
+## Acceptance Check
+- Task acceptance condition: Explicit headings, numbered short headings, and uppercase short headings pass threshold; normal sentences and long uppercase paragraphs do not pass threshold.
+- Status: satisfied
+- Evidence: The new heading-detection tests pass and cover the required positive and negative cases.
+
+## Artifacts Produced
+- Deterministic heading detection module at `backend/app/chunking/heading_detection.py`
+- Heading scoring test coverage at `backend/tests/test_heading_detection.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Used a narrow numbered-heading regex that matches the plan examples without treating plain numeric prose as a heading signal.
+- Compared candidate font size against nearby non-heading blocks only, so the larger-font heuristic stays aligned with body-text contrast.
+- Kept the public `is_heading_candidate` API aligned to the requested threshold-based contract and delegated the scoring to the helper.
+
+## Risks or Open Issues
+- None identified for this scope.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes
+- handoff notes: Heading scoring is in place and validated; smart section chunking can now consume this detector.
+
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+[docs/tasks/task_2.md]
+
+## Report File
+[docs/reports/report_2_execute_agent.md]
+
+## Batch
+[Batch04 - Header Scoring and Smart Section Chunking]
+
+## Task
+[(04B)] - Add smart section chunker
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.2: Add smart section chunker`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch04 - Header Scoring and Smart Section Chunking
+- Task ID: (04B)
+- Task title: Add smart section chunker
+
+## Completed Work
+- Added `CHUNKING_STRATEGY`, `HEADER_SCORE_THRESHOLD`, and `TABLE_CHUNK_MAX_TOKENS` settings to backend config with the requested defaults.
+- Implemented `SmartSectionChunker` in a new `backend/app/chunking/section_chunker.py` module.
+- Made the chunker use `parsed_document.blocks` when available and fall back to `FixedTokenChunker` when blocks are missing or produce no section/table chunks.
+- Added heading-stack handling so emitted chunks carry the nearest active `heading` and hierarchical `section_path` from detected headings.
+- Kept small tables intact as `chunk_type = "table"`, split oversized tables and sections with `FixedTokenChunker`, and preserved heading metadata on the split output.
+- Preserved fixed-token behavior by leaving `FixedTokenChunker` unchanged and covering the fallback path with tests.
+- Expanded `backend/tests/test_chunker.py` with coverage for config defaults, fixed-token fallback, intact small tables, oversized table splits, and scored-heading section splitting.
+
+## Files Created or Modified
+- `backend/app/core/config.py`
+- `backend/app/chunking/section_chunker.py`
+- `backend/tests/test_chunker.py`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_chunker.py tests/test_heading_detection.py -v`: Passed
+
+## Acceptance Check
+- Task acceptance condition: Smart section chunks carry heading and section path; small tables stay intact; oversized sections split without losing heading metadata; fixed-token tests still pass.
+- Status: satisfied
+- Evidence: The new targeted pytest run passed all 19 tests, including the new section chunker coverage and the existing heading-detection coverage.
+
+## Artifacts Produced
+- `backend/app/chunking/section_chunker.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Used deterministic heading scoring with neighbor-aware scoring for paragraph-like heading candidates, while trusting explicit parser heading blocks directly.
+- Kept small tables intact even when they exceed the fixed-token chunk size, because the table cap is the controlling threshold for table preservation.
+- Used `FixedTokenChunker` for split sections and tables so token windows, overlaps, and page metadata stay aligned with the existing chunking behavior.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- Adjusted one test so the pre-heading content chunk is validated separately from the scored heading section.
+
+## Workflow Integrity Check
+- No issue identified. The accepted 04A heading-scoring files were used as the live baseline and were left unchanged.
+
+## Notes for Next Task
+- next task ID: (04C)
+- can proceed: yes
+- handoff notes: Smart section chunking is implemented and validated. The remaining Batch04 work is to wire `CHUNKING_STRATEGY` into ingestion without changing the chunker behavior here.
+
+---
+
+# Task Execution Report - (04C)
+
+## Source Task File
+[docs/tasks/task_2.md]
+
+## Report File
+[docs/reports/report_2_execute_agent.md]
+
+## Batch
+[Batch04 - Header Scoring and Smart Section Chunking]
+
+## Task
+[(04C) - Integrate chunking strategy into ingestion]
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.3: Integrate chunking strategy into ingestion`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch04 - Header Scoring and Smart Section Chunking
+- Task ID: (04C)
+- Task title: Integrate chunking strategy into ingestion
+
+## Completed Work
+- Added a strategy resolver in `backend/app/graphs/ingestion_nodes.py` that maps `fixed_token` to `FixedTokenChunker` and `smart_section` to `SmartSectionChunker`.
+- Persisted `chunking_strategy` and `chunking_version` from the selected strategy, using `v1` for fixed token mode and `v2` for smart section mode.
+- Kept the ingestion node order intact so `save_chunks_node` still runs before `upsert_qdrant_node`.
+- Updated ingestion tests to cover both chunking strategies plus smart-section metadata in Supabase and Qdrant payloads.
+
+## Files Created or Modified
+- `backend/app/graphs/ingestion_nodes.py`
+- `backend/tests/test_ingestion_graph.py`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_ingestion_graph.py tests/test_chunker.py -v`: Passed
+
+## Acceptance Check
+- Task acceptance condition: Ingestion uses smart section chunking when configured, fixed token chunking when configured, stores smart-section `v2` metadata, and includes section metadata in Qdrant payloads.
+- Status: satisfied
+- Evidence: The required backend pytest command passed with 22/22 tests green, including fixed-token and smart-section chunk selection, Supabase metadata persistence, and Qdrant payload assertions.
+
+## Artifacts Produced
+- Updated backend ingestion strategy resolution and regression coverage for Batch04 task (04C).
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch completion remain for A2 after review.
+
+## Key Implementation Decisions
+- Centralized chunker selection in a small resolver instead of branching inline inside `chunk_document_node`.
+- Kept strategy metadata separate from the chunker's internal `chunk_type` so smart-section mode can still emit chunk records with section/table types while storing the configured ingestion strategy.
+
+## Risks or Open Issues
+- Unsupported chunking strategies now fail fast with a safe ingestion error, which is intentional but should be kept in mind for environment configuration.
+
+## Minor Issues Fixed During Execution
+- Trimmed stray trailing blank lines introduced while rewriting the test file.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes
+- handoff notes: Batch04 ingestion integration is complete and validated. The next isolated step is section-aware neighbor expansion in retrieval.
+
+---
+# Batch04 Pre-commit Repair Execution Report
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Report File
+docs/reports/report_2_execute_agent.md
+
+## Batch
+Batch04 - Header Scoring and Smart Section Chunking
+
+## Status
+complete
+
+## Scope
+Removed only the extra blank line at EOF from:
+- backend/app/chunking/section_chunker.py
+- backend/app/graphs/ingestion_nodes.py
+- backend/tests/test_chunker.py
+- backend/tests/test_ingestion_graph.py
+- docs/tasks/task_2.md
+
+## Validation
+- `git diff --check`: Passed with LF-to-CRLF warnings in existing modified files; no blank-line-at-EOF errors remained.
+
+## Files Modified
+- backend/app/chunking/section_chunker.py
+- backend/app/graphs/ingestion_nodes.py
+- backend/tests/test_chunker.py
+- backend/tests/test_ingestion_graph.py
+- docs/tasks/task_2.md
+- docs/reports/report_2_execute_agent.md
+
+## Notes
+- No behavior changes.
+- No task checkbox or batch status updates were made.

@@ -1493,3 +1493,714 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+[docs/tasks/task_2.md]
+
+## Execution Report Reviewed
+[docs/reports/report_2_execute_agent.md]
+
+## Review Report File
+[docs/review/review_2_review_agent.md]
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Header Scoring and Smart Section Chunking
+- Task ID: (04A)
+- Task title: Add deterministic header scoring
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.1: Add deterministic header scoring`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is for `(04A)` and matches the requested Batch04 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_2_execute_agent.md`
+- untracked files: `backend/app/chunking/heading_detection.py`, `backend/tests/test_heading_detection.py`
+
+## Files Reviewed
+- `backend/app/chunking/heading_detection.py`: in scope - new deterministic scoring module matches the task file and Plan_2 Batch 4.1.
+- `backend/tests/test_heading_detection.py`: in scope - focused coverage for the required scoring and threshold cases.
+- `backend/app/parsing/structure.py`: in scope - confirms the Batch03 parsed block contract this task depends on.
+- `backend/app/parsing/base.py`: in scope - confirms parsed documents may carry `blocks` from prior committed Batch03 work.
+- `backend/tests/test_parsers.py`: in scope - confirms Batch03 parser metadata already provides `font_size` and `is_bold` for this heuristic.
+- `backend/app/chunking/__init__.py`: in scope - checked package boundary; no unrelated export churn was introduced.
+- `backend/app/chunking/token_chunker.py`: in scope - checked current chunking contract to distinguish this task from future smart-section work.
+- `docs/tasks/task_2.md`: in scope - reviewed selected task requirements and updated only the `(04A)` checkbox.
+- `docs/plans/Plan_2.md`: in scope - reviewed the cited Batch 4.1 source section.
+- `docs/plans/Master_Plan.md`: in scope - confirmed this work aligns with the higher-level header scoring milestone.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(04A)` entry was reviewed and matched against repo evidence.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/chunking/heading_detection.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New module implements the requested scoring helpers only.
+- file from execution report: `backend/tests/test_heading_detection.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover explicit headings, numbered headings, uppercase short text, sentence penalties, and long uppercase paragraphs.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff shows an appended `(04A)` execution report entry rather than an overwrite.
+
+## Dependency Review
+- Required dependencies: Batch03 parsed block shape and parser-emitted block metadata.
+- Dependency status: satisfied
+- Missing or invalid dependency: None. Prior committed Batch03 code already defines `ParsedBlock` fields and parser metadata used by the new scoring logic.
+
+## Architecture Alignment
+- Passed: The change stays inside the chunking boundary, adds a deterministic helper module with focused tests, and does not pull Batch04 chunker or ingestion work forward.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `score_heading_candidate` computes real rule-based scores from block text, type, metadata, and neighboring font sizes; tests exercise both positive and negative paths.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Runtime logic uses general regex and metadata checks, not fixture-specific IDs, filenames, or canned answers.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_heading_detection.py -v`
+- Reported result: Passed
+- Rerun result: Passed (`11 passed`); pytest emitted a non-blocking `.pytest_cache` write warning under the managed workspace.
+- Status: Passed
+- Notes: The rerun covered the task-required validation exactly.
+
+## Acceptance Review
+- Task acceptance: Explicit headings, numbered short headings, and uppercase short headings pass threshold; normal sentences and long uppercase paragraphs do not pass threshold.
+- Status: satisfied
+- Evidence: The implementation and rerun test output both match the acceptance cases defined in `docs/tasks/task_2.md` and `docs/plans/Plan_2.md`.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and not marked complete
+- Execution report entry: appended for `(04A)`
+- Review report entry: appended for `(04A)`
+- Other: Sibling Batch04 task checkboxes remain unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- This review distinguishes the new Batch04 heading detector from prior committed Batch03 parser/block work; `(04A)` consumes the existing parsed-block contract but does not change parser output, chunking strategy selection, or ingestion behavior.
+- `is_heading_candidate(block, threshold=4)` currently evaluates the candidate without neighbor context, so future Batch04 chunker work should use `score_heading_candidate(block, previous_block, next_block)` when font-size comparison matters.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Header Scoring and Smart Section Chunking",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/chunking/heading_detection.py",
+    "backend/tests/test_heading_detection.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+[docs/tasks/task_2.md]
+
+## Execution Report Reviewed
+[docs/reports/report_2_execute_agent.md]
+
+## Review Report File
+[docs/review/review_2_review_agent.md]
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Header Scoring and Smart Section Chunking
+- Task ID: (04B)
+- Task title: Add smart section chunker
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.2: Add smart section chunker`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is for `(04B)`. Uncommitted `(04A)` files remain present in the workspace as an already accepted dependency baseline and were not re-accepted as part of this review.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/core/config.py`, `backend/tests/test_chunker.py`, `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, `docs/tasks/task_2.md`
+- untracked files: `backend/app/chunking/heading_detection.py`, `backend/app/chunking/section_chunker.py`, `backend/tests/test_heading_detection.py`
+
+## Files Reviewed
+- `backend/app/core/config.py`: in scope - adds the three Batch04 chunking settings with the required defaults.
+- `backend/app/chunking/section_chunker.py`: in scope - real smart-section chunker implementation with fixed-token fallback, table preservation, and heading metadata propagation.
+- `backend/tests/test_chunker.py`: in scope - focused Batch04 chunker coverage for fallback, intact tables, oversized-table splitting, and scored-heading section splitting.
+- `backend/app/chunking/heading_detection.py`: questionable - accepted `(04A)` dependency baseline used by `(04B)`; reviewed only for compatibility with the new chunker.
+- `backend/tests/test_heading_detection.py`: questionable - accepted `(04A)` dependency test file rerun as part of the required validation, but not part of the selected task's implementation scope.
+- `backend/app/chunking/token_chunker.py`: in scope - reviewed as the preserved fixed-token baseline and helper reused by the new chunker.
+- `backend/app/parsing/base.py`: in scope - confirms `ParsedDocument.blocks` is the Batch03 input contract consumed by the new chunker.
+- `backend/app/parsing/structure.py`: in scope - confirms heading/table block shape and metadata contract used by the tests and runtime logic.
+- `backend/app/graphs/ingestion_nodes.py`: questionable - reviewed only to confirm `CHUNKING_STRATEGY` wiring remains future `(04C)` work and was not silently pulled into `(04B)`.
+- `docs/tasks/task_2.md`: in scope - reviewed selected task requirements and updated only the `(04B)` checkbox entries.
+- `docs/plans/Plan_2.md`: in scope - reviewed the cited Batch 4.2 source section.
+- `docs/plans/Master_Plan.md`: in scope - confirmed smart section chunking remains a Phase 2 chunking concern.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(04B)` execution report entry matched repo evidence.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/config.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds `CHUNKING_STRATEGY`, `HEADER_SCORE_THRESHOLD`, and `TABLE_CHUNK_MAX_TOKENS` only.
+- file from execution report: `backend/app/chunking/section_chunker.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New module implements the smart section chunker behavior required by the plan.
+- file from execution report: `backend/tests/test_chunker.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Test additions align with the required fallback, table, and section-splitting cases.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff shows an appended `(04B)` execution report entry rather than an overwrite.
+
+## Dependency Review
+- Required dependencies: Accepted `(04A)` heading scoring, committed Batch03 parsed-block emission, and existing fixed-token chunker behavior.
+- Dependency status: satisfied
+- Missing or invalid dependency: None. `(04B)` consumes the accepted `(04A)` scoring helper and existing parsed-block contract without rewriting either dependency.
+
+## Architecture Alignment
+- Passed: The change stays inside the chunking layer, keeps `FixedTokenChunker` as the fallback/splitting mechanism, and leaves ingestion strategy selection for `(04C)`.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `SmartSectionChunker.chunk()` walks real parser blocks, maintains a heading stack, emits real chunk metadata, and delegates oversize splitting to `FixedTokenChunker` rather than returning canned results.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The runtime logic is generic across parsed block sequences and uses settings plus detected heading/table structure rather than fixture-specific values.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_chunker.py tests/test_heading_detection.py -v`
+- Reported result: Passed
+- Rerun result: Passed (`19 passed`); pytest emitted a non-blocking `.pytest_cache` write warning under the managed workspace.
+- Status: Passed
+- Notes: The rerun matched the task-required validation exactly and covered both the selected `(04B)` tests and the accepted `(04A)` dependency tests.
+
+## Acceptance Review
+- Task acceptance: Smart section chunks carry heading and section path; small tables stay intact; oversized sections split without losing heading metadata; fixed-token tests still pass.
+- Status: satisfied
+- Evidence: The new chunker preserves `heading` and `section_path`, emits intact small-table chunks with `chunk_type = "table"`, splits large sections/tables through `FixedTokenChunker`, and the rerun test suite passed.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and not marked complete
+- Execution report entry: appended for `(04B)`
+- Review report entry: appended for `(04B)`
+- Other: Sibling `(04C)` and later task checkboxes remain unchanged; the accepted uncommitted `(04A)` checkbox remains as previously reviewed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `(04B)` is correctly scoped short of ingestion integration: `backend/app/graphs/ingestion_nodes.py` still uses the Phase 1 fixed-token path, which matches the plan because strategy selection belongs to `(04C)`.
+- The new settings exist in config but are not yet consumed by ingestion; that is intentional for this task boundary, not a review defect.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Header Scoring and Smart Section Chunking",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/core/config.py",
+    "backend/app/chunking/section_chunker.py",
+    "backend/tests/test_chunker.py",
+    "backend/app/chunking/heading_detection.py",
+    "backend/tests/test_heading_detection.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (04C)
+
+## Source Task File
+[docs/tasks/task_2.md]
+
+## Execution Report Reviewed
+[docs/reports/report_2_execute_agent.md]
+
+## Review Report File
+[docs/review/review_2_review_agent.md]
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Header Scoring and Smart Section Chunking
+- Task ID: (04C)
+- Task title: Integrate chunking strategy into ingestion
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 4: Header Scoring and Smart Section Chunking` > `### Task 4.3: Integrate chunking strategy into ingestion`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04C)
+- Reviewed task ID: (04C)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is for `(04C)` and matches the requested task. Accepted but uncommitted `(04A)` and `(04B)` changes remain present as dependency baseline and were not re-reviewed as part of this task outcome.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/core/config.py`, `backend/app/graphs/ingestion_nodes.py`, `backend/tests/test_chunker.py`, `backend/tests/test_ingestion_graph.py`, `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, `docs/tasks/task_2.md`
+- untracked files: `backend/app/chunking/heading_detection.py`, `backend/app/chunking/section_chunker.py`, `backend/tests/test_heading_detection.py`
+
+## Files Reviewed
+- `backend/app/graphs/ingestion_nodes.py`: in scope - adds the strategy resolver, stores selected chunking metadata, and keeps Qdrant payload fields aligned with the task requirements.
+- `backend/tests/test_ingestion_graph.py`: in scope - covers both `fixed_token` and `smart_section` strategy selection, persisted metadata, Qdrant payload fields, and graph node order.
+- `backend/app/graphs/ingestion_graph.py`: in scope - reviewed to confirm `save_chunks` still precedes `upsert_qdrant` in the live graph.
+- `backend/app/core/config.py`: questionable - accepted uncommitted `(04B)` baseline that provides `CHUNKING_STRATEGY`; not changed specifically for `(04C)` but required for this task to operate.
+- `backend/tests/test_chunker.py`: questionable - accepted uncommitted `(04B)` dependency validation rerun alongside the selected task per the required command.
+- `backend/app/chunking/section_chunker.py`: questionable - accepted uncommitted `(04B)` dependency baseline used by strategy resolution; not newly reviewed as implementation scope for `(04C)`.
+- `backend/app/chunking/heading_detection.py`: questionable - accepted uncommitted `(04A)` dependency baseline used indirectly by `SmartSectionChunker`.
+- `backend/tests/test_heading_detection.py`: questionable - accepted uncommitted `(04A)` dependency test baseline; not part of the selected task's file list.
+- `docs/tasks/task_2.md`: in scope - reviewed selected task requirements and updated only the `(04C)` checkboxes after acceptance.
+- `docs/plans/Plan_2.md`: in scope - reviewed the cited Batch 4.3 source section.
+- `docs/plans/Master_Plan.md`: in scope - reviewed the ingestion workflow section to confirm node ordering remains architecture-aligned.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(04C)` execution report entry matched repo evidence.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Replaced direct fixed-token chunker construction with `_resolve_chunker_for_settings()` and persisted selected strategy/version in `chunk_document_node`.
+- file from execution report: `backend/tests/test_ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Added coverage for both strategies, smart-section Supabase metadata, and Qdrant payload metadata.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Diff shows an appended `(04C)` execution report entry rather than an overwrite.
+
+## Dependency Review
+- Required dependencies: Accepted `(04A)` heading scoring baseline, accepted `(04B)` smart section chunker baseline, existing ingestion graph order, and existing Supabase/Qdrant chunk persistence contract.
+- Dependency status: satisfied
+- Missing or invalid dependency: None. `(04C)` consumes the accepted Batch04 baselines without silently reimplementing them.
+
+## Architecture Alignment
+- Passed: Strategy selection is isolated inside the ingestion node layer, `save_chunks_node` still runs before `upsert_qdrant_node`, chunk metadata persists through Supabase and Qdrant, and the live ingestion graph still matches `docs/plans/Master_Plan.md` section 8 ordering.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `_resolve_chunker_for_settings()` instantiates real chunkers based on `settings.CHUNKING_STRATEGY`; `chunk_document_node()` returns real `chunking_strategy` and `chunking_version`; `_chunk_metadata()` persists those fields to Supabase rows; `_qdrant_payload()` includes `heading`, `section_path`, `page_start`, `page_end`, `chunk_type`, `token_count`, and `text`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Strategy selection and metadata persistence are driven by settings and chunk fields, not fixture-specific IDs, filenames, or canned payloads.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_ingestion_graph.py tests/test_chunker.py -v`
+- Reported result: Passed
+- Rerun result: Passed (`22 passed`)
+- Status: Passed
+- Notes: Pytest emitted one non-blocking `.pytest_cache` permission warning under the managed workspace.
+
+## Acceptance Review
+- Task acceptance: Ingestion uses smart section chunking when configured, fixed token chunking when configured, stores smart-section `v2` metadata, and includes section metadata in Qdrant payloads.
+- Status: satisfied
+- Evidence: The live ingestion node resolves both strategies correctly, the rerun tests passed for both modes, saved chunk metadata includes `chunking_strategy`/`chunking_version`, and Qdrant payload assertions cover the required smart-section fields.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and not marked complete
+- Execution report entry: appended for `(04C)`
+- Review report entry: appended for `(04C)`
+- Other: Accepted uncommitted `(04A)` and `(04B)` task checkboxes remain as previously reviewed; no sibling or future task checkboxes were changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The current git diff still includes accepted but uncommitted `(04A)` and `(04B)` files. This review treated them strictly as dependency baseline so `(04C)` scope stayed limited to ingestion integration.
+- Unsupported `CHUNKING_STRATEGY` values now fail fast through a normal ingestion failure state, which is consistent with the existing graph error path.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, per review instructions the batch checkbox remains unchanged in this pass
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Header Scoring and Smart Section Chunking",
+  "selected_task_id": "(04C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/tests/test_ingestion_graph.py",
+    "backend/app/graphs/ingestion_graph.py",
+    "backend/app/core/config.py",
+    "backend/tests/test_chunker.py",
+    "backend/app/chunking/section_chunker.py",
+    "backend/app/chunking/heading_detection.py",
+    "backend/tests/test_heading_detection.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - Batch04 Repair
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Header Scoring and Smart Section Chunking
+- Task ID: Batch04 pre-commit repair entry for accepted tasks (04A), (04B), (04C)
+- Task title: Remove extra blank lines at EOF from the five reported files only
+- Task status reported by executor: complete
+- Source of Truth: docs/tasks/task_2.md Batch04 accepted task state; docs/plans/Master_Plan.md > ## 2. MVP Design Principles; docs/plans/Master_Plan.md > ## 8. LangGraph Ingestion Graph
+- Supplemental documents: docs/plans/Master_Plan.md
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: none; user requested the latest Batch04 repair entry
+- Reviewed task ID: Batch04 pre-commit repair entry
+- Correct selection: yes
+- Notes: The latest appended entry is the Batch04 pre-commit repair report, not a new implementation task report.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: README.md; backend/app/core/config.py; backend/app/graphs/ingestion_nodes.py; backend/tests/test_chunker.py; backend/tests/test_ingestion_graph.py; docs/reports/report_2_execute_agent.md; docs/review/review_2_review_agent.md; docs/tasks/task_2.md; untracked backend/app/chunking/heading_detection.py; backend/app/chunking/section_chunker.py; backend/tests/test_heading_detection.py
+- untracked files: backend/app/chunking/heading_detection.py; backend/app/chunking/section_chunker.py; backend/tests/test_heading_detection.py
+
+## Files Reviewed
+- `backend/app/chunking/section_chunker.py`: in scope - raw EOF check shows a single trailing newline and no extra blank line at EOF; tail content is intact.
+- `backend/app/graphs/ingestion_nodes.py`: in scope - raw EOF check shows a single trailing newline and no extra blank line at EOF; accepted Batch04 ingestion logic remains intact.
+- `backend/tests/test_chunker.py`: in scope - raw EOF check shows a single trailing newline and no extra blank line at EOF; accepted smart-section tests remain intact.
+- `backend/tests/test_ingestion_graph.py`: in scope - raw EOF check shows a single trailing newline and no extra blank line at EOF; accepted ingestion tests remain intact.
+- `docs/tasks/task_2.md`: in scope - raw EOF check shows a single trailing newline and no extra blank line at EOF; accepted Batch04 checkboxes remain checked and no new checkbox drift was introduced.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest repair entry is appended and matches the narrow EOF-repair scope.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/chunking/section_chunker.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: File exists as an untracked accepted Batch04 file; no extra blank EOF line remains.
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Modified tracked file; no extra blank EOF line remains.
+- file from execution report: `backend/tests/test_chunker.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Modified tracked test file; no extra blank EOF line remains.
+- file from execution report: `backend/tests/test_ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Modified tracked test file; no extra blank EOF line remains.
+- file from execution report: `docs/tasks/task_2.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Modified tracked task file; no extra blank EOF line remains and accepted Batch04 checkbox state is preserved.
+
+## Dependency Review
+- Required dependencies: Accepted task states for (04A), (04B), and (04C) must already be checked and preserved.
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Master Plan ingestion flow remains unchanged in ordering; this repair does not introduce workflow or contract changes.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The repair report is limited to EOF cleanup, current file tails are intact, and no new behavioral edits were introduced beyond the already accepted Batch04 implementation.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No new runtime logic or test logic was added in the repair scope.
+
+## Validations Reviewed
+- Command/check: `git diff --check`
+- Reported result: Passed; no blank-line-at-EOF errors remained.
+- Rerun result: Passed locally during review.
+- Status: satisfied
+- Notes: This review also performed raw EOF checks on all five repaired files; each ends with one newline and `extra_blank_eof=False`.
+- Command/check: Batch04 task checkbox state inspection in `docs/tasks/task_2.md`
+- Reported result: Not explicitly reported by A1 beyond saying no task checkbox updates were made.
+- Rerun result: Passed; `(04A)`, `(04B)`, and `(04C)` remain checked in both the Batch04 task definitions and the Progress Tracker, while broader Batch04 batch/global checklist items remain unchanged.
+- Status: satisfied
+- Notes: No checkbox drift was found in the repair scope.
+
+## Acceptance Review
+- Task acceptance: EOF whitespace repair for the five reported files only, with no behavior change or scope drift.
+- Status: satisfied
+- Evidence: `git diff --check` passes, all five repaired files have no extra blank line at EOF, and the accepted Batch04 checkbox state was preserved.
+
+## Progress Tracking
+- Selected task checkbox: not applicable; this review targets a repair entry, and accepted Batch04 task checkboxes were already checked before review.
+- Checkbox updated by reviewer: no
+- Batch status: unchanged
+- Execution report entry: appended and accurate for the repair scope
+- Review report entry: appended at physical EOF by this review
+- Other: Batch04 task acceptance state remains limited to the already accepted `(04A)`, `(04B)`, and `(04C)` checkboxes.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- The worktree still contains the broader accepted Batch04 implementation diff and prior review artifacts; that is expected context and not new repair drift.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs in the batch chain and any required batch-level tracking are completed under the normal workflow
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch04 - Header Scoring and Smart Section Chunking",
+  "selected_task_id": "Batch04 pre-commit repair entry",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/chunking/section_chunker.py",
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/tests/test_chunker.py",
+    "backend/tests/test_ingestion_graph.py",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

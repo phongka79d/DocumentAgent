@@ -19,7 +19,7 @@ SECOND_DOCUMENT_ID = "22222222-2222-2222-2222-222222222222"
 FIXED_STORAGE_PATH = f"documents/{FIXED_DOCUMENT_ID}/original/report.pdf"
 
 
-def _test_settings() -> Settings:
+def _test_settings(*, chunking_strategy: str = "smart_section") -> Settings:
     return Settings(
         _env_file=None,
         SUPABASE_URL="https://example.supabase.co",
@@ -34,6 +34,7 @@ def _test_settings() -> Settings:
         QDRANT_COLLECTION="document_chunks_v1",
         JINA_API_KEY="jina-key",
         JINA_RERANK_MODEL="jina-reranker-v2-base-multilingual",
+        CHUNKING_STRATEGY=chunking_strategy,
     )
 
 
@@ -100,19 +101,28 @@ def _chunk_record(
     chunk_index: int,
     content: str,
     content_hash: str | None = None,
+    chunk_type: str = "fixed",
+    heading: str | None = None,
+    section_path: list[str] | None = None,
+    page_start: int = 1,
+    page_end: int = 1,
+    token_start: int | None = None,
+    token_end: int | None = None,
 ) -> dict[str, object]:
+    resolved_token_start = chunk_index * 10 if token_start is None else token_start
+    resolved_token_end = resolved_token_start + 10 if token_end is None else token_end
     return {
         "chunk_index": chunk_index,
         "content": content,
         "content_hash": content_hash or f"hash-{chunk_index}",
         "token_count": len(content.split()),
-        "chunk_type": "fixed",
-        "heading": None,
-        "section_path": [],
-        "page_start": 1,
-        "page_end": 1,
-        "token_start": chunk_index * 10,
-        "token_end": chunk_index * 10 + 10,
+        "chunk_type": chunk_type,
+        "heading": heading,
+        "section_path": list(section_path or []),
+        "page_start": page_start,
+        "page_end": page_end,
+        "token_start": resolved_token_start,
+        "token_end": resolved_token_end,
     }
 
 
@@ -465,11 +475,18 @@ def test_parse_document_node_downloads_and_parses_normalized_document(monkeypatc
     assert result["parser_version"] == "1.0.0"
 
 
-def test_chunk_document_node_builds_chunk_metadata(monkeypatch):
-    settings = _test_settings()
+def test_chunk_document_node_uses_fixed_token_chunker_and_stores_v1_metadata(monkeypatch):
+    settings = _test_settings(chunking_strategy="fixed_token")
     fake_chunker = FakeChunker()
 
     _patch_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        ingestion_nodes,
+        "SmartSectionChunker",
+        lambda *args, **kwargs: pytest.fail(
+            "SmartSectionChunker should not be used when fixed_token is configured"
+        ),
+    )
     monkeypatch.setattr(ingestion_nodes, "FixedTokenChunker", lambda *args, **kwargs: fake_chunker)
 
     result = ingestion_nodes.chunk_document_node(
@@ -486,6 +503,49 @@ def test_chunk_document_node_builds_chunk_metadata(monkeypatch):
     assert result["total_chunks"] == 2
     assert result["chunking_strategy"] == "fixed_token"
     assert result["chunking_version"] == "v1"
+
+
+def test_chunk_document_node_uses_smart_section_chunker_and_stores_v2_metadata(monkeypatch):
+    settings = _test_settings(chunking_strategy="smart_section")
+    fake_chunker = FakeChunker()
+    fake_chunker.chunks = [
+        _chunk_record(
+            chunk_index=0,
+            content="smart section chunk",
+            chunk_type="smart_section",
+            heading="Overview",
+            section_path=["Overview"],
+            page_start=1,
+            page_end=2,
+            token_start=0,
+            token_end=3,
+        )
+    ]
+
+    _patch_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        ingestion_nodes,
+        "FixedTokenChunker",
+        lambda *args, **kwargs: pytest.fail(
+            "FixedTokenChunker should not be used when smart_section is configured"
+        ),
+    )
+    monkeypatch.setattr(ingestion_nodes, "SmartSectionChunker", lambda *args, **kwargs: fake_chunker)
+
+    result = ingestion_nodes.chunk_document_node(
+        {
+            "document_id": FIXED_DOCUMENT_ID,
+            "parsed_document": _parsed_document(),
+            "parser_name": "fake-parser",
+            "parser_version": "1.0.0",
+        }
+    )
+
+    assert fake_chunker.chunk_calls == [_parsed_document()]
+    assert result["chunks"] == fake_chunker.chunks
+    assert result["total_chunks"] == 1
+    assert result["chunking_strategy"] == "smart_section"
+    assert result["chunking_version"] == "v2"
 
 
 def test_save_chunks_node_deletes_old_rows_inserts_new_rows_and_attaches_ids(monkeypatch):
@@ -510,11 +570,27 @@ def test_save_chunks_node_deletes_old_rows_inserts_new_rows_and_attaches_ids(mon
             "file_name": "report.pdf",
             "parser_name": "fake-parser",
             "parser_version": "1.0.0",
-            "chunking_strategy": "fixed_token",
-            "chunking_version": "v1",
+            "chunking_strategy": "smart_section",
+            "chunking_version": "v2",
             "chunks": [
-                _chunk_record(chunk_index=0, content="chunk zero"),
-                _chunk_record(chunk_index=1, content="chunk one"),
+                _chunk_record(
+                    chunk_index=0,
+                    content="chunk zero",
+                    chunk_type="smart_section",
+                    heading="Overview",
+                    section_path=["Overview"],
+                    page_start=1,
+                    page_end=2,
+                ),
+                _chunk_record(
+                    chunk_index=1,
+                    content="chunk one",
+                    chunk_type="smart_section",
+                    heading="Details",
+                    section_path=["Overview", "Details"],
+                    page_start=2,
+                    page_end=3,
+                ),
             ],
         }
     )
@@ -542,6 +618,16 @@ def test_save_chunks_node_deletes_old_rows_inserts_new_rows_and_attaches_ids(mon
     assert all("text" not in row for row in inserted_rows)
     assert all("file_name" not in row for row in inserted_rows)
     assert all(set(row).issubset(approved_chunk_keys) for row in inserted_rows)
+    assert all(
+        row["metadata"]
+        == {
+            "parser_name": "fake-parser",
+            "parser_version": "1.0.0",
+            "chunking_strategy": "smart_section",
+            "chunking_version": "v2",
+        }
+        for row in inserted_rows
+    )
     assert len(fake_client.tables["document_chunks"]) == 2
     assert all("id" in chunk for chunk in result["chunks"])
     assert [chunk["chunk_index"] for chunk in result["chunks"]] == [0, 1]
@@ -597,7 +683,7 @@ def test_upsert_qdrant_node_rejects_chunks_without_saved_ids(monkeypatch):
     assert fake_qdrant_client.upsert_calls == []
 
 
-def test_upsert_qdrant_node_upserts_points_with_chunk_payloads(monkeypatch):
+def test_upsert_qdrant_node_upserts_points_with_smart_section_chunk_payloads(monkeypatch):
     settings = _test_settings()
     fake_qdrant_client = FakeQdrantClient()
     fake_supabase_client = FakeSupabaseClient(document_chunks=[])
@@ -621,22 +707,22 @@ def test_upsert_qdrant_node_upserts_points_with_chunk_payloads(monkeypatch):
                     "id": "chunk-1",
                     "chunk_index": 0,
                     "content": "first chunk",
-                    "heading": None,
-                    "section_path": [],
+                    "heading": "Overview",
+                    "section_path": ["Overview"],
                     "page_start": 1,
                     "page_end": 1,
-                    "chunk_type": "fixed",
+                    "chunk_type": "smart_section",
                     "token_count": 2,
                 },
                 {
                     "id": "chunk-2",
                     "chunk_index": 1,
                     "content": "second chunk",
-                    "heading": "Section 2",
-                    "section_path": ["Section 2"],
+                    "heading": "Details",
+                    "section_path": ["Overview", "Details"],
                     "page_start": 2,
-                    "page_end": 2,
-                    "chunk_type": "fixed",
+                    "page_end": 3,
+                    "chunk_type": "smart_section",
                     "token_count": 2,
                 },
             ],
@@ -653,7 +739,21 @@ def test_upsert_qdrant_node_upserts_points_with_chunk_payloads(monkeypatch):
     assert first_point.payload["document_id"] == FIXED_DOCUMENT_ID
     assert first_point.payload["chunk_id"] == "chunk-1"
     assert first_point.payload["file_name"] == "report.pdf"
+    assert first_point.payload["heading"] == "Overview"
+    assert first_point.payload["section_path"] == ["Overview"]
+    assert first_point.payload["page_start"] == 1
+    assert first_point.payload["page_end"] == 1
+    assert first_point.payload["chunk_type"] == "smart_section"
+    assert first_point.payload["token_count"] == 2
     assert first_point.payload["text"] == "first chunk"
+    second_point = upsert_call["points"][1]
+    assert second_point.payload["heading"] == "Details"
+    assert second_point.payload["section_path"] == ["Overview", "Details"]
+    assert second_point.payload["page_start"] == 2
+    assert second_point.payload["page_end"] == 3
+    assert second_point.payload["chunk_type"] == "smart_section"
+    assert second_point.payload["token_count"] == 2
+    assert second_point.payload["text"] == "second chunk"
     assert result["qdrant_collection"] == settings.QDRANT_COLLECTION
     assert result["chunks"][0]["qdrant_point_id"] == "chunk-1"
 

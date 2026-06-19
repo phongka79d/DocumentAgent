@@ -7,6 +7,7 @@ from typing import Any
 from fastapi.encoders import jsonable_encoder
 from qdrant_client.http import models as qdrant_models
 
+from app.chunking.section_chunker import SmartSectionChunker
 from app.chunking.token_chunker import FixedTokenChunker
 from app.core.config import Settings, get_settings
 from app.core.errors import safe_detail
@@ -20,8 +21,11 @@ from app.services.supabase_client import create_supabase_client
 DOCUMENTS_TABLE = "documents"
 DOCUMENT_CHUNKS_TABLE = "document_chunks"
 DEFAULT_INGESTION_ERROR = "Ingestion failed"
-DEFAULT_CHUNKING_STRATEGY = "fixed_token"
+FIXED_TOKEN_CHUNKING_STRATEGY = "fixed_token"
+SMART_SECTION_CHUNKING_STRATEGY = "smart_section"
+DEFAULT_CHUNKING_STRATEGY = FIXED_TOKEN_CHUNKING_STRATEGY
 DEFAULT_CHUNKING_VERSION = "v1"
+SMART_SECTION_CHUNKING_VERSION = "v2"
 
 
 def _resolve_settings(settings: Settings | None = None) -> Settings:
@@ -216,6 +220,26 @@ def _build_qdrant_point(
     )
 
 
+def _resolve_chunker_for_settings(
+    settings: Settings,
+) -> tuple[Any, str, str]:
+    strategy = settings.CHUNKING_STRATEGY
+    normalized_strategy = strategy.strip().lower() if isinstance(strategy, str) else ""
+    if normalized_strategy == FIXED_TOKEN_CHUNKING_STRATEGY:
+        return (
+            FixedTokenChunker(settings=settings),
+            FIXED_TOKEN_CHUNKING_STRATEGY,
+            DEFAULT_CHUNKING_VERSION,
+        )
+    if normalized_strategy == SMART_SECTION_CHUNKING_STRATEGY:
+        return (
+            SmartSectionChunker(settings=settings),
+            SMART_SECTION_CHUNKING_STRATEGY,
+            SMART_SECTION_CHUNKING_VERSION,
+        )
+    raise ValueError(f"Unsupported chunking strategy: {strategy}")
+
+
 def load_document_record_node(state: IngestionState) -> dict[str, Any]:
     settings = _resolve_settings()
     document_id = _resolve_document_id(state)
@@ -328,17 +352,18 @@ def chunk_document_node(state: IngestionState) -> dict[str, Any]:
         return _failure_state(document_id, "parsed_document is required")
 
     try:
-        chunker = FixedTokenChunker(settings=settings)
+        chunker, chunking_strategy, chunking_version = _resolve_chunker_for_settings(settings)
         chunks = chunker.chunk(dict(parsed_document))
         if not chunks:
             return _failure_state(document_id, "Chunking produced no chunks")
         return {
             "chunks": [dict(chunk) for chunk in chunks],
             "total_chunks": len(chunks),
-            "chunking_strategy": getattr(chunker, "chunk_type", DEFAULT_CHUNKING_STRATEGY)
-            or DEFAULT_CHUNKING_STRATEGY,
-            "chunking_version": DEFAULT_CHUNKING_VERSION,
+            "chunking_strategy": chunking_strategy,
+            "chunking_version": chunking_version,
         }
+    except ValueError as exc:
+        return _failure_state(document_id, str(exc))
     except Exception as exc:  # pragma: no cover - defensive, exercised by failure tests
         return _failure_state(document_id, str(exc))
 

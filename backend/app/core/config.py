@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     RETRIEVAL_CONTEXT_WINDOW: int = 1
     RETRIEVAL_CONTEXT_MAX_CANDIDATES: int = 8
 
+    CHUNKING_STRATEGY: str = "smart_section"
+    HEADER_SCORE_THRESHOLD: int = 4
+    TABLE_CHUNK_MAX_TOKENS: int = 500
+
     CHUNK_SIZE_TOKENS: int = 500
     CHUNK_OVERLAP_TOKENS: int = 150
 
@@ -48,4 +52,3 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
-

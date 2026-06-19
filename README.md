@@ -2,7 +2,7 @@
 
 RagDocument Phase 1 is a personal, single-user document RAG MVP.
 
-This repository is currently through Phase 1 Batch08 and Phase 2 Batch03. The accepted behavior is:
+This repository is currently through Phase 1 Batch08 and Phase 2 Batch04. The accepted behavior is:
 
 - a FastAPI backend titled `RagDocument API`
 - `GET /api/health` returning `{"status": "ok"}`
@@ -16,8 +16,9 @@ This repository is currently through Phase 1 Batch08 and Phase 2 Batch03. The ac
 - document API routes for upload, list, detail, index, reindex, delete, and typed chunk inspection under `/api/documents`
 - normalized document parsers for PDF, DOCX, TXT, Markdown, and HTML under `backend/app/parsing/`, with optional structured block output for paragraphs, headings, and tables
 - a parser registry that resolves supported file extensions and MIME types, including `text/html`
-- a deterministic fixed-token chunker under `backend/app/chunking/` using 500-token chunks, 150-token overlap, and chunk metadata required for ingestion
-- a LangGraph ingestion workflow under `backend/app/graphs/` that loads existing document rows, marks processing, parses, chunks, saves chunks, embeds, upserts Qdrant vectors, marks ready, and marks fatal failures as failed with clear errors
+- deterministic heading scoring and chunkers under `backend/app/chunking/`, including fixed-token chunking plus smart section chunking with heading/section-path metadata, table preservation, and fixed-token fallback
+- chunking settings for `CHUNKING_STRATEGY`, `HEADER_SCORE_THRESHOLD`, `TABLE_CHUNK_MAX_TOKENS`, `CHUNK_SIZE_TOKENS`, and `CHUNK_OVERLAP_TOKENS`
+- a LangGraph ingestion workflow under `backend/app/graphs/` that loads existing document rows, marks processing, parses, selects the configured chunking strategy, saves chunks, embeds, upserts Qdrant vectors with section metadata, marks ready, and marks fatal failures as failed with clear errors
 - index and reindex document routes that invoke the ingestion graph with only the document ID; reindex deletes old Qdrant vectors and old Supabase chunks before rebuilding
 - retrieval helpers that embed questions, query Qdrant with optional document filters, rerank with Jina, fall back to Qdrant scores, and expand neighboring chunks with deduplication and context caps
 - a LangGraph query workflow under `backend/app/graphs/` that validates questions, retrieves context, reranks, expands neighbors, generates grounded answers with source citations, and optionally saves messages without failing chat responses
