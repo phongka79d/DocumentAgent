@@ -3262,3 +3262,902 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (07A)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07A)
+- Task title: Initialize React Vite frontend
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.1: Initialize React Vite frontend`; `docs/plans/Master_Plan.md` > `## 3. Technology Stack`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (07A)
+- Reviewed task ID: (07A)
+- Correct selection: yes
+- Notes: The latest appended execution report entry matches the user-requested Batch07 task `(07A)`.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_1_execute_agent.md`
+  - `docs/tasks/task_1.md` after reviewer checkbox update only
+- untracked files:
+  - `frontend/`
+  - `frontend/dist/` (ignored build artifact)
+  - `frontend/node_modules/` (ignored install artifact)
+
+## Files Reviewed
+- `docs/tasks/task_1.md`: in scope - verified task definition, dependencies, and the two `(07A)` checklist locations.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(07A)` execution report entry matches repo evidence.
+- `frontend/package.json`: in scope - React/Vite/TypeScript package scaffold and build scripts.
+- `frontend/package-lock.json`: in scope - install artifact expected for reproducible frontend dependencies.
+- `frontend/index.html`: in scope - Vite root HTML entry.
+- `frontend/vite.config.ts`: in scope - React Vite configuration.
+- `frontend/tsconfig.json`: in scope - TypeScript configuration for the frontend scaffold.
+- `frontend/src/main.tsx`: in scope - React bootstrap entry.
+- `frontend/src/App.tsx`: in scope - env-driven API base URL resolution and minimal app shell only.
+- `frontend/src/styles.css`: in scope - base shell styling only.
+- `frontend/dist/`: questionable - generated build output from task validation; acceptable because root `.gitignore` ignores `dist/`.
+- `frontend/node_modules/`: questionable - generated install artifact from task validation; acceptable because root `.gitignore` ignores `node_modules/`.
+- `.gitignore`: in scope - confirmed `dist/` and `node_modules/` are already ignored at the repo root.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/package.json`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Defines React/Vite frontend scaffold.
+- file from execution report: `frontend/index.html`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Present and minimal.
+- file from execution report: `frontend/vite.config.ts`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses the React plugin only.
+- file from execution report: `frontend/tsconfig.json`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Strict TypeScript config is present.
+- file from execution report: `frontend/src/main.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Bootstraps the React app.
+- file from execution report: `frontend/src/App.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Reads `VITE_API_BASE_URL`, trims it, and falls back to `http://localhost:8000`.
+- file from execution report: `frontend/src/styles.css`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Styles the initial shell only.
+- file from execution report: `frontend/package-lock.json`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Expected lockfile after `npm install`.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry was appended, not overwritten.
+
+## Dependency Review
+- Required dependencies: `(06C)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed:
+  - Frontend uses React with TypeScript and Vite, matching the plan technology stack.
+  - The implementation stays frontend-only and does not introduce backend or external-service clients in the browser.
+  - The shell remains within `(07A)` scope and does not pre-implement `(07B)`, `(07C)`, or `(07D)` behaviors.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence:
+  - `frontend/src/App.tsx` renders a real shell and reads `import.meta.env.VITE_API_BASE_URL`.
+  - `frontend/src/main.tsx` mounts a real React application.
+  - `npm run build` succeeds against the checked-in scaffold.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence:
+  - The frontend reads `VITE_API_BASE_URL` from runtime env and uses a local fallback only when the variable is absent.
+  - No backend secret names or values were found in the frontend tree.
+
+## Validations Reviewed
+- Command/check: `cd frontend; npm install`
+- Reported result: Passed
+- Rerun result: Passed (`up to date, audited 114 packages in 940ms`)
+- Status: passed
+- Notes: npm reported 2 dependency vulnerabilities, but install itself succeeded.
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed
+- Rerun result: Passed (`vite build` completed successfully)
+- Status: passed
+- Notes: Build output was generated under `frontend/dist/`.
+- Command/check: `rg -n "SUPABASE|QDRANT|SHOPAIKEY|JINA|ADMIN_API_TOKEN|SERVICE_ROLE|SECRET|API_KEY" frontend`
+- Reported result: Passed
+- Rerun result: Passed (no matches; `rg` exited with status 1 for an empty result set)
+- Status: passed
+- Notes: No backend-only secret names were found in the frontend tree.
+
+## Acceptance Review
+- Task acceptance: React Vite TypeScript frontend scaffold exists; API base URL is env-driven; no backend secrets are exposed; Vite build completes.
+- Status: satisfied
+- Evidence:
+  - `frontend/package.json` declares React, React DOM, Vite, and TypeScript.
+  - `frontend/src/App.tsx` reads `VITE_API_BASE_URL` and surfaces the resolved value in the shell.
+  - Frontend source scan returned no backend secret-name matches.
+  - `npm run build` passed on rerun.
+
+## Progress Tracking
+- Selected task checkbox: checked in both `(07A)` checklist locations only
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended already
+- Review report entry: appended by this review
+- Other: Sibling Batch07 tasks `(07B)`, `(07C)`, `(07D)` and the Batch07 summary checkbox were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- `frontend/dist/` and `frontend/node_modules/` remain in the workspace after validation, but they are ignored by the existing root `.gitignore` and do not need to be committed for `(07A)`.
+- `npm install` reports 2 dependency vulnerabilities; this does not block `(07A)` acceptance but should be revisited during dependency maintenance.
+
+### Observations
+- The app shell intentionally stops short of API client, document workflow, and chat behavior, which correctly preserves scope for `(07B)` through `(07D)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch07 - Frontend MVP",
+  "selected_task_id": "(07A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "frontend/package.json",
+    "frontend/package-lock.json",
+    "frontend/index.html",
+    "frontend/vite.config.ts",
+    "frontend/tsconfig.json",
+    "frontend/src/main.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/styles.css",
+    "docs/tasks/task_1.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "frontend/dist/ and frontend/node_modules/ are local ignored validation artifacts and should remain uncommitted.",
+    "npm install reports 2 dependency vulnerabilities, which do not block task acceptance."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (07B)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07B)
+- Task title: Add frontend API client and types
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.2: Add API client and types`; `docs/plans/Master_Plan.md` > `## 21. API Endpoints`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (07B)
+- Reviewed task ID: (07B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is `(07B)`, which matches the requested Batch07 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_1_execute_agent.md`
+  - `docs/review/review_1_review_agent.md`
+  - `docs/tasks/task_1.md` after reviewer checkbox update only
+- untracked files:
+  - `frontend/` containing prior accepted `(07A)` scaffold files plus new `(07B)` API files
+
+## Files Reviewed
+- `docs/tasks/task_1.md`: in scope - verified `(07B)` requirements, dependencies, acceptance, and both checklist locations.
+- `docs/reports/report_1_execute_agent.md`: in scope - reviewed the latest `(07B)` execution report entry.
+- `docs/plans/Plan_1.md`: in scope - verified Task 7.2 requirements.
+- `docs/plans/Master_Plan.md`: in scope - verified section 21 endpoint and chat contracts.
+- `frontend/src/api/types.ts`: in scope - new `(07B)` frontend request/response types.
+- `frontend/src/api/client.ts`: in scope - new `(07B)` API client implementation.
+- `frontend/src/App.tsx`: questionable - prior accepted `(07A)` scaffold reviewed only to confirm `(07B)` did not pre-implement UI tasks.
+- `frontend/src/main.tsx`: questionable - prior accepted `(07A)` scaffold context only.
+- `frontend/src/styles.css`: questionable - prior accepted `(07A)` scaffold context only.
+- `frontend/package.json`: questionable - prior accepted `(07A)` scaffold, used to rerun frontend validation commands.
+- `frontend/tsconfig.json`: questionable - prior accepted `(07A)` scaffold, used for TypeScript validation context.
+- `backend/app/models/schemas.py`: in scope - backend schema contract source for document/chat payload shapes.
+- `backend/app/api/routes/documents.py`: in scope - backend route contract source for upload, list, detail, index, reindex, and delete.
+- `backend/app/api/routes/chat.py`: in scope - backend route contract source for chat request/response behavior.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/api/types.ts`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains frontend types for document, upload, processing, chat, and citation payloads.
+- file from execution report: `frontend/src/api/client.ts`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Exposes typed client methods for all required endpoints plus browser token helpers.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry was appended, not overwritten.
+
+## Dependency Review
+- Required dependencies: `(07A)`, `(03C)`, `(06C)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed:
+  - The new work is confined to `frontend/src/api/*`, keeping `(07B)` separate from prior `(07A)` scaffold work and later `(07C)`/`(07D)` UI work.
+  - The client targets the planned MVP endpoints: upload, list, detail, index, reindex, delete, and chat.
+  - Frontend types mirror the backend document, upload, chat request, and source citation shapes closely enough for the next UI tasks.
+  - `X-Admin-API-Token` is attached only when a configured token exists via browser session storage or explicit client config.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence:
+  - `frontend/src/api/client.ts` implements real fetch-based requests for each required endpoint.
+  - `frontend/src/api/types.ts` defines concrete TypeScript interfaces matching backend request/response contracts.
+  - No placeholder TODOs or fake-success branches were found in the `(07B)` files.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence:
+  - No admin token value or other secret value is hardcoded in frontend source.
+  - The required header name `X-Admin-API-Token` is only set when a normalized token exists; otherwise it is removed.
+  - `ADMIN_API_TOKEN_STORAGE_KEY` is only a browser session-storage key name, not a secret.
+
+## Validations Reviewed
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Vite production build completed successfully.
+- Command/check: `cd frontend; npx tsc --noEmit --pretty false`
+- Reported result: Not the exact reported scratch-file command, but validates the same frontend TypeScript surface.
+- Rerun result: Passed
+- Status: passed
+- Notes: Confirms the checked-in frontend source, including `src/api/*`, type-checks cleanly.
+- Command/check: source review of `frontend/src/api/client.ts`
+- Reported result: Header behavior claimed correct.
+- Rerun result: Confirmed by inspection.
+- Status: passed
+- Notes: `createHeaders()` adds `X-Admin-API-Token` only when `resolveAdminApiToken()` returns a non-empty token, and deletes it otherwise.
+
+## Acceptance Review
+- Task acceptance: API client exposes all functions required by UI tasks and avoids hardcoded secrets.
+- Status: satisfied
+- Evidence:
+  - `frontend/src/api/client.ts` exports `uploadDocument`, `listDocuments`, `getDocument`, `indexDocument`, `reindexDocument`, `deleteDocument`, and `sendChatMessage`.
+  - `frontend/src/api/types.ts` matches backend `DocumentResponse`, `DocumentListResponse`, `UploadDocumentResponse`, chat request, chat response, and citation fields with frontend-safe string UUIDs/datetimes.
+  - Backend routes and schema files confirm the endpoint paths and response bodies expected by the client.
+
+## Progress Tracking
+- Selected task checkbox: checked in both `(07B)` checklist locations only
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended already
+- Review report entry: appended by this review
+- Other: Sibling tasks `(07C)` and `(07D)` and the Batch07 summary checkbox were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- No dedicated automated tests exist yet for runtime request behavior such as header injection, but the current task only required a typed client and build validation; source review confirms the required behavior.
+
+### Observations
+- The untracked `frontend/` tree in this workspace includes prior accepted `(07A)` scaffold files and new `(07B)` API files; only `frontend/src/api/types.ts` and `frontend/src/api/client.ts` are new `(07B)` implementation scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch07 - Frontend MVP",
+  "selected_task_id": "(07B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "frontend/src/api/types.ts",
+    "frontend/src/api/client.ts",
+    "backend/app/models/schemas.py",
+    "backend/app/api/routes/documents.py",
+    "backend/app/api/routes/chat.py",
+    "docs/tasks/task_1.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "No dedicated automated runtime test exists yet for request-header injection; behavior was confirmed by source review and compile/build validation."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (07C)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07C)
+- Task title: Build upload and document list UI
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.3: Build upload and document list UI`; `docs/plans/Master_Plan.md` > `## 6. Upload Flow`; `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (07C)
+- Reviewed task ID: (07C)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is `(07C)`, which matches the requested Batch07 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_1_execute_agent.md`
+  - `docs/review/review_1_review_agent.md`
+  - `docs/tasks/task_1.md` after reviewer checkbox update only
+- untracked files:
+  - `frontend/` containing prior accepted `(07A)` scaffold files, prior accepted `(07B)` API files, and the `(07C)` upload/document-list UI files
+
+## Files Reviewed
+- `docs/tasks/task_1.md`: in scope - verified `(07C)` requirements, dependencies, acceptance, and both checklist locations.
+- `docs/reports/report_1_execute_agent.md`: in scope - reviewed the latest `(07C)` execution report entry.
+- `docs/plans/Plan_1.md`: in scope - verified Task 7.3 requirements.
+- `docs/plans/Master_Plan.md`: in scope - verified upload-flow boundaries and required MVP document endpoints.
+- `frontend/src/components/UploadPanel.tsx`: in scope - new `(07C)` upload control with accepted file-type filter, upload action, and feedback states.
+- `frontend/src/components/DocumentList.tsx`: in scope - new `(07C)` document rows, refresh/index/re-index/delete actions, failed-state error rendering, and empty state.
+- `frontend/src/App.tsx`: in scope - `(07C)` wiring for upload, list, refresh, index, re-index, and delete through the existing API client.
+- `frontend/src/styles.css`: in scope - `(07C)` layout and control sizing updates for the upload/document-management surface.
+- `frontend/src/api/client.ts`: questionable - prior accepted `(07B)` dependency reviewed only to confirm `(07C)` actions are wired to the existing client methods.
+- `frontend/src/api/types.ts`: questionable - prior accepted `(07B)` dependency reviewed only to confirm document row fields are available to the UI.
+- `frontend/src/main.tsx`: questionable - prior accepted `(07A)` scaffold context only.
+- `frontend/package.json`: questionable - prior accepted `(07A)` scaffold, used to rerun build validation.
+- `frontend/index.html`: questionable - prior accepted `(07A)` scaffold context only.
+- `frontend/vite.config.ts`: questionable - prior accepted `(07A)` scaffold context only.
+- `frontend/tsconfig.json`: questionable - prior accepted `(07A)` scaffold context only.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/components/UploadPanel.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New `(07C)` component with file picker restricted to PDF, DOCX, TXT, MD, and Markdown-compatible MIME/extension values.
+- file from execution report: `frontend/src/components/DocumentList.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New `(07C)` component rendering row data, actions, failed-document messages, loading state, and empty state.
+- file from execution report: `frontend/src/App.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Existing `(07A)` shell expanded in `(07C)` to call the existing `(07B)` API client for list/upload/index/reindex/delete/refresh flows.
+- file from execution report: `frontend/src/styles.css`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Existing `(07A)` stylesheet expanded for the operational upload/list layout and stable control dimensions.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry was appended, not overwritten.
+
+## Dependency Review
+- Required dependencies: `(07B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed:
+  - Upload UI stays aligned with the plan boundary that upload is separate from indexing; indexing and re-indexing remain explicit row actions rather than being triggered automatically on upload.
+  - The UI is built on the existing frontend API client from `(07B)` and targets the required MVP endpoints: upload, list, index, reindex, and delete.
+  - The layout is restrained and operational, using a compact two-panel workspace instead of a marketing or chat-first composition.
+  - The implementation does not introduce `(07D)` chat or source-citation UI early; the app imports only `UploadPanel` and `DocumentList`.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence:
+  - `frontend/src/App.tsx` performs real async calls through `apiClient.listDocuments()`, `uploadDocument()`, `indexDocument()`, `reindexDocument()`, and `deleteDocument()`.
+  - `frontend/src/components/UploadPanel.tsx` renders a real file input and submit path.
+  - `frontend/src/components/DocumentList.tsx` renders real row fields and action buttons from `DocumentResponse` data.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence:
+  - Upload accepted types are declared as a normal file-input filter for the required extensions and MIME types, not a fake success path.
+  - Row rendering consumes runtime document data for file name, status, chunk count, timestamps, and errors.
+  - Action handlers accept runtime `document.id` values and call the client with those IDs.
+
+## Validations Reviewed
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Vite production build completed successfully on rerun.
+- Command/check: source review of upload control support
+- Reported result: Claimed support for PDF, DOCX, TXT, and Markdown.
+- Rerun result: Confirmed by inspection.
+- Status: passed
+- Notes: `UploadPanel.tsx` `accept` includes `.pdf,.docx,.txt,.md,.markdown` plus matching PDF/DOCX/plain-text/markdown MIME types.
+- Command/check: source review of document row fields and actions
+- Reported result: Claimed row metadata and action wiring present.
+- Rerun result: Confirmed by inspection.
+- Status: passed
+- Notes: `DocumentList.tsx` renders file name, status, total chunks, created time, indexed time, failed error message, and refresh/index/re-index/delete controls; `App.tsx` wires those controls to the existing API client.
+- Command/check: source review of empty-state behavior and `(07D)` early-scope avoidance
+- Reported result: Claimed empty-state handling and no chat/source UI.
+- Rerun result: Confirmed by inspection.
+- Status: passed
+- Notes: `DocumentList.tsx` has explicit loading and `No documents` branches, and the frontend tree contains no `ChatPanel.tsx` or `SourceList.tsx` UI files.
+
+## Acceptance Review
+- Task acceptance: Build passes; upload control supports PDF, DOCX, TXT, and Markdown; document rows show the required fields; actions exist and are wired to the existing API client; empty list renders safely.
+- Status: satisfied
+- Evidence:
+  - `frontend/src/components/UploadPanel.tsx` defines the required file-type filter and upload feedback states.
+  - `frontend/src/components/DocumentList.tsx` renders `file_name`, `status`, `total_chunks`, `created_at`, `indexed_at`, and `error_message` for failed documents.
+  - `frontend/src/App.tsx` wires `Refresh`, `Index`, `Re-index`, and `Delete` to the existing `apiClient` methods.
+  - `cd frontend; npm run build` passed on rerun.
+
+## Progress Tracking
+- Selected task checkbox: checked in both `(07C)` checklist locations only
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended already
+- Review report entry: appended by this review
+- Other: Sibling task `(07D)` and the Batch07 summary checkbox were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- The frontend tree is still untracked in git, so the repository diff cannot show a clean file-by-file split between prior accepted `(07A)`/`(07B)` work and new `(07C)` UI edits; that split was verified by review history, task scope, and direct file inspection.
+
+### Observations
+- `frontend/src/styles.css` uses fixed minimum widths for action buttons, wraps row actions and metrics responsively, and uses `overflow-wrap: anywhere` on long text, which is consistent with the requested stable operational UI.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch07 - Frontend MVP",
+  "selected_task_id": "(07C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "docs/tasks/task_1.md",
+    "frontend/src/components/UploadPanel.tsx",
+    "frontend/src/components/DocumentList.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/styles.css",
+    "frontend/src/api/client.ts",
+    "frontend/src/api/types.ts"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "The frontend tree is still untracked in git, so the 07A/07B versus 07C split was verified from review history, task scope, and direct file inspection rather than from a tracked diff."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (07D)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Execution Report Reviewed
+docs/reports/report_1_execute_agent.md
+
+## Review Report File
+docs/review/review_1_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07D)
+- Task title: Build chat and sources UI
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.4: Build chat and sources UI`; `docs/plans/Master_Plan.md` > `## 21.3. Chat Request`; `docs/plans/Master_Plan.md` > `## 21.4. Chat Response`; `docs/plans/Master_Plan.md` > `## 26. Source Citation Format`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (07D)
+- Reviewed task ID: (07D)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the requested Batch07 task `(07D)`.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `docs/reports/report_1_execute_agent.md`
+  - `docs/review/review_1_review_agent.md`
+  - `docs/tasks/task_1.md` after reviewer checkbox update only
+- untracked files:
+  - `frontend/` containing prior accepted `(07A)` scaffold files, prior accepted `(07B)` API files, prior accepted `(07C)` upload/list UI files, and the `(07D)` chat/source UI files
+
+## Files Reviewed
+- `docs/tasks/task_1.md`: in scope - verified `(07D)` requirements, dependencies, acceptance, and both checklist locations.
+- `docs/reports/report_1_execute_agent.md`: in scope - reviewed the latest `(07D)` execution report entry.
+- `docs/plans/Plan_1.md`: in scope - verified Task 7.4 requirements.
+- `docs/plans/Master_Plan.md`: in scope - verified chat request, chat response, and citation format requirements in sections 21.3, 21.4, and 26.
+- `frontend/src/components/ChatPanel.tsx`: in scope - new `(07D)` question-entry, ready-document selection, answer, and sources UI.
+- `frontend/src/components/SourceList.tsx`: in scope - new `(07D)` citation formatter and source list renderer.
+- `frontend/src/App.tsx`: in scope - prior accepted `(07A)`/`(07C)` shell updated in `(07D)` for chat request state, optional selected document handling, and seeded mock response rendering.
+- `frontend/src/styles.css`: in scope - prior accepted `(07A)`/`(07C)` stylesheet updated in `(07D)` for the chat layout and source display.
+- `frontend/src/api/client.ts`: questionable - prior accepted `(07B)` dependency reviewed only to confirm chat requests use the existing typed API client.
+- `frontend/src/api/types.ts`: questionable - prior accepted `(07B)` dependency reviewed only to confirm chat request/response and citation shapes remain typed.
+- `frontend/src/components/DocumentList.tsx`: questionable - prior accepted `(07C)` dependency reviewed only to confirm selected documents are limited to ready documents.
+- `backend/app/models/schemas.py`: questionable - backend contract reviewed only to confirm frontend chat types align with the existing API request/response shapes.
+- `backend/app/api/routes/chat.py`: questionable - backend route reviewed only to confirm the frontend client targets the existing `/api/chat` contract.
+
+## Reported Files Cross-Check
+- file from execution report: `frontend/src/App.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Existing app shell updated in `(07D)` with mock chat response seed, question state, ready-document selection filtering, and chat submit wiring.
+- file from execution report: `frontend/src/components/ChatPanel.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New `(07D)` component renders question entry, optional document selection, answer text, and sources section.
+- file from execution report: `frontend/src/components/SourceList.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New `(07D)` component renders the required citation string variants with and without page numbers.
+- file from execution report: `frontend/src/styles.css`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Existing stylesheet expanded for the chat panel, document selector, answer block, and source list.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest execution report entry was appended, not overwritten.
+
+## Dependency Review
+- Required dependencies: `(07B)`, `(07C)`
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed:
+  - `(07D)` stays within the planned frontend scope: it adds chat and source display only, on top of the existing `(07B)` client and `(07C)` document state.
+  - Chat requests use the existing API client and the typed `ChatRequest`/`ChatResponse` shapes instead of ad hoc fetch logic.
+  - Optional document filtering is limited to ready documents, and the request omits `document_ids` when none are selected.
+  - Answer and citation rendering are visible from mock data without requiring live backend data.
+- Failed:
+  - None.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence:
+  - `frontend/src/components/ChatPanel.tsx` renders a real form with a controlled textarea, optional document checkboxes, answer block, and source list.
+  - `frontend/src/components/SourceList.tsx` formats citations from typed source objects rather than hardcoded strings.
+  - `frontend/src/App.tsx` still calls `apiClient.sendChatMessage(request)` for live submissions; the seeded mock response is only the initial render state required by the task.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence:
+  - The seeded mock answer and source list are intentional acceptance scaffolding for render coverage and do not replace the live chat request path.
+  - Citation strings are derived from `SourceCitation` fields, not from static output text.
+  - Selected document filtering and question submission operate on runtime state rather than fixed IDs or fixed answers.
+
+## Validations Reviewed
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed
+- Rerun result: Passed (`vite build` completed successfully)
+- Status: passed
+- Notes: Production build completed successfully during this review.
+- Command/check: SSR render review of `frontend/src/App.tsx` without backend data
+- Reported result: Execution report claimed mock answer/citation rendering.
+- Rerun result: Passed
+- Status: passed
+- Notes: Rendered output contained the question textarea, `No ready documents`, the mock answer text, `Source 1: report.pdf, chunk 12, pages 3-4`, and `Source 2: summary.md, chunk 2` without using live backend data.
+- Command/check: source review of optional selected document handling in `frontend/src/App.tsx`
+- Reported result: Claimed `document_ids` omitted when no ready documents are selected.
+- Rerun result: Confirmed by inspection.
+- Status: passed
+- Notes: `selectedReadyDocumentIds` is derived from ready documents only, and `request.document_ids` is added only when `selectedReadyDocumentIds.length > 0`.
+- Command/check: source review of API client and typed response usage
+- Reported result: Claimed existing client and typed shapes were used.
+- Rerun result: Confirmed by inspection.
+- Status: passed
+- Notes: `frontend/src/App.tsx` constructs a typed `ChatRequest`; `frontend/src/api/client.ts` posts that request to `/api/chat` and returns `Promise<ChatResponse>`; `frontend/src/api/types.ts` defines `ChatRequest`, `ChatResponse`, and `SourceCitation`.
+
+## Acceptance Review
+- Task acceptance: Question entry exists; optional selected documents are supported; answer text renders; both citation formats render correctly; answer and citation surfaces render from mock data; chat requests use the existing typed API client.
+- Status: satisfied
+- Evidence:
+  - `frontend/src/components/ChatPanel.tsx` provides the question textarea and optional ready-document selection UI.
+  - `frontend/src/App.tsx` limits selection to ready documents, prunes stale selections, omits `document_ids` when none are selected, and sends chat through `apiClient.sendChatMessage`.
+  - `frontend/src/components/SourceList.tsx` renders `Source N: file_name, chunk X, pages Y-Z` when both page values exist and `Source N: file_name, chunk X` when they do not.
+  - The rerun build passed, and the SSR render output showed the seeded mock answer and both required citation string variants without backend data.
+
+## Progress Tracking
+- Selected task checkbox: checked in both `(07D)` checklist locations only
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended already
+- Review report entry: appended by this review
+- Other: The Batch07 summary checkbox remained unchanged, and no Batch08 task checkboxes were modified.
+
+## Report Accuracy
+- Accurate
+- Mismatches:
+  - None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- The frontend tree is still untracked in git, so the split between prior accepted `(07A)`/`(07B)`/`(07C)` files and new `(07D)` work was verified from review history, task scope, and direct file inspection rather than from a tracked diff.
+
+### Observations
+- The seeded mock response in `frontend/src/App.tsx` is appropriate for this task because the source-of-truth explicitly requires answer and citation rendering from mock data before live backend validation.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch07 - Frontend MVP",
+  "selected_task_id": "(07D)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "docs/tasks/task_1.md",
+    "frontend/src/App.tsx",
+    "frontend/src/components/ChatPanel.tsx",
+    "frontend/src/components/SourceList.tsx",
+    "frontend/src/styles.css",
+    "frontend/src/api/client.ts",
+    "frontend/src/api/types.ts",
+    "frontend/src/components/DocumentList.tsx",
+    "backend/app/models/schemas.py",
+    "backend/app/api/routes/chat.py"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "The frontend tree is still untracked in git, so the 07A/07B/07C versus 07D split was verified from review history, task scope, and direct file inspection rather than from a tracked diff."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

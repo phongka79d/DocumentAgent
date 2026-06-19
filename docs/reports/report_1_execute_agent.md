@@ -1410,3 +1410,327 @@ complete
 - next task ID: (07A)
 - can proceed: yes
 - handoff notes: Frontend work can now target `/api/chat` and rely on the schema-backed `answer` plus `sources` response.
+
+---
+
+# Task Execution Report - (07A)
+
+## Source Task File
+ docs/tasks/task_1.md
+
+## Report File
+ docs/reports/report_1_execute_agent.md
+
+## Batch
+ Batch07 - Frontend MVP
+
+## Task
+ (07A) - Initialize React Vite frontend
+
+## Status
+ complete
+
+## Source of Truth Used
+- docs/plans/Plan_1.md > ## Batch 7: Frontend MVP > ### Task 7.1: Initialize React Vite frontend
+- docs/plans/Master_Plan.md > ## 3. Technology Stack
+
+## Supplemental Documents Used
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07A)
+- Task title: Initialize React Vite frontend
+
+## Completed Work
+- Created the Vite/React/TypeScript frontend scaffold only.
+- Added an env-driven API base URL resolution path from `VITE_API_BASE_URL` with a local fallback for shell rendering.
+- Built a minimal, usable app shell with a header, backend config panel, and empty documents/chat panels.
+- Kept backend-only secret names and values out of the frontend source.
+
+## Files Created or Modified
+- frontend/package.json
+- frontend/index.html
+- frontend/vite.config.ts
+- frontend/tsconfig.json
+- frontend/src/main.tsx
+- frontend/src/App.tsx
+- frontend/src/styles.css
+- frontend/package-lock.json
+- docs/reports/report_1_execute_agent.md
+
+## Tests or Validations Run
+- `cd frontend; npm install`: Passed. Installed dependencies successfully.
+- `cd frontend; npm run build`: Passed. Vite production build completed successfully.
+- `rg -n "SUPABASE|QDRANT|SHOPAIKEY|JINA|ADMIN_API_TOKEN|SERVICE_ROLE|SECRET|API_KEY" frontend`: Passed. No matches found.
+
+## Acceptance Check
+- Task acceptance condition: Vite build completes and frontend source contains no backend service secrets.
+- Status: satisfied
+- Evidence: Production build completed, and source scan found no backend secret names or values.
+
+## Artifacts Produced
+- `frontend/dist/` production build output
+- `frontend/package-lock.json`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Used `VITE_API_BASE_URL` when present and fell back to `http://localhost:8000` for a usable local shell.
+- Kept the first-screen layout restrained and app-like, but deferred API client and workflow controls to later tasks.
+
+## Risks or Open Issues
+- Live API wiring, upload controls, document management, and chat behavior are intentionally not implemented yet.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (07B)
+- can proceed: yes
+- handoff notes: The shell is ready for a typed API client layer and later UI wiring.
+---
+
+# Task Execution Report - (07B)
+
+## Source Task File
+[docs/tasks/task_1.md]
+
+## Report File
+[docs/reports/report_1_execute_agent.md]
+
+## Batch
+[Batch07 - Frontend MVP]
+
+## Task
+[(07B)] - Add frontend API client and types
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.2: Add API client and types`
+- `docs/plans/Master_Plan.md` > `## 21. API Endpoints`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07B)
+- Task title: Add frontend API client and types
+
+## Completed Work
+- Added `frontend/src/api/types.ts` with frontend types mirroring the backend document, upload, chat, and citation payloads used by the UI.
+- Added `frontend/src/api/client.ts` with typed fetch helpers for upload, list, detail, index, reindex, delete, and chat.
+- Implemented a default browser client plus `createApiClient` and browser-session token helpers so `X-Admin-API-Token` is only sent when the user has stored a token in session state.
+- Kept secrets out of the frontend and avoided wiring any UI components or sibling Batch07 behavior.
+
+## Files Created or Modified
+- frontend/src/api/types.ts
+- frontend/src/api/client.ts
+- docs/reports/report_1_execute_agent.md
+
+## Tests or Validations Run
+- `npx tsc --noEmit --pretty false --target ES2020 --module ESNext --moduleResolution Bundler --lib ES2020,DOM,DOM.Iterable --types vite/client __api_client_check.ts`: Passed. Temporary scratch type check confirmed the API surface and types compile.
+- `cd frontend; npm run build`: Passed. Vite production build completed successfully.
+
+## Acceptance Check
+- Task acceptance condition: API client exposes all functions required by UI tasks and avoids hardcoded secrets.
+- Status: satisfied
+- Evidence: The frontend exports typed helpers for upload, list, detail, index, reindex, delete, and chat, and the admin token header is sourced from browser session storage or explicit client config rather than hardcoded values.
+
+## Artifacts Produced
+- `frontend/dist/` production build output
+- `frontend/src/api/client.ts`
+- `frontend/src/api/types.ts`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Used a small explicit client factory plus top-level helper exports so later UI tasks can either call the shared client directly or create a configured instance.
+- Read the admin token from browser session storage only when present, with explicit helper functions for setting and clearing it.
+- Sent chat requests as JSON with an explicit `Content-Type: application/json` header.
+
+## Risks or Open Issues
+- Later UI tasks still need to decide where the user-facing token input lives and whether they want to persist the base URL separately.
+
+## Minor Issues Fixed During Execution
+- Added runtime-safe handling for browser session storage and fetch resolution so the client stays importable in non-browser contexts.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (07C)
+- can proceed: yes
+- handoff notes: The typed API surface is ready for upload/list/detail/index/reindex/delete/chat UI wiring.
+---
+
+# Task Execution Report - (07C)
+
+## Source Task File
+[docs/tasks/task_1.md]
+
+## Report File
+[docs/reports/report_1_execute_agent.md]
+
+## Batch
+[Batch07 - Frontend MVP]
+
+## Task
+[07C] - Build upload and document list UI
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.3: Build upload and document list UI`
+- `docs/plans/Master_Plan.md` > `## 6. Upload Flow`
+- `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07C)
+- Task title: Build upload and document list UI
+
+## Completed Work
+- Created `UploadPanel` and `DocumentList` components for document upload and management.
+- Wired `frontend/src/App.tsx` to the existing API client for upload, list, index, re-index, delete, and refresh flows.
+- Added loading, error, and empty-state handling plus row-level failed-document error rendering.
+- Updated `frontend/src/styles.css` for the compact operational layout, responsive rows, and stable button sizing.
+- Kept chat and source display out of scope for `(07D)`.
+
+## Files Created or Modified
+- frontend/src/components/UploadPanel.tsx
+- frontend/src/components/DocumentList.tsx
+- frontend/src/App.tsx
+- frontend/src/styles.css
+- docs/reports/report_1_execute_agent.md
+
+## Tests or Validations Run
+- `cd frontend; npm run build`: Passed. Vite production build completed successfully.
+
+## Acceptance Check
+- Task acceptance condition: Build passes and document list renders empty state without crashing.
+- Status: satisfied
+- Evidence: The frontend builds successfully, and the document list component has explicit empty-state and loading branches that safely handle an empty `documents` array.
+
+## Artifacts Produced
+- `frontend/dist/` production build output
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Used a compact two-panel layout with a dedicated upload form and a scan-friendly document list instead of introducing any chat or source surfaces.
+- Kept action buttons fixed-width and added spinner indicators so loading states do not shift the row layout.
+- Used background refresh after mutations to keep list state aligned with the backend while preserving the existing list during updates.
+
+## Risks or Open Issues
+- Live upload/index/re-index/delete behavior still depends on a running backend, so this run validated the frontend build rather than end-to-end API calls.
+
+## Minor Issues Fixed During Execution
+- Corrected timestamp fallback rendering to ASCII-safe `-` and added a visible loading state for upload feedback.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (07D)
+- can proceed: yes
+- handoff notes: Chat/source display remains intentionally untouched.
+---
+
+# Task Execution Report - (07D)
+
+## Source Task File
+ docs/tasks/task_1.md
+
+## Report File
+ docs/reports/report_1_execute_agent.md
+
+## Batch
+ Batch07 - Frontend MVP
+
+## Task
+ (07D) - Build chat and sources UI
+
+## Status
+ complete
+
+## Source of Truth Used
+- docs/plans/Plan_1.md > ## Batch 7: Frontend MVP > ### Task 7.4: Build chat and sources UI
+- docs/plans/Master_Plan.md > ## 21.3. Chat Request
+- docs/plans/Master_Plan.md > ## 21.4. Chat Response
+- docs/plans/Master_Plan.md > ## 26. Source Citation Format
+
+## Supplemental Documents Used
+- docs/plans/Plan_1.md
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch07 - Frontend MVP
+- Task ID: (07D)
+- Task title: Build chat and sources UI
+
+## Completed Work
+- Implemented `ChatPanel` and `SourceList` components for question entry, optional ready-document selection, answer rendering, and citation rendering.
+- Wired chat request state into `frontend/src/App.tsx`, including optional `document_ids` handling and a seeded mock chat response so answer/source rendering is visible without live backend data.
+- Updated `frontend/src/styles.css` to add the chat layout, document selector, answer block, and source list styling while keeping the existing document panels intact.
+
+## Files Created or Modified
+- frontend/src/App.tsx
+- frontend/src/components/ChatPanel.tsx
+- frontend/src/components/SourceList.tsx
+- frontend/src/styles.css
+
+## Tests or Validations Run
+- `cd frontend; npm run build`: Passed.
+- Manual browser verification at `http://127.0.0.1:5173` with Playwright/Chromium: Passed. Verified `Chat` heading, mock answer text, and source strings `Source 1: report.pdf, chunk 12, pages 3-4` and `Source 2: summary.md, chunk 2`.
+
+## Acceptance Check
+- Task acceptance condition: Build passes and answer/citation components render from mock data.
+- Status: satisfied
+- Evidence: Production build passed, and the rendered page showed the seeded mock answer and both citation formats in the DOM.
+
+## Artifacts Produced
+- `frontend/dist/` production build output
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Kept the optional document filter limited to ready documents, and omitted `document_ids` entirely when no ready documents are selected so chat can target all documents.
+- Seeded the chat panel with a mock response so the answer and citation surfaces are visible in the current frontend-only environment without live backend data.
+- Formatted citations from typed response data with the exact required page-present and page-absent variants.
+
+## Risks or Open Issues
+- Live chat still depends on a running backend and indexed documents, so only the frontend rendering path was validated here.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (08A)
+- can proceed: yes
+- handoff notes: Batch07 frontend MVP task (07D) is implemented and build-verified.

@@ -848,7 +848,7 @@ The MVP needs a usable browser interface for the full upload, index, chat, cite,
 
 ### Tasks
 
-- [ ] (07A): Initialize React Vite frontend
+- [x] (07A): Initialize React Vite frontend
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.1: Initialize React Vite frontend`; `docs/plans/Master_Plan.md` > `## 3. Technology Stack`
   - Source Requirements:
     - Use React with TypeScript.
@@ -877,7 +877,7 @@ The MVP needs a usable browser interface for the full upload, index, chat, cite,
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` only if package installation cannot access npm or the user must provide environment configuration for live API testing.
   - Files: `frontend/package.json`, `frontend/index.html`, `frontend/vite.config.ts`, `frontend/tsconfig.json`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/styles.css`
 
-- [ ] (07B): Add frontend API client and types
+- [x] (07B): Add frontend API client and types
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.2: Add API client and types`; `docs/plans/Master_Plan.md` > `## 21. API Endpoints`
   - Source Requirements:
     - Implement functions for upload, list, detail, index, reindex, delete, and chat.
@@ -904,7 +904,7 @@ The MVP needs a usable browser interface for the full upload, index, chat, cite,
   - Blocked Condition: None
   - Files: `frontend/src/api/types.ts`, `frontend/src/api/client.ts`
 
-- [ ] (07C): Build upload and document list UI
+- [x] (07C): Build upload and document list UI
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.3: Build upload and document list UI`; `docs/plans/Master_Plan.md` > `## 6. Upload Flow`; `docs/plans/Master_Plan.md` > `## 21.1. Required MVP Endpoints`
   - Source Requirements:
     - Show upload control for PDF, DOCX, TXT, and Markdown.
@@ -930,7 +930,7 @@ The MVP needs a usable browser interface for the full upload, index, chat, cite,
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` for live UI validation if backend and external services are not running/configured.
   - Files: `frontend/src/components/UploadPanel.tsx`, `frontend/src/components/DocumentList.tsx`, `frontend/src/App.tsx`, `frontend/src/styles.css`
 
-- [ ] (07D): Build chat and sources UI
+- [x] (07D): Build chat and sources UI
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 7: Frontend MVP` > `### Task 7.4: Build chat and sources UI`; `docs/plans/Master_Plan.md` > `## 21.3. Chat Request`; `docs/plans/Master_Plan.md` > `## 21.4. Chat Response`; `docs/plans/Master_Plan.md` > `## 26. Source Citation Format`
   - Source Requirements:
     - Allow question entry.
@@ -1220,10 +1220,10 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch07
 
-- [ ] (07A): Initialize React Vite frontend
-- [ ] (07B): Add frontend API client and types
-- [ ] (07C): Build upload and document list UI
-- [ ] (07D): Build chat and sources UI
+- [x] (07A): Initialize React Vite frontend
+- [x] (07B): Add frontend API client and types
+- [x] (07C): Build upload and document list UI
+- [x] (07D): Build chat and sources UI
 
 #### Batch08
 
