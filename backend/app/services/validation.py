@@ -11,10 +11,13 @@ SUPPORTED_UPLOAD_EXTENSIONS = {
     ".txt",
     ".md",
     ".markdown",
+    ".html",
+    ".htm",
 }
 
 PDF_MIME_TYPE = "application/pdf"
 DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+HTML_MIME_TYPE = "text/html"
 OCTET_STREAM_MIME_TYPE = "application/octet-stream"
 MARKDOWN_MIME_TYPES = {
     "application/markdown",
@@ -65,6 +68,9 @@ def _is_mime_type_compatible(extension: str, content_type: str | None) -> bool:
 
     if extension in {".md", ".markdown"}:
         return content_type.startswith("text/") or content_type in MARKDOWN_MIME_TYPES
+
+    if extension in {".html", ".htm"}:
+        return content_type == HTML_MIME_TYPE
 
     return False
 

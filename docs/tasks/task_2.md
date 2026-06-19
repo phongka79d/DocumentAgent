@@ -393,7 +393,7 @@ Smart section chunking requires parser-provided structure where available, and P
 
 ### Tasks
 
-- [ ] (03A): Add parsed block structure
+- [x] (03A): Add parsed block structure
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 3: Structured Parsing and HTML Support` > `### Task 3.1: Add parsed block structure`
   - Source Requirements:
     - Add `ParsedBlock` with type, text, page number, heading level, section path, and metadata fields.
@@ -422,7 +422,7 @@ Smart section chunking requires parser-provided structure where available, and P
   - Blocked Condition: None.
   - Files: `backend/app/parsing/structure.py`, `backend/app/parsing/base.py`, `backend/tests/test_parsers.py`
 
-- [ ] (03B): Emit structure from existing parsers
+- [x] (03B): Emit structure from existing parsers
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 3: Structured Parsing and HTML Support` > `### Task 3.2: Emit structure from existing parsers`
   - Source Requirements:
     - TXT parser emits paragraph blocks split by blank lines.
@@ -451,7 +451,7 @@ Smart section chunking requires parser-provided structure where available, and P
   - Blocked Condition: None.
   - Files: `backend/app/parsing/text.py`, `backend/app/parsing/markdown.py`, `backend/app/parsing/docx.py`, `backend/app/parsing/pdf.py`, `backend/tests/test_parsers.py`
 
-- [ ] (03C): Add HTML upload validation and parser
+- [x] (03C): Add HTML upload validation and parser
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 3: Structured Parsing and HTML Support` > `### Task 3.3: Add HTML upload validation and parser`
   - Source Requirements:
     - Add `beautifulsoup4>=4.12,<5.0`.
@@ -1044,9 +1044,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch03
 
-- [ ] (03A): Add parsed block structure
-- [ ] (03B): Emit structure from existing parsers
-- [ ] (03C): Add HTML upload validation and parser
+- [x] (03A): Add parsed block structure
+- [x] (03B): Emit structure from existing parsers
+- [x] (03C): Add HTML upload validation and parser
 
 #### Batch04
 

@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from .base import BaseParser, PARSER_VERSION, ParsedDocument
+import re
+
+from .base import BaseParser, PARSER_VERSION, ParsedDocument, normalize_text
+from .structure import build_paragraph_block
+
+
+_PARAGRAPH_SPLIT_RE = re.compile(r"\n\s*\n+")
 
 
 def _decode_text(file_bytes: bytes) -> str:
@@ -8,6 +14,12 @@ def _decode_text(file_bytes: bytes) -> str:
         return file_bytes.decode("utf-8-sig")
     except UnicodeDecodeError:
         return file_bytes.decode("latin-1")
+
+
+def _split_paragraphs(text: str) -> list[str]:
+    normalized_text = normalize_text(text)
+    normalized_text = _PARAGRAPH_SPLIT_RE.split(normalized_text)
+    return [paragraph.strip() for paragraph in normalized_text if paragraph.strip()]
 
 
 class TextParser(BaseParser):
@@ -24,4 +36,8 @@ class TextParser(BaseParser):
         mime_type: str | None = None,
     ) -> ParsedDocument:
         text = _decode_text(file_bytes)
-        return self.build_document(text=text)
+        paragraph_blocks = [
+            build_paragraph_block(paragraph_text, page_number=None)
+            for paragraph_text in _split_paragraphs(text)
+        ]
+        return self.build_document(text=text, blocks=paragraph_blocks)

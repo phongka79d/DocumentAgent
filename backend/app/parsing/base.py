@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import ClassVar, Sequence, TypedDict
+from typing import ClassVar, NotRequired, Sequence, TypedDict
 
 PARSER_VERSION = "1.0.0"
 
@@ -21,6 +21,7 @@ class ParsedDocument(TypedDict):
     text: str
     pages: list[ParsedPage]
     metadata: ParsedMetadata
+    blocks: NotRequired[list["ParsedBlock"]]
 
 
 class ParseError(ValueError):
@@ -78,6 +79,7 @@ def build_parsed_document(
     parser_name: str,
     parser_version: str = PARSER_VERSION,
     page_texts: Sequence[str] | None = None,
+    blocks: Sequence["ParsedBlock"] | None = None,
 ) -> ParsedDocument:
     normalized_text = normalize_text(text)
     if not normalized_text.strip():
@@ -95,7 +97,7 @@ def build_parsed_document(
         for page_number, page_text in enumerate(normalized_page_texts, start=1)
     ]
 
-    return {
+    document: ParsedDocument = {
         "text": normalized_text,
         "pages": pages,
         "metadata": {
@@ -103,6 +105,11 @@ def build_parsed_document(
             "parser_version": parser_version,
         },
     }
+
+    if blocks is not None:
+        document["blocks"] = list(blocks)
+
+    return document
 
 
 class BaseParser(ABC):
@@ -134,10 +141,12 @@ class BaseParser(ABC):
         *,
         text: str,
         page_texts: Sequence[str] | None = None,
+        blocks: Sequence["ParsedBlock"] | None = None,
     ) -> ParsedDocument:
         return build_parsed_document(
             text=text,
             parser_name=self.parser_name,
             parser_version=self.parser_version,
             page_texts=page_texts,
+            blocks=blocks,
         )

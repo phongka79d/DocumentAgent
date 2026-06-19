@@ -928,3 +928,568 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Structured Parsing and HTML Support
+- Task ID: (03A)
+- Task title: Add parsed block structure
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 3: Structured Parsing and HTML Support` > `### Task 3.1: Add parsed block structure`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The latest appended execution report entry matches the requested task. Prior Batch01 and Batch02 accepted work is distinct from the current Batch03 parser-structure changes under review.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/parsing/base.py`, `backend/tests/test_parsers.py`, `docs/reports/report_2_execute_agent.md`
+- untracked files: `backend/app/parsing/structure.py`
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - reviewed only the `(03A)` task entry and progress tracker checkbox.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(03A)` execution report entry matches repository evidence.
+- `docs/plans/Plan_2.md`: in scope - reviewed `### Task 3.1: Add parsed block structure` requirements and acceptance.
+- `docs/plans/Master_Plan.md`: in scope - checked parser/chunking architecture constraints for compatibility.
+- `backend/app/parsing/structure.py`: in scope - new shared block types and helpers implement the planned parser structure primitives.
+- `backend/app/parsing/base.py`: in scope - optional `blocks` support extends `ParsedDocument` and parser builder contracts without changing existing fields.
+- `backend/app/parsing/__init__.py`: in scope - checked package surface for surrounding parser contract context.
+- `backend/tests/test_parsers.py`: in scope - new tests cover block helpers, optional blocks, and backward compatibility.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/parsing/structure.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New module contains `ParsedBlock`, normalization helpers, block builders, and Markdown table flattening.
+- file from execution report: `backend/app/parsing/base.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `ParsedDocument` and parser builder signatures were extended with optional `blocks` only.
+- file from execution report: `backend/tests/test_parsers.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Test additions map directly to the new structure contract and backward-compatibility requirements.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report append is expected execution bookkeeping, not implementation scope drift.
+
+## Dependency Review
+- Required dependencies: Existing parser base types and parser tests.
+- Dependency status: Satisfied.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: The task adds shared parser primitives in a dedicated parsing module, keeps `ParsedDocument.text/pages/metadata` intact, and does not alter Phase 1 parser or chunking behavior outside the planned optional `blocks` extension.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/parsing/structure.py` contains concrete block builders and deterministic table flattening; `backend/app/parsing/base.py` threads optional `blocks` through `build_parsed_document` and `BaseParser.build_document`; tests exercise the new behavior.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Helper behavior is generic across inputs, with deterministic normalization and no fixture-specific runtime branches.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_parsers.py -v`
+- Reported result: Passed (`18 passed`)
+- Rerun result: Passed (`18 passed`)
+- Status: passed
+- Notes: Local rerun matched the execution report and covered both legacy parser behavior and the new structure helpers.
+
+## Acceptance Review
+- Task acceptance: Add parsed block structure
+- Status: satisfied
+- Evidence: `ParsedBlock` includes the required fields and allowed block types, `ParsedDocument.blocks` is optional, existing document fields remain unchanged, helper functions were added, and Markdown table rows flatten to stable output.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still incomplete
+- Execution report entry: appended and accurate for `(03A)`
+- Review report entry: appended
+- Other: Sibling and future task checkboxes were left unchanged.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The current diff for implementation scope is limited to the new parser structure module, parser base contract, parser tests, and the execution report append.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch03 - Structured Parsing and HTML Support",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/parsing/base.py",
+    "backend/app/parsing/structure.py",
+    "backend/tests/test_parsers.py",
+    "docs/reports/report_2_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Structured Parsing and HTML Support
+- Task ID: (03B)
+- Task title: Emit structure from existing parsers
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 3: Structured Parsing and HTML Support` > `### Task 3.2: Emit structure from existing parsers`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry matches the requested task. The working tree also contains previously accepted `(03A)` parser-structure and review-tracking changes, which were treated as sibling context rather than `(03B)` scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/parsing/base.py`, `backend/app/parsing/docx.py`, `backend/app/parsing/markdown.py`, `backend/app/parsing/pdf.py`, `backend/app/parsing/text.py`, `backend/tests/test_parsers.py`, `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, `docs/tasks/task_2.md`
+- untracked files: `backend/app/parsing/structure.py`
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - reviewed the `(03B)` task entry, dependency note, and updated only the `(03B)` checkboxes after acceptance.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(03B)` execution report entry matches repository evidence.
+- `docs/plans/Plan_2.md`: in scope - reviewed `### Task 3.2: Emit structure from existing parsers` requirements and expected validation.
+- `docs/plans/Master_Plan.md`: in scope - checked parser architecture constraints and Phase 2 parsing scope.
+- `backend/app/parsing/text.py`: in scope - emits paragraph blocks split on blank lines while preserving full text.
+- `backend/app/parsing/markdown.py`: in scope - emits heading, paragraph, list-group, and pipe-table blocks while preserving the existing markdown text contract.
+- `backend/app/parsing/docx.py`: in scope - emits heading, paragraph, and table blocks in body order and keeps the extracted full text aligned with those blocks.
+- `backend/app/parsing/pdf.py`: in scope - emits page-aware paragraph blocks with optional PyMuPDF metadata.
+- `backend/tests/test_parsers.py`: in scope - covers TXT, Markdown, DOCX, and PDF structured block emission plus empty-text behavior through the existing parser suite.
+- `backend/app/parsing/base.py`: questionable - changed in the same batch, but this is previously accepted `(03A)` dependency work rather than new `(03B)` implementation scope.
+- `backend/app/parsing/structure.py`: questionable - uncommitted sibling `(03A)` dependency already accepted in the prior review.
+- `docs/review/review_2_review_agent.md`: questionable - contains the existing `(03A)` review entry and was inspected for append safety only.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/parsing/text.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Paragraph splitting is implemented through `_split_paragraphs()` and paragraph block emission.
+- file from execution report: `backend/app/parsing/markdown.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: ATX heading detection, pipe-table grouping, paragraph handling, and list-group emission were added.
+- file from execution report: `backend/app/parsing/docx.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Body-order block iteration, heading-style mapping, and table markdown emission are implemented.
+- file from execution report: `backend/app/parsing/pdf.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Page-aware paragraph block extraction and optional `font_size` / `is_bold` / `bbox` metadata are implemented.
+- file from execution report: `backend/tests/test_parsers.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Test additions align with the parser-emission acceptance requirements.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report append is expected execution bookkeeping.
+
+## Dependency Review
+- Required dependencies: Task `(03A)` parser block primitives, existing parser registry, and the current parser test suite.
+- Dependency status: Satisfied. `(03A)` is already accepted in `docs/tasks/task_2.md`, and the shared base/structure changes are present for `(03B)` to consume.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: The task extends the existing TXT, Markdown, DOCX, and PDF parsers in place, emits optional structured blocks without changing parser registration, and preserves `parsed_document["text"]` as the chunking input contract.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Each parser now produces concrete block payloads using the shared `(03A)` helpers, DOCX parsing walks the document body rather than returning a fixed shape, and PDF block metadata is derived from PyMuPDF text spans instead of placeholder values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The parser logic is input-driven and generic; no sample-text branches, fixed document IDs, or test-only runtime shortcuts were introduced.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_parsers.py -v`
+- Reported result: Passed (`19 passed`)
+- Rerun result: Passed (`19 passed`)
+- Status: passed
+- Notes: Local rerun matched the execution report and exercised structured block emission for TXT, Markdown, DOCX, and PDF parsers.
+
+## Acceptance Review
+- Task acceptance: Emit structure from existing parsers
+- Status: satisfied
+- Evidence: TXT blocks split on blank lines, Markdown emits heading/table/paragraph/list-group blocks, DOCX preserves heading styles and tables in body order, PDF blocks include page numbers and available metadata, and the parsers keep full extracted text available for downstream chunking.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and still incomplete
+- Execution report entry: appended and accurate for `(03B)`
+- Review report entry: appended
+- Other: Sibling `(03A)` acceptance remains unchanged; `(03C)` and later tasks were left untouched.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The current worktree still includes accepted `(03A)` dependency and review-tracking changes; they do not change the `(03B)` acceptance decision.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch03 - Structured Parsing and HTML Support",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/parsing/base.py",
+    "backend/app/parsing/docx.py",
+    "backend/app/parsing/markdown.py",
+    "backend/app/parsing/pdf.py",
+    "backend/app/parsing/structure.py",
+    "backend/app/parsing/text.py",
+    "backend/tests/test_parsers.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (03C)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Structured Parsing and HTML Support
+- Task ID: (03C)
+- Task title: Add HTML upload validation and parser
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 3: Structured Parsing and HTML Support` > `### Task 3.3: Add HTML upload validation and parser`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03C)
+- Reviewed task ID: (03C)
+- Correct selection: yes
+- Notes: The latest appended execution report entry matches the requested task. Previously accepted but uncommitted `(03A)` and `(03B)` parser-structure changes remain in the worktree and were treated as sibling context rather than `(03C)` implementation scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/parsing/base.py`, `backend/app/parsing/docx.py`, `backend/app/parsing/markdown.py`, `backend/app/parsing/pdf.py`, `backend/app/parsing/registry.py`, `backend/app/parsing/text.py`, `backend/app/services/validation.py`, `backend/pyproject.toml`, `backend/tests/test_parsers.py`, `backend/tests/test_validation.py`, `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, `docs/tasks/task_2.md`
+- untracked files: `backend/app/parsing/html.py`, `backend/app/parsing/structure.py`
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - reviewed the `(03C)` task entry and updated only the `(03C)` task checkboxes after acceptance.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(03C)` execution report entry matches repository evidence.
+- `docs/plans/Plan_2.md`: in scope - reviewed `### Task 3.3: Add HTML upload validation and parser` requirements and validation command.
+- `docs/plans/Master_Plan.md`: questionable - consulted only for high-level parser architecture context because the user supplied it; the task authority remains `Plan_2.md`.
+- `backend/pyproject.toml`: in scope - includes `beautifulsoup4>=4.12,<5.0` as required.
+- `backend/app/services/validation.py`: in scope - accepts `.html`, `.htm`, and `text/html` while preserving rejection of incompatible MIME types.
+- `backend/app/parsing/html.py`: in scope - implements `HtmlParser`, removes non-visible tags, emits heading/paragraph/table blocks, builds full text from blocks, and relies on the shared empty-text guard.
+- `backend/app/parsing/registry.py`: in scope - registers `HtmlParser` by extension and MIME type.
+- `backend/tests/test_validation.py`: in scope - adds HTML upload acceptance and MIME-conflict coverage.
+- `backend/tests/test_parsers.py`: in scope - adds HTML parser extraction, empty-visible-text, and registry coverage; the same file also contains previously accepted `(03A)` and `(03B)` tests.
+- `backend/app/parsing/base.py`: questionable - modified for accepted `(03A)` shared block support and inspected only as a dependency of `(03C)`.
+- `backend/app/parsing/structure.py`: questionable - uncommitted but already accepted `(03A)` dependency used by `HtmlParser`.
+- `backend/app/parsing/text.py`: questionable - accepted `(03B)` sibling change, not part of `(03C)` scope.
+- `backend/app/parsing/markdown.py`: questionable - accepted `(03B)` sibling change, not part of `(03C)` scope.
+- `backend/app/parsing/docx.py`: questionable - accepted `(03B)` sibling change, not part of `(03C)` scope.
+- `backend/app/parsing/pdf.py`: questionable - accepted `(03B)` sibling change, not part of `(03C)` scope.
+- `docs/review/review_2_review_agent.md`: questionable - prior `(03A)` and `(03B)` reviews were inspected for append safety only.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/pyproject.toml`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Backend dependency list includes `beautifulsoup4>=4.12,<5.0`.
+- file from execution report: `backend/app/services/validation.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: HTML extensions and MIME compatibility rules were added without widening unrelated formats.
+- file from execution report: `backend/app/parsing/html.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: New parser removes `script`, `style`, `noscript`, and `template`, emits structured blocks, and builds full text from emitted blocks.
+- file from execution report: `backend/app/parsing/registry.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: HTML parser registration is present for both extension and MIME lookup paths.
+- file from execution report: `backend/tests/test_validation.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: HTML upload acceptance and conflict behavior are covered.
+- file from execution report: `backend/tests/test_parsers.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: HTML block extraction, registry resolution, and empty-visible-text rejection are covered.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Report append is expected execution bookkeeping.
+
+## Dependency Review
+- Required dependencies: Task `(03A)`, upload validation service, parser registry, and parser tests.
+- Dependency status: Satisfied. `(03A)` and `(03B)` are already accepted in `docs/tasks/task_2.md`, and the shared parser block primitives used by the new HTML parser are present in the worktree.
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: The task adds HTML as a Phase 2 parser through the existing validation and parser-registry boundaries, emits optional structured blocks without changing the parser contract, and does not leak into Batch04 chunking or scoring work.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `HtmlParser` uses BeautifulSoup with the standard `html.parser`, removes non-visible elements before traversal, emits concrete heading/paragraph/table blocks from document content, and defers empty-text failure to the existing parser guard instead of returning a fixed success payload.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The HTML parsing and validation logic is input-driven and generic, with no fixture-specific branches or fixed sample text embedded in runtime behavior.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_validation.py tests/test_parsers.py -v`
+- Reported result: Passed after dependency installation.
+- Rerun result: Passed (`36 passed`)
+- Status: passed
+- Notes: The rerun covered HTML validation, parser registration, HTML block extraction, empty-visible-text rejection, and the accepted sibling parser-structure tests that remain in the same suite.
+
+## Acceptance Review
+- Task acceptance: Add HTML upload validation and parser
+- Status: satisfied
+- Evidence: `.html` and `.htm` are accepted in upload validation, `text/html` is accepted and incompatible MIME types are rejected, `HtmlParser` removes `script` / `style` / `noscript` / `template`, headings and tables become structured blocks, full text is built from emitted blocks, and empty visible text raises the existing parser empty-text error.
+
+## Progress Tracking
+- Selected task checkbox: checked
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged and not updated
+- Execution report entry: appended and accurate for `(03C)`
+- Review report entry: appended
+- Other: Sibling `(03A)` and `(03B)` checkboxes were left as-is; no future-task or batch-complete checkbox was modified.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The current worktree still contains accepted `(03A)` and `(03B)` implementation and review-tracking changes. They are relevant dependency context for `(03C)` but were not re-reviewed as part of this decision.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, batch completion is out of scope for this review turn
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch03 - Structured Parsing and HTML Support",
+  "selected_task_id": "(03C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/parsing/base.py",
+    "backend/app/parsing/docx.py",
+    "backend/app/parsing/html.py",
+    "backend/app/parsing/markdown.py",
+    "backend/app/parsing/pdf.py",
+    "backend/app/parsing/registry.py",
+    "backend/app/parsing/structure.py",
+    "backend/app/parsing/text.py",
+    "backend/app/services/validation.py",
+    "backend/pyproject.toml",
+    "backend/tests/test_parsers.py",
+    "backend/tests/test_validation.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

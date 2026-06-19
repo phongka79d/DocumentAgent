@@ -9,6 +9,7 @@ from .base import (
     normalize_mime_type,
 )
 from .docx import DocxParser
+from .html import HtmlParser
 from .markdown import MarkdownParser
 from .pdf import PdfParser
 from .text import TextParser
@@ -96,6 +97,7 @@ PARSER_REGISTRY = ParserRegistry(
         DocxParser(),
         TextParser(),
         MarkdownParser(),
+        HtmlParser(),
     )
 )
 

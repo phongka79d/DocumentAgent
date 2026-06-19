@@ -2,7 +2,7 @@
 
 RagDocument Phase 1 is a personal, single-user document RAG MVP.
 
-This repository is currently through Phase 1 Batch08 and Phase 2 Batch02. The accepted behavior is:
+This repository is currently through Phase 1 Batch08 and Phase 2 Batch03. The accepted behavior is:
 
 - a FastAPI backend titled `RagDocument API`
 - `GET /api/health` returning `{"status": "ok"}`
@@ -11,11 +11,11 @@ This repository is currently through Phase 1 Batch08 and Phase 2 Batch02. The ac
 - an optional `X-Admin-API-Token` gate that is disabled when `ADMIN_API_TOKEN` is empty and enforced when it is set
 - a Supabase MVP schema contract in `docs/database/supabase_schema.sql` for `documents`, `document_chunks`, and optional `messages`
 - lazy backend service client factories under `backend/app/services/` for Supabase, Qdrant, ShopAIKey, and Jina
-- document schemas, SHA-256 upload hashing, and deterministic upload validation for PDF, DOCX, TXT, and Markdown files
+- document schemas, SHA-256 upload hashing, and deterministic upload validation for PDF, DOCX, TXT, Markdown, and HTML files
 - document service functions for listing, lookup, duplicate detection, original-file upload, row creation, and deletion cleanup
 - document API routes for upload, list, detail, index, reindex, delete, and typed chunk inspection under `/api/documents`
-- normalized document parsers for PDF, DOCX, TXT, and Markdown under `backend/app/parsing/`
-- a parser registry that resolves supported file extensions and MIME types
+- normalized document parsers for PDF, DOCX, TXT, Markdown, and HTML under `backend/app/parsing/`, with optional structured block output for paragraphs, headings, and tables
+- a parser registry that resolves supported file extensions and MIME types, including `text/html`
 - a deterministic fixed-token chunker under `backend/app/chunking/` using 500-token chunks, 150-token overlap, and chunk metadata required for ingestion
 - a LangGraph ingestion workflow under `backend/app/graphs/` that loads existing document rows, marks processing, parses, chunks, saves chunks, embeds, upserts Qdrant vectors, marks ready, and marks fatal failures as failed with clear errors
 - index and reindex document routes that invoke the ingestion graph with only the document ID; reindex deletes old Qdrant vectors and old Supabase chunks before rebuilding

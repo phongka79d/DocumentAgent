@@ -33,6 +33,16 @@ from app.services.validation import UploadValidationError, validate_upload_file
             None,
             None,
         ),
+        (
+            "page.html",
+            "text/html",
+            "text/html",
+        ),
+        (
+            "snippet.htm",
+            "text/html; charset=utf-8",
+            "text/html",
+        ),
     ],
 )
 def test_validate_upload_file_accepts_supported_files(
@@ -98,5 +108,18 @@ def test_validate_upload_file_rejects_obvious_mime_conflict():
             file_name="invoice.txt",
             file_bytes=b"data",
             content_type="application/pdf",
+            max_upload_bytes=1024,
+        )
+
+
+def test_validate_upload_file_rejects_html_mime_conflict():
+    with pytest.raises(
+        UploadValidationError,
+        match="File extension .html is incompatible with MIME type text/plain",
+    ):
+        validate_upload_file(
+            file_name="page.html",
+            file_bytes=b"<html></html>",
+            content_type="text/plain",
             max_upload_bytes=1024,
         )

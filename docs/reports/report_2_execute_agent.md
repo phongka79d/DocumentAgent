@@ -386,3 +386,245 @@ complete
 - next task ID: (03A)
 - can proceed: yes
 - handoff notes: Batch02 now includes typed message-history fetching, source viewing, and saved-answer restore; the next task can move into Batch03 parsing work without additional frontend follow-up for this panel.
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+[docs/tasks/task_2.md]
+
+## Report File
+[docs/reports/report_2_execute_agent.md]
+
+## Batch
+[Batch03 - Structured Parsing and HTML Support]
+
+## Task
+[(03A)] - Add parsed block structure
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 3: Structured Parsing and HTML Support` > `### Task 3.1: Add parsed block structure`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch03 - Structured Parsing and HTML Support
+- Task ID: (03A)
+- Task title: Add parsed block structure
+
+## Completed Work
+- Added `ParsedBlock` and the supporting block helpers in a new shared parser structure module.
+- Extended `ParsedDocument` with optional `blocks` while keeping existing `text`, `pages`, and `metadata` unchanged.
+- Added Markdown-style table flattening with deterministic row formatting and pipe escaping.
+- Added parser structure tests covering normalization, block builders, optional blocks, and backward compatibility.
+
+## Files Created or Modified
+- `backend/app/parsing/structure.py`
+- `backend/app/parsing/base.py`
+- `backend/tests/test_parsers.py`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_parsers.py -v`: Passed
+- evidence or reason: 18 tests collected, 18 passed.
+
+## Acceptance Check
+- Task acceptance condition: Existing parser tests pass; parsed documents can include blocks; old callers can still use `text` and `pages`; table rows flatten to stable Markdown-style text.
+- Status: satisfied
+- Evidence: The required pytest command passed, `build_parsed_document` and `BaseParser.build_document` now accept optional `blocks`, and the new helper tests verify stable Markdown table output.
+
+## Artifacts Produced
+- `backend/app/parsing/structure.py`
+- Parser helper tests in `backend/tests/test_parsers.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Kept `ParsedDocument.blocks` optional with `NotRequired` so existing parser callers do not need to change.
+- Made the table flattener deterministic by padding ragged rows and escaping pipe characters in cell text.
+
+## Risks or Open Issues
+- None identified for this scope.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes
+- handoff notes: Shared parser block primitives are in place, so the next task can focus on emitting blocks from the existing parsers without changing the base contract again.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+- docs/tasks/task_2.md
+
+## Report File
+- docs/reports/report_2_execute_agent.md
+
+## Batch
+- Batch03 - Structured Parsing and HTML Support
+
+## Task
+- (03B) - Emit structure from existing parsers
+
+## Status
+- complete
+
+## Source of Truth Used
+- docs/plans/Plan_2.md > ## Batch 3: Structured Parsing and HTML Support > ### Task 3.2: Emit structure from existing parsers
+
+## Supplemental Documents Used
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch03 - Structured Parsing and HTML Support
+- Task ID: (03B)
+- Task title: Emit structure from existing parsers
+
+## Completed Work
+- Updated TXT parsing to emit paragraph blocks split on blank lines while preserving the full extracted text.
+- Updated Markdown parsing to emit heading, table, paragraph, and list-group blocks.
+- Updated DOCX parsing to emit heading, paragraph, and table blocks in document order, including table markdown text in the extracted full text.
+- Updated PDF parsing to emit page-aware paragraph blocks with `font_size`, `is_bold`, and `bbox` metadata when PyMuPDF exposes them.
+- Preserved empty-text parse error behavior and kept `parsed_document["text"]` as the full extracted text contract.
+- Added parser tests covering TXT paragraph splitting, Markdown headings/tables/list groups, DOCX headings/tables, and PDF page-aware blocks.
+
+## Files Created or Modified
+- backend/app/parsing/text.py
+- backend/app/parsing/markdown.py
+- backend/app/parsing/docx.py
+- backend/app/parsing/pdf.py
+- backend/tests/test_parsers.py
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_parsers.py -v`: Passed
+- evidence or reason: 19 tests collected, 19 passed.
+
+## Acceptance Check
+- Task acceptance condition: TXT, Markdown, DOCX, and PDF parser tests pass; heading and table blocks are detected; PDF blocks include page numbers; full text remains available.
+- Status: satisfied
+- Evidence: The required pytest command passed, and the new tests verify structured blocks plus preserved full extracted text across all four parsers.
+
+## Artifacts Produced
+- Updated parser implementations in `backend/app/parsing/*.py`
+- Updated parser coverage in `backend/tests/test_parsers.py`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Kept the shared 03A block helpers unchanged and used local parser logic where parser-specific metadata was needed.
+- Parsed DOCX in body order so headings, paragraphs, and tables stay in the extracted text and block order.
+- Treated Markdown tables as header-plus-data regions and grouped contiguous list items into paragraph blocks.
+
+## Risks or Open Issues
+- None identified for this scope.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (03C)
+- can proceed: yes
+- handoff notes: Structured block emission is in place; the next task can focus on HTML upload validation and parsing without changing these parser contracts again.
+---
+
+# Task Execution Report - (03C)
+
+## Source Task File
+- docs/tasks/task_2.md
+
+## Report File
+- docs/reports/report_2_execute_agent.md
+
+## Batch
+- Batch03 - Structured Parsing and HTML Support
+
+## Task
+- (03C) - Add HTML upload validation and parser
+
+## Status
+- complete
+
+## Source of Truth Used
+- docs/plans/Plan_2.md > ## Batch 3: Structured Parsing and HTML Support > ### Task 3.3: Add HTML upload validation and parser
+
+## Supplemental Documents Used
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch03 - Structured Parsing and HTML Support
+- Task ID: (03C)
+- Task title: Add HTML upload validation and parser
+
+## Completed Work
+- Added `beautifulsoup4>=4.12,<5.0` to the backend dependency list.
+- Extended upload validation to accept `.html` and `.htm` files and the `text/html` MIME type.
+- Implemented `HtmlParser` with safe visible-text extraction, removal of `script`, `style`, `noscript`, and `template` elements, structured heading/paragraph/table blocks, and empty-visible-text rejection.
+- Registered the HTML parser in the parser registry.
+- Added validation and parser coverage for HTML acceptance, MIME compatibility, registry resolution, block emission, and empty-visible-text failure handling.
+
+## Files Created or Modified
+- backend/pyproject.toml
+- backend/app/services/validation.py
+- backend/app/parsing/html.py
+- backend/app/parsing/registry.py
+- backend/tests/test_validation.py
+- backend/tests/test_parsers.py
+- docs/reports/report_2_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_validation.py tests/test_parsers.py -v`: Passed
+- initial run before installing `beautifulsoup4`: Failed with `ModuleNotFoundError: No module named 'bs4'`; resolved by installing `beautifulsoup4>=4.12,<5.0` in the local environment and rerunning the same command successfully.
+
+## Acceptance Check
+- Task acceptance condition: `.html` and `.htm` uploads with `text/html` are accepted; script/style content is ignored; headings and tables become parsed blocks; unsupported extensions remain rejected.
+- Status: satisfied
+- Evidence: Validation tests accepted the new HTML extensions and MIME type, parser tests confirmed visible block extraction and non-visible element removal, and unsupported extension behavior remained unchanged.
+
+## Artifacts Produced
+- `backend/app/parsing/html.py`
+- Updated HTML validation and parser registry coverage in backend tests
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Used BeautifulSoup's standard `html.parser` backend for deterministic local parsing.
+- Emitted only the outermost supported block elements in document order to avoid duplicate nested block output.
+- Added a fallback paragraph for visible body text when no structured block tags are present.
+
+## Risks or Open Issues
+- None identified for this scope.
+
+## Minor Issues Fixed During Execution
+- Installed `beautifulsoup4` into the local Python environment so the new parser could execute during validation.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes
+- handoff notes: HTML upload validation and parser support are complete; Batch04 can now build on the structured block output for header scoring.
