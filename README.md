@@ -2,7 +2,7 @@
 
 RagDocument Phase 1 is a personal, single-user document RAG MVP.
 
-This repository is currently through Phase 1 Batch08 and Phase 2 Batch01. The accepted behavior is:
+This repository is currently through Phase 1 Batch08 and Phase 2 Batch02. The accepted behavior is:
 
 - a FastAPI backend titled `RagDocument API`
 - `GET /api/health` returning `{"status": "ok"}`
@@ -24,9 +24,10 @@ This repository is currently through Phase 1 Batch08 and Phase 2 Batch01. The ac
 - a `POST /api/chat` route that accepts `question`, optional `document_ids`, and `save_message`, invokes the query graph, and returns `answer` plus `sources`
 - a `GET /api/messages` route that returns saved Q&A history from the optional `messages` table, newest first, with bounded limits and safe error responses
 - a React Vite TypeScript frontend under `frontend/` that reads `VITE_API_BASE_URL`, keeps backend service secrets out of browser code, and builds with `npm run build`
-- a typed frontend API client for upload, list, detail, index, reindex, delete, and chat requests, with `X-Admin-API-Token` sent only when configured in browser session state
+- a typed frontend API client for upload, list, detail, index, reindex, delete, chat, document chunk inspection, and message history requests, with `X-Admin-API-Token` sent only when configured in browser session state
 - browser UI for uploading PDF, DOCX, TXT, and Markdown files, listing documents, refreshing document state, indexing, re-indexing, deleting, and showing failed-document errors
-- browser chat UI with optional ready-document selection, answer rendering, and source citations in the required page-present and page-absent formats
+- browser chat UI with optional ready-document selection, answer rendering, selectable source citations, source chunk inspection with adjacent chunk navigation, and source citations in the required page-present and page-absent formats
+- browser message history UI that loads saved Q&A rows, supports refresh, and restores saved answers and sources into the chat response area without resending the question
 - local run documentation in `backend/README.md` covering backend, frontend, Supabase, Qdrant, and required environment setup
 - live MVP smoke validation for a TXT document covering upload, duplicate upload, indexing to ready, chat with source citation, delete, and disappearance from the document list
 

@@ -1,9 +1,11 @@
 import type {
   ChatRequest,
   ChatResponse,
+  DocumentChunkListResponse,
   DocumentListResponse,
   DocumentProcessingResponse,
   DocumentResponse,
+  MessageListResponse,
   UploadDocumentOptions,
   UploadDocumentResponse,
 } from "./types";
@@ -25,10 +27,12 @@ export interface ApiClient {
   ): Promise<UploadDocumentResponse>;
   listDocuments(): Promise<DocumentListResponse>;
   getDocument(documentId: string): Promise<DocumentResponse>;
+  getDocumentChunks(documentId: string): Promise<DocumentChunkListResponse>;
   indexDocument(documentId: string): Promise<DocumentProcessingResponse>;
   reindexDocument(documentId: string): Promise<DocumentProcessingResponse>;
   deleteDocument(documentId: string): Promise<DocumentResponse>;
   sendChatMessage(request: ChatRequest): Promise<ChatResponse>;
+  listMessages(limit: number): Promise<MessageListResponse>;
 }
 
 export class ApiError extends Error {
@@ -276,6 +280,14 @@ function createRequestHandler(config: ApiClientConfig) {
       );
     },
 
+    getDocumentChunks(
+      documentId: string,
+    ): Promise<DocumentChunkListResponse> {
+      return request<DocumentChunkListResponse>(
+        `/api/documents/${encodeURIComponent(documentId)}/chunks`,
+      );
+    },
+
     indexDocument(documentId: string): Promise<DocumentProcessingResponse> {
       return request<DocumentProcessingResponse>(
         `/api/documents/${encodeURIComponent(documentId)}/index`,
@@ -311,6 +323,10 @@ function createRequestHandler(config: ApiClientConfig) {
         },
         body: JSON.stringify(requestBody),
       });
+    },
+
+    listMessages(limit: number): Promise<MessageListResponse> {
+      return request<MessageListResponse>(`/api/messages?limit=${encodeURIComponent(String(limit))}`);
     },
   } satisfies ApiClient;
 }
@@ -355,6 +371,12 @@ export function getDocument(documentId: string): Promise<DocumentResponse> {
   return apiClient.getDocument(documentId);
 }
 
+export function getDocumentChunks(
+  documentId: string,
+): Promise<DocumentChunkListResponse> {
+  return apiClient.getDocumentChunks(documentId);
+}
+
 export function indexDocument(
   documentId: string,
 ): Promise<DocumentProcessingResponse> {
@@ -373,4 +395,8 @@ export function deleteDocument(documentId: string): Promise<DocumentResponse> {
 
 export function sendChatMessage(requestBody: ChatRequest): Promise<ChatResponse> {
   return apiClient.sendChatMessage(requestBody);
+}
+
+export function listMessages(limit: number): Promise<MessageListResponse> {
+  return apiClient.listMessages(limit);
 }

@@ -746,3 +746,238 @@ dl {
     text-align: left;
   }
 }
+
+.source-list__button {
+  width: 100%;
+  display: block;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.source-list__button:hover {
+  background: var(--panel-soft);
+  border-color: rgba(29, 78, 216, 0.16);
+}
+
+.source-list__button--selected {
+  background: var(--accent-soft);
+  border-color: rgba(29, 78, 216, 0.24);
+}
+
+.source-list__button--selected .source-list__text {
+  color: var(--accent);
+}
+
+.chunk-viewer {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.chunk-viewer__toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chunk-viewer__identity {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chunk-viewer__file {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.chunk-viewer__chunk {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chunk-viewer__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chunk-viewer__nav-button {
+  min-width: 6.5rem;
+}
+
+.chunk-viewer__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.chunk-viewer__meta-item {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chunk-viewer__meta-item dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.chunk-viewer__meta-item dd {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.chunk-viewer__content {
+  min-height: 144px;
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chunk-viewer-state {
+  min-height: 144px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 1px dashed var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.chunk-viewer-state--error {
+  border-color: rgba(185, 28, 28, 0.24);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.chunk-viewer-state--warning {
+  border-color: rgba(180, 83, 9, 0.24);
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+@media (max-width: 600px) {
+  .chunk-viewer__meta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chunk-viewer__nav {
+    width: 100%;
+  }
+
+  .chunk-viewer__nav-button {
+    flex: 1 1 0;
+  }
+}
+
+.message-history-state {
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.message-history-state--error {
+  border-color: rgba(185, 28, 28, 0.24);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.message-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.message-history-list__item {
+  min-width: 0;
+}
+
+.message-history-card {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.message-history-card:hover {
+  border-color: rgba(29, 78, 216, 0.18);
+  background: #f3f7fd;
+}
+
+.message-history-card--selected {
+  border-color: rgba(29, 78, 216, 0.26);
+  background: var(--accent-soft);
+}
+
+.message-history-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.message-history-card__question,
+.message-history-card__answer {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.message-history-card__question {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.message-history-card__answer {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

@@ -251,7 +251,7 @@ Users need to inspect retrieved source content and restore saved answers without
 
 ### Tasks
 
-- [ ] (02A): Extend frontend API client and types
+- [x] (02A): Extend frontend API client and types
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 2: Frontend Source Viewer and Message History` > `### Task 2.1: Extend frontend API client and types`
   - Source Requirements:
     - Add `DocumentChunk`, `DocumentChunkListResponse`, `MessageHistoryItem`, and `MessageListResponse` types.
@@ -274,7 +274,7 @@ Users need to inspect retrieved source content and restore saved answers without
   - Blocked Condition: None.
   - Files: `frontend/src/api/types.ts`, `frontend/src/api/client.ts`
 
-- [ ] (02B): Build source chunk viewer panel
+- [x] (02B): Build source chunk viewer panel
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 2: Frontend Source Viewer and Message History` > `### Task 2.2: Build source chunk viewer panel`
   - Source Requirements:
     - Make each source citation selectable.
@@ -305,7 +305,7 @@ Users need to inspect retrieved source content and restore saved answers without
   - Blocked Condition: None.
   - Files: `frontend/src/components/ChunkViewerPanel.tsx`, `frontend/src/components/SourceList.tsx`, `frontend/src/components/ChatPanel.tsx`, `frontend/src/App.tsx`, `frontend/src/styles.css`
 
-- [ ] (02C): Build message history panel
+- [x] (02C): Build message history panel
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 2: Frontend Source Viewer and Message History` > `### Task 2.3: Build message history panel`
   - Source Requirements:
     - Load `GET /api/messages?limit=25` on initial render after documents load.
@@ -1038,9 +1038,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch02
 
-- [ ] (02A): Extend frontend API client and types
-- [ ] (02B): Build source chunk viewer panel
-- [ ] (02C): Build message history panel
+- [x] (02A): Extend frontend API client and types
+- [x] (02B): Build source chunk viewer panel
+- [x] (02C): Build message history panel
 
 #### Batch03
 

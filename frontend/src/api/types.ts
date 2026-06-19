@@ -28,6 +28,30 @@ export interface DocumentListResponse {
   documents: DocumentResponse[];
 }
 
+export interface DocumentChunk {
+  id: string;
+  document_id: string;
+  chunk_index: number;
+  content: string;
+  content_hash: string | null;
+  token_count: number | null;
+  chunk_type: string | null;
+  heading: string | null;
+  section_path: string[];
+  page_start: number | null;
+  page_end: number | null;
+  token_start: number | null;
+  token_end: number | null;
+  qdrant_point_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string | null;
+}
+
+export interface DocumentChunkListResponse {
+  document_id: string;
+  chunks: DocumentChunk[];
+}
+
 export interface UploadDocumentResponse {
   document_id: string;
   status: DocumentStatus;
@@ -60,6 +84,19 @@ export interface SourceCitation {
 export interface ChatResponse {
   answer: string;
   sources: SourceCitation[];
+}
+
+export interface MessageHistoryItem {
+  id: string;
+  question: string;
+  answer: string;
+  sources: SourceCitation[];
+  metadata: Record<string, unknown>;
+  created_at: string | null;
+}
+
+export interface MessageListResponse {
+  messages: MessageHistoryItem[];
 }
 
 export interface UploadDocumentOptions {

@@ -1,11 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DEFAULT_API_BASE_URL, apiClient } from "./api/client";
-import type { ChatRequest, ChatResponse, DocumentResponse } from "./api/types";
+import type {
+  ChatRequest,
+  ChatResponse,
+  DocumentChunk,
+  DocumentResponse,
+  MessageHistoryItem,
+  SourceCitation,
+} from "./api/types";
 import ChatPanel from "./components/ChatPanel";
 import DocumentList from "./components/DocumentList";
+import MessageHistoryPanel from "./components/MessageHistoryPanel";
 import UploadPanel from "./components/UploadPanel";
 
 type DocumentAction = "index" | "reindex" | "delete";
+type ChunkLoadStatus = "idle" | "loading" | "ready" | "error";
+
+interface ChunkLoadState {
+  status: ChunkLoadStatus;
+  error: string | null;
+}
+
+const INITIAL_CHUNK_LOAD_STATE: ChunkLoadState = {
+  status: "idle",
+  error: null,
+};
+
+const MESSAGE_HISTORY_LIMIT = 25;
 
 const MOCK_CHAT_RESPONSE = {
   answer:
@@ -61,10 +82,31 @@ export default function App() {
   const [question, setQuestion] = useState("");
   const [chatResponse, setChatResponse] =
     useState<ChatResponse>(MOCK_CHAT_RESPONSE);
+  const [selectedSource, setSelectedSource] = useState<SourceCitation | null>(
+    null,
+  );
+  const [selectedChunkIndex, setSelectedChunkIndex] = useState<number | null>(
+    null,
+  );
+  const [documentChunkCache, setDocumentChunkCache] = useState<
+    Record<string, DocumentChunk[]>
+  >({});
+  const [documentChunkState, setDocumentChunkState] = useState<
+    Record<string, ChunkLoadState>
+  >({});
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
   const [isRefreshingDocuments, setIsRefreshingDocuments] = useState(false);
+  const [messageHistory, setMessageHistory] = useState<MessageHistoryItem[]>([]);
+  const [messageHistoryError, setMessageHistoryError] = useState<string | null>(
+    null,
+  );
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null,
+  );
+  const [isLoadingMessageHistory, setIsLoadingMessageHistory] = useState(false);
+  const [hasLoadedMessageHistory, setHasLoadedMessageHistory] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
@@ -93,6 +135,54 @@ export default function App() {
     );
   }, [readyDocuments, selectedDocumentIds]);
 
+  const selectedSourceLoadState = selectedSource
+    ? documentChunkState[selectedSource.document_id] ?? INITIAL_CHUNK_LOAD_STATE
+    : INITIAL_CHUNK_LOAD_STATE;
+
+  const selectedDocumentChunks = useMemo(() => {
+    if (!selectedSource) {
+      return null;
+    }
+
+    return documentChunkCache[selectedSource.document_id] ?? null;
+  }, [documentChunkCache, selectedSource]);
+
+  const selectedChunk = useMemo(() => {
+    if (!selectedDocumentChunks || selectedChunkIndex === null) {
+      return null;
+    }
+
+    return (
+      selectedDocumentChunks.find(
+        (chunk) => chunk.chunk_index === selectedChunkIndex,
+      ) ?? null
+    );
+  }, [selectedChunkIndex, selectedDocumentChunks]);
+
+  const previousChunk = useMemo(() => {
+    if (!selectedChunk || !selectedDocumentChunks) {
+      return null;
+    }
+
+    return (
+      selectedDocumentChunks.find(
+        (chunk) => chunk.chunk_index === selectedChunk.chunk_index - 1,
+      ) ?? null
+    );
+  }, [selectedChunk, selectedDocumentChunks]);
+
+  const nextChunk = useMemo(() => {
+    if (!selectedChunk || !selectedDocumentChunks) {
+      return null;
+    }
+
+    return (
+      selectedDocumentChunks.find(
+        (chunk) => chunk.chunk_index === selectedChunk.chunk_index + 1,
+      ) ?? null
+    );
+  }, [selectedChunk, selectedDocumentChunks]);
+
   useEffect(() => {
     if (selectedDocumentIds.length === 0) {
       return;
@@ -110,6 +200,11 @@ export default function App() {
     }
   }, [readyDocuments, selectedDocumentIds]);
 
+  useEffect(() => {
+    setSelectedSource(null);
+    setSelectedChunkIndex(null);
+  }, [chatResponse]);
+
   const loadDocuments = useCallback(
     async (options: { background?: boolean } = {}) => {
       const { background = false } = options;
@@ -126,9 +221,7 @@ export default function App() {
         const response = await apiClient.listDocuments();
         setDocuments(Array.isArray(response.documents) ? response.documents : []);
       } catch (error) {
-        setDocumentError(
-          getErrorMessage(error, "Unable to load documents."),
-        );
+        setDocumentError(getErrorMessage(error, "Unable to load documents."));
       } finally {
         if (background) {
           setIsRefreshingDocuments(false);
@@ -140,9 +233,89 @@ export default function App() {
     [],
   );
 
+  const loadDocumentChunks = useCallback(async (documentId: string) => {
+    setDocumentChunkState((current) => ({
+      ...current,
+      [documentId]: {
+        status: "loading",
+        error: null,
+      },
+    }));
+
+    try {
+      const response = await apiClient.getDocumentChunks(documentId);
+      setDocumentChunkCache((current) => ({
+        ...current,
+        [documentId]: Array.isArray(response.chunks) ? response.chunks : [],
+      }));
+      setDocumentChunkState((current) => ({
+        ...current,
+        [documentId]: {
+          status: "ready",
+          error: null,
+        },
+      }));
+    } catch (error) {
+      setDocumentChunkState((current) => ({
+        ...current,
+        [documentId]: {
+          status: "error",
+          error: getErrorMessage(error, "Unable to load source."),
+        },
+      }));
+    }
+  }, []);
+
+  const loadMessageHistory = useCallback(async () => {
+    setIsLoadingMessageHistory(true);
+    setMessageHistoryError(null);
+
+    try {
+      const response = await apiClient.listMessages(MESSAGE_HISTORY_LIMIT);
+      const nextMessages = Array.isArray(response.messages)
+        ? response.messages
+        : [];
+
+      setMessageHistory(nextMessages);
+      setSelectedMessageId((current) =>
+        nextMessages.some((message) => message.id === current) ? current : null,
+      );
+    } catch (error) {
+      setMessageHistoryError(
+        getErrorMessage(error, "Unable to load message history."),
+      );
+    } finally {
+      setHasLoadedMessageHistory(true);
+      setIsLoadingMessageHistory(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadDocuments();
   }, [loadDocuments]);
+
+  useEffect(() => {
+    if (isLoadingDocuments || hasLoadedMessageHistory) {
+      return;
+    }
+
+    void loadMessageHistory();
+  }, [hasLoadedMessageHistory, isLoadingDocuments, loadMessageHistory]);
+
+  useEffect(() => {
+    if (!selectedSource) {
+      return;
+    }
+
+    const documentId = selectedSource.document_id;
+    const chunkState = documentChunkState[documentId] ?? INITIAL_CHUNK_LOAD_STATE;
+
+    if (chunkState.status !== "idle") {
+      return;
+    }
+
+    void loadDocumentChunks(documentId);
+  }, [documentChunkState, loadDocumentChunks, selectedSource]);
 
   const handleUpload = useCallback(
     async (file: File) => {
@@ -159,9 +332,7 @@ export default function App() {
         setUploadResult(response.duplicate ? "Duplicate upload" : "Uploaded");
         await loadDocuments({ background: true });
       } catch (error) {
-        setUploadError(
-          getErrorMessage(error, "Unable to upload document."),
-        );
+        setUploadError(getErrorMessage(error, "Unable to upload document."));
       } finally {
         setIsUploading(false);
       }
@@ -188,18 +359,37 @@ export default function App() {
           setDocuments((current) =>
             current.filter((document) => document.id !== documentId),
           );
+          setDocumentChunkCache((current) => {
+            const nextCache = { ...current };
+            delete nextCache[documentId];
+            return nextCache;
+          });
+          setDocumentChunkState((current) => {
+            const nextState = { ...current };
+            delete nextState[documentId];
+            return nextState;
+          });
+          setSelectedSource((current) =>
+            current?.document_id === documentId ? null : current,
+          );
+          setSelectedChunkIndex((current) =>
+            selectedSource?.document_id === documentId ? null : current,
+          );
         }
 
         await loadDocuments({ background: true });
       } catch (error) {
         setDocumentError(
-          getErrorMessage(error, `Unable to ${kind === "reindex" ? "re-index" : kind} document.`),
+          getErrorMessage(
+            error,
+            `Unable to ${kind === "reindex" ? "re-index" : kind} document.`,
+          ),
         );
       } finally {
         setPendingAction(null);
       }
     },
-    [isUploading, loadDocuments, pendingAction],
+    [isUploading, loadDocuments, pendingAction, selectedSource],
   );
 
   const handleQuestionChange = useCallback((value: string) => {
@@ -214,6 +404,38 @@ export default function App() {
         : [...current, documentId],
     );
   }, []);
+
+  const handleSelectSource = useCallback((source: SourceCitation) => {
+    setSelectedSource({ ...source });
+    setSelectedChunkIndex(source.chunk_index);
+    setDocumentChunkState((current) => {
+      const existingState = current[source.document_id];
+      if (!existingState || existingState.status !== "error") {
+        return current;
+      }
+
+      return {
+        ...current,
+        [source.document_id]: INITIAL_CHUNK_LOAD_STATE,
+      };
+    });
+  }, []);
+
+  const handleViewPreviousChunk = useCallback(() => {
+    if (!previousChunk) {
+      return;
+    }
+
+    setSelectedChunkIndex(previousChunk.chunk_index);
+  }, [previousChunk]);
+
+  const handleViewNextChunk = useCallback(() => {
+    if (!nextChunk) {
+      return;
+    }
+
+    setSelectedChunkIndex(nextChunk.chunk_index);
+  }, [nextChunk]);
 
   const handleChatSubmit = useCallback(async () => {
     const trimmedQuestion = question.trim();
@@ -235,6 +457,7 @@ export default function App() {
       }
 
       const response = await apiClient.sendChatMessage(request);
+      setSelectedMessageId(null);
       setChatResponse(response);
     } catch (error) {
       setChatError(getErrorMessage(error, "Unable to send question."));
@@ -246,6 +469,22 @@ export default function App() {
   const refreshDocuments = useCallback(async () => {
     await loadDocuments({ background: true });
   }, [loadDocuments]);
+
+  const handleRefreshMessageHistory = useCallback(async () => {
+    await loadMessageHistory();
+  }, [loadMessageHistory]);
+
+  const handleSelectMessageHistoryItem = useCallback(
+    (message: MessageHistoryItem) => {
+      setSelectedMessageId(message.id);
+      setChatError(null);
+      setChatResponse({
+        answer: message.answer,
+        sources: Array.isArray(message.sources) ? message.sources : [],
+      });
+    },
+    [],
+  );
 
   const isDocumentActionBusy = isUploading || pendingAction !== null;
 
@@ -289,18 +528,41 @@ export default function App() {
               pendingAction={pendingAction?.kind ?? null}
               pendingDocumentId={pendingAction?.documentId ?? null}
             />
+
+            <MessageHistoryPanel
+              error={messageHistoryError}
+              hasLoaded={hasLoadedMessageHistory}
+              isLoading={isLoadingMessageHistory}
+              messages={messageHistory}
+              onRefresh={handleRefreshMessageHistory}
+              onSelectMessage={handleSelectMessageHistoryItem}
+              selectedMessageId={selectedMessageId}
+            />
           </div>
 
           <ChatPanel
             error={chatError}
             isSubmitting={isSendingChat}
+            isSourceLoading={selectedSourceLoadState.status === "loading"}
             onQuestionChange={handleQuestionChange}
+            onSelectSource={handleSelectSource}
             onSubmit={handleChatSubmit}
             onToggleDocument={handleToggleSelectedDocument}
+            onViewNextChunk={handleViewNextChunk}
+            onViewPreviousChunk={handleViewPreviousChunk}
             question={question}
             readyDocuments={readyDocuments}
             response={chatResponse}
+            selectedChunk={selectedChunk}
             selectedDocumentIds={selectedReadyDocumentIds}
+            selectedSource={selectedSource}
+            sourceError={
+              selectedSourceLoadState.status === "error"
+                ? selectedSourceLoadState.error
+                : null
+            }
+            hasNextChunk={nextChunk !== null}
+            hasPreviousChunk={previousChunk !== null}
           />
         </div>
       </main>

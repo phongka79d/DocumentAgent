@@ -1,5 +1,11 @@
-import { type FormEvent } from "react";
-import type { ChatResponse, DocumentResponse } from "../api/types";
+﻿import { type FormEvent } from "react";
+import type {
+  ChatResponse,
+  DocumentChunk,
+  DocumentResponse,
+  SourceCitation,
+} from "../api/types";
+import ChunkViewerPanel from "./ChunkViewerPanel";
 import SourceList from "./SourceList";
 
 interface ChatPanelProps {
@@ -9,21 +15,39 @@ interface ChatPanelProps {
   isSubmitting: boolean;
   readyDocuments: DocumentResponse[];
   selectedDocumentIds: string[];
+  selectedSource: SourceCitation | null;
+  selectedChunk: DocumentChunk | null;
+  isSourceLoading: boolean;
+  sourceError: string | null;
+  hasPreviousChunk: boolean;
+  hasNextChunk: boolean;
   onQuestionChange: (value: string) => void;
   onToggleDocument: (documentId: string) => void;
   onSubmit: () => Promise<void>;
+  onSelectSource: (source: SourceCitation) => void;
+  onViewPreviousChunk: () => void;
+  onViewNextChunk: () => void;
 }
 
 export default function ChatPanel({
   error,
   isSubmitting,
+  isSourceLoading,
   onQuestionChange,
+  onSelectSource,
   onSubmit,
   onToggleDocument,
+  onViewNextChunk,
+  onViewPreviousChunk,
   question,
   readyDocuments,
   response,
+  selectedChunk,
   selectedDocumentIds,
+  selectedSource,
+  sourceError,
+  hasNextChunk,
+  hasPreviousChunk,
 }: ChatPanelProps) {
   const selectedCount = selectedDocumentIds.length;
   const hasReadyDocuments = readyDocuments.length > 0;
@@ -130,7 +154,25 @@ export default function ChatPanel({
 
         <section className="chat-response__section">
           <span className="field-label">Sources</span>
-          <SourceList sources={response.sources} />
+          <SourceList
+            sources={response.sources}
+            selectedSourceChunkId={selectedSource?.chunk_id ?? null}
+            onSelectSource={onSelectSource}
+          />
+        </section>
+
+        <section className="chat-response__section">
+          <span className="field-label">Source viewer</span>
+          <ChunkViewerPanel
+            selectedSource={selectedSource}
+            selectedChunk={selectedChunk}
+            isLoading={isSourceLoading}
+            error={sourceError}
+            hasPreviousChunk={hasPreviousChunk}
+            hasNextChunk={hasNextChunk}
+            onViewPreviousChunk={onViewPreviousChunk}
+            onViewNextChunk={onViewNextChunk}
+          />
         </section>
       </div>
     </section>
