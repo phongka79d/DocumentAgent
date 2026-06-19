@@ -438,6 +438,32 @@ def test_rerank_chunks_falls_back_to_qdrant_score_sort_when_jina_fails():
     ]
 
 
+def test_extract_retrieval_hints_uses_llm_json_without_hardcoded_query_phrase():
+    settings = _test_settings()
+    fake_shopaikey_client = FakeShopAIKeyClient(
+        chat_response=SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content='{"boundary_positions":["beginning"]}'
+                    )
+                )
+            ]
+        )
+    )
+
+    hints = retrieval.extract_retrieval_hints(
+        "Who is Alice, and what happens at the opening of the story?",
+        settings=settings,
+        shopaikey_client=fake_shopaikey_client,
+    )
+
+    assert hints == {"boundary_positions": ["beginning"]}
+    chat_call = fake_shopaikey_client.chat.completions.calls[0]
+    assert chat_call["model"] == settings.SHOPAIKEY_CHAT_MODEL
+    assert "opening" in chat_call["messages"][1]["content"]
+
+
 def test_retrieve_context_chunks_orchestrates_search_rerank_and_neighbor_expansion():
     settings = _test_settings()
     fake_supabase_client = FakeSupabaseClient(
@@ -587,6 +613,142 @@ def test_retrieve_context_chunks_orchestrates_search_rerank_and_neighbor_expansi
     ]
 
 
+def test_retrieve_context_chunks_adds_llm_requested_beginning_boundary_chunk():
+    settings = _test_settings()
+    fake_supabase_client = FakeSupabaseClient(
+        tables={
+            "document_chunks": [
+                {
+                    "id": "chunk-0",
+                    "document_id": DOC_A,
+                    "chunk_index": 0,
+                    "content": "Alice was sitting by her sister when the White Rabbit ran by.",
+                },
+                {
+                    "id": "chunk-56",
+                    "document_id": DOC_A,
+                    "chunk_index": 56,
+                    "content": "neighbor identity setup",
+                },
+                {
+                    "id": "chunk-58",
+                    "document_id": DOC_A,
+                    "chunk_index": 58,
+                    "content": "neighbor identity follow-up",
+                },
+            ]
+        }
+    )
+    fake_qdrant_client = FakeQdrantClient(
+        points=[
+            _qdrant_point(
+                chunk_id="chunk-57",
+                document_id=DOC_A,
+                chunk_index=57,
+                file_name="alice-in-wonderland.txt",
+                score=0.99,
+                text="Alice says she hardly knows who she is after changing several times.",
+            ),
+            _qdrant_point(
+                chunk_id="chunk-59",
+                document_id=DOC_A,
+                chunk_index=59,
+                file_name="alice-in-wonderland.txt",
+                score=0.98,
+                text="More later identity confusion.",
+            ),
+        ]
+    )
+    fake_shopaikey_client = FakeShopAIKeyClient(
+        vectors=[[0.1, 0.2, 0.3]],
+        chat_response=SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content='{"boundary_positions":["beginning"]}'
+                    )
+                )
+            ]
+        ),
+    )
+    fake_jina_client = SimpleNamespace(
+        http_client=FakeHttpClient(
+            response=FakeHttpResponse(
+                {
+                    "results": [
+                        {"index": 0, "relevance_score": 0.99},
+                        {"index": 1, "relevance_score": 0.98},
+                    ]
+                }
+            )
+        ),
+        model=settings.JINA_RERANK_MODEL,
+    )
+
+    result = retrieval.retrieve_context_chunks(
+        "Who is Alice, and what happens at the opening of the story?",
+        document_ids=[DOC_A],
+        settings=settings,
+        supabase_client=fake_supabase_client,
+        qdrant_client=fake_qdrant_client,
+        shopaikey_client=fake_shopaikey_client,
+        jina_client=fake_jina_client,
+    )
+
+    assert [chunk["chunk_id"] for chunk in result["reranked_chunks"]] == [
+        "chunk-57",
+        "chunk-59",
+    ]
+    assert "chunk-0" in [chunk["chunk_id"] for chunk in result["context_chunks"]]
+    assert result["retrieval_hints"] == {"boundary_positions": ["beginning"]}
+
+
+def test_expand_neighbor_context_adds_llm_requested_end_boundary_chunk():
+    settings = _test_settings()
+    fake_supabase_client = FakeSupabaseClient(
+        tables={
+            "document_chunks": [
+                {
+                    "id": "chunk-2",
+                    "document_id": DOC_A,
+                    "chunk_index": 2,
+                    "content": "middle chunk",
+                },
+                {
+                    "id": "chunk-99",
+                    "document_id": DOC_A,
+                    "chunk_index": 99,
+                    "content": "Alice woke up on the bank.",
+                },
+            ]
+        }
+    )
+    reranked_chunks = [
+        {
+            "chunk_id": "chunk-2",
+            "document_id": DOC_A,
+            "file_name": "alice-in-wonderland.txt",
+            "chunk_index": 2,
+            "content": "middle chunk",
+            "qdrant_score": 0.95,
+            "rerank_score": 0.99,
+        }
+    ]
+
+    context_chunks = retrieval.expand_neighbor_context(
+        reranked_chunks,
+        settings=settings,
+        supabase_client=fake_supabase_client,
+        retrieval_hints={"boundary_positions": ["end"]},
+        document_ids=[DOC_A],
+    )
+
+    assert [chunk["chunk_id"] for chunk in context_chunks] == [
+        "chunk-2",
+        "chunk-99",
+    ]
+
+
 def test_expand_neighbor_context_keeps_reranked_chunks_first_deduplicates_and_caps_context(
     monkeypatch,
 ):
@@ -714,6 +876,7 @@ def test_query_state_contains_required_fields_and_no_extra_fields():
         "save_message",
         "prepared_query",
         "query_embedding",
+        "retrieval_hints",
         "retrieved_chunks",
         "reranked_chunks",
         "context_chunks",

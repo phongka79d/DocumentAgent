@@ -276,10 +276,16 @@ def retrieve_qdrant_node(
             settings=resolved_settings,
             qdrant_client=qdrant_client,
         )
+        retrieval_hints = retrieval.extract_retrieval_hints(
+            prepared_query,
+            settings=resolved_settings,
+            shopaikey_client=shopaikey_client,
+        )
         return {
             "prepared_query": prepared_query,
             "document_ids": document_ids,
             "query_embedding": query_embedding,
+            "retrieval_hints": retrieval_hints,
             "retrieved_chunks": retrieved_chunks,
         }
     except retrieval.RetrievalError as exc:
@@ -353,6 +359,8 @@ def expand_neighbor_context_node(
             reranked_chunks,
             settings=resolved_settings,
             supabase_client=supabase_client,
+            retrieval_hints=state.get("retrieval_hints"),
+            document_ids=_normalize_document_ids(state.get("document_ids")),
         )
         return {"context_chunks": context_chunks}
     except retrieval.RetrievalError as exc:

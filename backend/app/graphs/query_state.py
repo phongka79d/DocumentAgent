@@ -10,6 +10,7 @@ class QueryState(TypedDict, total=False):
 
     prepared_query: str
     query_embedding: list[float]
+    retrieval_hints: dict[str, list[str]]
 
     retrieved_chunks: list[dict[str, Any]]
     reranked_chunks: list[dict[str, Any]]

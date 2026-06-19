@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import json
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 from uuid import UUID
@@ -18,6 +19,19 @@ logger = logging.getLogger(__name__)
 
 class RetrievalError(RuntimeError):
     """Raised when semantic retrieval cannot be completed."""
+
+
+RETRIEVAL_HINT_SYSTEM_PROMPT = (
+    "You extract retrieval hints for a document RAG system.\n"
+    "Return compact JSON only. No prose.\n"
+    "Use this schema: {\"boundary_positions\": [\"beginning\"|\"end\"]}.\n"
+    "Use an empty list when the question does not ask about a document boundary."
+)
+RETRIEVAL_HINT_USER_PROMPT_TEMPLATE = "Question:\n{question}"
+BOUNDARY_CHUNK_INDEXES = {
+    "beginning": [0],
+    "end": [],
+}
 
 
 def _resolve_settings(settings: Settings | None = None) -> Settings:
@@ -190,6 +204,127 @@ def _normalize_context_chunk(
     if is_neighbor_context is not None:
         normalized["is_neighbor_context"] = is_neighbor_context
     return normalized
+
+
+def _extract_chat_content(response: Any) -> str | None:
+    output_text = getattr(response, "output_text", None)
+    normalized_output_text = _normalize_text(output_text)
+    if normalized_output_text is not None:
+        return normalized_output_text
+
+    choices = getattr(response, "choices", None)
+    if choices is None and isinstance(response, Mapping):
+        choices = response.get("choices")
+    if not choices:
+        return None
+
+    first_choice = choices[0]
+    message = getattr(first_choice, "message", None)
+    if message is None and isinstance(first_choice, Mapping):
+        message = first_choice.get("message")
+    if message is not None:
+        content = getattr(message, "content", None)
+        if content is None and isinstance(message, Mapping):
+            content = message.get("content")
+        normalized_content = _normalize_text(content)
+        if normalized_content is not None:
+            return normalized_content
+
+    text = getattr(first_choice, "text", None)
+    if text is None and isinstance(first_choice, Mapping):
+        text = first_choice.get("text")
+    return _normalize_text(text)
+
+
+def _normalize_retrieval_hints(value: Any) -> dict[str, list[str]]:
+    if not isinstance(value, Mapping):
+        return {"boundary_positions": []}
+
+    raw_positions = value.get("boundary_positions")
+    if not isinstance(raw_positions, Sequence) or isinstance(raw_positions, (str, bytes)):
+        return {"boundary_positions": []}
+
+    positions: list[str] = []
+    seen: set[str] = set()
+    for raw_position in raw_positions:
+        position = _normalize_text(raw_position)
+        if position is None:
+            continue
+        position = position.lower()
+        if position not in BOUNDARY_CHUNK_INDEXES or position in seen:
+            continue
+        positions.append(position)
+        seen.add(position)
+    return {"boundary_positions": positions}
+
+
+def _get_boundary_chunks(
+    document_id: UUID | str,
+    boundary_positions: Sequence[str],
+    *,
+    settings: Settings,
+    supabase_client: Any | None = None,
+) -> list[dict[str, Any]]:
+    chunks: list[dict[str, Any]] = []
+    if "beginning" in boundary_positions:
+        chunks.extend(
+            chunk_service.get_chunks_by_document_and_indexes(
+                document_id,
+                BOUNDARY_CHUNK_INDEXES["beginning"],
+                settings=settings,
+                supabase_client=supabase_client,
+            )
+        )
+    if "end" in boundary_positions:
+        last_chunk = chunk_service.get_last_chunk_by_document(
+            document_id,
+            settings=settings,
+            supabase_client=supabase_client,
+        )
+        if last_chunk is not None:
+            chunks.append(last_chunk)
+    return chunks
+
+
+def extract_retrieval_hints(
+    question: str,
+    *,
+    settings: Settings | None = None,
+    shopaikey_client: Any | None = None,
+) -> dict[str, list[str]]:
+    resolved_settings = _resolve_settings(settings)
+    normalized_question = _normalize_text(question)
+    if normalized_question is None:
+        raise RetrievalError("question is required")
+
+    client = _resolve_shopaikey_client(shopaikey_client)
+    chat = getattr(client, "chat", None)
+    completions = getattr(chat, "completions", None) if chat is not None else None
+    if completions is None:
+        return {"boundary_positions": []}
+
+    try:
+        response = completions.create(
+            model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
+            messages=[
+                {"role": "system", "content": RETRIEVAL_HINT_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": RETRIEVAL_HINT_USER_PROMPT_TEMPLATE.format(
+                        question=normalized_question
+                    ),
+                },
+            ],
+            temperature=0,
+            max_tokens=80,
+        )
+        content = _extract_chat_content(response)
+        if content is None:
+            return {"boundary_positions": []}
+        return _normalize_retrieval_hints(json.loads(content))
+    except Exception as exc:  # pragma: no cover - fallback is intentional
+        logger.warning("Retrieval hint extraction failed: %s", exc)
+        return {"boundary_positions": []}
 
 
 def embed_question(
@@ -409,6 +544,8 @@ def expand_neighbor_context(
     *,
     settings: Settings | None = None,
     supabase_client: Any | None = None,
+    retrieval_hints: Mapping[str, Any] | None = None,
+    document_ids: Sequence[UUID | str] | None = None,
 ) -> list[dict[str, Any]]:
     resolved_settings = _resolve_settings(settings)
     if not reranked_chunks:
@@ -431,6 +568,37 @@ def expand_neighbor_context(
         seen_chunk_ids.add(chunk_id)
         if len(selected) >= resolved_settings.RETRIEVAL_CONTEXT_MAX_CANDIDATES:
             return selected
+
+    normalized_hints = _normalize_retrieval_hints(retrieval_hints or {})
+    boundary_positions = normalized_hints["boundary_positions"]
+    if boundary_positions:
+        hint_document_ids = _normalize_document_ids(document_ids)
+        if not hint_document_ids:
+            hint_document_ids = list(
+                dict.fromkeys(chunk["document_id"] for chunk in normalized_reranked_chunks)
+            )
+
+        for document_id in hint_document_ids:
+            if len(selected) >= resolved_settings.RETRIEVAL_CONTEXT_MAX_CANDIDATES:
+                break
+            boundary_rows = _get_boundary_chunks(
+                document_id,
+                boundary_positions,
+                settings=resolved_settings,
+                supabase_client=supabase_client,
+            )
+            for boundary_row in boundary_rows:
+                if len(selected) >= resolved_settings.RETRIEVAL_CONTEXT_MAX_CANDIDATES:
+                    break
+                boundary_chunk = _normalize_context_chunk(
+                    boundary_row,
+                    is_neighbor_context=True,
+                )
+                boundary_chunk_id = boundary_chunk["chunk_id"]
+                if boundary_chunk_id in seen_chunk_ids:
+                    continue
+                selected.append(boundary_chunk)
+                seen_chunk_ids.add(boundary_chunk_id)
 
     for chunk in normalized_reranked_chunks:
         if len(selected) >= resolved_settings.RETRIEVAL_CONTEXT_MAX_CANDIDATES:
@@ -493,6 +661,11 @@ def retrieve_context_chunks(
         settings=resolved_settings,
         shopaikey_client=shopaikey_client,
     )
+    retrieval_hints = extract_retrieval_hints(
+        normalized_question,
+        settings=resolved_settings,
+        shopaikey_client=shopaikey_client,
+    )
     retrieved_chunks = search_semantic_chunks(
         query_embedding,
         document_ids=normalized_document_ids,
@@ -509,11 +682,14 @@ def retrieve_context_chunks(
         reranked_chunks,
         settings=resolved_settings,
         supabase_client=supabase_client,
+        retrieval_hints=retrieval_hints,
+        document_ids=normalized_document_ids,
     )
     return {
         "question": normalized_question,
         "document_ids": normalized_document_ids,
         "query_embedding": query_embedding,
+        "retrieval_hints": retrieval_hints,
         "retrieved_chunks": retrieved_chunks,
         "reranked_chunks": reranked_chunks,
         "context_chunks": context_chunks,

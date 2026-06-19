@@ -98,3 +98,23 @@ def get_chunk_by_document_and_index(
         supabase_client=supabase_client,
     )
     return rows[0] if rows else None
+
+
+def get_last_chunk_by_document(
+    document_id: UUID | str,
+    *,
+    settings: Settings | None = None,
+    supabase_client: Any | None = None,
+) -> dict[str, Any] | None:
+    _resolve_settings(settings)
+    client = _resolve_supabase_client(supabase_client)
+    response = (
+        client.table(DOCUMENT_CHUNKS_TABLE)
+        .select("*")
+        .eq("document_id", str(document_id))
+        .order("chunk_index", desc=True)
+        .limit(1)
+        .execute()
+    )
+    rows = [_normalize_row(row) for row in _response_rows(response)]
+    return rows[0] if rows else None
