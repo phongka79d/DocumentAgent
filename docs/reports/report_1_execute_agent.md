@@ -1734,3 +1734,389 @@ complete
 - next task ID: (08A)
 - can proceed: yes
 - handoff notes: Batch07 frontend MVP task (07D) is implemented and build-verified.
+
+---
+
+# Task Execution Report - (08A)
+
+## Source Task File
+[docs/tasks/task_1.md](C:/Users/ACER/OtherProjects/DocumentAgent/docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](C:/Users/ACER/OtherProjects/DocumentAgent/docs/reports/report_1_execute_agent.md)
+
+## Batch
+- Batch08 - End-to-End Verification
+
+## Task
+- (08A) - Add local run documentation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.1: Add local run documentation`
+- `docs/plans/Master_Plan.md` > `## 22. Updated .env`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08A)
+- Task title: Add local run documentation
+
+## Completed Work
+- Created `backend/README.md` with operator-facing local setup instructions for the backend and frontend, plus the required external setup notes for Supabase, Qdrant, and backend environment variables.
+- Kept all environment values as placeholders and documented the live E2E setup as user-controlled and blocked until external services are configured.
+
+## Files Created or Modified
+- `backend/README.md`
+
+## Tests or Validations Run
+- Manual review of `backend/README.md`: Passed
+- Evidence: The README includes the required backend venv, install, and Uvicorn commands; the required frontend install and dev commands; the Supabase SQL, Storage bucket, Qdrant collection, and backend env setup notes; and no real secrets or local `.env` values.
+
+## Acceptance Check
+- Task acceptance condition: README documents backend, frontend, and external setup steps safely.
+- Status: satisfied
+- Evidence: The new backend README covers the exact local run commands and external setup requirements requested by the task, while keeping all secret-bearing values as placeholders.
+
+## Artifacts Produced
+- `backend/README.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Kept the Master Plan environment values as placeholders only.
+- Added a note that `FRONTEND_ORIGIN` must match the frontend host when using the `127.0.0.1` Vite command.
+
+## Risks or Open Issues
+- Live E2E validation remains blocked until the user applies the Supabase schema, creates the `documents` bucket, creates the `document_chunks_v1` Qdrant collection with the correct embedding dimension, and supplies real API keys.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (08B)
+- can proceed: yes
+- handoff notes: Automated verification can run after this documentation task is accepted.
+
+---
+
+# Task Execution Report - (08A)
+
+## Source Task File
+[docs/tasks/task_1.md](C:/Users/ACER/OtherProjects/DocumentAgent/docs/tasks/task_1.md)
+
+## Report File
+[docs/reports/report_1_execute_agent.md](C:/Users/ACER/OtherProjects/DocumentAgent/docs/reports/report_1_execute_agent.md)
+
+## Batch
+- Batch08 - End-to-End Verification
+
+## Task
+- (08A) - Add local run documentation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.1: Add local run documentation`
+- `docs/plans/Master_Plan.md` > `## 22. Updated .env`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08A)
+- Task title: Add local run documentation
+
+## Completed Work
+- Corrected the `backend/README.md` environment placeholder block so `SHOPAIKEY_CHAT_MODEL` now matches `gpt-5-mini` and `TEMPERATURE` now matches `0.2`, aligned exactly with Master Plan section 22.
+- Re-reviewed the README to confirm the backend setup, frontend setup, and external setup instructions remain present and unchanged.
+
+## Files Created or Modified
+- `backend/README.md`
+
+## Tests or Validations Run
+- Manual re-review of `backend/README.md` against Master Plan section 22: Passed
+- Evidence: The placeholder block now matches the source plan exactly, and the documented backend venv, `pip install -e ".[dev]"`, `uvicorn app.main:app --reload --port 8000`, frontend install/dev commands, Supabase SQL, Supabase bucket, Qdrant collection, and backend env setup instructions are still present and unchanged.
+
+## Acceptance Check
+- Task acceptance condition: README documents backend, frontend, and external setup steps safely.
+- Status: satisfied
+- Evidence: The README now matches the required section 22 placeholder values and still documents the required local run and external setup steps without real secrets.
+
+## Artifacts Produced
+- `backend/README.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says A2 owns checkbox updates after accepted review.
+
+## Key Implementation Decisions
+- Kept the repair scoped to the A2-identified placeholder mismatch only.
+
+## Risks or Open Issues
+- Live E2E validation remains blocked until the user applies the Supabase schema, creates the `documents` bucket, creates the `document_chunks_v1` Qdrant collection with the correct embedding dimension, and supplies real API keys.
+
+## Minor Issues Fixed During Execution
+- Replaced the two mismatched placeholder values in the README env block.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (08B)
+- can proceed: no
+- handoff notes: Await accepted review before moving to automated verification.
+
+---
+
+# Task Execution Report - (08B)
+
+## Source Task File
+docs/tasks/task_1.md
+
+## Report File
+docs/reports/report_1_execute_agent.md
+
+## Batch
+Batch08 - End-to-End Verification
+
+## Task
+(08B) - Run full automated verification
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_1.md > ## Batch 8: End-to-End Verification > ### Task 8.2: Run full automated verification
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08B)
+- Task title: Run full automated verification
+
+## Completed Work
+- Ran the required backend test suite and frontend production build.
+- Found one backend failure in `upsert_qdrant_node`, fixed the Phase 1 implementation by validating chunk IDs before creating Qdrant/Supabase clients, and reran the checks successfully.
+
+## Files Created or Modified
+- backend/app/graphs/ingestion_nodes.py
+
+## Tests or Validations Run
+- `cd backend; python -m pytest -v`: Failed on the first run with 85 passed, 1 failed, 1 skipped; the failure was `tests/test_ingestion_graph.py::test_upsert_qdrant_node_rejects_chunks_without_saved_ids`.
+- `cd backend; python -m pytest -v`: Passed on rerun with 86 passed, 1 skipped.
+- `cd frontend; npm run build`: Passed.
+- `cd frontend; npm run build`: Passed on rerun.
+
+## Acceptance Check
+- Task acceptance condition: All backend tests pass and frontend production build passes.
+- Status: satisfied
+- Evidence: Final backend rerun completed with 86 passed, 1 skipped, and frontend production build completed successfully.
+
+## Artifacts Produced
+- Backend test run log
+- Frontend build output
+- Updated Phase 1 ingestion node implementation
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: user instruction says leave checkbox updates to A2 after ACCEPTED review.
+
+## Key Implementation Decisions
+- Deferred Qdrant and Supabase client construction until after chunk ID validation so the failure path stays side-effect free.
+
+## Risks or Open Issues
+- None identified in this task.
+
+## Minor Issues Fixed During Execution
+- `upsert_qdrant_node` now returns the intended chunk-id validation failure before any service client creation.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (08C)
+- can proceed: yes
+- handoff notes: Manual MVP smoke test still depends on the user-provided local/external setup described in the README.---
+
+# Task Execution Report - (08C)
+
+## Source Task File
+- docs/tasks/task_1.md
+
+## Report File
+- docs/reports/report_1_execute_agent.md
+
+## Batch
+- Batch08 - End-to-End Verification
+
+## Task
+- (08C) - Run manual MVP smoke test
+
+## Status
+blocked
+
+## Source of Truth Used
+- docs/plans/Plan_1.md > ## Batch 8: End-to-End Verification > ### Task 8.3: Run manual MVP smoke test
+- docs/plans/Plan_1.md > ## Phase 1 Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 29. Final MVP Checklist
+
+## Supplemental Documents Used
+- backend/README.md
+
+## Selected Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08C)
+- Task title: Run manual MVP smoke test
+
+## Completed Work
+- The manual smoke test could not complete end to end because the live Supabase schema is not aligned with the backend expectations.
+- Started backend on port 8000 and frontend on host 127.0.0.1 port 5173, then ran the browser flow in headless Chrome.
+- Applied a tiny config fix in `backend/.env` so `FRONTEND_ORIGIN` matches the required browser host `http://127.0.0.1:5173`.
+- Stopped the backend and frontend services after capturing the blocking failure.
+
+## Files Created or Modified
+- backend/.env
+- docs/reports/report_1_execute_agent.md
+
+## Tests or Validations Run
+- `uvicorn app.main:app --reload --port 8000`: Passed startup
+- `npm run dev -- --host 127.0.0.1 --port 5173`: Passed startup
+- Playwright browser smoke test in headless Chrome against `http://127.0.0.1:5173`: Blocked
+- Direct CORS preflight to `http://127.0.0.1:8000/api/documents` with origin `http://127.0.0.1:5173`: Passed, allowed origin returned
+- Backend request trace: `GET /api/documents` returned 500 with Pydantic validation errors for extra columns; earlier `POST /api/documents/upload` returned 500 because `documents.file_hash` does not exist
+
+## Acceptance Check
+- Task acceptance condition: The app completes upload, duplicate detection, index, cite, and delete flow for a TXT document.
+- Status: blocked
+- Evidence: The browser smoke test could not reach the full flow because the live Supabase schema is inconsistent with the backend model. `GET /api/documents` failed with validation errors for unexpected `user_id`, `file_type`, and `chunk_count` fields, and the upload path previously failed because `documents.file_hash` is missing.
+
+## Artifacts Produced
+- Manual smoke-test browser log
+- Backend request trace showing the schema mismatch
+- Updated backend CORS config value in `backend/.env`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrator instruction says leave checkbox updates to A2; task is blocked
+
+## Key Implementation Decisions
+- None beyond the minimal environment/config alignment needed to run the browser on the required host.
+
+## Risks or Open Issues
+- Live Supabase schema appears stale or incomplete relative to the current backend model.
+- The manual TXT smoke test remains blocked until the user applies the correct schema, bucket, collection, and API-key setup.
+
+## Minor Issues Fixed During Execution
+- Updated `FRONTEND_ORIGIN` in `backend/.env` from `http://localhost:5173` to `http://127.0.0.1:5173` so the smoke test could run on the required host.
+
+## Workflow Integrity Check
+- BLOCKED_BY_USER_ACTION: live Supabase schema is invalid or incomplete for the app. Backend logs show `documents.file_hash` missing during upload and extra columns (`user_id`, `file_type`, `chunk_count`) causing `DocumentResponse` validation failures during list retrieval.
+
+## Notes for Next Task
+- next task ID: none
+- can proceed: no
+- handoff notes: Once the user fixes the Supabase schema to match the plan and confirms the remaining external setup, rerun (08C) without changing runtime code.
+
+---
+
+# Task Execution Report - (08C)
+
+## Source Task File
+- docs/tasks/task_1.md
+
+## Report File
+- docs/reports/report_1_execute_agent.md
+
+## Batch
+- Batch08 - End-to-End Verification
+
+## Task
+- (08C) - Run manual MVP smoke test
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_1.md > ## Batch 8: End-to-End Verification > ### Task 8.3: Run manual MVP smoke test
+- docs/plans/Plan_1.md > ## Phase 1 Acceptance Criteria
+- docs/plans/Master_Plan.md > ## 29. Final MVP Checklist
+
+## Supplemental Documents Used
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08C)
+- Task title: Run manual MVP smoke test
+
+## Completed Work
+- Completed the live manual MVP smoke test for a TXT document against backend port 8000 and frontend `http://127.0.0.1:5173`.
+- Verified upload, duplicate upload returning the existing document, indexing to ready, chat with at least one source citation, delete, and disappearance from the document list.
+- Stopped the backend and frontend services started for the task. A follow-up port check found no active listeners on ports 8000 or 5173, only closed TIME_WAIT sockets.
+
+## Files Created or Modified
+- backend/app/graphs/ingestion_nodes.py
+- backend/tests/test_ingestion_graph.py
+- docs/reports/report_1_execute_agent.md
+
+## Tests or Validations Run
+- `uvicorn app.main:app --reload --port 8000`: Passed startup and served the smoke flow.
+- `npm run dev -- --host 127.0.0.1 --port 5173`: Passed startup and served the smoke flow.
+- Browser smoke test at `http://127.0.0.1:5173`: Passed. Evidence: frontend loaded; upload created uploaded TXT document; duplicate upload returned existing document; index completed and document became ready; chat returned at least one source citation; delete removed document from list.
+- `Invoke-RestMethod http://127.0.0.1:8000/api/documents`: Passed after cleanup with an empty `documents` list.
+- `python -m pytest tests/test_ingestion_graph.py::test_mark_processing_node_sets_processing_and_clears_error_message tests/test_ingestion_graph.py::test_mark_ready_node_updates_completion_metadata -q`: Passed, 2 passed.
+- `python -m pytest -q`: Passed, 86 passed and 1 skipped.
+- Port cleanup check for `:8000` and `:5173`: Passed, no LISTENING entries found after shutdown.
+
+## Acceptance Check
+- Task acceptance condition: The app completes upload, duplicate detection, index, chat, cite, and delete flow for a TXT document.
+- Status: satisfied
+- Evidence: The live browser smoke test completed the full TXT flow and reported `status: passed` with source citation evidence and successful deletion from the list.
+
+## Artifacts Produced
+- Manual MVP smoke-test result appended in this report.
+- Temporary Playwright smoke files were removed after execution.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run instruction leaves checkbox updates to A2 after accepted review.
+
+## Key Implementation Decisions
+- Fixed the ingestion document update boundary to JSON-encode update payloads before sending them to Supabase, because the live index flow failed on raw Python `datetime` values in `updated_at` / `indexed_at`.
+- Installed the already-declared local dependency `tiktoken` into the active Python environment after the live index flow reported it missing. No repo dependency file was changed for this.
+
+## Risks or Open Issues
+- `python -m pip install -e ".[dev]"` did not complete because the declared `jina` dependency conflicts with the current FastAPI/Pydantic/Uvicorn constraints in this Python environment. This did not block the final smoke test after installing the already-declared `tiktoken` package directly.
+- Live external services were exercised, but no secrets were printed or copied.
+
+## Minor Issues Fixed During Execution
+- Supabase document update payloads now pass through `jsonable_encoder` so datetime values are JSON serializable for the real Supabase client.
+- Added focused regression assertions that ingestion update payload timestamps are strings.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency/user action status: user confirmed Supabase schema was rerun; live smoke test then passed against the configured external services.
+
+## Notes for Next Task
+- next task ID: none for Batch08 A1 execution
+- can proceed: yes
+- handoff notes: A2 can review `(08C)` using this report, the live smoke evidence, and the current git diff. Do not commit until orchestrator/A3 approval.

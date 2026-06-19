@@ -433,6 +433,7 @@ def test_mark_processing_node_sets_processing_and_clears_error_message(monkeypat
     payload = fake_client.events[0][2]
     assert payload["status"] == "processing"
     assert payload["error_message"] is None
+    assert isinstance(payload["updated_at"], str)
 
 
 def test_parse_document_node_downloads_and_parses_normalized_document(monkeypatch):
@@ -684,6 +685,8 @@ def test_mark_ready_node_updates_completion_metadata(monkeypatch):
     payload = fake_client.events[0][2]
     assert payload["status"] == "ready"
     assert payload["error_message"] is None
+    assert isinstance(payload["indexed_at"], str)
+    assert isinstance(payload["updated_at"], str)
     assert payload["indexed_at"] is not None
     assert result["status"] == "ready"
     assert result["error_message"] is None

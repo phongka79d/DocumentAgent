@@ -2,7 +2,7 @@
 
 RagDocument Phase 1 is a personal, single-user document RAG MVP.
 
-This repository is currently through Batch07. The accepted behavior is:
+This repository is currently through Batch08. The accepted behavior is:
 
 - a FastAPI backend titled `RagDocument API`
 - `GET /api/health` returning `{"status": "ok"}`
@@ -26,10 +26,12 @@ This repository is currently through Batch07. The accepted behavior is:
 - a typed frontend API client for upload, list, detail, index, reindex, delete, and chat requests, with `X-Admin-API-Token` sent only when configured in browser session state
 - browser UI for uploading PDF, DOCX, TXT, and Markdown files, listing documents, refreshing document state, indexing, re-indexing, deleting, and showing failed-document errors
 - browser chat UI with optional ready-document selection, answer rendering, and source citations in the required page-present and page-absent formats
+- local run documentation in `backend/README.md` covering backend, frontend, Supabase, Qdrant, and required environment setup
+- live MVP smoke validation for a TXT document covering upload, duplicate upload, indexing to ready, chat with source citation, delete, and disappearance from the document list
 
 The current backend uses safe local-development defaults for its settings layer. External service clients are constructed only when their factories are called. Upload route tests use local fakes/mocks; live Supabase, Qdrant, ShopAIKey, and Jina validation still requires real user-provided credentials, and the Supabase SQL and storage bucket must be applied manually before live document workflow validation.
 
-Index and reindex endpoints run the ingestion graph against stored originals. Retrieval and chat are implemented with mock-backed tests. The frontend is implemented and build-validated; end-to-end live workflow validation still requires a running backend, configured external services, applied Supabase schema/storage, and indexed documents.
+Index and reindex endpoints run the ingestion graph against stored originals. Retrieval and chat are implemented with mock-backed tests. The frontend is implemented and build-validated; the Batch08 live smoke test passed against configured external services after the Supabase schema/storage and Qdrant setup were in place.
 
 ## Validation
 

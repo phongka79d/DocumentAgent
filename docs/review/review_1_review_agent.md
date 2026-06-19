@@ -370,6 +370,7 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
 ---
 
 # Task Review Report - Batch01 Repair
@@ -4159,5 +4160,701 @@ ACCEPTED
   ],
   "next_task_can_proceed": true,
   "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (08A)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+REJECTED_WITH_WARNINGS
+
+## Reviewed Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08A)
+- Task title: Add local run documentation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.1: Add local run documentation`; `docs/plans/Master_Plan.md` > `## 22. Updated .env`
+- Supplemental documents: `docs/plans/Plan_1.md`, `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08A)
+- Reviewed task ID: (08A)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the requested `(08A)` task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`
+- untracked files: `backend/README.md`
+
+## Files Reviewed
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(08A)` execution report entry reviewed.
+- `docs/tasks/task_1.md`: in scope - `(08A)` task definition and progress tracker reviewed.
+- `docs/plans/Plan_1.md`: in scope - Task 8.1 command and scope contract reviewed.
+- `docs/plans/Master_Plan.md`: in scope - section 22 environment placeholder contract reviewed.
+- `backend/README.md`: in scope - local run documentation content reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/README.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The README is present as an untracked file and is the only implementation artifact for `(08A)`.
+
+## Dependency Review
+- Required dependencies: `(07D)`
+- Dependency status: satisfied
+- Missing or invalid dependency: None identified for this review.
+
+## Architecture Alignment
+- Passed: README documents backend setup, frontend setup, Supabase SQL setup, `documents` storage bucket, `document_chunks_v1` Qdrant collection, and backend env variables without exposing real secrets.
+- Failed: Placeholder defaults in the env block do not fully match `docs/plans/Master_Plan.md` section 22.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/README.md` contains concrete local-run and external-setup instructions.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The README uses placeholder values rather than real local `.env` contents or live credentials.
+
+## Validations Reviewed
+- Command/check: Manual review of `backend/README.md`
+- Reported result: Passed
+- Rerun result: Partial
+- Status: failed
+- Notes: The required command coverage is present, but the placeholder env defaults are not fully aligned with the Master Plan. `backend/README.md:56` documents `SHOPAIKEY_CHAT_MODEL=gpt-4o-mini` while `docs/plans/Master_Plan.md:1401` requires `SHOPAIKEY_CHAT_MODEL=gpt-5-mini`. `backend/README.md:76` documents `TEMPERATURE=0.1` while `docs/plans/Master_Plan.md:1421` requires `TEMPERATURE=0.2`.
+
+## Acceptance Review
+- Task acceptance: README documents backend, frontend, and external setup steps safely.
+- Status: partially satisfied
+- Evidence: Required backend commands are present at `backend/README.md:10-14`; frontend commands are present at `backend/README.md:24-26`; external setup notes are present at `backend/README.md:35-39`; no real secrets are present. Acceptance is still not satisfied because the placeholder env defaults diverge from the source-of-truth values.
+
+## Progress Tracking
+- Selected task checkbox: unchecked in both `(08A)` checklist locations
+- Checkbox updated by reviewer: no
+- Batch status: unchanged
+- Execution report entry: appended and present
+- Review report entry: appended by this review
+- Other: `docs/plans/Plan_1.md` was not modified, which is correct because no command/path correction was required.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report states the README kept Master Plan environment values as placeholders only, but two documented placeholder values do not match `docs/plans/Master_Plan.md` section 22.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- `backend/README.md:56` uses `SHOPAIKEY_CHAT_MODEL=gpt-4o-mini`, but the source of truth requires `SHOPAIKEY_CHAT_MODEL=gpt-5-mini` at `docs/plans/Master_Plan.md:1401`.
+- `backend/README.md:76` uses `TEMPERATURE=0.1`, but the source of truth requires `TEMPERATURE=0.2` at `docs/plans/Master_Plan.md:1421`.
+
+### Minor
+- None.
+
+### Warnings
+- The task is otherwise correctly scoped and safe; rejection is due to source-of-truth drift in the placeholder env block.
+
+### Observations
+- `docs/plans/Plan_1.md` was not modified, and git evidence shows no unrelated implementation changes beyond the execution report append and the new README.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/README.md` env placeholder block
+- change: Replace `SHOPAIKEY_CHAT_MODEL=gpt-4o-mini` with `SHOPAIKEY_CHAT_MODEL=gpt-5-mini` and replace `TEMPERATURE=0.1` with `TEMPERATURE=0.2` so the placeholders match `docs/plans/Master_Plan.md` section 22 exactly.
+- validation: Re-review `backend/README.md` against `docs/plans/Master_Plan.md` section 22 and confirm the backend/frontend/external setup commands remain present and unchanged.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED_WITH_WARNINGS",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch08 - End-to-End Verification",
+  "selected_task_id": "(08A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "docs/tasks/task_1.md",
+    "docs/plans/Plan_1.md",
+    "docs/plans/Master_Plan.md",
+    "backend/README.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "backend/README.md placeholder env block does not fully match Master Plan section 22"
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "backend/README.md:56 uses gpt-4o-mini instead of the required gpt-5-mini",
+    "backend/README.md:76 uses TEMPERATURE=0.1 instead of the required TEMPERATURE=0.2"
+  ],
+  "warnings": [
+    "The documentation is otherwise complete and safely scoped."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (08A)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08A)
+- Task title: Add local run documentation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.1: Add local run documentation`; `docs/plans/Master_Plan.md` > `## 22. Updated .env`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08A)
+- Reviewed task ID: (08A)
+- Correct selection: yes
+- Notes: The latest appended `(08A)` execution report is the repair entry that addresses the prior placeholder mismatch findings.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/README.md`
+
+## Files Reviewed
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(08A)` repair execution report reviewed.
+- `backend/README.md`: in scope - repaired placeholder env block and required run/setup instructions reviewed.
+- `docs/plans/Master_Plan.md`: in scope - section 22 placeholder contract reviewed.
+- `docs/tasks/task_1.md`: in scope - reviewer updated only the two `(08A)` checkboxes after acceptance.
+- `docs/review/review_1_review_agent.md`: questionable - reviewer-owned audit artifact, not part of the A1 repair scope.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/README.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The repair remained limited to the README placeholder block, with the execution report append as expected workflow evidence.
+
+## Dependency Review
+- Required dependencies: `(07D)`
+- Dependency status: satisfied
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: The README still documents backend venv/install/uvicorn commands, frontend install/dev commands, Supabase SQL setup, Supabase Storage bucket `documents`, Qdrant collection `document_chunks_v1`, and backend environment variables without exposing real secrets.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/README.md:56` now matches `SHOPAIKEY_CHAT_MODEL=gpt-5-mini` and `backend/README.md:76` now matches `TEMPERATURE=0.2`, aligning with `docs/plans/Master_Plan.md:1401` and `docs/plans/Master_Plan.md:1421`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The README continues to use placeholders only and includes no real `.env` values or secrets.
+
+## Validations Reviewed
+- Command/check: Manual re-review of `backend/README.md` against Master Plan section 22
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Verified the two repaired values now match the source of truth exactly and the previously required setup commands remain present and unchanged.
+
+## Acceptance Review
+- Task acceptance: README documents backend, frontend, and external setup steps safely.
+- Status: satisfied
+- Evidence: Backend commands remain present at `backend/README.md:10-14`; frontend commands remain present at `backend/README.md:24-26`; required external setup remains present at `backend/README.md:35-39`; repaired placeholders now match the source of truth at `backend/README.md:56` and `backend/README.md:76`.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in both `(08A)` checklist locations
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: latest repair entry appended and reviewed
+- Review report entry: appended by this review
+- Other: Only the two `(08A)` checkboxes were updated at `docs/tasks/task_1.md:1023` and `docs/tasks/task_1.md:1230`.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live E2E work remains dependent on user-controlled external setup, but that is expected and already documented for `(08A)`.
+
+### Observations
+- The current `docs/review/review_1_review_agent.md` and `docs/tasks/task_1.md` modifications are reviewer-owned tracking updates, not extra A1 implementation scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch08 - End-to-End Verification",
+  "selected_task_id": "(08A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "docs/reports/report_1_execute_agent.md",
+    "backend/README.md",
+    "docs/plans/Master_Plan.md",
+    "docs/tasks/task_1.md",
+    "docs/review/review_1_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live E2E work still depends on the documented external setup."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (08B)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08B)
+- Task title: Run full automated verification
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.2: Run full automated verification`
+- Supplemental documents: `docs/plans/Plan_1.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08B)
+- Reviewed task ID: (08B)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the requested `(08B)` task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/ingestion_nodes.py`, `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/README.md`
+
+## Files Reviewed
+- `backend/app/graphs/ingestion_nodes.py`: in scope - the only new `(08B)` production code change; it moves Qdrant and Supabase client creation until after chunk ID validation.
+- `backend/tests/test_ingestion_graph.py`: in scope - reviewed `test_upsert_qdrant_node_rejects_chunks_without_saved_ids` as the cited Phase 1 failure.
+- `frontend/package.json`: in scope - confirms the production build command is `vite build`.
+- `docs/tasks/task_1.md`: in scope - `(08B)` task definition reviewed and only the two `(08B)` checkboxes were updated after acceptance.
+- `docs/plans/Plan_1.md`: in scope - Task 8.2 validation contract reviewed.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(08B)` execution report reviewed; file also contains prior accepted `(08A)` execution entries.
+- `docs/review/review_1_review_agent.md`: questionable - reviewer-owned audit log, not executor implementation scope.
+- `backend/README.md`: out of scope - accepted uncommitted `(08A)` documentation artifact, not part of `(08B)` implementation.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The diff is limited to deferring service client construction until after chunk ID validation; no unrelated production behavior changes were introduced.
+
+## Dependency Review
+- Required dependencies: `(08A)`
+- Dependency status: satisfied
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: Task 8.2 requires running the full backend test suite and frontend production build. The executor did that, and the code change in `upsert_qdrant_node` is scoped to the Phase 1 ingestion graph failure path described by the failing backend test.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/graphs/ingestion_nodes.py:473-495` now validates chunk IDs before any Qdrant upsert or Supabase update client is created. The success path still builds the same point payloads and performs the same `upsert` and chunk-row updates once validation succeeds.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The fix does not introduce test-specific constants, conditional shortcuts, or fixture-only branches.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest -v`
+- Reported result: Failed initially on `tests/test_ingestion_graph.py::test_upsert_qdrant_node_rejects_chunks_without_saved_ids`, then passed on rerun with 86 passed and 1 skipped.
+- Rerun result: Passed with 86 passed, 1 skipped.
+- Status: passed
+- Notes: Current rerun confirms the full backend suite is green and the cited ingestion graph regression is resolved.
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed.
+- Rerun result: Passed.
+- Status: passed
+- Notes: Current rerun completed a production Vite build successfully.
+
+## Acceptance Review
+- Task acceptance: All backend tests pass and frontend production build passes.
+- Status: satisfied
+- Evidence: The backend suite reran green at 86 passed, 1 skipped, and the frontend production build reran successfully.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in both `(08B)` checklist locations
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: present and appended
+- Review report entry: appended by this review
+- Other: Existing uncommitted `backend/README.md` plus prior `(08A)` report/review/task edits are accepted earlier-task artifacts and are distinct from the new `(08B)` code fix.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `backend/app/graphs/ingestion_nodes.py` is the only new `(08B)` implementation change in git. The remaining modified docs files are execution/review/progress artifacts, and `backend/README.md` remains the accepted uncommitted `(08A)` documentation artifact.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch08 - End-to-End Verification",
+  "selected_task_id": "(08B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/tests/test_ingestion_graph.py",
+    "frontend/package.json",
+    "docs/tasks/task_1.md",
+    "docs/plans/Plan_1.md",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "backend/README.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (08C)
+
+## Source Task File
+`docs/tasks/task_1.md`
+
+## Execution Report Reviewed
+`docs/reports/report_1_execute_agent.md`
+
+## Review Report File
+`docs/review/review_1_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch08 - End-to-End Verification
+- Task ID: (08C)
+- Task title: Run manual MVP smoke test
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.3: Run manual MVP smoke test`; `docs/plans/Plan_1.md` > `## Phase 1 Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 29. Final MVP Checklist`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08C)
+- Reviewed task ID: (08C)
+- Correct selection: yes
+- Notes: The latest appended `(08C)` execution report is the complete rerun after the user confirmed the Supabase schema was rerun.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/ingestion_nodes.py`, `backend/tests/test_ingestion_graph.py`, `docs/reports/report_1_execute_agent.md`, `docs/review/review_1_review_agent.md`, `docs/tasks/task_1.md`
+- untracked files: `backend/README.md`
+
+## Files Reviewed
+- `backend/app/graphs/ingestion_nodes.py`: in scope - JSON-encodes Supabase document update payloads so live datetime fields can be persisted during indexing; also contains the previously accepted `(08B)` client-creation ordering fix.
+- `backend/tests/test_ingestion_graph.py`: in scope - focused assertions verify ingestion update timestamps are serialized strings before reaching the fake Supabase update boundary.
+- `docs/reports/report_1_execute_agent.md`: in scope - latest `(08C)` completion report reviewed.
+- `docs/tasks/task_1.md`: in scope - reviewer updated only the two `(08C)` checkboxes after acceptance.
+- `docs/review/review_1_review_agent.md`: in scope - reviewer-owned audit artifact for this report append.
+- `docs/plans/Plan_1.md`: in scope - Task 8.3 and Phase 1 acceptance requirements reviewed.
+- `docs/plans/Master_Plan.md`: in scope - Final MVP checklist reviewed.
+- `backend/README.md`: out of scope for `(08C)` - accepted uncommitted `(08A)` documentation artifact.
+- `backend/.env`: out of scope and ignored - status only confirmed as ignored; contents were not inspected.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The change is necessary for the reported live E2E indexing success because Supabase update payloads must be JSON serializable.
+- file from execution report: `backend/tests/test_ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Tests cover the runtime serialization behavior added for live Supabase compatibility.
+- file from execution report: `docs/reports/report_1_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: The latest completion entry is appended after the earlier blocked entry.
+
+## Dependency Review
+- Required dependencies: `(08B)`
+- Dependency status: satisfied
+- Missing or invalid dependency: None.
+
+## Architecture Alignment
+- Passed: The smoke flow uses the required FastAPI backend on port 8000, Vite frontend on `127.0.0.1:5173`, Supabase Storage/Postgres, Qdrant, ShopAIKey embeddings/chat, and Jina reranking path as configured by the MVP architecture.
+- Passed: The runtime code change stays at the Supabase client boundary and does not introduce authentication, multi-user behavior, relation graphs, fake storage, fake retrieval, or bypass logic.
+- Failed: None.
+- Uncertain: Browser smoke was not rerun by A2; A2 reviewed A1's live report and reran backend regression/full tests plus service cleanup checks.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Production code still performs real document updates through Supabase and real Qdrant upserts; the change only serializes payloads with `jsonable_encoder` before calling the Supabase update API.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-specific document IDs, filenames, expected answers, or forced success branches were added. The tests assert payload type behavior, not a sample-only value.
+
+## Validations Reviewed
+- Command/check: Browser smoke test at `http://127.0.0.1:5173`
+- Reported result: Passed; upload, duplicate upload, index to ready, chat with source citation, delete, and disappearance from list completed for a TXT document.
+- Rerun result: Not rerun by A2; reviewed latest A1 live report after user-confirmed schema rerun.
+- Status: accepted based on A1 live evidence.
+- Notes: The selected task's required validation is the browser smoke test, and the latest execution report gives complete flow evidence.
+- Command/check: `python -m pytest tests/test_ingestion_graph.py::test_mark_processing_node_sets_processing_and_clears_error_message tests/test_ingestion_graph.py::test_mark_ready_node_updates_completion_metadata -q`
+- Reported result: Passed, 2 passed.
+- Rerun result: Passed, 2 passed.
+- Status: passed.
+- Notes: Confirms the added timestamp serialization assertions.
+- Command/check: `python -m pytest -q`
+- Reported result: Passed, 86 passed and 1 skipped.
+- Rerun result: Passed, 86 passed and 1 skipped.
+- Status: passed.
+- Notes: Confirms no backend regression from the live E2E fix.
+- Command/check: Port cleanup check for `:8000` and `:5173`
+- Reported result: Passed, no LISTENING entries.
+- Rerun result: Passed, no LISTENING entries.
+- Status: passed.
+- Notes: Services started for the smoke test were stopped.
+- Command/check: ignored env status for `backend/.env`
+- Reported result: No secrets printed.
+- Rerun result: `backend/.env` is ignored.
+- Status: passed.
+- Notes: Contents were not inspected and must not be committed.
+
+## Acceptance Review
+- Task acceptance: The app completes upload, duplicate detection, index, chat, cite, and delete flow for a TXT document.
+- Status: satisfied
+- Evidence: Latest A1 report states the live browser flow completed all required steps after schema rerun; A2 verified the supporting code/test diffs are real, scoped, and backend tests pass.
+
+## Progress Tracking
+- Selected task checkbox: updated to checked in both `(08C)` checklist locations
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: latest complete `(08C)` report appended and reviewed
+- Review report entry: appended by this review
+- Other: No sibling or future task checkboxes were changed in this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None material. A1's report lists the files changed for the latest `(08C)` work; prior accepted Batch08 artifacts remain uncommitted and distinct.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- `python -m pip install -e ".[dev]"` still has a reported dependency conflict around `jina` versus current FastAPI/Pydantic/Uvicorn constraints in this local environment. This did not block the accepted smoke test or backend suite, but it remains a packaging follow-up risk.
+- `backend/.env` is ignored and modified for local smoke configuration; it must remain uncommitted.
+
+### Observations
+- The `(08C)` production fix is justified despite the task saying no new files expected: the live E2E revealed a real Supabase serialization failure, and the fix is narrowly scoped to the existing ingestion node.
+- `backend/README.md` is still untracked from accepted `(08A)` and should be handled by the orchestrator's Batch08 commit, not by this review.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch08 task IDs are now accepted; final batch marking/commit still belongs to orchestrator/A3.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_1.md",
+  "execution_report_reviewed": "docs/reports/report_1_execute_agent.md",
+  "review_report_file": "docs/review/review_1_review_agent.md",
+  "selected_batch": "Batch08 - End-to-End Verification",
+  "selected_task_id": "(08C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/tests/test_ingestion_graph.py",
+    "docs/reports/report_1_execute_agent.md",
+    "docs/review/review_1_review_agent.md",
+    "docs/tasks/task_1.md",
+    "backend/README.md",
+    "backend/.env"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Local editable install still reports a dependency conflict around jina versus current FastAPI/Pydantic/Uvicorn constraints.",
+    "backend/.env is ignored and must remain uncommitted."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
 }
 ```

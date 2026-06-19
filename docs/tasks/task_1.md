@@ -1020,7 +1020,7 @@ The implementation is not complete until a future execution agent proves backend
 
 ### Tasks
 
-- [ ] (08A): Add local run documentation
+- [x] (08A): Add local run documentation
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.1: Add local run documentation`; `docs/plans/Master_Plan.md` > `## 22. Updated .env`
   - Source Requirements:
     - Document backend venv, install, and uvicorn commands.
@@ -1047,7 +1047,7 @@ The implementation is not complete until a future execution agent proves backend
   - Blocked Condition: None for documentation; live setup remains `BLOCKED_BY_USER_ACTION` until user completes it.
   - Files: `backend/README.md`, `docs/plans/Plan_1.md` only if required
 
-- [ ] (08B): Run full automated verification
+- [x] (08B): Run full automated verification
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.2: Run full automated verification`
   - Source Requirements:
     - Run all backend tests.
@@ -1069,7 +1069,7 @@ The implementation is not complete until a future execution agent proves backend
   - Blocked Condition: `BLOCKED_BY_USER_ACTION` if required local environment values or dependency installation steps cannot be completed by the agent.
   - Files: No new files expected
 
-- [ ] (08C): Run manual MVP smoke test
+- [x] (08C): Run manual MVP smoke test
   - Source of Truth: `docs/plans/Plan_1.md` > `## Batch 8: End-to-End Verification` > `### Task 8.3: Run manual MVP smoke test`; `docs/plans/Plan_1.md` > `## Phase 1 Acceptance Criteria`; `docs/plans/Master_Plan.md` > `## 29. Final MVP Checklist`
   - Source Requirements:
     - Start backend on port 8000.
@@ -1227,9 +1227,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch08
 
-- [ ] (08A): Add local run documentation
-- [ ] (08B): Run full automated verification
-- [ ] (08C): Run manual MVP smoke test
+- [x] (08A): Add local run documentation
+- [x] (08B): Run full automated verification
+- [x] (08C): Run manual MVP smoke test
 
 ## Completion Reporting Rules for Future Execution Agents
 

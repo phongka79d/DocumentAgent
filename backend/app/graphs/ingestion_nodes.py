@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from typing import Any
 
+from fastapi.encoders import jsonable_encoder
 from qdrant_client.http import models as qdrant_models
 
 from app.chunking.token_chunker import FixedTokenChunker
@@ -125,7 +126,9 @@ def _update_document_row(
     client = supabase_client if supabase_client is not None else create_supabase_client(
         resolved_settings
     )
-    client.table(DOCUMENTS_TABLE).update(payload).eq("id", document_id).execute()
+    client.table(DOCUMENTS_TABLE).update(jsonable_encoder(payload)).eq(
+        "id", document_id
+    ).execute()
 
 
 def _normalize_bytes(downloaded: Any) -> bytes:
@@ -468,9 +471,6 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
 
     try:
         collection_name = state.get("qdrant_collection") or settings.QDRANT_COLLECTION
-        qdrant_client = create_qdrant_client(settings)
-        supabase_client = create_supabase_client(settings)
-
         points: list[qdrant_models.PointStruct] = []
         updated_chunks: list[dict[str, Any]] = []
         for chunk, vector in zip(chunks, embeddings, strict=True):
@@ -494,6 +494,8 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
             updated_chunk["qdrant_point_id"] = point_id
             updated_chunks.append(updated_chunk)
 
+        qdrant_client = create_qdrant_client(settings)
+        supabase_client = create_supabase_client(settings)
         qdrant_client.upsert(
             collection_name=collection_name,
             points=points,
