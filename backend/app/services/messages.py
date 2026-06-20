@@ -17,8 +17,16 @@ def _resolve_settings(settings: Settings | None = None) -> Settings:
     return settings if settings is not None else get_settings()
 
 
-def _resolve_supabase_client(supabase_client: Any | None = None) -> Any:
-    return supabase_client if supabase_client is not None else create_supabase_client()
+def _resolve_supabase_client(
+    supabase_client: Any | None = None,
+    *,
+    settings: Settings | None = None,
+) -> Any:
+    if supabase_client is not None:
+        return supabase_client
+    if settings is not None:
+        return create_supabase_client(settings)
+    return create_supabase_client()
 
 
 def _response_rows(response: Any) -> list[dict[str, Any]]:
@@ -94,8 +102,11 @@ def create_message(
     settings: Settings | None = None,
     supabase_client: Any | None = None,
 ) -> None:
-    _resolve_settings(settings)
-    client = _resolve_supabase_client(supabase_client)
+    resolved_settings = _resolve_settings(settings)
+    client = _resolve_supabase_client(
+        supabase_client,
+        settings=resolved_settings,
+    )
     payload = {
         MessageField.QUESTION: question,
         MessageField.ANSWER: answer,

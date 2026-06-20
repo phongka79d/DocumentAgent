@@ -12,6 +12,7 @@ from app.graphs import query_nodes
 from app.graphs.query_graph import build_query_graph
 from app.graphs.query_state import QueryState
 from app.services import chunks as chunk_service
+from app.services import messages as message_service
 from app.services import retrieval
 
 
@@ -1260,6 +1261,28 @@ def test_source_citation_preview_uses_shared_limit():
     )[0]
 
     assert citation["content_preview"] == "x" * 240
+
+
+def test_create_message_passes_custom_settings_to_client_factory(monkeypatch):
+    settings = _test_settings()
+    fake_client = FakeSupabaseClient(tables={"messages": []})
+    received_settings: list[Settings | None] = []
+
+    def _create_client(client_settings=None):
+        received_settings.append(client_settings)
+        return fake_client
+
+    monkeypatch.setattr(message_service, "create_supabase_client", _create_client)
+
+    message_service.create_message(
+        question="What is pricing?",
+        answer="Pricing is based on usage tiers.",
+        sources=[],
+        metadata={},
+        settings=settings,
+    )
+
+    assert received_settings == [settings]
 
 
 def test_save_message_optional_node_delegates_to_message_service(monkeypatch):
