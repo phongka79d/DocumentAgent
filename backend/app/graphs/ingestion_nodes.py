@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any
 
@@ -9,6 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from app.core.config import Settings, get_settings
 from app.core.contracts import ChunkField, DocumentStatus, TableName
 from app.core.errors import safe_detail
+from app.graphs import ingestion_inputs
 from app.graphs import ingestion_payloads
 from app.graphs.ingestion_state import IngestionState
 from app.parsing import get_parser_for_file
@@ -27,70 +28,31 @@ def _resolve_settings(settings: Settings | None = None) -> Settings:
 
 
 def _document_id_text(state: Mapping[str, Any]) -> str | None:
-    document_id = state.get("document_id")
-    if document_id is None:
-        return None
-    return str(document_id).strip() or None
+    return ingestion_inputs.document_id_text(state)
 
 
 def _resolve_document_id(state: Mapping[str, Any]) -> str | None:
-    return _document_id_text(state)
+    return ingestion_inputs.resolve_document_id(state)
 
 
 def _resolve_document_record(state: Mapping[str, Any]) -> Mapping[str, Any]:
-    document_record = state.get("document_record")
-    if isinstance(document_record, Mapping):
-        return document_record
-    return {}
+    return ingestion_inputs.resolve_document_record(state)
 
 
 def _resolve_file_name(state: Mapping[str, Any]) -> str | None:
-    file_name = state.get("file_name")
-    if isinstance(file_name, str) and file_name.strip():
-        return file_name.strip()
-
-    document_record = _resolve_document_record(state)
-    record_file_name = document_record.get("file_name")
-    if isinstance(record_file_name, str) and record_file_name.strip():
-        return record_file_name.strip()
-    return None
+    return ingestion_inputs.resolve_file_name(state)
 
 
 def _resolve_mime_type(state: Mapping[str, Any]) -> str | None:
-    mime_type = state.get("mime_type")
-    if isinstance(mime_type, str) and mime_type.strip():
-        return mime_type.strip()
-
-    document_record = _resolve_document_record(state)
-    record_mime_type = document_record.get("mime_type")
-    if isinstance(record_mime_type, str) and record_mime_type.strip():
-        return record_mime_type.strip()
-    return None
+    return ingestion_inputs.resolve_mime_type(state)
 
 
 def _resolve_storage_path(state: Mapping[str, Any]) -> str | None:
-    storage_path = state.get("storage_path")
-    if isinstance(storage_path, str) and storage_path.strip():
-        return storage_path.strip()
-
-    document_record = _resolve_document_record(state)
-    record_storage_path = document_record.get("storage_path")
-    if isinstance(record_storage_path, str) and record_storage_path.strip():
-        return record_storage_path.strip()
-    return None
+    return ingestion_inputs.resolve_storage_path(state)
 
 
 def _resolve_rows(response: Any) -> list[dict[str, Any]]:
-    data = getattr(response, "data", response)
-    if data is None:
-        return []
-    if isinstance(data, list):
-        return [dict(row) for row in data]
-    if isinstance(data, Mapping):
-        return [dict(data)]
-    if isinstance(data, Sequence) and not isinstance(data, (str, bytes)):
-        return [dict(row) for row in data]
-    return [dict(data)]
+    return ingestion_inputs.resolve_rows(response)
 
 
 def _now_utc() -> datetime:
@@ -130,21 +92,7 @@ def _update_document_row(
 
 
 def _normalize_bytes(downloaded: Any) -> bytes:
-    if isinstance(downloaded, bytes):
-        return downloaded
-    if isinstance(downloaded, bytearray):
-        return bytes(downloaded)
-    if isinstance(downloaded, memoryview):
-        return downloaded.tobytes()
-    if hasattr(downloaded, "read"):
-        data = downloaded.read()
-        if isinstance(data, bytes):
-            return data
-        if isinstance(data, bytearray):
-            return bytes(data)
-    if isinstance(downloaded, str):
-        return downloaded.encode("utf-8")
-    raise TypeError("Downloaded document bytes could not be normalized")
+    return ingestion_inputs.normalize_bytes(downloaded)
 
 
 def load_document_record_node(state: IngestionState) -> dict[str, Any]:
