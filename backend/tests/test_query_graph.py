@@ -1263,6 +1263,19 @@ def test_source_citation_preview_uses_shared_limit():
     assert citation["content_preview"] == "x" * 240
 
 
+def test_query_formatting_exposes_cross_module_helpers_as_public_api():
+    from app.graphs import query_formatting
+
+    assert query_formatting.normalize_text("  value  ") == "value"
+    assert query_formatting.resolve_context_chunks(
+        {"context_chunks": [{"chunk_id": "chunk-1"}]}
+    ) == [{"chunk_id": "chunk-1"}]
+    assert callable(query_formatting.build_context_prompt)
+    assert callable(query_formatting.build_source_citations)
+    assert callable(query_formatting.extract_chat_content)
+    assert callable(query_formatting.message_metadata)
+
+
 def test_create_message_passes_custom_settings_to_client_factory(monkeypatch):
     settings = _test_settings()
     fake_client = FakeSupabaseClient(tables={"messages": []})

@@ -80,7 +80,7 @@ def _extract_chat_content(response: Any) -> str | None:
     return _normalize_text(text)
 
 
-def _normalize_retrieval_hints(value: Any) -> dict[str, list[str]]:
+def normalize_retrieval_hints(value: Any) -> dict[str, list[str]]:
     if not isinstance(value, Mapping):
         return {"boundary_positions": []}
 
@@ -137,7 +137,17 @@ def extract_retrieval_hints(
         content = _extract_chat_content(response)
         if content is None:
             return _empty_retrieval_hints()
-        return _normalize_retrieval_hints(json.loads(content))
+        return normalize_retrieval_hints(json.loads(content))
     except Exception as exc:  # pragma: no cover - fallback is intentional
         logger.warning("Retrieval hint extraction failed: %s", exc)
         return _empty_retrieval_hints()
+
+
+_normalize_retrieval_hints = normalize_retrieval_hints
+
+__all__ = [
+    "RETRIEVAL_HINT_SYSTEM_PROMPT",
+    "RETRIEVAL_HINT_USER_PROMPT_TEMPLATE",
+    "extract_retrieval_hints",
+    "normalize_retrieval_hints",
+]

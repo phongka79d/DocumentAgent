@@ -8,7 +8,7 @@ from app.core.config import Settings, get_settings
 from app.core.contracts import ContextMode
 from app.services import chunks as chunk_service
 from app.services.retrieval_boundaries import resolve_boundary_chunks
-from app.services.retrieval_hints import _normalize_retrieval_hints
+from app.services.retrieval_hints import normalize_retrieval_hints
 
 
 class RetrievalContextError(RuntimeError):
@@ -173,7 +173,7 @@ def _append_boundary_chunks(
     retrieval_hints: Mapping[str, Any] | None,
     document_ids: Sequence[UUID | str] | None,
 ) -> bool:
-    normalized_hints = _normalize_retrieval_hints(retrieval_hints or {})
+    normalized_hints = normalize_retrieval_hints(retrieval_hints or {})
     boundary_positions = normalized_hints["boundary_positions"]
     if not boundary_positions:
         return True

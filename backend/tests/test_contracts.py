@@ -1,3 +1,6 @@
+from types import SimpleNamespace
+
+from app.core.config import Settings
 from app.core.contracts import (
     ChunkField,
     ChunkingStrategy,
@@ -10,6 +13,7 @@ from app.core.contracts import (
     SOURCE_PREVIEW_CHARS,
     TableName,
 )
+from app.services import retrieval
 
 
 def test_shared_contract_literals_match_database_and_api_values():
@@ -68,3 +72,71 @@ def test_shared_contract_literals_match_database_and_api_values():
     assert QdrantPayloadKey.CHUNK_TYPE == "chunk_type"
     assert QdrantPayloadKey.TOKEN_COUNT == "token_count"
     assert SOURCE_PREVIEW_CHARS == 240
+
+
+def test_retrieval_uses_qdrant_payload_key_contract(monkeypatch):
+    contract_keys = SimpleNamespace(
+        CHUNK_ID="contract_chunk_id",
+        DOCUMENT_ID="contract_document_id",
+        FILE_NAME="contract_file_name",
+        CHUNK_INDEX="contract_chunk_index",
+        TEXT="contract_text",
+        HEADING="contract_heading",
+        SECTION_PATH="contract_section_path",
+        PAGE_START="contract_page_start",
+        PAGE_END="contract_page_end",
+        CHUNK_TYPE="contract_chunk_type",
+        TOKEN_COUNT="contract_token_count",
+    )
+    monkeypatch.setattr(retrieval, "QdrantPayloadKey", contract_keys, raising=False)
+
+    query_filter = retrieval.build_document_id_filter(["doc-1"])
+    assert query_filter.must[0].key == contract_keys.DOCUMENT_ID
+
+    class QdrantClient:
+        def query_points(self, **kwargs):
+            return SimpleNamespace(
+                points=[
+                    {
+                        "id": "point-1",
+                        "score": 0.8,
+                        "payload": {
+                            contract_keys.CHUNK_ID: "chunk-1",
+                            contract_keys.DOCUMENT_ID: "doc-1",
+                            contract_keys.FILE_NAME: "contract.pdf",
+                            contract_keys.CHUNK_INDEX: 2,
+                            contract_keys.TEXT: "contract text",
+                            contract_keys.HEADING: "Contract",
+                            contract_keys.SECTION_PATH: ["Contract"],
+                            contract_keys.PAGE_START: 3,
+                            contract_keys.PAGE_END: 4,
+                            contract_keys.CHUNK_TYPE: "text",
+                            contract_keys.TOKEN_COUNT: 5,
+                        },
+                    }
+                ]
+            )
+
+    chunks = retrieval.search_semantic_chunks(
+        [0.1],
+        settings=Settings(_env_file=None),
+        qdrant_client=QdrantClient(),
+    )
+
+    assert chunks[0] == {
+        "id": "chunk-1",
+        "chunk_id": "chunk-1",
+        "document_id": "doc-1",
+        "file_name": "contract.pdf",
+        "chunk_index": 2,
+        "content": "contract text",
+        "text": "contract text",
+        "heading": "Contract",
+        "section_path": ["Contract"],
+        "page_start": 3,
+        "page_end": 4,
+        "chunk_type": "text",
+        "token_count": 5,
+        "qdrant_score": 0.8,
+        "rerank_score": None,
+    }

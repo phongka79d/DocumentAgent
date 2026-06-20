@@ -8,6 +8,7 @@ from uuid import UUID
 from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
+from app.core.contracts import QdrantPayloadKey
 from app.services.qdrant_client import create_qdrant_client
 from app.services.jina_client import create_jina_client
 from app.services.retrieval_context import (
@@ -19,8 +20,6 @@ from app.services.retrieval_context import (
 from app.services.retrieval_hints import (
     RETRIEVAL_HINT_SYSTEM_PROMPT,
     RETRIEVAL_HINT_USER_PROMPT_TEMPLATE,
-    _extract_chat_content,
-    _normalize_retrieval_hints,
     extract_retrieval_hints as _extract_retrieval_hints,
 )
 from app.services.shopaikey_client import create_shopaikey_client
@@ -158,7 +157,7 @@ def build_document_id_filter(
     return qdrant_models.Filter(
         must=[
             qdrant_models.FieldCondition(
-                key="document_id",
+                key=QdrantPayloadKey.DOCUMENT_ID,
                 match=qdrant_models.MatchAny(any=normalized_document_ids),
             )
         ]
@@ -241,27 +240,31 @@ def search_semantic_chunks(
 
         point_score = point.get("score") if isinstance(point, Mapping) else None
 
-        chunk_id = _normalize_text(payload.get("chunk_id") or point.get("id"))
-        document_id = _normalize_text(payload.get("document_id"))
+        chunk_id = _normalize_text(
+            payload.get(QdrantPayloadKey.CHUNK_ID) or point.get("id")
+        )
+        document_id = _normalize_text(payload.get(QdrantPayloadKey.DOCUMENT_ID))
         if chunk_id is None or document_id is None:
             continue
 
-        content = _normalize_text(payload.get("text")) or ""
+        content = _normalize_text(payload.get(QdrantPayloadKey.TEXT)) or ""
         results.append(
             {
                 "id": chunk_id,
                 "chunk_id": chunk_id,
                 "document_id": document_id,
-                "file_name": _normalize_text(payload.get("file_name")),
-                "chunk_index": _normalize_int(payload.get("chunk_index")),
+                "file_name": _normalize_text(payload.get(QdrantPayloadKey.FILE_NAME)),
+                "chunk_index": _normalize_int(payload.get(QdrantPayloadKey.CHUNK_INDEX)),
                 "content": content,
                 "text": content,
-                "heading": payload.get("heading"),
-                "section_path": _normalize_section_path(payload.get("section_path")),
-                "page_start": _normalize_int(payload.get("page_start")),
-                "page_end": _normalize_int(payload.get("page_end")),
-                "chunk_type": _normalize_text(payload.get("chunk_type")),
-                "token_count": _normalize_int(payload.get("token_count")),
+                "heading": payload.get(QdrantPayloadKey.HEADING),
+                "section_path": _normalize_section_path(
+                    payload.get(QdrantPayloadKey.SECTION_PATH)
+                ),
+                "page_start": _normalize_int(payload.get(QdrantPayloadKey.PAGE_START)),
+                "page_end": _normalize_int(payload.get(QdrantPayloadKey.PAGE_END)),
+                "chunk_type": _normalize_text(payload.get(QdrantPayloadKey.CHUNK_TYPE)),
+                "token_count": _normalize_int(payload.get(QdrantPayloadKey.TOKEN_COUNT)),
                 "qdrant_score": _normalize_float(point_score),
                 "rerank_score": None,
             }

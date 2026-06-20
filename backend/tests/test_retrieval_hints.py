@@ -93,7 +93,7 @@ def test_retrieval_compatibility_raises_retrieval_error_for_blank_question():
 
 
 def test_normalize_retrieval_hints_filters_unknown_boundary_values():
-    hints = retrieval_hints._normalize_retrieval_hints(
+    hints = retrieval_hints.normalize_retrieval_hints(
         {
             "boundary_positions": [
                 "unknown",

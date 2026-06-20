@@ -6,7 +6,7 @@ from typing import Any
 from app.core.contracts import SOURCE_PREVIEW_CHARS
 
 
-def _normalize_text(value: Any) -> str | None:
+def normalize_text(value: Any) -> str | None:
     if value is None:
         return None
     text = str(value).strip()
@@ -37,16 +37,16 @@ def _normalize_section_path(value: Any) -> list[str]:
     if value is None:
         return []
     if isinstance(value, (str, bytes)):
-        text = _normalize_text(value)
+        text = normalize_text(value)
         return [text] if text is not None else []
     if isinstance(value, Sequence):
         normalized: list[str] = []
         for item in value:
-            text = _normalize_text(item)
+            text = normalize_text(item)
             if text is not None:
                 normalized.append(text)
         return normalized
-    text = _normalize_text(value)
+    text = normalize_text(value)
     return [text] if text is not None else []
 
 
@@ -59,7 +59,7 @@ def _chunk_content_preview(chunk: Mapping[str, Any]) -> str:
     return str(content)[:SOURCE_PREVIEW_CHARS]
 
 
-def _resolve_context_chunks(state: Mapping[str, Any]) -> list[dict[str, Any]]:
+def resolve_context_chunks(state: Mapping[str, Any]) -> list[dict[str, Any]]:
     for key in ("context_chunks", "reranked_chunks", "retrieved_chunks"):
         chunks = state.get(key)
         if not isinstance(chunks, list) or not chunks:
@@ -74,7 +74,7 @@ def _resolve_context_chunks(state: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 def _chunk_content(chunk: Mapping[str, Any]) -> str:
-    return _normalize_text(chunk.get("content") or chunk.get("text")) or ""
+    return normalize_text(chunk.get("content") or chunk.get("text")) or ""
 
 
 def _format_page_range(
@@ -94,10 +94,10 @@ def _format_page_range(
 
 
 def _format_context_chunk(chunk: Mapping[str, Any], position: int) -> str:
-    file_name = _normalize_text(chunk.get("file_name")) or "unknown"
-    chunk_id = _normalize_text(chunk.get("chunk_id") or chunk.get("id")) or "unknown"
+    file_name = normalize_text(chunk.get("file_name")) or "unknown"
+    chunk_id = normalize_text(chunk.get("chunk_id") or chunk.get("id")) or "unknown"
     chunk_index = _normalize_int(chunk.get("chunk_index"))
-    heading = _normalize_text(chunk.get("heading"))
+    heading = normalize_text(chunk.get("heading"))
     parts = [
         f"Source {position}",
         f"File: {file_name}",
@@ -115,7 +115,7 @@ def _format_context_chunk(chunk: Mapping[str, Any], position: int) -> str:
     return "\n".join(parts)
 
 
-def _build_context_prompt(context_chunks: Sequence[Mapping[str, Any]]) -> str:
+def build_context_prompt(context_chunks: Sequence[Mapping[str, Any]]) -> str:
     blocks = [
         _format_context_chunk(chunk, position=index)
         for index, chunk in enumerate(context_chunks, start=1)
@@ -124,8 +124,8 @@ def _build_context_prompt(context_chunks: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _source_citation_from_chunk(chunk: Mapping[str, Any]) -> dict[str, Any]:
-    document_id = _normalize_text(chunk.get("document_id"))
-    chunk_id = _normalize_text(chunk.get("chunk_id") or chunk.get("id"))
+    document_id = normalize_text(chunk.get("document_id"))
+    chunk_id = normalize_text(chunk.get("chunk_id") or chunk.get("id"))
     chunk_index = _normalize_int(chunk.get("chunk_index"))
     if document_id is None or chunk_id is None or chunk_index is None:
         raise ValueError("context chunks must include document_id, chunk_id, and chunk_index")
@@ -137,7 +137,7 @@ def _source_citation_from_chunk(chunk: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "document_id": document_id,
         "chunk_id": chunk_id,
-        "file_name": _normalize_text(chunk.get("file_name")) or "unknown",
+        "file_name": normalize_text(chunk.get("file_name")) or "unknown",
         "chunk_index": chunk_index,
         "page_start": _normalize_int(chunk.get("page_start")),
         "page_end": _normalize_int(chunk.get("page_end")),
@@ -150,7 +150,7 @@ def _source_citation_from_chunk(chunk: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_source_citations(context_chunks: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def build_source_citations(context_chunks: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     citations: list[dict[str, Any]] = []
     seen_chunk_ids: set[str] = set()
     for chunk in context_chunks:
@@ -163,23 +163,23 @@ def _build_source_citations(context_chunks: Sequence[Mapping[str, Any]]) -> list
     return citations
 
 
-def _message_metadata(state: Mapping[str, Any]) -> dict[str, Any]:
+def message_metadata(state: Mapping[str, Any]) -> dict[str, Any]:
     document_ids = state.get("document_ids")
     if not isinstance(document_ids, list):
         document_ids = []
 
     return {
         "document_ids": list(document_ids),
-        "prepared_query": _normalize_text(state.get("prepared_query") or state.get("question")),
+        "prepared_query": normalize_text(state.get("prepared_query") or state.get("question")),
         "retrieved_chunk_count": len(state.get("retrieved_chunks") or []),
         "reranked_chunk_count": len(state.get("reranked_chunks") or []),
         "context_chunk_count": len(state.get("context_chunks") or []),
     }
 
 
-def _extract_chat_content(response: Any) -> str | None:
+def extract_chat_content(response: Any) -> str | None:
     output_text = getattr(response, "output_text", None)
-    normalized_output_text = _normalize_text(output_text)
+    normalized_output_text = normalize_text(output_text)
     if normalized_output_text is not None:
         return normalized_output_text
 
@@ -198,17 +198,31 @@ def _extract_chat_content(response: Any) -> str | None:
         content = getattr(message, "content", None)
         if content is None and isinstance(message, Mapping):
             content = message.get("content")
-        normalized_content = _normalize_text(content)
+        normalized_content = normalize_text(content)
         if normalized_content is not None:
             return normalized_content
 
     text = getattr(first_choice, "text", None)
     if text is None and isinstance(first_choice, Mapping):
         text = first_choice.get("text")
-    return _normalize_text(text)
+    return normalize_text(text)
+
+
+_build_context_prompt = build_context_prompt
+_build_source_citations = build_source_citations
+_extract_chat_content = extract_chat_content
+_message_metadata = message_metadata
+_normalize_text = normalize_text
+_resolve_context_chunks = resolve_context_chunks
 
 
 __all__ = [
+    "build_context_prompt",
+    "build_source_citations",
+    "extract_chat_content",
+    "message_metadata",
+    "normalize_text",
+    "resolve_context_chunks",
     "_build_context_prompt",
     "_build_source_citations",
     "_chunk_content",

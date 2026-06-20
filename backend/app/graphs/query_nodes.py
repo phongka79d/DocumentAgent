@@ -8,12 +8,12 @@ from uuid import UUID
 from app.core.config import Settings, get_settings
 from app.core.errors import safe_detail
 from app.graphs.query_formatting import (
-    _build_context_prompt,
-    _build_source_citations,
-    _extract_chat_content,
-    _message_metadata,
-    _normalize_text,
-    _resolve_context_chunks,
+    build_context_prompt,
+    build_source_citations,
+    extract_chat_content,
+    message_metadata,
+    normalize_text,
+    resolve_context_chunks,
 )
 from app.graphs.query_prompts import (
     ANSWER_SYSTEM_PROMPT,
@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_QUERY_ERROR = "Query failed"
 
+# Compatibility for callers that historically imported this through query_nodes.
+_build_source_citations = build_source_citations
+
 
 def _resolve_settings(settings: Settings | None = None) -> Settings:
     return settings if settings is not None else get_settings()
@@ -41,13 +44,13 @@ def _normalize_document_ids(
         return []
 
     if isinstance(document_ids, (str, bytes)):
-        text = _normalize_text(document_ids)
+        text = normalize_text(document_ids)
         return [text] if text is not None else []
 
     normalized: list[str] = []
     seen: set[str] = set()
     for value in document_ids:
-        text = _normalize_text(value)
+        text = normalize_text(value)
         if text is None or text in seen:
             continue
         normalized.append(text)
@@ -56,13 +59,13 @@ def _normalize_document_ids(
 
 
 def _question_text(state: Mapping[str, Any]) -> str | None:
-    return _normalize_text(state.get("prepared_query") or state.get("question"))
+    return normalize_text(state.get("prepared_query") or state.get("question"))
 
 
 def prepare_query_node(state: Mapping[str, Any], *, settings: Settings | None = None) -> dict[str, Any]:
     _resolve_settings(settings)
 
-    question = _normalize_text(state.get("question"))
+    question = normalize_text(state.get("question"))
     if question is None:
         return {"error_message": "question is required"}
 
@@ -215,7 +218,7 @@ def generate_answer_node(
     if question is None:
         return {"error_message": "prepared_query is required"}
 
-    context_chunks = _resolve_context_chunks(state)
+    context_chunks = resolve_context_chunks(state)
     if not context_chunks:
         return {
             "answer": NO_RELEVANT_INFORMATION_MESSAGE,
@@ -228,14 +231,14 @@ def generate_answer_node(
             if shopaikey_client is not None
             else create_shopaikey_client(resolved_settings)
         )
-        context = _build_context_prompt(context_chunks)
+        context = build_context_prompt(context_chunks)
         response = client.chat.completions.create(
             model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
             messages=build_answer_messages(context=context, question=question),
             temperature=resolved_settings.TEMPERATURE,
             max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
         )
-        answer = _extract_chat_content(response)
+        answer = extract_chat_content(response)
         if answer is None:
             return {
                 "error_message": safe_detail(
@@ -245,7 +248,7 @@ def generate_answer_node(
             }
         return {
             "answer": answer,
-            "sources": _build_source_citations(context_chunks),
+            "sources": build_source_citations(context_chunks),
         }
     except Exception as exc:  # pragma: no cover - defensive guard
         return {
@@ -267,7 +270,7 @@ def save_message_optional_node(
         return {}
 
     question = _question_text(state)
-    answer = _normalize_text(state.get("answer"))
+    answer = normalize_text(state.get("answer"))
     if question is None or answer is None:
         return {}
 
@@ -278,13 +281,13 @@ def save_message_optional_node(
                 dict(source) for source in sources if isinstance(source, Mapping)
             ]
         else:
-            normalized_sources = _build_source_citations(_resolve_context_chunks(state))
+            normalized_sources = build_source_citations(resolve_context_chunks(state))
 
         message_service.create_message(
             question=question,
             answer=answer,
             sources=normalized_sources,
-            metadata=_message_metadata(state),
+            metadata=message_metadata(state),
             settings=resolved_settings,
             supabase_client=supabase_client,
         )
