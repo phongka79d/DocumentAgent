@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import json
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 from uuid import UUID
@@ -11,8 +10,16 @@ from qdrant_client.http import models as qdrant_models
 from app.core.config import Settings, get_settings
 from app.services import chunks as chunk_service
 from app.services.qdrant_client import create_qdrant_client
-from app.services.shopaikey_client import create_shopaikey_client
 from app.services.jina_client import create_jina_client
+from app.services.retrieval_boundaries import resolve_boundary_chunks as _get_boundary_chunks
+from app.services.retrieval_hints import (
+    RETRIEVAL_HINT_SYSTEM_PROMPT,
+    RETRIEVAL_HINT_USER_PROMPT_TEMPLATE,
+    _extract_chat_content,
+    _normalize_retrieval_hints,
+    extract_retrieval_hints as _extract_retrieval_hints,
+)
+from app.services.shopaikey_client import create_shopaikey_client
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +27,6 @@ logger = logging.getLogger(__name__)
 class RetrievalError(RuntimeError):
     """Raised when semantic retrieval cannot be completed."""
 
-
-RETRIEVAL_HINT_SYSTEM_PROMPT = (
-    "You extract retrieval hints for a document RAG system.\n"
-    "Return compact JSON only. No prose.\n"
-    "Use this schema: {\"boundary_positions\": [\"beginning\"|\"end\"]}.\n"
-    "Use an empty list when the question does not ask about a document boundary."
-)
-RETRIEVAL_HINT_USER_PROMPT_TEMPLATE = "Question:\n{question}"
-BOUNDARY_CHUNK_INDEXES = {
-    "beginning": [0],
-    "end": [],
-}
 
 NEIGHBOR_CONTEXT_MODE = "neighbor"
 SECTION_AWARE_CONTEXT_MODE = "section_aware"
@@ -216,125 +211,20 @@ def _normalize_context_chunk(
     return normalized
 
 
-def _extract_chat_content(response: Any) -> str | None:
-    output_text = getattr(response, "output_text", None)
-    normalized_output_text = _normalize_text(output_text)
-    if normalized_output_text is not None:
-        return normalized_output_text
-
-    choices = getattr(response, "choices", None)
-    if choices is None and isinstance(response, Mapping):
-        choices = response.get("choices")
-    if not choices:
-        return None
-
-    first_choice = choices[0]
-    message = getattr(first_choice, "message", None)
-    if message is None and isinstance(first_choice, Mapping):
-        message = first_choice.get("message")
-    if message is not None:
-        content = getattr(message, "content", None)
-        if content is None and isinstance(message, Mapping):
-            content = message.get("content")
-        normalized_content = _normalize_text(content)
-        if normalized_content is not None:
-            return normalized_content
-
-    text = getattr(first_choice, "text", None)
-    if text is None and isinstance(first_choice, Mapping):
-        text = first_choice.get("text")
-    return _normalize_text(text)
-
-
-def _normalize_retrieval_hints(value: Any) -> dict[str, list[str]]:
-    if not isinstance(value, Mapping):
-        return {"boundary_positions": []}
-
-    raw_positions = value.get("boundary_positions")
-    if not isinstance(raw_positions, Sequence) or isinstance(raw_positions, (str, bytes)):
-        return {"boundary_positions": []}
-
-    positions: list[str] = []
-    seen: set[str] = set()
-    for raw_position in raw_positions:
-        position = _normalize_text(raw_position)
-        if position is None:
-            continue
-        position = position.lower()
-        if position not in BOUNDARY_CHUNK_INDEXES or position in seen:
-            continue
-        positions.append(position)
-        seen.add(position)
-    return {"boundary_positions": positions}
-
-
-def _get_boundary_chunks(
-    document_id: UUID | str,
-    boundary_positions: Sequence[str],
-    *,
-    settings: Settings,
-    supabase_client: Any | None = None,
-) -> list[dict[str, Any]]:
-    chunks: list[dict[str, Any]] = []
-    if "beginning" in boundary_positions:
-        chunks.extend(
-            chunk_service.get_chunks_by_document_and_indexes(
-                document_id,
-                BOUNDARY_CHUNK_INDEXES["beginning"],
-                settings=settings,
-                supabase_client=supabase_client,
-            )
-        )
-    if "end" in boundary_positions:
-        last_chunk = chunk_service.get_last_chunk_by_document(
-            document_id,
-            settings=settings,
-            supabase_client=supabase_client,
-        )
-        if last_chunk is not None:
-            chunks.append(last_chunk)
-    return chunks
-
-
 def extract_retrieval_hints(
     question: str,
     *,
     settings: Settings | None = None,
     shopaikey_client: Any | None = None,
 ) -> dict[str, list[str]]:
-    resolved_settings = _resolve_settings(settings)
     normalized_question = _normalize_text(question)
     if normalized_question is None:
         raise RetrievalError("question is required")
-
-    client = _resolve_shopaikey_client(shopaikey_client)
-    chat = getattr(client, "chat", None)
-    completions = getattr(chat, "completions", None) if chat is not None else None
-    if completions is None:
-        return {"boundary_positions": []}
-
-    try:
-        response = completions.create(
-            model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
-            messages=[
-                {"role": "system", "content": RETRIEVAL_HINT_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": RETRIEVAL_HINT_USER_PROMPT_TEMPLATE.format(
-                        question=normalized_question
-                    ),
-                },
-            ],
-            temperature=0,
-            max_tokens=80,
-        )
-        content = _extract_chat_content(response)
-        if content is None:
-            return {"boundary_positions": []}
-        return _normalize_retrieval_hints(json.loads(content))
-    except Exception as exc:  # pragma: no cover - fallback is intentional
-        logger.warning("Retrieval hint extraction failed: %s", exc)
-        return {"boundary_positions": []}
+    return _extract_retrieval_hints(
+        normalized_question,
+        settings=settings,
+        shopaikey_client=shopaikey_client,
+    )
 
 
 def embed_question(
