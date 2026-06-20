@@ -1134,3 +1134,246 @@ complete
 - next task ID: none started
 - can proceed: yes, after A2 validation and A3 audit are rerun
 - handoff notes: Batch05 accepted task entries for (05A) and (05B) remain present; the out-of-scope older `(01B)` link change has been repaired.
+
+---
+
+# Task Execution Report - (06A)
+
+## Source Task File
+[docs/tasks/task_2.md](docs/tasks/task_2.md)
+
+## Report File
+[docs/reports/report_2_execute_agent.md](docs/reports/report_2_execute_agent.md)
+
+## Batch
+Batch06 - Documentation and End-to-End Validation
+
+## Task
+(06A) - Update local documentation
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.1: Update local documentation`
+- `docs/plans/Master_Plan.md`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Documentation and End-to-End Validation
+- Task ID: (06A)
+- Task title: Update local documentation
+
+## Completed Work
+- Updated `README.md` to describe the Phase 2 Batch05 baseline, include the new retrieval-context settings, call out HTML parsing support, note that existing documents should be re-indexed to gain smart section metadata, and include the `tests/test_heading_detection.py` validation target.
+- Updated `backend/README.md` with a Phase 2 settings section covering `CHUNKING_STRATEGY`, `HEADER_SCORE_THRESHOLD`, `TABLE_CHUNK_MAX_TOKENS`, `RETRIEVAL_CONTEXT_MODE`, and `RETRIEVAL_SECTION_SIBLING_WINDOW`.
+- Documented backend HTML support for `.html`/`.htm` uploads and the visible-block parser behavior in `backend/README.md`.
+- Kept the frontend upload documentation aligned with the current UI by leaving HTML as backend parser support rather than claiming the file picker accepts it.
+
+## Files Created or Modified
+- `README.md`
+- `backend/README.md`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- Manual doc accuracy review against `backend/app/core/config.py`, `backend/app/parsing/html.py`, `backend/app/parsing/registry.py`, `backend/app/services/retrieval.py`, and `frontend/src/components/UploadPanel.tsx`: Passed
+- `git diff --check`: Passed
+
+## Acceptance Check
+- Task acceptance condition: Documentation reflects implemented Phase 2 behavior and settings without adding unsupported claims.
+- Status: satisfied
+- Evidence: The README files now describe the implemented Phase 2 chunking, retrieval, HTML parsing, source-viewer, and message-history behavior, and the frontend upload wording was kept within current UI capabilities.
+
+## Artifacts Produced
+- Updated local documentation in `README.md` and `backend/README.md`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Kept HTML support documented as backend validation/parser support only so the docs do not overstate the current frontend upload picker.
+- Added a dedicated Phase 2 settings subsection in `backend/README.md` so the new env vars are described next to the local setup instructions.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- Corrected an initial draft that would have implied the frontend upload picker already accepts HTML files.
+
+## Workflow Integrity Check
+- No source-of-truth conflict identified.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes
+- handoff notes: Documentation now matches the implemented Phase 2 behavior closely enough to proceed to the full automated verification batch.
+---
+
+# Task Execution Report - (06B)
+
+## Source Task File
+[docs/tasks/task_2.md](docs/tasks/task_2.md)
+
+## Report File
+[docs/reports/report_2_execute_agent.md](docs/reports/report_2_execute_agent.md)
+
+## Batch
+Batch06 - Documentation and End-to-End Validation
+
+## Task
+(06B) - Run full automated verification
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.2: Run full automated verification`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch06 - Documentation and End-to-End Validation
+- Task ID: (06B)
+- Task title: Run full automated verification
+
+## Completed Work
+- Ran the required backend pytest list and frontend production build.
+- The first backend pass failed only at `tests/test_api_chat.py::test_chat_route_returns_answer_and_sources_from_query_graph` because the assertion still expected the pre-05B citation shape.
+- Updated `backend/tests/test_api_chat.py` so the chat-route expectation includes the richer optional citation fields now emitted by `SourceCitation`.
+- Reran the backend test list and the frontend build; both passed.
+
+## Files Created or Modified
+- `backend/tests/test_api_chat.py`
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend && python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_chunker.py tests/test_heading_detection.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v`: Failed on first run with 1 failure in `tests/test_api_chat.py::test_chat_route_returns_answer_and_sources_from_query_graph`; passed on rerun (`130 passed`)
+- `cd frontend && npm run build`: Passed (`vite build` completed successfully; `38 modules transformed`)
+
+## Acceptance Check
+- Task acceptance condition: Full backend test list passes and frontend build passes.
+- Status: satisfied
+- Evidence: The rerun backend suite finished with `130 passed`, and the frontend production build completed successfully.
+
+## Artifacts Produced
+- Backend test run output
+- Frontend production build output in `frontend/dist/`
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Preserved the richer Batch05 citation contract in the API and updated the stale chat test to match that contract instead of stripping fields from the response.
+- Treated the first backend failure as a test expectation mismatch, not a product regression, because the rest of the suite already passed around the same change set.
+
+## Risks or Open Issues
+- None identified.
+
+## Minor Issues Fixed During Execution
+- Updated one stale `test_api_chat` assertion to include the Batch05 citation metadata defaults.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: (06C)
+- can proceed: yes
+- handoff notes: Automated validation is green; the remaining Batch06 work is the manual smoke test.
+---
+
+# Task Execution Report - (06C)
+
+## Source Task File
+[docs/tasks/task_2.md](docs/tasks/task_2.md)
+
+## Report File
+[docs/reports/report_2_execute_agent.md](docs/reports/report_2_execute_agent.md)
+
+## Batch
+Batch06 - Documentation and End-to-End Validation
+
+## Task
+(06C) - Run manual Phase 2 smoke test
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.3: Run manual Phase 2 smoke test`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch06 - Documentation and End-to-End Validation
+- Task ID: (06C)
+- Task title: Run manual Phase 2 smoke test
+
+## Completed Work
+- Confirmed the backend-local `.env` contains the required live service keys for Supabase, Qdrant, ShopAIKey, and Jina without printing secret values. `CHUNKING_STRATEGY` was not explicitly set there, but the backend default remained `smart_section`, which matched the task requirement.
+- Started the backend with `uvicorn app.main:app --reload --port 8000` from `backend` and the frontend with `npm run dev -- --host 127.0.0.1 --port 5173` from `frontend`.
+- Ran the browser smoke flow against `http://127.0.0.1:5173` using Playwright with the local admin token loaded into browser session storage so the protected API could be exercised through the real UI.
+- Uploaded and indexed a temporary Markdown document with headings and a table, confirmed it reached `Ready`, asked a table-grounded question, confirmed the answer and source citations, and verified the source viewer showed chunk content, heading, section path, plus Qdrant and rerank scores.
+- Asked a second question with the frontend's `save_message=true` request behavior, refreshed message history, selected the saved message, and confirmed the saved answer and sources restored without any additional `/api/chat` request.
+- Uploaded and indexed a temporary HTML document, confirmed it reached `Ready`, asked an HTML-grounded question, and verified source citations plus source viewer inspection for the HTML chunk.
+- Removed the temporary local Markdown and HTML smoke files after the browser validation completed.
+
+## Files Created or Modified
+- `docs/reports/report_2_execute_agent.md`
+
+## Tests or Validations Run
+- Backend-local `.env` presence check for required live settings: Passed
+- `cd backend && uvicorn app.main:app --reload --port 8000`: Passed
+- `cd frontend && npm run dev -- --host 127.0.0.1 --port 5173`: Passed
+- HTTP reachability checks for `http://127.0.0.1:8000/api/documents` and `http://127.0.0.1:5173`: Passed
+- Manual browser smoke test via Playwright and system Chrome: Passed
+- Evidence:
+  - Markdown upload/index status reached `Ready`
+  - Markdown table question answer identified Growth with `$49`
+  - Markdown response returned 2 source citations
+  - Markdown source viewer showed heading `Pricing Table`, section path, and both score fields
+  - Saved-message restore left `/api/chat` request count unchanged (`2` before select, `2` after select)
+  - HTML upload/index status reached `Ready`
+  - HTML question answer returned `15 minutes`
+  - HTML response returned 2 source citations
+  - HTML source viewer showed heading `Escalation Window` and the expected chunk text
+
+## Acceptance Check
+- Task acceptance condition: The app completes smart-section Markdown ingestion, table-grounded chat, source inspection, message history restore, and HTML ingestion.
+- Status: satisfied
+- Evidence: The smoke run completed the Markdown, message-history, and HTML flows in the browser with ready statuses, grounded answers, citations, inspectable source metadata, and restored saved output without a new chat request.
+
+## Artifacts Produced
+- Safe browser smoke observations recorded in this report
+- Temporary local smoke files under the system temp directory during execution, removed before completion
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch updates are deferred to A2 after review.
+
+## Key Implementation Decisions
+- Used the backend-local admin token only inside browser session storage so the protected API could be exercised without printing or copying the secret.
+- Used unique smoke-document content to avoid duplicate-file-hash upload behavior from earlier dry runs.
+- Used system Chrome for Playwright because the bundled Playwright browser binary was not installed locally.
+
+## Risks or Open Issues
+- Smoke-test uploads and the saved smoke-test message remain in the configured live application data because this task did not require deleting backend records after validation.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No issue identified.
+
+## Notes for Next Task
+- next task ID: None
+- can proceed: yes
+- handoff notes: Batch06 manual validation evidence is complete and ready for A2 review/acceptance handling.

@@ -834,7 +834,7 @@ Phase 2 is not complete until docs reflect the new behavior and both automated a
 
 ### Tasks
 
-- [ ] (06A): Update local documentation
+- [x] (06A): Update local documentation
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.1: Update local documentation`
   - Source Requirements:
     - Update `README.md`.
@@ -862,7 +862,7 @@ Phase 2 is not complete until docs reflect the new behavior and both automated a
   - Blocked Condition: None.
   - Files: `README.md`, `backend/README.md`
 
-- [ ] (06B): Run full automated verification
+- [x] (06B): Run full automated verification
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.2: Run full automated verification`
   - Source Requirements:
     - Run the listed backend tests.
@@ -885,7 +885,7 @@ Phase 2 is not complete until docs reflect the new behavior and both automated a
   - Blocked Condition: None.
   - Files: No new files expected.
 
-- [ ] (06C): Run manual Phase 2 smoke test
+- [x] (06C): Run manual Phase 2 smoke test
   - Source of Truth: `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.3: Run manual Phase 2 smoke test`
   - Source Requirements:
     - Start backend with `uvicorn app.main:app --reload --port 8000`.
@@ -1061,9 +1061,9 @@ Optional future tracks are outside the mandatory chain.
 
 #### Batch06
 
-- [ ] (06A): Update local documentation
-- [ ] (06B): Run full automated verification
-- [ ] (06C): Run manual Phase 2 smoke test
+- [x] (06A): Update local documentation
+- [x] (06B): Run full automated verification
+- [x] (06C): Run manual Phase 2 smoke test
 
 ## Completion Reporting Rules for Future Execution Agents
 

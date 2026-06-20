@@ -1493,6 +1493,7 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
 ---
 
 # Task Review Report - (04A)
@@ -2773,5 +2774,726 @@ ACCEPTED
   "warnings": [],
   "next_task_can_proceed": true,
   "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05A) and (05B) Recheck
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Retrieval Context Tuning
+- Task ID: (05A), (05B)
+- Task title: Add section-aware neighbor expansion; Add richer citation metadata
+- Task status reported by executor: complete for both task IDs
+- Source of Truth: docs/plans/Plan_2.md > ## Batch 5: Retrieval Context Tuning
+- Supplemental documents: none
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A), (05B)
+- Reviewed task ID: (05A), (05B)
+- Correct selection: yes
+- Notes: Rechecked the latest matching execution entries for both requested task IDs and the current committed repository files.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: none; worktree was clean before this review append
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - (05A) and (05B) are checked complete in the task list and progress tracker.
+- `docs/reports/report_2_execute_agent.md`: in scope - contains complete execution reports for (05A) and (05B), plus a later accepted Batch05 repair entry.
+- `docs/plans/Plan_2.md`: in scope - Batch05 source requirements reviewed.
+- `backend/app/core/config.py`: in scope - contains retrieval context mode and section sibling window settings.
+- `backend/app/services/retrieval.py`: in scope - contains section-aware and legacy neighbor expansion paths.
+- `backend/app/models/schemas.py`: in scope - contains richer SourceCitation fields.
+- `backend/app/graphs/query_nodes.py`: in scope - populates richer citation metadata.
+- `backend/tests/test_config.py`: in scope - covers retrieval settings.
+- `backend/tests/test_query_graph.py`: in scope - covers section-aware context and citation metadata behavior.
+- `frontend/src/api/types.ts`: in scope - frontend accepts richer source citation objects.
+- `frontend/src/components/SourceList.tsx`: in scope - existing Phase 1 source label format remains unchanged.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/core/config.py; present in git/repo: yes; matches task scope: yes; notes: settings exist.
+- file from execution report: backend/app/services/retrieval.py; present in git/repo: yes; matches task scope: yes; notes: section-aware expansion exists and legacy neighbor mode is preserved.
+- file from execution report: backend/app/models/schemas.py; present in git/repo: yes; matches task scope: yes; notes: SourceCitation includes section_path, content_preview, and is_neighbor_context.
+- file from execution report: backend/app/graphs/query_nodes.py; present in git/repo: yes; matches task scope: yes; notes: citations are built from context chunks with richer metadata.
+- file from execution report: backend/tests/test_query_graph.py; present in git/repo: yes; matches task scope: yes; notes: targeted tests passed.
+- file from execution report: frontend/src/api/types.ts; present in git/repo: yes; matches task scope: yes; notes: frontend type accepts richer citation fields.
+
+## Dependency Review
+- Required dependencies: Batch04 smart-section chunk metadata and accepted (05A) before (05B).
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: implementation extends existing retrieval, query graph, schema, and frontend type layers without adding excluded Phase 3 features.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `expand_neighbor_context` routes by `RETRIEVAL_CONTEXT_MODE`; `section_aware` keeps reranked chunks first, adds boundary chunks, prefers same-section neighbors, then generic neighbors with dedupe/cap; source citations are populated from real context chunk values.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: tests use fixtures, but production logic is driven by settings, retrieved chunk metadata, retrieval hints, document_id, section_path, chunk_index, and chunk_id.
+
+## Validations Reviewed
+- Command/check: `python -m pytest tests/test_query_graph.py -v`
+- Reported result: passed in execution report
+- Rerun result: passed, 22 passed in 2.06s
+- Status: pass
+- Notes: covers Batch05 retrieval context and richer citation behavior.
+- Command/check: `npm run build`
+- Reported result: passed in execution report
+- Rerun result: passed, Vite build completed
+- Status: pass
+- Notes: confirms frontend accepts richer citation objects.
+- Command/check: `git status --short`
+- Reported result: previously clean after Batch05 repair
+- Rerun result: clean before this review append
+- Status: pass
+- Notes: no unrelated implementation changes were present for this recheck.
+
+## Acceptance Review
+- Task acceptance: (05A) section-aware neighbor expansion
+- Status: satisfied
+- Evidence: settings exist; section-aware mode exists; legacy `neighbor` mode is preserved; tests cover boundary chunks, same-section ordering, dedupe, and cap handling.
+- Task acceptance: (05B) richer citation metadata
+- Status: satisfied
+- Evidence: backend and frontend citation types include richer fields; query node populates section_path, 240-character content_preview, and is_neighbor_context; SourceList label format is unchanged; tests and build passed.
+
+## Progress Tracking
+- Selected task checkbox: already checked for both (05A) and (05B)
+- Checkbox updated by reviewer: no, already accurate
+- Batch status: Batch05 task IDs complete; batch-level tracker not changed by this recheck
+- Execution report entry: present for (05A), (05B), and later Batch05 repair
+- Review report entry: appended at EOF
+- Other: no sibling or future task checkbox was changed.
+
+## Report Accuracy
+- accurate
+- Mismatches: none found for the requested implementation status.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The worktree was clean before this review append, so the implementation appears committed or otherwise already incorporated into the current repo state.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch05 task IDs are complete; not updated by this reviewer
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch05 - Retrieval Context Tuning",
+  "selected_task_id": "(05A), (05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
+}
+```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Documentation and End-to-End Validation
+- Task ID: (06A)
+- Task title: Update local documentation
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.1: Update local documentation`
+- Supplemental documents: `docs/plans/Master_Plan.md` provided, not needed beyond the cited plan section
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: The latest execution entry in `docs/reports/report_2_execute_agent.md` is the `(06A)` report for Batch06, so the requested task selection matches the latest report entry.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `README.md`, `backend/README.md`, `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - `(06A)` task requirements and progress tracker reviewed; selected checkbox updated only after acceptance.
+- `docs/reports/report_2_execute_agent.md`: in scope - latest `(06A)` execution report is present and matches the diff.
+- `docs/plans/Plan_2.md`: in scope - Batch06 Task 6.1 requirements reviewed against the documentation changes.
+- `README.md`: in scope - updated root documentation for implemented Phase 2 behavior, validations, source viewer, message history, HTML support, and re-index guidance.
+- `backend/README.md`: in scope - updated backend setup documentation for Phase 2 settings and HTML parser support.
+- `backend/app/core/config.py`: in scope - used to verify documented defaults for chunking and retrieval settings.
+- `backend/app/parsing/html.py`: in scope - used to verify documented HTML parser behavior.
+- `backend/app/parsing/registry.py`: in scope - used to verify `.html`, `.htm`, and `text/html` support exists in the parser registry.
+- `backend/app/services/retrieval.py`: in scope - used to verify documented retrieval-context settings and behavior.
+- `frontend/src/components/UploadPanel.tsx`: in scope - used to verify the docs do not incorrectly claim the current file picker accepts HTML.
+- `frontend/src/components/SourceList.tsx`: in scope - used to verify the documented source-viewer behavior remains aligned with the Phase 1 citation label format.
+- `frontend/src/components/ChunkViewerPanel.tsx`: in scope - used to verify the documented source-viewer behavior matches the implemented metadata and adjacent-chunk navigation.
+- `frontend/src/components/MessageHistoryPanel.tsx`: in scope - used to verify the documented message-history behavior matches the implemented UI states and refresh behavior.
+- `frontend/src/App.tsx`: in scope - used to verify message-history loading, saved-answer restore behavior, and source-viewer integration.
+- `docs/review/review_2_review_agent.md`: out of scope - pre-existing dirty review file containing the Batch05 recheck; left intact except for this appended `(06A)` review entry.
+
+## Reported Files Cross-Check
+- file from execution report: `README.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: root documentation was updated for Phase 2 behavior and validation commands.
+- file from execution report: `backend/README.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: backend documentation now covers the requested Phase 2 settings and HTML parser support.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: contains the appended `(06A)` execution report and no unrelated Batch06 implementation claims.
+
+## Dependency Review
+- Required dependencies: Completed implementation in Batches 01 through 05.
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Documentation changes stay within approved user-facing docs, describe implemented settings and behavior only, and do not expose backend-only secrets.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `README.md` and `backend/README.md` now describe settings and behavior that exist in `backend/app/core/config.py`, `backend/app/parsing/html.py`, `backend/app/parsing/registry.py`, `backend/app/services/retrieval.py`, `frontend/src/components/SourceList.tsx`, `frontend/src/components/ChunkViewerPanel.tsx`, `frontend/src/components/MessageHistoryPanel.tsx`, and `frontend/src/App.tsx`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The documentation reflects existing configuration defaults and implemented UI/backend behavior rather than sample-only or unsupported claims.
+
+## Validations Reviewed
+- Command/check: Manual doc accuracy review against `backend/app/core/config.py`, `backend/app/parsing/html.py`, `backend/app/parsing/registry.py`, `backend/app/services/retrieval.py`, and `frontend/src/components/UploadPanel.tsx`
+- Reported result: passed
+- Rerun result: passed by reviewer through direct file cross-check, expanded to include `frontend/src/components/SourceList.tsx`, `frontend/src/components/ChunkViewerPanel.tsx`, `frontend/src/components/MessageHistoryPanel.tsx`, and `frontend/src/App.tsx`
+- Status: pass
+- Notes: The changed documentation matches the implemented Phase 2 behavior and does not overstate HTML upload support in the current frontend picker.
+- Command/check: `git diff --check`
+- Reported result: passed
+- Rerun result: passed; Git emitted LF-to-CRLF working-copy warnings only, with no diff-check errors
+- Status: pass
+- Notes: No whitespace or patch-formatting errors were introduced by the `(06A)` documentation changes.
+
+## Acceptance Review
+- Task acceptance: Documentation reflects implemented Phase 2 behavior and settings without adding unsupported claims.
+- Status: satisfied
+- Evidence: `README.md` documents the requested Phase 2 settings, HTML parser support, source viewer behavior, message history behavior, and re-index guidance; `backend/README.md` documents the Phase 2 settings and HTML parser support with placeholder-only secret examples preserved.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(06A)` in both the Batch06 task entry and the Batch06 progress-tracker entry
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains incomplete because `(06B)` and `(06C)` are still unchecked; the Batch06 batch checkbox was not changed
+- Execution report entry: present and appended
+- Review report entry: appended at EOF
+- Other: `(06B)`, `(06C)`, and unrelated batch checkboxes were left unchanged
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `docs/review/review_2_review_agent.md` was already dirty from a Batch05 recheck before this `(06A)` review and is not part of the selected task scope.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only `(06A)` is accepted in Batch06
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch06 - Documentation and End-to-End Validation",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "README.md",
+    "backend/README.md",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06B)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Documentation and End-to-End Validation
+- Task ID: (06B)
+- Task title: Run full automated verification
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.2: Run full automated verification`
+- Supplemental documents: `docs/plans/Master_Plan.md` provided, not needed beyond the cited plan section
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06B)
+- Reviewed task ID: (06B)
+- Correct selection: yes
+- Notes: The latest appended task execution report is the `(06B)` Batch06 automated verification entry.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `README.md`, `backend/README.md`, `backend/tests/test_api_chat.py`, `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, `docs/tasks/task_2.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - `(06B)` task requirements and progress tracker reviewed; reviewer updated only the `(06B)` checkboxes after acceptance.
+- `docs/reports/report_2_execute_agent.md`: in scope - contains the latest `(06B)` execution report and the accepted `(06A)` entry already in the worktree.
+- `docs/plans/Plan_2.md`: in scope - Task 6.2 requirements reviewed against the execution report and rerun validations.
+- `backend/tests/test_api_chat.py`: in scope - the only `(06B)` implementation-file change; updated stale chat-route assertion to match accepted 05B citation defaults.
+- `backend/app/models/schemas.py`: in scope - confirms `SourceCitation` now includes defaulted `section_path`, `content_preview`, and `is_neighbor_context` fields.
+- `backend/app/graphs/query_nodes.py`: in scope - confirms the query graph populates the richer citation metadata consumed by the chat route.
+- `backend/tests/test_query_graph.py`: in scope - confirms accepted 05B tests already verify the richer citation metadata contract.
+- `README.md`: out of scope - accepted `(06A)` documentation change already present in the worktree.
+- `backend/README.md`: out of scope - accepted `(06A)` documentation change already present in the worktree.
+- `docs/review/review_2_review_agent.md`: out of scope - pre-existing dirty review file from earlier accepted reviews; only appended at EOF for this review.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/tests/test_api_chat.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: the diff only expands the expected `sources[0]` payload with the accepted 05B citation defaults.
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: the `(06B)` execution report accurately records the initial stale-test failure and the successful rerun.
+
+## Dependency Review
+- Required dependencies: Task `(06A)` and completed Batch01 through Batch05 implementation, especially accepted `(05B)` richer citation metadata.
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: `(06B)` performs the required automated verification and keeps the accepted 05B citation contract intact.
+- Passed: the `backend/tests/test_api_chat.py` change is test-only and aligns the route expectation with `SourceCitation` defaults emitted by the current API schema.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `backend/app/models/schemas.py` defines `section_path: list[str] = []` via `default_factory`, `content_preview: str = ""`, and `is_neighbor_context: bool = False`; `backend/app/graphs/query_nodes.py` populates those fields in `_source_citation_from_chunk`; `backend/tests/test_query_graph.py` already asserts the richer citation shape. The `(06B)` edit updates only the stale chat-route expectation to that existing contract.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: no production logic changed; the test now expects schema-default fields already guaranteed by the accepted 05B API contract.
+
+## Validations Reviewed
+- Command/check: `cd backend && python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_chunker.py tests/test_heading_detection.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v`
+- Reported result: first run failed once in `tests/test_api_chat.py::test_chat_route_returns_answer_and_sources_from_query_graph`; rerun passed with `130 passed`
+- Rerun result: passed with `130 passed in 3.68s`
+- Status: pass
+- Notes: rerun confirms the full required backend verification target is green.
+- Command/check: `cd frontend && npm run build`
+- Reported result: passed
+- Rerun result: passed; Vite production build completed with `38 modules transformed`
+- Status: pass
+- Notes: rerun confirms the required frontend production build is green.
+- Command/check: `git diff -- backend/tests/test_api_chat.py`
+- Reported result: not separately reported
+- Rerun result: reviewed; only one assertion hunk changed
+- Status: pass
+- Notes: no behavioral or out-of-scope production change was introduced to make the full suite pass.
+
+## Acceptance Review
+- Task acceptance: Run the listed backend tests and frontend production build, with both passing.
+- Status: satisfied
+- Evidence: the exact source-of-truth backend pytest command passed on rerun with `130 passed`, and the exact frontend build command passed on rerun.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(06B)` in both the Batch06 task entry and the Batch06 progress-tracker entry
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains incomplete because `(06C)` is still unchecked; the Batch06 batch checkbox was not changed
+- Execution report entry: present and appended
+- Review report entry: appended at EOF
+- Other: `(06A)` accepted documentation/report/task changes were left intact; `(06C)` and sibling batch checkboxes were unchanged
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The initial backend failure was a legitimate stale-test mismatch after accepted `(05B)`, not an API behavior regression.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, `(06C)` is still pending
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch06 - Documentation and End-to-End Validation",
+  "selected_task_id": "(06B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "README.md",
+    "backend/README.md",
+    "backend/tests/test_api_chat.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (06C)
+
+## Source Task File
+docs/tasks/task_2.md
+
+## Execution Report Reviewed
+docs/reports/report_2_execute_agent.md
+
+## Review Report File
+docs/review/review_2_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Documentation and End-to-End Validation
+- Task ID: (06C)
+- Task title: Run manual Phase 2 smoke test
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_2.md` > `## Batch 6: Documentation and End-to-End Validation` > `### Task 6.3: Run manual Phase 2 smoke test`
+- Supplemental documents: `docs/plans/Master_Plan.md` provided, not needed beyond the task file and cited plan section for this review
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06C)
+- Reviewed task ID: (06C)
+- Correct selection: yes
+- Notes: The latest appended task execution report in `docs/reports/report_2_execute_agent.md` is the `(06C)` Batch06 manual smoke-test entry.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `README.md`, `backend/README.md`, `backend/tests/test_api_chat.py`, `docs/reports/report_2_execute_agent.md`, `docs/review/review_2_review_agent.md`, `docs/tasks/task_2.md`
+- untracked files: none
+
+## Files Reviewed
+- `docs/tasks/task_2.md`: in scope - `(06C)` requirements and progress tracker reviewed; reviewer updated only the `(06C)` checkboxes after acceptance.
+- `docs/reports/report_2_execute_agent.md`: in scope - contains the latest `(06C)` execution report with the manual smoke observations.
+- `docs/plans/Plan_2.md`: in scope - Task 6.3 requirements reviewed against the execution report and lightweight reviewer checks.
+- `backend/app/core/config.py`: in scope - verifies the live credential variable names, the `SHOPAIKEY_API_KEY` setting name, and the default `CHUNKING_STRATEGY="smart_section"` used by the report.
+- `backend/app/services/validation.py`: in scope - verifies `.html` and `.htm` uploads with `text/html` are accepted by the backend validation layer.
+- `backend/app/parsing/html.py`: in scope - verifies the backend has a real HTML parser for visible headings, paragraphs, code/pre blocks, and tables.
+- `frontend/src/App.tsx`: in scope - verifies chunk loading, initial message-history loading, `save_message: true` chat requests, and saved-message restore through local state without re-sending chat.
+- `frontend/src/components/ChunkViewerPanel.tsx`: in scope - verifies the source viewer renders heading, section path, Qdrant score, rerank score, and chunk content.
+- `frontend/src/components/MessageHistoryPanel.tsx`: in scope - verifies message-history refresh and selectable saved-message rows exist in the UI.
+- `README.md`: out of scope - accepted `(06A)` documentation work already present in the worktree.
+- `backend/README.md`: out of scope - accepted `(06A)` documentation work already present in the worktree.
+- `backend/tests/test_api_chat.py`: out of scope - accepted `(06B)` test-only update already present in the worktree.
+- `docs/review/review_2_review_agent.md`: out of scope - pre-existing accepted review entries for earlier tasks; only this `(06C)` review is appended at EOF.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_2_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: `(06C)` is a manual validation/reporting task, and the only repo artifact added for it is the appended execution report.
+
+## Dependency Review
+- Required dependencies: accepted `(06B)` automated verification, local backend/frontend environments, and user-provided live service credentials/setup.
+- Dependency status: satisfied
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: `(06C)` stayed within approved scope for a manual smoke-validation task and did not introduce implementation changes beyond the appended report.
+- Passed: the existing implementation surfaces exercised by the report are real and aligned with Phase 2 architecture: backend HTML validation/parsing, smart-section chunking default, frontend source inspection, and message-history restore.
+- Passed: secrets were not printed into the repo diff, the execution report, or the review evidence.
+- Failed: none
+- Uncertain: none
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `frontend/src/App.tsx` loads chunks with `apiClient.getDocumentChunks(...)`, loads history with `apiClient.listMessages(...)`, sends chat requests with `save_message: true`, and restores saved answers/sources locally on message selection; `frontend/src/components/ChunkViewerPanel.tsx` renders section path and both score fields; `backend/app/services/validation.py` and `backend/app/parsing/html.py` provide real HTML upload and parsing support; `backend/app/core/config.py` sets `CHUNKING_STRATEGY` default to `smart_section`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: no production code changed for `(06C)`, and the reviewed implementation paths use existing typed API/state flows rather than task-specific shortcuts.
+
+## Validations Reviewed
+- Command/check: execution report existence and latest-entry selection for `(06C)`
+- Reported result: passed
+- Rerun result: passed
+- Status: pass
+- Notes: the latest appended task execution report is the requested `(06C)` entry.
+- Command/check: backend `.env` presence check for required live settings names without printing values
+- Reported result: passed
+- Rerun result: passed for `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, `QDRANT_URL`, `QDRANT_API_KEY`, `SHOPAIKEY_API_KEY`, and `JINA_API_KEY`
+- Status: pass
+- Notes: reviewer checked names only; no secret values were printed.
+- Command/check: port cleanup after smoke run
+- Reported result: backend/frontend ports closed after the run
+- Rerun result: passed; ports `8000` and `5173` were closed at review time
+- Status: pass
+- Notes: confirms the live services used for the manual smoke test were not left running.
+- Command/check: changed-file scope and smoke-artifact review via `git status`, `git diff --stat`, `git diff`, and `git diff --name-only`
+- Reported result: only the execution report was modified for `(06C)`
+- Rerun result: passed; no untracked smoke files or extra temp artifacts were present in the repo worktree
+- Status: pass
+- Notes: the remaining modified files are accepted `(06A)` and `(06B)` work already present in the worktree.
+- Command/check: manual browser smoke test via Playwright and system Chrome
+- Reported result: passed
+- Rerun result: not rerun by reviewer because the task is live/expensive and the user explicitly limited review to lightweight checks
+- Status: accepted on report-plus-repo evidence
+- Notes: the report includes specific observations for Markdown ingestion, table-grounded answer, source citations, source viewer metadata/scores, saved-message restore without a new `/api/chat` request, and HTML ingestion; those observations are consistent with the existing implementation surfaces reviewed above.
+
+## Acceptance Review
+- Task acceptance: The app completes smart-section Markdown ingestion, table-grounded chat, source inspection, message history restore, and HTML ingestion.
+- Status: satisfied
+- Evidence: the `(06C)` report records each required browser flow with concrete outcomes, and the reviewer confirmed the supporting implementation paths and practical cleanup checks without rerunning the live smoke sequence.
+
+## Progress Tracking
+- Selected task checkbox: updated from unchecked to checked for `(06C)` in both the Batch06 task entry and the Batch06 progress-tracker entry
+- Checkbox updated by reviewer: yes
+- Batch status: all Batch06 task IDs are now checked, but the Batch06 batch checkbox was not updated here per user instruction to leave batch completion handling to orchestrator/A3
+- Execution report entry: present and appended
+- Review report entry: appended at EOF
+- Other: accepted `(06A)` and `(06B)` task/report/review changes were left intact
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The execution report correctly notes that smoke-test uploads and the saved smoke-test message remain in the live application data; that is a disclosed post-run state, not a repository-scope defect for `(06C)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? yes, all Batch06 task IDs are now accepted; batch checkbox not updated by this reviewer per user instruction
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_2.md",
+  "execution_report_reviewed": "docs/reports/report_2_execute_agent.md",
+  "review_report_file": "docs/review/review_2_review_agent.md",
+  "selected_batch": "Batch06 - Documentation and End-to-End Validation",
+  "selected_task_id": "(06C)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "README.md",
+    "backend/README.md",
+    "backend/tests/test_api_chat.py",
+    "docs/reports/report_2_execute_agent.md",
+    "docs/review/review_2_review_agent.md",
+    "docs/tasks/task_2.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": true
 }
 ```

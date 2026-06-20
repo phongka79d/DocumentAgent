@@ -40,7 +40,29 @@ If you use the exact frontend host above (`127.0.0.1`), set `FRONTEND_ORIGIN=htt
 
 Live end-to-end validation stays blocked until the schema, bucket, collection, and real API keys are in place.
 
+## Phase 2 behavior
+
+The backend now supports the Phase 2 settings and parser behavior documented in the master plan.
+
+- `CHUNKING_STRATEGY=smart_section` is the default. It uses detected headings and table boundaries to write `heading` and `section_path` metadata. `CHUNKING_STRATEGY=fixed_token` preserves the Phase 1 chunking path.
+- `HEADER_SCORE_THRESHOLD=4` controls when paragraph-like blocks are promoted to headings during smart section chunking.
+- `TABLE_CHUNK_MAX_TOKENS=500` keeps small tables intact and lets larger tables fall back to fixed-token splitting.
+- `RETRIEVAL_CONTEXT_MODE=section_aware` is the default retrieval mode. `RETRIEVAL_CONTEXT_MODE=neighbor` keeps the older same-document neighbor expansion.
+- `RETRIEVAL_SECTION_SIBLING_WINDOW=1` controls how many same-section neighbors are preferred on each side before generic neighbors are added.
+- HTML uploads are supported for `.html` and `.htm` files with `text/html`. The parser keeps visible headings, paragraphs, lists, blockquotes, code, and tables, and ignores scripts, styles, and other hidden elements.
+- Existing documents indexed before smart section chunking was enabled should be re-indexed so their stored chunks and source citations gain the new heading metadata.
+
 ## Backend environment variables
+
+The settings layer keeps backend-only values out of the frontend bundle. Use placeholder values only in local files.
+
+Phase 2 settings:
+
+- `CHUNKING_STRATEGY`: `fixed_token` or `smart_section`. The default is `smart_section`.
+- `HEADER_SCORE_THRESHOLD`: integer threshold used by smart section heading scoring. The default is `4`.
+- `TABLE_CHUNK_MAX_TOKENS`: maximum size for keeping a table intact before splitting. The default is `500`.
+- `RETRIEVAL_CONTEXT_MODE`: `section_aware` or `neighbor`. The default is `section_aware`.
+- `RETRIEVAL_SECTION_SIBLING_WINDOW`: number of adjacent chunks to prefer within the same section. The default is `1`.
 
 ```env
 APP_ENV=development

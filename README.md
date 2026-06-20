@@ -1,8 +1,8 @@
 # RagDocument
 
-RagDocument Phase 1 is a personal, single-user document RAG MVP.
+RagDocument is a personal, single-user document RAG app.
 
-This repository is currently through Phase 1 Batch08 and Phase 2 Batch05. The accepted behavior is:
+This repository currently reflects the Phase 2 Batch05 implementation. The accepted behavior is:
 
 - a FastAPI backend titled `RagDocument API`
 - `GET /api/health` returning `{"status": "ok"}`
@@ -14,12 +14,14 @@ This repository is currently through Phase 1 Batch08 and Phase 2 Batch05. The ac
 - document schemas, SHA-256 upload hashing, and deterministic upload validation for PDF, DOCX, TXT, Markdown, and HTML files
 - document service functions for listing, lookup, duplicate detection, original-file upload, row creation, and deletion cleanup
 - document API routes for upload, list, detail, index, reindex, delete, and typed chunk inspection under `/api/documents`
-- normalized document parsers for PDF, DOCX, TXT, Markdown, and HTML under `backend/app/parsing/`, with optional structured block output for paragraphs, headings, and tables
+- normalized document parsers for PDF, DOCX, TXT, Markdown, and HTML under `backend/app/parsing/`, with optional structured block output for paragraphs, headings, tables, and visible HTML blocks
 - a parser registry that resolves supported file extensions and MIME types, including `text/html`
 - deterministic heading scoring and chunkers under `backend/app/chunking/`, including fixed-token chunking plus smart section chunking with heading/section-path metadata, table preservation, and fixed-token fallback
 - chunking settings for `CHUNKING_STRATEGY`, `HEADER_SCORE_THRESHOLD`, `TABLE_CHUNK_MAX_TOKENS`, `CHUNK_SIZE_TOKENS`, and `CHUNK_OVERLAP_TOKENS`
+- retrieval context settings for `RETRIEVAL_CONTEXT_MODE` and `RETRIEVAL_SECTION_SIBLING_WINDOW`
 - a LangGraph ingestion workflow under `backend/app/graphs/` that loads existing document rows, marks processing, parses, selects the configured chunking strategy, saves chunks, embeds, upserts Qdrant vectors with section metadata, marks ready, and marks fatal failures as failed with clear errors
 - index and reindex document routes that invoke the ingestion graph with only the document ID; reindex deletes old Qdrant vectors and old Supabase chunks before rebuilding
+- existing documents should be re-indexed after smart section chunking is enabled so stored chunks and source citations receive `heading` and `section_path` metadata
 - retrieval helpers that embed questions, query Qdrant with optional document filters, rerank with Jina, fall back to Qdrant scores, and expand neighboring chunks with section-aware same-section preference, boundary hints, deduplication, and context caps
 - a LangGraph query workflow under `backend/app/graphs/` that validates questions, retrieves context, reranks, expands neighbors, generates grounded answers with source citations, includes optional section path, content preview, and neighbor-context metadata, and optionally saves messages without failing chat responses
 - a `POST /api/chat` route that accepts `question`, optional `document_ids`, and `save_message`, invokes the query graph, and returns `answer` plus `sources`
@@ -42,7 +44,7 @@ Run the current backend checks with:
 
 ```bash
 cd backend
-python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
+python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
 ```
 
 Run the current frontend build check with:

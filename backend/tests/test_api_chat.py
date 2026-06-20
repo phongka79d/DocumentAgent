@@ -173,11 +173,14 @@ def test_chat_route_returns_answer_and_sources_from_query_graph(monkeypatch):
                     "file_name": "pricing.pdf",
                     "chunk_index": 12,
                     "page_start": 3,
-                "page_end": 4,
-                "heading": None,
-                "qdrant_score": 0.78,
-                "rerank_score": 0.91,
-            }
+                    "page_end": 4,
+                    "heading": None,
+                    "qdrant_score": 0.78,
+                    "rerank_score": 0.91,
+                    "section_path": [],
+                    "content_preview": "",
+                    "is_neighbor_context": False,
+                }
         ],
     }
 
