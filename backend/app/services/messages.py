@@ -122,9 +122,12 @@ def list_messages(
     settings: Settings | None = None,
     supabase_client: Any | None = None,
 ) -> list[MessageResponse]:
-    _resolve_settings(settings)
+    resolved_settings = _resolve_settings(settings)
     clamped_limit = _normalize_limit(limit)
-    client = _resolve_supabase_client(supabase_client)
+    client = _resolve_supabase_client(
+        supabase_client,
+        settings=resolved_settings,
+    )
     response = (
         client.table(MESSAGES_TABLE)
         .select("*")

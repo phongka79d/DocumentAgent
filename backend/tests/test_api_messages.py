@@ -183,6 +183,23 @@ def test_list_messages_returns_newest_first_and_normalizes_json_fields():
     ]
 
 
+def test_list_messages_passes_custom_settings_to_client_factory(monkeypatch):
+    settings = _test_settings()
+    fake_client = FakeSupabaseClient(messages=[])
+    received_settings: list[Settings | None] = []
+
+    def _create_client(client_settings=None):
+        received_settings.append(client_settings)
+        return fake_client
+
+    monkeypatch.setattr(message_service, "create_supabase_client", _create_client)
+
+    messages = message_service.list_messages(settings=settings)
+
+    assert messages == []
+    assert received_settings == [settings]
+
+
 @pytest.mark.parametrize(
     ("limit", "expected_limit", "expected_ids"),
     [
@@ -230,7 +247,7 @@ def test_get_messages_route_clamps_limit_and_returns_newest_rows_first(
     monkeypatch.setattr(
         message_service,
         "_resolve_supabase_client",
-        lambda supabase_client=None: fake_client,
+        lambda supabase_client=None, settings=None: fake_client,
     )
 
     app = _test_app(settings)
@@ -275,7 +292,7 @@ def test_get_messages_route_returns_safe_http_error_when_listing_fails(monkeypat
     monkeypatch.setattr(
         message_service,
         "_resolve_supabase_client",
-        lambda supabase_client=None: BrokenClient(),
+        lambda supabase_client=None, settings=None: BrokenClient(),
     )
 
     app = _test_app(settings)
