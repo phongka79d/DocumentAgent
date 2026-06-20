@@ -1246,6 +1246,22 @@ def test_generate_answer_node_builds_sources_and_uses_only_context():
     assert chat_call["messages"][1]["content"].endswith("Answer using only the context.")
 
 
+def test_source_citation_preview_uses_shared_limit():
+    long_content = "x" * 300
+    citation = query_nodes._build_source_citations(
+        [
+            {
+                "document_id": DOC_A,
+                "chunk_id": "chunk-1",
+                "chunk_index": 0,
+                "content": long_content,
+            }
+        ]
+    )[0]
+
+    assert citation["content_preview"] == "x" * 240
+
+
 def test_save_message_optional_node_inserts_question_answer_sources_and_metadata():
     settings = _test_settings()
     fake_client = FakeSupabaseClient(tables={"messages": []})
