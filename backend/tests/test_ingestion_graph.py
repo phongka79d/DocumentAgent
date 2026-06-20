@@ -481,13 +481,17 @@ def test_chunk_document_node_uses_fixed_token_chunker_and_stores_v1_metadata(mon
 
     _patch_settings(monkeypatch, settings)
     monkeypatch.setattr(
-        ingestion_nodes,
+        ingestion_nodes.ingestion_payloads,
         "SmartSectionChunker",
         lambda *args, **kwargs: pytest.fail(
             "SmartSectionChunker should not be used when fixed_token is configured"
         ),
     )
-    monkeypatch.setattr(ingestion_nodes, "FixedTokenChunker", lambda *args, **kwargs: fake_chunker)
+    monkeypatch.setattr(
+        ingestion_nodes.ingestion_payloads,
+        "FixedTokenChunker",
+        lambda *args, **kwargs: fake_chunker,
+    )
 
     result = ingestion_nodes.chunk_document_node(
         {
@@ -524,13 +528,17 @@ def test_chunk_document_node_uses_smart_section_chunker_and_stores_v2_metadata(m
 
     _patch_settings(monkeypatch, settings)
     monkeypatch.setattr(
-        ingestion_nodes,
+        ingestion_nodes.ingestion_payloads,
         "FixedTokenChunker",
         lambda *args, **kwargs: pytest.fail(
             "FixedTokenChunker should not be used when smart_section is configured"
         ),
     )
-    monkeypatch.setattr(ingestion_nodes, "SmartSectionChunker", lambda *args, **kwargs: fake_chunker)
+    monkeypatch.setattr(
+        ingestion_nodes.ingestion_payloads,
+        "SmartSectionChunker",
+        lambda *args, **kwargs: fake_chunker,
+    )
 
     result = ingestion_nodes.chunk_document_node(
         {

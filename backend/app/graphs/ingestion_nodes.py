@@ -5,12 +5,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi.encoders import jsonable_encoder
-from qdrant_client.http import models as qdrant_models
 
-from app.chunking.section_chunker import SmartSectionChunker
-from app.chunking.token_chunker import FixedTokenChunker
 from app.core.config import Settings, get_settings
+from app.core.contracts import ChunkField, DocumentStatus, TableName
 from app.core.errors import safe_detail
+from app.graphs import ingestion_payloads
 from app.graphs.ingestion_state import IngestionState
 from app.parsing import get_parser_for_file
 from app.services import documents as document_service
@@ -18,14 +17,9 @@ from app.services.qdrant_client import create_qdrant_client
 from app.services.shopaikey_client import create_shopaikey_client
 from app.services.supabase_client import create_supabase_client
 
-DOCUMENTS_TABLE = "documents"
-DOCUMENT_CHUNKS_TABLE = "document_chunks"
+DOCUMENTS_TABLE = TableName.DOCUMENTS
+DOCUMENT_CHUNKS_TABLE = TableName.DOCUMENT_CHUNKS
 DEFAULT_INGESTION_ERROR = "Ingestion failed"
-FIXED_TOKEN_CHUNKING_STRATEGY = "fixed_token"
-SMART_SECTION_CHUNKING_STRATEGY = "smart_section"
-DEFAULT_CHUNKING_STRATEGY = FIXED_TOKEN_CHUNKING_STRATEGY
-DEFAULT_CHUNKING_VERSION = "v1"
-SMART_SECTION_CHUNKING_VERSION = "v2"
 
 
 def _resolve_settings(settings: Settings | None = None) -> Settings:
@@ -111,7 +105,7 @@ def _failure_state(
 ) -> dict[str, Any]:
     message = safe_detail(error_message, fallback=fallback)
     result: dict[str, Any] = {
-        "status": "failed",
+        "status": DocumentStatus.FAILED,
         "error_message": message,
     }
     if document_id is not None:
@@ -151,93 +145,6 @@ def _normalize_bytes(downloaded: Any) -> bytes:
     if isinstance(downloaded, str):
         return downloaded.encode("utf-8")
     raise TypeError("Downloaded document bytes could not be normalized")
-
-
-def _chunk_metadata(state: Mapping[str, Any]) -> dict[str, Any]:
-    metadata = {
-        "parser_name": state.get("parser_name"),
-        "parser_version": state.get("parser_version"),
-        "chunking_strategy": state.get("chunking_strategy"),
-        "chunking_version": state.get("chunking_version"),
-    }
-    return {key: value for key, value in metadata.items() if value is not None}
-
-
-def _document_chunk_insert_payload(
-    document_id: str,
-    *,
-    chunk: Mapping[str, Any],
-    metadata: dict[str, Any],
-) -> dict[str, Any]:
-    return {
-        "document_id": document_id,
-        "chunk_index": chunk.get("chunk_index"),
-        "content": chunk.get("content"),
-        "content_hash": chunk.get("content_hash"),
-        "token_count": chunk.get("token_count"),
-        "chunk_type": chunk.get("chunk_type"),
-        "heading": chunk.get("heading"),
-        "section_path": list(chunk.get("section_path") or []),
-        "page_start": chunk.get("page_start"),
-        "page_end": chunk.get("page_end"),
-        "token_start": chunk.get("token_start"),
-        "token_end": chunk.get("token_end"),
-        "metadata": metadata or None,
-    }
-
-
-def _qdrant_payload(
-    document_id: str,
-    *,
-    chunk: Mapping[str, Any],
-    file_name: str,
-) -> dict[str, Any]:
-    return {
-        "document_id": document_id,
-        "chunk_id": str(chunk.get("id") or chunk.get("qdrant_point_id") or ""),
-        "chunk_index": chunk.get("chunk_index"),
-        "file_name": file_name,
-        "heading": chunk.get("heading"),
-        "section_path": list(chunk.get("section_path") or []),
-        "page_start": chunk.get("page_start"),
-        "page_end": chunk.get("page_end"),
-        "chunk_type": chunk.get("chunk_type"),
-        "token_count": chunk.get("token_count"),
-        "text": chunk.get("content"),
-    }
-
-
-def _build_qdrant_point(
-    *,
-    chunk_id: str,
-    vector: Sequence[float],
-    payload: dict[str, Any],
-) -> qdrant_models.PointStruct:
-    return qdrant_models.PointStruct(
-        id=chunk_id,
-        vector=list(vector),
-        payload=payload,
-    )
-
-
-def _resolve_chunker_for_settings(
-    settings: Settings,
-) -> tuple[Any, str, str]:
-    strategy = settings.CHUNKING_STRATEGY
-    normalized_strategy = strategy.strip().lower() if isinstance(strategy, str) else ""
-    if normalized_strategy == FIXED_TOKEN_CHUNKING_STRATEGY:
-        return (
-            FixedTokenChunker(settings=settings),
-            FIXED_TOKEN_CHUNKING_STRATEGY,
-            DEFAULT_CHUNKING_VERSION,
-        )
-    if normalized_strategy == SMART_SECTION_CHUNKING_STRATEGY:
-        return (
-            SmartSectionChunker(settings=settings),
-            SMART_SECTION_CHUNKING_STRATEGY,
-            SMART_SECTION_CHUNKING_VERSION,
-        )
-    raise ValueError(f"Unsupported chunking strategy: {strategy}")
 
 
 def load_document_record_node(state: IngestionState) -> dict[str, Any]:
@@ -292,14 +199,10 @@ def mark_processing_node(state: IngestionState) -> dict[str, Any]:
     try:
         _update_document_row(
             document_id,
-            {
-                "status": "processing",
-                "error_message": None,
-                "updated_at": _now_utc(),
-            },
+            ingestion_payloads.processing_document_payload(now=_now_utc()),
             settings=settings,
         )
-        return {"status": "processing", "error_message": None}
+        return {"status": DocumentStatus.PROCESSING, "error_message": None}
     except Exception as exc:  # pragma: no cover - defensive, exercised by failures
         return _failure_state(document_id, f"Failed to mark document processing: {exc}")
 
@@ -352,7 +255,9 @@ def chunk_document_node(state: IngestionState) -> dict[str, Any]:
         return _failure_state(document_id, "parsed_document is required")
 
     try:
-        chunker, chunking_strategy, chunking_version = _resolve_chunker_for_settings(settings)
+        chunker, chunking_strategy, chunking_version = (
+            ingestion_payloads.resolve_chunker_for_settings(settings)
+        )
         chunks = chunker.chunk(dict(parsed_document))
         if not chunks:
             return _failure_state(document_id, "Chunking produced no chunks")
@@ -378,14 +283,14 @@ def save_chunks_node(state: IngestionState) -> dict[str, Any]:
     if not isinstance(chunks, list) or not chunks:
         return _failure_state(document_id, "chunks are required before saving")
 
-    metadata = _chunk_metadata(state)
+    metadata = ingestion_payloads.chunk_metadata(state)
 
     try:
         client = create_supabase_client(settings)
         client.table(DOCUMENT_CHUNKS_TABLE).delete().eq("document_id", document_id).execute()
 
         payload_rows = [
-            _document_chunk_insert_payload(
+            ingestion_payloads.document_chunk_insert_payload(
                 document_id,
                 chunk=chunk,
                 metadata=metadata,
@@ -398,21 +303,21 @@ def save_chunks_node(state: IngestionState) -> dict[str, Any]:
             return _failure_state(document_id, "Chunk save did not return inserted rows")
 
         rows_by_index = {
-            row.get("chunk_index"): row
+            row.get(ChunkField.CHUNK_INDEX): row
             for row in rows
-            if row.get("chunk_index") is not None
+            if row.get(ChunkField.CHUNK_INDEX) is not None
         }
         saved_chunks: list[dict[str, Any]] = []
         for index, chunk in enumerate(chunks):
-            row = rows_by_index.get(chunk.get("chunk_index"))
+            row = rows_by_index.get(chunk.get(ChunkField.CHUNK_INDEX))
             if row is None and index < len(rows):
                 row = rows[index]
-            if row is None or row.get("id") is None:
+            if row is None or row.get(ChunkField.ID) is None:
                 return _failure_state(document_id, "Inserted chunks are missing ids")
 
             saved_chunk = dict(chunk)
-            saved_chunk["id"] = str(row["id"])
-            saved_chunk["document_id"] = document_id
+            saved_chunk[ChunkField.ID] = str(row[ChunkField.ID])
+            saved_chunk[ChunkField.DOCUMENT_ID] = document_id
             saved_chunks.append(saved_chunk)
 
         return {
@@ -496,10 +401,10 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
 
     try:
         collection_name = state.get("qdrant_collection") or settings.QDRANT_COLLECTION
-        points: list[qdrant_models.PointStruct] = []
+        points: list[Any] = []
         updated_chunks: list[dict[str, Any]] = []
         for chunk, vector in zip(chunks, embeddings, strict=True):
-            chunk_id = chunk.get("id") or chunk.get("qdrant_point_id")
+            chunk_id = chunk.get(ChunkField.ID) or chunk.get(ChunkField.QDRANT_POINT_ID)
             if chunk_id is None or not str(chunk_id).strip():
                 return _failure_state(
                     document_id,
@@ -507,16 +412,20 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
                 )
 
             point_id = str(chunk_id)
-            payload = _qdrant_payload(
+            payload = ingestion_payloads.qdrant_payload(
                 document_id,
                 chunk=chunk,
                 file_name=file_name,
             )
-            point = _build_qdrant_point(chunk_id=point_id, vector=vector, payload=payload)
+            point = ingestion_payloads.build_qdrant_point(
+                chunk_id=point_id,
+                vector=vector,
+                payload=payload,
+            )
             points.append(point)
 
             updated_chunk = dict(chunk)
-            updated_chunk["qdrant_point_id"] = point_id
+            updated_chunk[ChunkField.QDRANT_POINT_ID] = point_id
             updated_chunks.append(updated_chunk)
 
         qdrant_client = create_qdrant_client(settings)
@@ -527,10 +436,10 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
             wait=True,
         )
         for chunk in updated_chunks:
-            chunk_id = str(chunk["id"])
+            chunk_id = str(chunk[ChunkField.ID])
             supabase_client.table(DOCUMENT_CHUNKS_TABLE).update(
-                {"qdrant_point_id": chunk["qdrant_point_id"]}
-            ).eq("id", chunk_id).execute()
+                {ChunkField.QDRANT_POINT_ID: chunk[ChunkField.QDRANT_POINT_ID]}
+            ).eq(ChunkField.ID, chunk_id).execute()
     except Exception as exc:  # pragma: no cover - defensive, exercised by failure tests
         return _failure_state(document_id, f"Qdrant upsert failed: {exc}")
 
@@ -547,25 +456,15 @@ def mark_ready_node(state: IngestionState) -> dict[str, Any]:
         return _failure_state(None, "document_id is required")
 
     resolved_collection = state.get("qdrant_collection") or settings.QDRANT_COLLECTION
-    payload = {
-        "status": "ready",
-        "total_pages": state.get("total_pages"),
-        "total_chunks": state.get("total_chunks"),
-        "parser_name": state.get("parser_name"),
-        "parser_version": state.get("parser_version"),
-        "chunking_strategy": state.get("chunking_strategy"),
-        "chunking_version": state.get("chunking_version"),
-        "embedding_model": state.get("embedding_model"),
-        "embedding_dimension": state.get("embedding_dimension"),
-        "qdrant_collection": resolved_collection,
-        "indexed_at": _now_utc(),
-        "error_message": None,
-        "updated_at": _now_utc(),
-    }
+    payload = ingestion_payloads.ready_document_payload(
+        state,
+        qdrant_collection=resolved_collection,
+        now=_now_utc(),
+    )
     try:
         _update_document_row(document_id, payload, settings=settings)
         return {
-            "status": "ready",
+            "status": DocumentStatus.READY,
             "error_message": None,
             "qdrant_collection": resolved_collection,
             "indexed_at": payload["indexed_at"],
@@ -587,16 +486,12 @@ def mark_failed_node(
     if document_id is None:
         return _failure_state(None, message)
 
-    payload = {
-        "status": "failed",
-        "error_message": message,
-        "updated_at": _now_utc(),
-    }
+    payload = ingestion_payloads.failed_document_payload(message, now=_now_utc())
     try:
         _update_document_row(document_id, payload, settings=settings)
     except Exception:  # pragma: no cover - defensive, failure state still returned
         pass
     return {
-        "status": "failed",
+        "status": DocumentStatus.FAILED,
         "error_message": message,
     }
