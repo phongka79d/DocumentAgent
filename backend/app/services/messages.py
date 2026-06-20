@@ -4,10 +4,11 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from app.core.config import Settings, get_settings
+from app.core.contracts import MessageField, TableName
 from app.models.schemas import MessageResponse
 from app.services.supabase_client import create_supabase_client
 
-MESSAGES_TABLE = "messages"
+MESSAGES_TABLE = TableName.MESSAGES
 MIN_MESSAGE_LIMIT = 1
 MAX_MESSAGE_LIMIT = 100
 
@@ -82,6 +83,26 @@ def _normalize_row(row: Mapping[str, Any]) -> dict[str, Any]:
 
 def _message_from_row(row: Mapping[str, Any]) -> MessageResponse:
     return MessageResponse.model_validate(_normalize_row(row))
+
+
+def create_message(
+    *,
+    question: str,
+    answer: str,
+    sources: list[dict[str, Any]],
+    metadata: dict[str, Any],
+    settings: Settings | None = None,
+    supabase_client: Any | None = None,
+) -> None:
+    _resolve_settings(settings)
+    client = _resolve_supabase_client(supabase_client)
+    payload = {
+        MessageField.QUESTION: question,
+        MessageField.ANSWER: answer,
+        MessageField.SOURCES: sources,
+        MessageField.METADATA: metadata,
+    }
+    client.table(MESSAGES_TABLE).insert(payload).execute()
 
 
 def list_messages(

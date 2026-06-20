@@ -1262,6 +1262,49 @@ def test_source_citation_preview_uses_shared_limit():
     assert citation["content_preview"] == "x" * 240
 
 
+def test_save_message_optional_node_delegates_to_message_service(monkeypatch):
+    settings = _test_settings()
+    fake_client = FakeSupabaseClient(tables={"messages": []})
+    calls: list[dict[str, object]] = []
+
+    def _create_message(**kwargs):
+        calls.append(kwargs)
+
+    monkeypatch.setattr(query_nodes.message_service, "create_message", _create_message)
+
+    result = query_nodes.save_message_optional_node(
+        {
+            "question": "What is pricing?",
+            "prepared_query": "What is pricing?",
+            "answer": "Pricing is based on usage tiers.",
+            "sources": [{"document_id": DOC_A, "chunk_id": "chunk-1"}],
+            "save_message": True,
+            "document_ids": [DOC_A],
+            "context_chunks": [{"chunk_id": "chunk-1"}],
+        },
+        settings=settings,
+        supabase_client=fake_client,
+    )
+
+    assert result == {}
+    assert calls == [
+        {
+            "question": "What is pricing?",
+            "answer": "Pricing is based on usage tiers.",
+            "sources": [{"document_id": DOC_A, "chunk_id": "chunk-1"}],
+            "metadata": {
+                "document_ids": [DOC_A],
+                "prepared_query": "What is pricing?",
+                "retrieved_chunk_count": 0,
+                "reranked_chunk_count": 0,
+                "context_chunk_count": 1,
+            },
+            "settings": settings,
+            "supabase_client": fake_client,
+        }
+    ]
+
+
 def test_save_message_optional_node_inserts_question_answer_sources_and_metadata():
     settings = _test_settings()
     fake_client = FakeSupabaseClient(tables={"messages": []})

@@ -21,9 +21,9 @@ from app.graphs.query_prompts import (
     NO_RELEVANT_INFORMATION_MESSAGE,
     build_answer_messages,
 )
+from app.services import messages as message_service
 from app.services import retrieval
 from app.services.shopaikey_client import create_shopaikey_client
-from app.services.supabase_client import create_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -280,19 +280,14 @@ def save_message_optional_node(
         else:
             normalized_sources = _build_source_citations(_resolve_context_chunks(state))
 
-        payload = {
-            "question": question,
-            "answer": answer,
-            "sources": normalized_sources,
-            "metadata": _message_metadata(state),
-        }
-
-        client = (
-            supabase_client
-            if supabase_client is not None
-            else create_supabase_client(resolved_settings)
+        message_service.create_message(
+            question=question,
+            answer=answer,
+            sources=normalized_sources,
+            metadata=_message_metadata(state),
+            settings=resolved_settings,
+            supabase_client=supabase_client,
         )
-        client.table("messages").insert(payload).execute()
     except Exception as exc:  # pragma: no cover - message save must not fail chat
         logger.warning("Message save failed: %s", exc)
     return {}
