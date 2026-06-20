@@ -35,6 +35,10 @@ ALL_SETTINGS_FIELDS = {
     "RETRIEVAL_CONTEXT_WINDOW",
     "RETRIEVAL_SECTION_SIBLING_WINDOW",
     "RETRIEVAL_CONTEXT_MAX_CANDIDATES",
+    "RETRIEVAL_HINT_TEMPERATURE",
+    "RETRIEVAL_HINT_MAX_TOKENS",
+    "RETRIEVAL_BOUNDARY_START_CHUNKS",
+    "RETRIEVAL_BOUNDARY_END_CHUNKS",
     "CHUNKING_STRATEGY",
     "HEADER_SCORE_THRESHOLD",
     "TABLE_CHUNK_MAX_TOKENS",
@@ -105,6 +109,10 @@ def test_settings_load_defaults_from_master_plan(monkeypatch):
     assert settings.RETRIEVAL_CONTEXT_WINDOW == 1
     assert settings.RETRIEVAL_SECTION_SIBLING_WINDOW == 1
     assert settings.RETRIEVAL_CONTEXT_MAX_CANDIDATES == 8
+    assert settings.RETRIEVAL_HINT_TEMPERATURE == 0.0
+    assert settings.RETRIEVAL_HINT_MAX_TOKENS == 120
+    assert settings.RETRIEVAL_BOUNDARY_START_CHUNKS == 2
+    assert settings.RETRIEVAL_BOUNDARY_END_CHUNKS == 2
     assert settings.CHUNKING_STRATEGY == "smart_section"
     assert settings.HEADER_SCORE_THRESHOLD == 4
     assert settings.TABLE_CHUNK_MAX_TOKENS == 500
@@ -124,6 +132,10 @@ def test_settings_read_environment_overrides(monkeypatch):
     monkeypatch.setenv("RETRIEVAL_CONTEXT_MODE", "neighbor")
     monkeypatch.setenv("RETRIEVAL_SECTION_SIBLING_WINDOW", "2")
     monkeypatch.setenv("RETRIEVAL_FINAL_TOP_K", "7")
+    monkeypatch.setenv("RETRIEVAL_HINT_TEMPERATURE", "0.1")
+    monkeypatch.setenv("RETRIEVAL_HINT_MAX_TOKENS", "160")
+    monkeypatch.setenv("RETRIEVAL_BOUNDARY_START_CHUNKS", "3")
+    monkeypatch.setenv("RETRIEVAL_BOUNDARY_END_CHUNKS", "4")
     monkeypatch.setenv("MAX_OUTPUT_TOKENS", "2048")
 
     settings = Settings(_env_file=None)
@@ -135,6 +147,10 @@ def test_settings_read_environment_overrides(monkeypatch):
     assert settings.RETRIEVAL_CONTEXT_MODE == "neighbor"
     assert settings.RETRIEVAL_SECTION_SIBLING_WINDOW == 2
     assert settings.RETRIEVAL_FINAL_TOP_K == 7
+    assert settings.RETRIEVAL_HINT_TEMPERATURE == 0.1
+    assert settings.RETRIEVAL_HINT_MAX_TOKENS == 160
+    assert settings.RETRIEVAL_BOUNDARY_START_CHUNKS == 3
+    assert settings.RETRIEVAL_BOUNDARY_END_CHUNKS == 4
     assert settings.MAX_OUTPUT_TOKENS == 2048
 
 
