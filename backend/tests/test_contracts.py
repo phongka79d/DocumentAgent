@@ -27,6 +27,7 @@ def test_shared_contract_literals_match_database_and_api_values():
     assert ChunkingVersion.FIXED_TOKEN == "v1"
     assert ChunkingVersion.SMART_SECTION == "v2"
 
+    assert ChunkField.ID == "id"
     assert ChunkField.DOCUMENT_ID == "document_id"
     assert ChunkField.CHUNK_INDEX == "chunk_index"
     assert ChunkField.CONTENT == "content"
@@ -39,7 +40,9 @@ def test_shared_contract_literals_match_database_and_api_values():
     assert ChunkField.PAGE_END == "page_end"
     assert ChunkField.TOKEN_START == "token_start"
     assert ChunkField.TOKEN_END == "token_end"
+    assert ChunkField.QDRANT_POINT_ID == "qdrant_point_id"
     assert ChunkField.METADATA == "metadata"
+    assert ChunkField.CREATED_AT == "created_at"
 
     assert MessageField.QUESTION == "question"
     assert MessageField.ANSWER == "answer"

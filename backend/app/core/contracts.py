@@ -35,6 +35,7 @@ class RetrievalBoundary(StrEnum):
 
 
 class ChunkField(StrEnum):
+    ID = "id"
     DOCUMENT_ID = "document_id"
     CHUNK_INDEX = "chunk_index"
     CONTENT = "content"
@@ -47,7 +48,9 @@ class ChunkField(StrEnum):
     PAGE_END = "page_end"
     TOKEN_START = "token_start"
     TOKEN_END = "token_end"
+    QDRANT_POINT_ID = "qdrant_point_id"
     METADATA = "metadata"
+    CREATED_AT = "created_at"
 
 
 class QdrantPayloadKey(StrEnum):
