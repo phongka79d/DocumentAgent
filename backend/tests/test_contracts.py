@@ -18,6 +18,7 @@ def test_shared_contract_literals_match_database_and_api_values():
     assert DocumentStatus.FAILED == "failed"
     assert DocumentStatus.PROCESSING == "processing"
     assert DocumentStatus.READY == "ready"
+    assert DocumentStatus.UPLOADED == "uploaded"
 
     assert ChunkingStrategy.FIXED_TOKEN == "fixed_token"
     assert ChunkingStrategy.SMART_SECTION == "smart_section"
@@ -29,7 +30,17 @@ def test_shared_contract_literals_match_database_and_api_values():
     assert RetrievalBoundary.BEGINNING == "beginning"
     assert RetrievalBoundary.END == "end"
 
-    assert QdrantPayloadKey.DOCUMENT_ID == "document_id"
+    assert QdrantPayloadKey.ID == "id"
     assert QdrantPayloadKey.CHUNK_ID == "chunk_id"
+    assert QdrantPayloadKey.DOCUMENT_ID == "document_id"
+    assert QdrantPayloadKey.FILE_NAME == "file_name"
+    assert QdrantPayloadKey.CHUNK_INDEX == "chunk_index"
+    assert QdrantPayloadKey.CONTENT == "content"
     assert QdrantPayloadKey.TEXT == "text"
+    assert QdrantPayloadKey.HEADING == "heading"
+    assert QdrantPayloadKey.SECTION_PATH == "section_path"
+    assert QdrantPayloadKey.PAGE_START == "page_start"
+    assert QdrantPayloadKey.PAGE_END == "page_end"
+    assert QdrantPayloadKey.CHUNK_TYPE == "chunk_type"
+    assert QdrantPayloadKey.TOKEN_COUNT == "token_count"
     assert SOURCE_PREVIEW_CHARS == 240
