@@ -22,6 +22,7 @@ ALL_SETTINGS_FIELDS = {
     "SHOPAIKEY_API_KEY",
     "SHOPAIKEY_BASE_URL",
     "SHOPAIKEY_CHAT_MODEL",
+    "SHOPAIKEY_INPUT_MODEL",
     "SHOPAIKEY_EMBEDDING_MODEL",
     "QDRANT_URL",
     "QDRANT_API_KEY",
@@ -101,6 +102,7 @@ def test_settings_load_defaults_from_master_plan(monkeypatch):
     assert settings.ADMIN_API_TOKEN == ""
     assert settings.SUPABASE_STORAGE_BUCKET == "documents"
     assert settings.SHOPAIKEY_BASE_URL == "https://api.shopaikey.com/v1"
+    assert settings.SHOPAIKEY_INPUT_MODEL == "gpt-5-nano"
     assert settings.QDRANT_COLLECTION == "document_chunks_v1"
     assert settings.ENABLE_RERANK is True
     assert settings.RETRIEVAL_SEMANTIC_TOP_K == 40

@@ -121,7 +121,7 @@ def extract_retrieval_hints(
 
     try:
         response = completions.create(
-            model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
+            model=resolved_settings.SHOPAIKEY_INPUT_MODEL,
             messages=[
                 {"role": "system", "content": RETRIEVAL_HINT_SYSTEM_PROMPT},
                 {

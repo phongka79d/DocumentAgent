@@ -462,7 +462,7 @@ def test_extract_retrieval_hints_uses_llm_json_without_hardcoded_query_phrase():
 
     assert hints == {"boundary_positions": ["beginning"]}
     chat_call = fake_shopaikey_client.chat.completions.calls[0]
-    assert chat_call["model"] == settings.SHOPAIKEY_CHAT_MODEL
+    assert chat_call["model"] == settings.SHOPAIKEY_INPUT_MODEL
     assert "opening" in chat_call["messages"][1]["content"]
 
 

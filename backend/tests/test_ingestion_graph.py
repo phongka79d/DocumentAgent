@@ -29,6 +29,7 @@ def _test_settings(*, chunking_strategy: str = "smart_section") -> Settings:
         SHOPAIKEY_BASE_URL="https://api.shopaikey.com/v1",
         SHOPAIKEY_EMBEDDING_MODEL="text-embedding-3-small",
         SHOPAIKEY_CHAT_MODEL="gpt-5-mini",
+        SHOPAIKEY_INPUT_MODEL="gpt-5-mini",
         QDRANT_URL="https://qdrant.example.com",
         QDRANT_API_KEY="qdrant-key",
         QDRANT_COLLECTION="document_chunks_v1",

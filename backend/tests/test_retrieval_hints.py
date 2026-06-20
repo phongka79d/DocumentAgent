@@ -16,6 +16,7 @@ def _test_settings() -> Settings:
         SHOPAIKEY_API_KEY="shopai-key",
         SHOPAIKEY_BASE_URL="https://api.shopaikey.com/v1",
         SHOPAIKEY_CHAT_MODEL="gpt-5-mini",
+        SHOPAIKEY_INPUT_MODEL="gpt-5-mini",
         RETRIEVAL_HINT_TEMPERATURE=0.3,
         RETRIEVAL_HINT_MAX_TOKENS=77,
     )
@@ -81,6 +82,7 @@ def test_extract_retrieval_hints_uses_settings_temperature_and_max_tokens():
 
     assert hints == {"boundary_positions": [RetrievalBoundary.BEGINNING]}
     chat_call = client.chat.completions.calls[0]
+    assert chat_call["model"] == settings.SHOPAIKEY_INPUT_MODEL
     assert chat_call["temperature"] == settings.RETRIEVAL_HINT_TEMPERATURE
     assert chat_call["max_tokens"] == settings.RETRIEVAL_HINT_MAX_TOKENS
     system_prompt = chat_call["messages"][0]["content"]
