@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { DEFAULT_API_BASE_URL, apiClient } from "./api/client";
 import type {
   ChatRequest,
@@ -11,7 +11,7 @@ import type {
 import ChatPanel from "./components/ChatPanel";
 import DocumentList from "./components/DocumentList";
 import MessageHistoryPanel from "./components/MessageHistoryPanel";
-import UploadPanel from "./components/UploadPanel";
+import ChunkViewerPanel from "./components/ChunkViewerPanel";
 
 type DocumentAction = "index" | "reindex" | "delete";
 type ChunkLoadStatus = "idle" | "loading" | "ready" | "error";
@@ -30,31 +30,8 @@ const MESSAGE_HISTORY_LIMIT = 25;
 
 const MOCK_CHAT_RESPONSE = {
   answer:
-    "Pricing is organized by usage tier. The document ties the base plan to volume and shows that higher tiers reduce the unit cost as usage grows.",
-  sources: [
-    {
-      document_id: "mock-document-1",
-      chunk_id: "mock-chunk-12",
-      file_name: "report.pdf",
-      chunk_index: 12,
-      page_start: 3,
-      page_end: 4,
-      heading: null,
-      qdrant_score: 0.78,
-      rerank_score: 0.91,
-    },
-    {
-      document_id: "mock-document-2",
-      chunk_id: "mock-chunk-2",
-      file_name: "summary.md",
-      chunk_index: 2,
-      page_start: null,
-      page_end: null,
-      heading: null,
-      qdrant_score: 0.71,
-      rerank_score: 0.88,
-    },
-  ],
+    "Hello! I've indexed your latest Q3 Financial Reports and Market Analysis documents. How can I assist your research today?",
+  sources: [],
 } satisfies ChatResponse;
 
 function resolveApiBaseUrl(rawValue: string | undefined): string {
@@ -115,6 +92,12 @@ export default function App() {
     documentId: string;
     kind: DocumentAction;
   } | null>(null);
+
+  // New UI states
+  const [activeView, setActiveView] = useState<"chat" | "documents" | "history">("chat");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const readyDocuments = useMemo(
     () => documents.filter((document) => document.status === "ready"),
@@ -482,90 +465,339 @@ export default function App() {
         answer: message.answer,
         sources: Array.isArray(message.sources) ? message.sources : [],
       });
+      setActiveView("chat"); // Switch back to chat to view the selected answer
     },
     [],
   );
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      void handleUpload(file);
+    }
+  };
+
+  const handleNewChat = () => {
+    setQuestion("");
+    setChatResponse(MOCK_CHAT_RESPONSE);
+    setSelectedSource(null);
+    setSelectedChunkIndex(null);
+    setActiveView("chat");
+    setIsMobileSidebarOpen(false);
+  };
+
+  // Client-side filtering of documents based on Search Term
+  const filteredDocuments = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return documents;
+    return documents.filter((doc) =>
+      doc.file_name.toLowerCase().includes(term)
+    );
+  }, [documents, searchTerm]);
+
   const isDocumentActionBusy = isUploading || pendingAction !== null;
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand-block">
+    <div className="app-layout">
+      {/* Sidebar Overlay for mobile screen */}
+      <div 
+        className={`app-sidebar-overlay ${isMobileSidebarOpen ? "open" : ""}`}
+        onClick={() => setIsMobileSidebarOpen(false)}
+      />
+
+      {/* Sidebar Panel */}
+      <aside className={`app-sidebar ${isMobileSidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
           <h1>RagDocument</h1>
+          <p className="sidebar-subtitle">AI Research Assistant</p>
         </div>
 
-        <div className="api-chip" title={apiBaseUrl}>
-          <span className="status-dot" aria-hidden="true" />
-          <span>{apiBaseUrl}</span>
+        {/* Upload hidden input and styled button */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+          disabled={isUploading}
+        />
+        <button 
+          className="btn-primary mb-8"
+          onClick={handleUploadClick}
+          disabled={isUploading}
+        >
+          <span className="material-symbols-outlined">add</span>
+          Upload Document
+        </button>
+
+        {/* Sidebar upload feedback */}
+        {isUploading || uploadError || uploadResult ? (
+          <div className="sidebar-upload-status">
+            <div className="sidebar-upload-text">
+              {isUploading ? "Uploading file..." : uploadResult || "Upload ready"}
+            </div>
+            <div className={`sidebar-upload-feedback ${isUploading ? "loading" : uploadError ? "error" : "success"}`}>
+              {isUploading ? (
+                <>
+                  <span className="spinner" aria-hidden="true" />
+                  <span>Sending to Server</span>
+                </>
+              ) : uploadError ? (
+                uploadError
+              ) : (
+                "File processed!"
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Sidebar Navigation Options */}
+        <nav className="sidebar-menu">
+          <button 
+            className={`menu-item ${activeView === "chat" ? "active" : ""}`}
+            onClick={() => {
+              setActiveView("chat");
+              setIsMobileSidebarOpen(false);
+            }}
+          >
+            <span className="material-symbols-outlined">chat</span>
+            Active Chat
+          </button>
+
+          <button 
+            className={`menu-item ${activeView === "documents" ? "active" : ""}`}
+            onClick={() => {
+              setActiveView("documents");
+              setIsMobileSidebarOpen(false);
+            }}
+          >
+            <span className="material-symbols-outlined">description</span>
+            All Documents
+          </button>
+
+          <button 
+            className={`menu-item ${activeView === "history" ? "active" : ""}`}
+            onClick={() => {
+              setActiveView("history");
+              setIsMobileSidebarOpen(false);
+            }}
+          >
+            <span className="material-symbols-outlined">history</span>
+            Recent Research
+          </button>
+        </nav>
+
+        {/* Chat Document Selection checkboxes in Sidebar */}
+        {activeView === "chat" && readyDocuments.length > 0 ? (
+          <div className="sidebar-sources-section">
+            <span className="sidebar-sources-label">Chat Over Documents</span>
+            {readyDocuments.map((doc) => {
+              const isChecked = selectedDocumentIds.includes(doc.id);
+              return (
+                <label key={doc.id} className="sidebar-source-item">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleToggleSelectedDocument(doc.id)}
+                    disabled={isSendingChat}
+                  />
+                  <span className="sidebar-source-name" title={doc.file_name}>
+                    {doc.file_name}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* Static sidebar items matching layout style */}
+        <div className="menu-footer">
+          <button className="menu-item" onClick={handleNewChat}>
+            <span className="material-symbols-outlined">restart_alt</span>
+            Reset Conversation
+          </button>
         </div>
-      </header>
+      </aside>
 
-      <main className="workspace">
-        <div className="workspace-grid">
-          <div className="workspace-column">
-            <UploadPanel
-              error={uploadError}
-              isUploading={isUploading}
-              onUpload={handleUpload}
-              result={uploadResult}
-            />
-
-            <DocumentList
-              documents={documents}
-              error={documentError}
-              isBusy={isDocumentActionBusy}
-              isLoading={isLoadingDocuments}
-              isRefreshing={isRefreshingDocuments}
-              onDelete={(documentId) =>
-                handleDocumentAction(documentId, "delete")
-              }
-              onIndex={(documentId) => handleDocumentAction(documentId, "index")}
-              onRefresh={refreshDocuments}
-              onReindex={(documentId) =>
-                handleDocumentAction(documentId, "reindex")
-              }
-              pendingAction={pendingAction?.kind ?? null}
-              pendingDocumentId={pendingAction?.documentId ?? null}
-            />
-
-            <MessageHistoryPanel
-              error={messageHistoryError}
-              hasLoaded={hasLoadedMessageHistory}
-              isLoading={isLoadingMessageHistory}
-              messages={messageHistory}
-              onRefresh={handleRefreshMessageHistory}
-              onSelectMessage={handleSelectMessageHistoryItem}
-              selectedMessageId={selectedMessageId}
-            />
+      {/* Main Canvas Area */}
+      <main className="main-area">
+        {/* Topbar/Header */}
+        <header className="app-topbar">
+          <div className="flex items-center gap-4 flex-1">
+            <button 
+              className="mobile-sidebar-toggle"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              aria-label="Open sidebar menu"
+            >
+              <span className="material-symbols-outlined">menu</span>
+            </button>
+            <div className="topbar-search-container">
+              <span className="material-symbols-outlined search-icon">search</span>
+              <input
+                className="search-input"
+                type="text"
+                placeholder="Search across documents..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
 
-          <ChatPanel
-            error={chatError}
-            isSubmitting={isSendingChat}
-            isSourceLoading={selectedSourceLoadState.status === "loading"}
-            onQuestionChange={handleQuestionChange}
-            onSelectSource={handleSelectSource}
-            onSubmit={handleChatSubmit}
-            onToggleDocument={handleToggleSelectedDocument}
-            onViewNextChunk={handleViewNextChunk}
-            onViewPreviousChunk={handleViewPreviousChunk}
-            question={question}
-            readyDocuments={readyDocuments}
-            response={chatResponse}
-            selectedChunk={selectedChunk}
-            selectedDocumentIds={selectedReadyDocumentIds}
+          <div className="topbar-actions">
+            <div className="topbar-api-chip" title={apiBaseUrl}>
+              <span className="api-dot" aria-hidden="true" />
+              <span>{apiBaseUrl}</span>
+            </div>
+            
+            <button className="topbar-action-button" aria-label="Notifications">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+            
+            <button 
+              className="topbar-action-button" 
+              onClick={() => setActiveView("documents")}
+              aria-label="Settings"
+            >
+              <span className="material-symbols-outlined">settings</span>
+            </button>
+
+            <div className="topbar-avatar">
+              <img 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcCw0_qGkLU5bX1wJiMYH1_xOr5JPaOLk2JIEEioy-ac2VmNMbCm5eZ1Na2iOw7gTfFe2rfZZAOic56GQaQEiINDiQWysoSWrlhWwSNa-xPFHiWWBls9I0WIAZ4tB8wkZrc4ZGWLgKfKidT45E-X4VVTszd532gAtF0KopoJNWn2nycKs_Kn9FR2ERxzRDLBhDDbnaF2vjlzAXGo0bdXi8amQI_AIbKZ6y4uu8T8vWuo4IVmwOfsWejoYlj2n9uOKFN9EN4-4UZqcC" 
+                alt="User headshot avatar" 
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* Central Component Switcher */}
+        <div className="content-canvas">
+          {activeView === "chat" ? (
+            <ChatPanel
+              error={chatError}
+              isSubmitting={isSendingChat}
+              isSourceLoading={selectedSourceLoadState.status === "loading"}
+              onQuestionChange={handleQuestionChange}
+              onSelectSource={handleSelectSource}
+              onSubmit={handleChatSubmit}
+              onToggleDocument={handleToggleSelectedDocument}
+              onViewNextChunk={handleViewNextChunk}
+              onViewPreviousChunk={handleViewPreviousChunk}
+              question={question}
+              readyDocuments={readyDocuments}
+              response={chatResponse}
+              selectedChunk={selectedChunk}
+              selectedDocumentIds={selectedReadyDocumentIds}
+              selectedSource={selectedSource}
+              sourceError={
+                selectedSourceLoadState.status === "error"
+                  ? selectedSourceLoadState.error
+                  : null
+              }
+              hasNextChunk={nextChunk !== null}
+              hasPreviousChunk={previousChunk !== null}
+            />
+          ) : activeView === "documents" ? (
+            <div>
+              <div className="documents-view-header">
+                <h2>Document Management</h2>
+                <button
+                  className="refresh-button"
+                  onClick={refreshDocuments}
+                  disabled={isLoadingDocuments || isRefreshingDocuments || isDocumentActionBusy}
+                >
+                  {isRefreshingDocuments ? (
+                    <span className="spinner" aria-hidden="true" />
+                  ) : (
+                    <span className="material-symbols-outlined">refresh</span>
+                  )}
+                  <span>{isRefreshingDocuments ? "Refreshing" : "Refresh List"}</span>
+                </button>
+              </div>
+
+              <DocumentList
+                documents={filteredDocuments}
+                error={documentError}
+                isBusy={isDocumentActionBusy}
+                isLoading={isLoadingDocuments}
+                isRefreshing={isRefreshingDocuments}
+                onDelete={(documentId) => handleDocumentAction(documentId, "delete")}
+                onIndex={(documentId) => handleDocumentAction(documentId, "index")}
+                onRefresh={refreshDocuments}
+                onReindex={(documentId) => handleDocumentAction(documentId, "reindex")}
+                pendingAction={pendingAction?.kind ?? null}
+                pendingDocumentId={pendingAction?.documentId ?? null}
+              />
+            </div>
+          ) : (
+            <div>
+              <div className="documents-view-header">
+                <h2>Recent Research History</h2>
+                <button
+                  className="refresh-button"
+                  onClick={handleRefreshMessageHistory}
+                  disabled={isLoadingMessageHistory}
+                >
+                  {isLoadingMessageHistory && hasLoadedMessageHistory ? (
+                    <span className="spinner" aria-hidden="true" />
+                  ) : (
+                    <span className="material-symbols-outlined">refresh</span>
+                  )}
+                  <span>Refresh History</span>
+                </button>
+              </div>
+
+              <MessageHistoryPanel
+                error={messageHistoryError}
+                hasLoaded={hasLoadedMessageHistory}
+                isLoading={isLoadingMessageHistory}
+                messages={messageHistory}
+                onRefresh={handleRefreshMessageHistory}
+                onSelectMessage={handleSelectMessageHistoryItem}
+                selectedMessageId={selectedMessageId}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Right Sidebar: Document Preview (Collapsible) */}
+      <aside className={`app-preview-panel ${selectedSource ? "open" : ""}`}>
+        <div className="preview-panel-header">
+          <div className="preview-panel-header-title">
+            <span className="material-symbols-outlined">description</span>
+            <h2>{selectedSource?.file_name ?? "Document Preview"}</h2>
+          </div>
+          <button 
+            className="preview-close-button" 
+            onClick={() => setSelectedSource(null)}
+            aria-label="Close preview panel"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="preview-panel-content">
+          <ChunkViewerPanel
             selectedSource={selectedSource}
-            sourceError={
+            selectedChunk={selectedChunk}
+            isLoading={selectedSourceLoadState.status === "loading"}
+            error={
               selectedSourceLoadState.status === "error"
                 ? selectedSourceLoadState.error
                 : null
             }
-            hasNextChunk={nextChunk !== null}
             hasPreviousChunk={previousChunk !== null}
+            hasNextChunk={nextChunk !== null}
+            onViewPreviousChunk={handleViewPreviousChunk}
+            onViewNextChunk={handleViewNextChunk}
           />
         </div>
-      </main>
+      </aside>
     </div>
   );
 }

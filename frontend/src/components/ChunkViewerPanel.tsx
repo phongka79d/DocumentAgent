@@ -30,8 +30,7 @@ function formatScore(score: number | null): string {
   if (score === null) {
     return "N/A";
   }
-
-  return score.toFixed(3);
+  return `${(score * 100).toFixed(0)}%`;
 }
 
 export default function ChunkViewerPanel({
@@ -45,98 +44,135 @@ export default function ChunkViewerPanel({
   onViewNextChunk,
 }: ChunkViewerPanelProps) {
   if (!selectedSource) {
-    return <div className="chunk-viewer-state">No source selected</div>;
-  }
-
-  if (isLoading) {
-    return <div className="chunk-viewer-state">Loading source</div>;
-  }
-
-  if (error) {
-    return <div className="chunk-viewer-state chunk-viewer-state--error">Unable to load source</div>;
-  }
-
-  if (!selectedChunk) {
     return (
-      <div className="chunk-viewer-state chunk-viewer-state--warning">
-        Selected chunk not found
+      <div className="state-container">
+        <span className="material-symbols-outlined state-icon">description</span>
+        <h3 className="state-title">No Source Selected</h3>
+        <p className="state-message">
+          Click on a citation card in the chat panel to view its full text and metadata.
+        </p>
       </div>
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="state-container">
+        <span className="spinner state-icon" aria-hidden="true" />
+        <h3 className="state-title">Loading Source</h3>
+        <p className="state-message">Fetching document fragment from server...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="state-container">
+        <span className="material-symbols-outlined state-icon" style={{ color: "var(--danger)" }}>error</span>
+        <h3 className="state-title" style={{ color: "var(--danger)" }}>Error Loading Source</h3>
+        <p className="state-message">{error}</p>
+      </div>
+    );
+  }
+
+  if (!selectedChunk) {
+    return (
+      <div className="state-container">
+        <span className="material-symbols-outlined state-icon" style={{ color: "var(--warning)" }}>warning</span>
+        <h3 className="state-title">Chunk Not Found</h3>
+        <p className="state-message">The requested document fragment could not be located.</p>
+      </div>
+    );
+  }
+
+  const scoreVal = selectedSource.rerank_score ?? selectedSource.qdrant_score;
+  const relevanceStr = formatScore(scoreVal);
+
   const pageRange =
     formatPageRange(selectedChunk.page_start, selectedChunk.page_end) ??
-    formatPageRange(selectedSource.page_start, selectedSource.page_end);
-  const heading = selectedChunk.heading ?? selectedSource.heading;
+    formatPageRange(selectedSource.page_start, selectedSource.page_end) ??
+    "N/A";
+  const heading = selectedChunk.heading ?? selectedSource.heading ?? "N/A";
   const sectionPath =
-    selectedChunk.section_path.length > 0
+    selectedChunk.section_path && selectedChunk.section_path.length > 0
       ? selectedChunk.section_path.join(" / ")
-      : null;
+      : "N/A";
 
   return (
-    <div className="chunk-viewer">
-      <div className="chunk-viewer__toolbar">
-        <div className="chunk-viewer__identity">
-          <div className="chunk-viewer__file" title={selectedSource.file_name}>
-            {selectedSource.file_name}
-          </div>
-          <div className="chunk-viewer__chunk">Chunk {selectedChunk.chunk_index}</div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: "24px" }}>
+      {/* Fragment Card */}
+      <div className="preview-fragment-card">
+        <div className="preview-fragment-header">
+          <span className="preview-fragment-tag">Fragment {selectedChunk.chunk_index}</span>
+          <span className="preview-fragment-relevance">Relevance: {relevanceStr}</span>
+        </div>
+        <div className="preview-fragment-text">
+          {selectedChunk.content}
         </div>
 
-        <div className="chunk-viewer__nav">
+        {/* Fragment Navigation */}
+        <div className="chunk-viewer-nav-group">
           <button
-            className="button button--secondary button--compact chunk-viewer__nav-button"
+            className="chunk-viewer-nav-btn"
             type="button"
             onClick={onViewPreviousChunk}
             disabled={!hasPreviousChunk}
           >
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>navigate_before</span>
             Previous
           </button>
           <button
-            className="button button--secondary button--compact chunk-viewer__nav-button"
+            className="chunk-viewer-nav-btn"
             type="button"
             onClick={onViewNextChunk}
             disabled={!hasNextChunk}
           >
             Next
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>navigate_next</span>
           </button>
         </div>
       </div>
 
-      <dl className="chunk-viewer__meta">
-        {pageRange ? (
-          <div className="chunk-viewer__meta-item">
-            <dt>Pages</dt>
-            <dd>{pageRange}</dd>
+      {/* Metadata Section */}
+      <div className="preview-metadata-section">
+        <h3 className="preview-metadata-title">Metadata</h3>
+        <div className="preview-metadata-grid">
+          <div className="preview-metadata-card">
+            <span className="preview-metadata-label">Page Range</span>
+            <span className="preview-metadata-value" title={pageRange}>{pageRange}</span>
           </div>
-        ) : null}
 
-        {heading ? (
-          <div className="chunk-viewer__meta-item">
-            <dt>Heading</dt>
-            <dd>{heading}</dd>
+          <div className="preview-metadata-card">
+            <span className="preview-metadata-label">Heading</span>
+            <span className="preview-metadata-value" title={heading}>{heading}</span>
           </div>
-        ) : null}
 
-        {sectionPath ? (
-          <div className="chunk-viewer__meta-item">
-            <dt>Section path</dt>
-            <dd>{sectionPath}</dd>
+          <div className="preview-metadata-card">
+            <span className="preview-metadata-label">Section Path</span>
+            <span className="preview-metadata-value" title={sectionPath}>{sectionPath}</span>
           </div>
-        ) : null}
 
-        <div className="chunk-viewer__meta-item">
-          <dt>Qdrant score</dt>
-          <dd>{formatScore(selectedSource.qdrant_score)}</dd>
+          <div className="preview-metadata-card">
+            <span className="preview-metadata-label">Qdrant Score</span>
+            <span className="preview-metadata-value">
+              {selectedSource.qdrant_score !== null ? selectedSource.qdrant_score.toFixed(4) : "N/A"}
+            </span>
+          </div>
         </div>
+      </div>
 
-        <div className="chunk-viewer__meta-item">
-          <dt>Rerank score</dt>
-          <dd>{formatScore(selectedSource.rerank_score)}</dd>
-        </div>
-      </dl>
-
-      <div className="chunk-viewer__content">{selectedChunk.content}</div>
+      {/* Action Footer */}
+      <div className="preview-full-doc-container">
+        <button 
+          className="btn-outline" 
+          disabled 
+          title="Full document viewer requires premium document integration."
+        >
+          <span className="material-symbols-outlined">open_in_new</span>
+          Open Full Document
+        </button>
+      </div>
     </div>
   );
 }
+

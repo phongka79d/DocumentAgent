@@ -1,11 +1,10 @@
-﻿import { type FormEvent } from "react";
+import { useEffect, useRef, type FormEvent, type KeyboardEvent } from "react";
 import type {
   ChatResponse,
   DocumentChunk,
   DocumentResponse,
   SourceCitation,
 } from "../api/types";
-import ChunkViewerPanel from "./ChunkViewerPanel";
 import SourceList from "./SourceList";
 
 interface ChatPanelProps {
@@ -29,152 +28,147 @@ interface ChatPanelProps {
   onViewNextChunk: () => void;
 }
 
+const MOCK_CHAT_ANSWER =
+  "Hello! I've indexed your latest Q3 Financial Reports and Market Analysis documents. How can I assist your research today?";
+
 export default function ChatPanel({
   error,
   isSubmitting,
-  isSourceLoading,
   onQuestionChange,
   onSelectSource,
   onSubmit,
-  onToggleDocument,
-  onViewNextChunk,
-  onViewPreviousChunk,
   question,
-  readyDocuments,
   response,
-  selectedChunk,
-  selectedDocumentIds,
   selectedSource,
-  sourceError,
-  hasNextChunk,
-  hasPreviousChunk,
 }: ChatPanelProps) {
-  const selectedCount = selectedDocumentIds.length;
-  const hasReadyDocuments = readyDocuments.length > 0;
-  const statusMessage = error ?? (isSubmitting ? "Sending" : null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [response, isSubmitting]);
+
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
-
     if (isSubmitting || !question.trim()) {
       return;
     }
-
     void onSubmit();
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (!isSubmitting && question.trim()) {
+        void onSubmit();
+      }
+    }
+  }
+
+  const hasAsked = isSubmitting || response.answer !== MOCK_CHAT_ANSWER;
+
   return (
-    <section className="panel chat-panel" aria-label="Chat">
-      <div className="panel-heading">
-        <h2>Chat</h2>
-      </div>
-
-      <form className="chat-form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span className="field-label">Question</span>
-          <textarea
-            className="chat-question"
-            value={question}
-            onChange={(event) => onQuestionChange(event.target.value)}
-            placeholder="What does this document say about pricing?"
-            rows={5}
-            disabled={isSubmitting}
-          />
-        </label>
-
-        <div className="chat-documents" aria-label="Ready documents">
-          <div className="chat-documents__header">
-            <span className="field-label">Documents</span>
-            <span className="chat-documents__count">
-              {selectedCount > 0 ? `${selectedCount} selected` : "All documents"}
-            </span>
+    <section className="chat-messages-wrapper" style={{ display: "flex", flexDirection: "column", height: "100%" }} aria-label="Chat Area">
+      {/* Scrollable messages area */}
+      <div className="chat-messages-container">
+        {/* AI Greeting */}
+        <div className="chat-bubble-row ai">
+          <div className="chat-avatar">
+            <span className="material-symbols-outlined">auto_awesome</span>
           </div>
-
-          {hasReadyDocuments ? (
-            <div className="chat-documents__list" role="group">
-              {readyDocuments.map((document) => {
-                const checked = selectedDocumentIds.includes(document.id);
-
-                return (
-                  <label key={document.id} className="chat-document-option">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => onToggleDocument(document.id)}
-                      disabled={isSubmitting}
-                    />
-                    <span
-                      className="chat-document-option__label"
-                      title={document.file_name}
-                    >
-                      {document.file_name}
-                    </span>
-                  </label>
-                );
-              })}
+          <div className="chat-bubble-body">
+            <div className="chat-bubble-content">
+              {MOCK_CHAT_ANSWER}
             </div>
-          ) : (
-            <div className="chat-documents__empty">No ready documents</div>
-          )}
+          </div>
         </div>
 
-        <div className="chat-footer">
+        {/* User query and AI response */}
+        {hasAsked && (
+          <>
+            {/* User message bubble */}
+            <div className="chat-bubble-row user">
+              <div className="chat-avatar">
+                <span className="material-symbols-outlined">person</span>
+              </div>
+              <div className="chat-bubble-body">
+                <div className="chat-bubble-content">
+                  {question.trim() || "Research Query"}
+                </div>
+              </div>
+            </div>
+
+            {/* AI response bubble */}
+            <div className="chat-bubble-row ai">
+              <div className="chat-avatar">
+                <span className="material-symbols-outlined">auto_awesome</span>
+              </div>
+              <div className="chat-bubble-body">
+                {isSubmitting ? (
+                  <div className="chat-bubble-content">
+                    <span className="spinner" aria-hidden="true" />
+                    <span style={{ marginLeft: "8px" }}>Analyzing documents...</span>
+                  </div>
+                ) : error ? (
+                  <div className="chat-bubble-content" style={{ color: "var(--danger)", border: "1px solid var(--danger)" }}>
+                    <span className="material-symbols-outlined" style={{ verticalAlign: "middle", marginRight: "6px" }}>error</span>
+                    {error}
+                  </div>
+                ) : (
+                  <>
+                    <div className="chat-bubble-content">
+                      {response.answer}
+                    </div>
+
+                    {response.sources && response.sources.length > 0 && (
+                      <div className="chat-sources-container">
+                        <span className="chat-sources-label">Sources & Citations</span>
+                        <SourceList
+                          sources={response.sources}
+                          selectedSourceChunkId={selectedSource?.chunk_id ?? null}
+                          onSelectSource={onSelectSource}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input bar area */}
+      <form onSubmit={handleSubmit} className="chat-input-bar-container">
+        <div className="chat-input-bar">
+          <textarea
+            className="chat-input-textarea"
+            value={question}
+            onChange={(e) => onQuestionChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask a question about your indexed documents... (Enter to send, Shift+Enter for new line)"
+            rows={1}
+            disabled={isSubmitting}
+            aria-label="Ask a question"
+          />
           <button
-            className="button button--primary"
+            className="chat-send-button"
             type="submit"
             disabled={isSubmitting || !question.trim()}
-            aria-busy={isSubmitting}
+            aria-label="Send question"
           >
             {isSubmitting ? (
-              <span className="button-spinner" aria-hidden="true" />
-            ) : null}
-            <span>{isSubmitting ? "Sending" : "Ask"}</span>
+              <span className="spinner" aria-hidden="true" style={{ color: "var(--on-primary)" }} />
+            ) : (
+              <span className="material-symbols-outlined">send</span>
+            )}
           </button>
-
-          <div
-            className={`chat-status ${
-              error
-                ? "chat-status--error"
-                : isSubmitting
-                  ? "chat-status--loading"
-                  : "chat-status--idle"
-            }`}
-            aria-live="polite"
-          >
-            {statusMessage}
-          </div>
         </div>
+        <p className="chat-disclaimer">
+          InsightDoc can make mistakes. Verify important information against the original documents.
+        </p>
       </form>
-
-      <div className="chat-response" aria-live="polite">
-        <section className="chat-response__section">
-          <span className="field-label">Answer</span>
-          <p className="chat-answer">{response.answer}</p>
-        </section>
-
-        <section className="chat-response__section">
-          <span className="field-label">Sources</span>
-          <SourceList
-            sources={response.sources}
-            selectedSourceChunkId={selectedSource?.chunk_id ?? null}
-            onSelectSource={onSelectSource}
-          />
-        </section>
-
-        <section className="chat-response__section">
-          <span className="field-label">Source viewer</span>
-          <ChunkViewerPanel
-            selectedSource={selectedSource}
-            selectedChunk={selectedChunk}
-            isLoading={isSourceLoading}
-            error={sourceError}
-            hasPreviousChunk={hasPreviousChunk}
-            hasNextChunk={hasNextChunk}
-            onViewPreviousChunk={onViewPreviousChunk}
-            onViewNextChunk={onViewNextChunk}
-          />
-        </section>
-      </div>
     </section>
   );
 }
+

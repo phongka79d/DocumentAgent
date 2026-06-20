@@ -25,13 +25,20 @@ function formatTimestamp(value: string | null): string {
   if (!value) {
     return "-";
   }
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return "-";
   }
-
   return DATE_FORMATTER.format(date);
+}
+
+function formatFileSize(bytes: number | null): string {
+  if (bytes === null) return "N/A";
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 function formatStatusLabel(status: DocumentResponse["status"]): string {
@@ -67,10 +74,8 @@ export default function DocumentList({
   error,
   isBusy,
   isLoading,
-  isRefreshing,
   onDelete,
   onIndex,
-  onRefresh,
   onReindex,
   pendingAction,
   pendingDocumentId,
@@ -78,178 +83,168 @@ export default function DocumentList({
   const hasDocuments = documents.length > 0;
   const showEmptyState = !hasDocuments && !error && !isLoading;
 
-  return (
-    <section className="panel document-list-panel" aria-label="Documents">
-      <div className="panel-heading">
-        <h2>Documents</h2>
-
-        <button
-          className="button button--secondary button--compact"
-          type="button"
-          onClick={() => void onRefresh()}
-          disabled={isBusy || isLoading || isRefreshing}
-          aria-busy={isRefreshing}
-        >
-          {isRefreshing ? (
-            <span className="button-spinner" aria-hidden="true" />
-          ) : null}
-          <span>{isRefreshing ? "Refreshing" : "Refresh"}</span>
-        </button>
+  if (error) {
+    return (
+      <div className="state-container">
+        <span className="material-symbols-outlined state-icon" style={{ color: "var(--danger)" }}>error</span>
+        <h3 className="state-title" style={{ color: "var(--danger)" }}>Error Loading Documents</h3>
+        <p className="state-message">{error}</p>
       </div>
+    );
+  }
 
-      {error ? (
-        <div className="document-list-error" role="alert">
-          {error}
-        </div>
-      ) : null}
+  if (isLoading && !hasDocuments) {
+    return (
+      <div className="state-container">
+        <span className="spinner state-icon" aria-hidden="true" />
+        <h3 className="state-title">Loading Documents</h3>
+        <p className="state-message">Fetching documents from the server...</p>
+      </div>
+    );
+  }
 
-      {isLoading && !hasDocuments ? (
-        <div className="document-list-state" aria-live="polite">
-          Loading documents
-        </div>
-      ) : hasDocuments ? (
-        <div className="document-list">
-          {documents.map((document) => {
-            const rowBusy = pendingDocumentId === document.id;
-            const indexBusy = isDocumentActionBusy(
-              document.id,
-              "index",
-              pendingDocumentId,
-              pendingAction,
-              isBusy,
-              isLoading,
-            );
-            const reindexBusy = isDocumentActionBusy(
-              document.id,
-              "reindex",
-              pendingDocumentId,
-              pendingAction,
-              isBusy,
-              isLoading,
-            );
-            const deleteBusy = isDocumentActionBusy(
-              document.id,
-              "delete",
-              pendingDocumentId,
-              pendingAction,
-              isBusy,
-              isLoading,
-            );
+  if (showEmptyState) {
+    return (
+      <div className="state-container">
+        <span className="material-symbols-outlined state-icon">folder_open</span>
+        <h3 className="state-title">No Documents Found</h3>
+        <p className="state-message">Upload some files from the sidebar to begin indexing.</p>
+      </div>
+    );
+  }
 
-            return (
-              <article
-                key={document.id}
-                className={`document-row ${
-                  document.status === "failed" ? "document-row--failed" : ""
-                }`}
-                data-status={document.status}
+  return (
+    <div className="documents-grid">
+      {documents.map((document) => {
+        const isFailed = document.status === "failed";
+        const isProcessing = document.status === "processing";
+        const isReady = document.status === "ready";
+
+        const indexBusy = isDocumentActionBusy(
+          document.id,
+          "index",
+          pendingDocumentId,
+          pendingAction,
+          isBusy,
+          isLoading,
+        );
+        const reindexBusy = isDocumentActionBusy(
+          document.id,
+          "reindex",
+          pendingDocumentId,
+          pendingAction,
+          isBusy,
+          isLoading,
+        );
+        const deleteBusy = isDocumentActionBusy(
+          document.id,
+          "delete",
+          pendingDocumentId,
+          pendingAction,
+          isBusy,
+          isLoading,
+        );
+
+        let cardClass = "document-card";
+        if (isFailed) cardClass += " failed";
+        if (isProcessing) cardClass += " processing";
+
+        return (
+          <article key={document.id} className={cardClass} data-status={document.status}>
+            {/* Header: Title + Status Badge */}
+            <div className="document-card-header">
+              <span className="document-card-title" title={document.file_name}>
+                {document.file_name}
+              </span>
+              <span className={`status-badge ${document.status}`}>
+                {formatStatusLabel(document.status)}
+              </span>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="document-card-stats">
+              <div className="document-stat-item">
+                <span className="document-stat-label">Chunks</span>
+                <span className="document-stat-value" title={document.total_chunks.toString()}>
+                  {document.total_chunks.toLocaleString()}
+                </span>
+              </div>
+              <div className="document-stat-item">
+                <span className="document-stat-label">Size</span>
+                <span className="document-stat-value">
+                  {formatFileSize(document.file_size)}
+                </span>
+              </div>
+              <div className="document-stat-item">
+                <span className="document-stat-label">Created</span>
+                <span className="document-stat-value" title={document.created_at ?? "-"}>
+                  {formatTimestamp(document.created_at)}
+                </span>
+              </div>
+            </div>
+
+            {/* Failed Error Message */}
+            {isFailed && document.error_message && (
+              <div className="document-card-error" role="alert">
+                {document.error_message.trim()}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="document-card-actions">
+              {!isReady && !isProcessing && (
+                <button
+                  className="document-action-btn"
+                  type="button"
+                  onClick={() => void onIndex(document.id)}
+                  disabled={indexBusy}
+                  aria-busy={pendingDocumentId === document.id && pendingAction === "index"}
+                >
+                  {pendingDocumentId === document.id && pendingAction === "index" ? (
+                    <span className="spinner" aria-hidden="true" />
+                  ) : (
+                    <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>play_arrow</span>
+                  )}
+                  <span>Index</span>
+                </button>
+              )}
+
+              {(isReady || isFailed) && (
+                <button
+                  className="document-action-btn"
+                  type="button"
+                  onClick={() => void onReindex(document.id)}
+                  disabled={reindexBusy}
+                  aria-busy={pendingDocumentId === document.id && pendingAction === "reindex"}
+                >
+                  {pendingDocumentId === document.id && pendingAction === "reindex" ? (
+                    <span className="spinner" aria-hidden="true" />
+                  ) : (
+                    <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>sync</span>
+                  )}
+                  <span>Re-index</span>
+                </button>
+              )}
+
+              <button
+                className="document-action-btn delete"
+                type="button"
+                onClick={() => void onDelete(document.id)}
+                disabled={deleteBusy}
+                aria-busy={pendingDocumentId === document.id && pendingAction === "delete"}
               >
-                <div className="document-row__header">
-                  <div className="document-row__identity">
-                    <span
-                      className="document-row__name"
-                      title={document.file_name}
-                    >
-                      {document.file_name}
-                    </span>
-                    <span
-                      className={`status-tag status-tag--${document.status}`}
-                    >
-                      {formatStatusLabel(document.status)}
-                    </span>
-                  </div>
-
-                  <div className="document-row__actions">
-                    <button
-                      className="button button--secondary button--compact"
-                      type="button"
-                      onClick={() => void onIndex(document.id)}
-                      disabled={indexBusy}
-                      aria-busy={
-                        pendingDocumentId === document.id &&
-                        pendingAction === "index"
-                      }
-                    >
-                      {pendingDocumentId === document.id &&
-                      pendingAction === "index" ? (
-                        <span className="button-spinner" aria-hidden="true" />
-                      ) : null}
-                      <span>Index</span>
-                    </button>
-
-                    <button
-                      className="button button--secondary button--compact"
-                      type="button"
-                      onClick={() => void onReindex(document.id)}
-                      disabled={reindexBusy}
-                      aria-busy={
-                        pendingDocumentId === document.id &&
-                        pendingAction === "reindex"
-                      }
-                    >
-                      {pendingDocumentId === document.id &&
-                      pendingAction === "reindex" ? (
-                        <span className="button-spinner" aria-hidden="true" />
-                      ) : null}
-                      <span>Re-index</span>
-                    </button>
-
-                    <button
-                      className="button button--danger button--compact"
-                      type="button"
-                      onClick={() => void onDelete(document.id)}
-                      disabled={deleteBusy}
-                      aria-busy={
-                        pendingDocumentId === document.id &&
-                        pendingAction === "delete"
-                      }
-                    >
-                      {pendingDocumentId === document.id &&
-                      pendingAction === "delete" ? (
-                        <span className="button-spinner" aria-hidden="true" />
-                      ) : null}
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                </div>
-
-                <dl className="document-row__meta">
-                  <div className="document-metric">
-                    <dt>Total chunks</dt>
-                    <dd>{document.total_chunks.toLocaleString()}</dd>
-                  </div>
-
-                  <div className="document-metric">
-                    <dt>Created</dt>
-                    <dd title={document.created_at ?? "-"}>
-                      {formatTimestamp(document.created_at)}
-                    </dd>
-                  </div>
-
-                  <div className="document-metric">
-                    <dt>Indexed</dt>
-                    <dd title={document.indexed_at ?? "-"}>
-                      {formatTimestamp(document.indexed_at)}
-                    </dd>
-                  </div>
-                </dl>
-
-                {document.status === "failed" ? (
-                  <div className="document-row__error" role="status">
-                    {document.error_message?.trim() || "Failed"}
-                  </div>
-                ) : null}
-
-                {rowBusy ? <span className="sr-only">Action in progress</span> : null}
-              </article>
-            );
-          })}
-        </div>
-      ) : showEmptyState ? (
-        <div className="document-list-state" aria-live="polite">
-          No documents
-        </div>
-      ) : null}
-    </section>
+                {pendingDocumentId === document.id && pendingAction === "delete" ? (
+                  <span className="spinner" aria-hidden="true" />
+                ) : (
+                  <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>delete</span>
+                )}
+                <span>Delete</span>
+              </button>
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
+

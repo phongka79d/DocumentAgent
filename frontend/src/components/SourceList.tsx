@@ -1,19 +1,9 @@
-﻿import type { SourceCitation } from "../api/types";
+import type { SourceCitation } from "../api/types";
 
 interface SourceListProps {
   sources: SourceCitation[];
   selectedSourceChunkId: string | null;
   onSelectSource: (source: SourceCitation) => void;
-}
-
-function formatSourceCitation(source: SourceCitation, index: number): string {
-  const sourceLabel = `Source ${index + 1}: ${source.file_name}, chunk ${source.chunk_index}`;
-
-  if (source.page_start !== null && source.page_end !== null) {
-    return `${sourceLabel}, pages ${source.page_start}-${source.page_end}`;
-  }
-
-  return sourceLabel;
 }
 
 export default function SourceList({
@@ -22,31 +12,52 @@ export default function SourceList({
   onSelectSource,
 }: SourceListProps) {
   if (sources.length === 0) {
-    return <div className="source-list__empty">No sources returned</div>;
+    return <div className="chat-sources-empty">No sources cited for this response.</div>;
+  }
+
+  function getFileIcon(fileName: string) {
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    if (ext === "pdf") {
+      return <span className="material-symbols-outlined citation-card-icon">picture_as_pdf</span>;
+    } else if (ext === "docx" || ext === "doc") {
+      return <span className="material-symbols-outlined citation-card-icon docx">description</span>;
+    } else if (ext === "txt") {
+      return <span className="material-symbols-outlined citation-card-icon txt">article</span>;
+    } else if (ext === "md" || ext === "markdown") {
+      return <span className="material-symbols-outlined citation-card-icon md">description</span>;
+    }
+    return <span className="material-symbols-outlined citation-card-icon">insert_drive_file</span>;
   }
 
   return (
-    <ol className="source-list">
-      {sources.map((source, index) => {
+    <div className="chat-sources-list" role="list">
+      {sources.map((source) => {
         const isSelected = source.chunk_id === selectedSourceChunkId;
+        const pageInfo = source.page_start !== null
+          ? `Page ${source.page_start}${source.page_end && source.page_end !== source.page_start ? `-${source.page_end}` : ""}`
+          : `Chunk ${source.chunk_index}`;
 
         return (
-          <li key={source.chunk_id} className="source-list__item">
-            <button
-              className={`source-list__button${
-                isSelected ? " source-list__button--selected" : ""
-              }`}
-              type="button"
-              onClick={() => onSelectSource(source)}
-              aria-pressed={isSelected}
-            >
-              <span className="source-list__text">
-                {formatSourceCitation(source, index)}
-              </span>
-            </button>
-          </li>
+          <button
+            key={source.chunk_id}
+            className={`citation-card ${isSelected ? "selected" : ""}`}
+            type="button"
+            onClick={() => onSelectSource(source)}
+            aria-label={`View citation from ${source.file_name}, ${pageInfo}`}
+          >
+            {getFileIcon(source.file_name)}
+            <div className="citation-card-details">
+              <div className="citation-card-name" title={source.file_name}>
+                {source.file_name}
+              </div>
+              <div className="citation-card-meta">
+                {pageInfo} {source.rerank_score !== null ? `• Score: ${(source.rerank_score * 100).toFixed(0)}%` : source.qdrant_score !== null ? `• Score: ${(source.qdrant_score * 100).toFixed(0)}%` : ""}
+              </div>
+            </div>
+          </button>
         );
       })}
-    </ol>
+    </div>
   );
 }
+
