@@ -247,6 +247,12 @@ def test_service_client_modules_import_without_creating_clients(monkeypatch):
     importlib.reload(shopaikey_module)
     importlib.reload(jina_module)
 
+    monkeypatch.undo()
+    importlib.reload(supabase_module)
+    importlib.reload(qdrant_module)
+    importlib.reload(shopaikey_module)
+    importlib.reload(jina_module)
+
 
 def test_supabase_client_factory_reads_settings_without_network_calls(monkeypatch):
     _clear_settings_env(monkeypatch)

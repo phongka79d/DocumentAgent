@@ -1,8 +1,10 @@
 from app.core.contracts import (
+    ChunkField,
     ChunkingStrategy,
     ChunkingVersion,
     ContextMode,
     DocumentStatus,
+    MessageField,
     QdrantPayloadKey,
     RetrievalBoundary,
     SOURCE_PREVIEW_CHARS,
@@ -24,6 +26,25 @@ def test_shared_contract_literals_match_database_and_api_values():
     assert ChunkingStrategy.SMART_SECTION == "smart_section"
     assert ChunkingVersion.FIXED_TOKEN == "v1"
     assert ChunkingVersion.SMART_SECTION == "v2"
+
+    assert ChunkField.DOCUMENT_ID == "document_id"
+    assert ChunkField.CHUNK_INDEX == "chunk_index"
+    assert ChunkField.CONTENT == "content"
+    assert ChunkField.CONTENT_HASH == "content_hash"
+    assert ChunkField.TOKEN_COUNT == "token_count"
+    assert ChunkField.CHUNK_TYPE == "chunk_type"
+    assert ChunkField.HEADING == "heading"
+    assert ChunkField.SECTION_PATH == "section_path"
+    assert ChunkField.PAGE_START == "page_start"
+    assert ChunkField.PAGE_END == "page_end"
+    assert ChunkField.TOKEN_START == "token_start"
+    assert ChunkField.TOKEN_END == "token_end"
+    assert ChunkField.METADATA == "metadata"
+
+    assert MessageField.QUESTION == "question"
+    assert MessageField.ANSWER == "answer"
+    assert MessageField.SOURCES == "sources"
+    assert MessageField.METADATA == "metadata"
 
     assert ContextMode.NEIGHBOR == "neighbor"
     assert ContextMode.SECTION_AWARE == "section_aware"
