@@ -242,16 +242,17 @@ def test_service_client_modules_import_without_creating_clients(monkeypatch):
     import app.services.shopaikey_client as shopaikey_module
     import app.services.jina_client as jina_module
 
-    importlib.reload(supabase_module)
-    importlib.reload(qdrant_module)
-    importlib.reload(shopaikey_module)
-    importlib.reload(jina_module)
-
-    monkeypatch.undo()
-    importlib.reload(supabase_module)
-    importlib.reload(qdrant_module)
-    importlib.reload(shopaikey_module)
-    importlib.reload(jina_module)
+    try:
+        importlib.reload(supabase_module)
+        importlib.reload(qdrant_module)
+        importlib.reload(shopaikey_module)
+        importlib.reload(jina_module)
+    finally:
+        monkeypatch.undo()
+        importlib.reload(supabase_module)
+        importlib.reload(qdrant_module)
+        importlib.reload(shopaikey_module)
+        importlib.reload(jina_module)
 
 
 def test_supabase_client_factory_reads_settings_without_network_calls(monkeypatch):
