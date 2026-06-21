@@ -344,6 +344,7 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
         return _failure_state(document_id, "Embedding count does not match chunk count")
 
     file_name = _resolve_file_name(state)
+    mime_type = _resolve_mime_type(state)
     if file_name is None:
         return _failure_state(document_id, "Document file_name is required")
 
@@ -364,6 +365,7 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
                 document_id,
                 chunk=chunk,
                 file_name=file_name,
+                mime_type=mime_type,
             )
             point = ingestion_payloads.build_qdrant_point(
                 chunk_id=point_id,

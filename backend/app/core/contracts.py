@@ -93,6 +93,7 @@ class QdrantPayloadKey(StrEnum):
     CHUNK_ID = "chunk_id"
     DOCUMENT_ID = "document_id"
     FILE_NAME = "file_name"
+    MIME_TYPE = "mime_type"
     CHUNK_INDEX = "chunk_index"
     CONTENT = "content"
     TEXT = "text"

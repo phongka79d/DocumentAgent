@@ -9,6 +9,9 @@ from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
 from app.core.contracts import QdrantPayloadKey
+from app.models.schemas import RetrievalFilters
+from app.core.contracts import RetrievalPath
+from app.services import keyword_search, score_fusion
 from app.services.qdrant_client import create_qdrant_client
 from app.services.jina_client import create_jina_client
 from app.services.retrieval_context import (
@@ -147,21 +150,87 @@ def _normalize_document_ids(document_ids: Sequence[UUID | str] | None) -> list[s
     return normalized
 
 
-def build_document_id_filter(
-    document_ids: Sequence[UUID | str] | None,
-) -> qdrant_models.Filter | None:
-    normalized_document_ids = _normalize_document_ids(document_ids)
-    if not normalized_document_ids:
-        return None
+def _normalize_filters(filters: RetrievalFilters | Mapping[str, Any] | None) -> dict[str, Any]:
+    if filters is None:
+        return {}
+    if isinstance(filters, RetrievalFilters):
+        model = filters
+    elif isinstance(filters, Mapping):
+        model = RetrievalFilters.model_validate(dict(filters))
+    else:
+        model = RetrievalFilters.model_validate(filters)
+    return model.model_dump(mode="json", exclude_none=True)
 
-    return qdrant_models.Filter(
-        must=[
+
+def build_qdrant_filter(
+    document_ids: Sequence[UUID | str] | None,
+    filters: RetrievalFilters | Mapping[str, Any] | None = None,
+) -> qdrant_models.Filter | None:
+    conditions: list[qdrant_models.Condition] = []
+
+    normalized_document_ids = _normalize_document_ids(document_ids)
+    if normalized_document_ids:
+        conditions.append(
             qdrant_models.FieldCondition(
                 key=QdrantPayloadKey.DOCUMENT_ID,
                 match=qdrant_models.MatchAny(any=normalized_document_ids),
             )
-        ]
-    )
+        )
+
+    normalized_filters = _normalize_filters(filters)
+    mime_types = _normalize_section_path(normalized_filters.get("mime_types"))
+    if mime_types:
+        conditions.append(
+            qdrant_models.FieldCondition(
+                key=QdrantPayloadKey.MIME_TYPE,
+                match=qdrant_models.MatchAny(any=mime_types),
+            )
+        )
+
+    heading = _normalize_text(normalized_filters.get("heading"))
+    if heading is not None:
+        conditions.append(
+            qdrant_models.FieldCondition(
+                key=QdrantPayloadKey.HEADING,
+                match=qdrant_models.MatchText(text=heading),
+            )
+        )
+
+    for section_segment in _normalize_section_path(normalized_filters.get("section_path")):
+        conditions.append(
+            qdrant_models.FieldCondition(
+                key=QdrantPayloadKey.SECTION_PATH,
+                match=qdrant_models.MatchValue(value=section_segment),
+            )
+        )
+
+    page_start = _normalize_int(normalized_filters.get("page_start"))
+    page_end = _normalize_int(normalized_filters.get("page_end"))
+    if page_end is not None:
+        conditions.append(
+            qdrant_models.FieldCondition(
+                key=QdrantPayloadKey.PAGE_START,
+                range=qdrant_models.Range(lte=page_end),
+            )
+        )
+    if page_start is not None:
+        conditions.append(
+            qdrant_models.FieldCondition(
+                key=QdrantPayloadKey.PAGE_END,
+                range=qdrant_models.Range(gte=page_start),
+            )
+        )
+
+    if not conditions:
+        return None
+
+    return qdrant_models.Filter(must=conditions)
+
+
+def build_document_id_filter(
+    document_ids: Sequence[UUID | str] | None,
+) -> qdrant_models.Filter | None:
+    return build_qdrant_filter(document_ids)
 
 
 def extract_retrieval_hints(
@@ -217,12 +286,13 @@ def search_semantic_chunks(
     query_embedding: Sequence[float],
     *,
     document_ids: Sequence[UUID | str] | None = None,
+    filters: RetrievalFilters | Mapping[str, Any] | None = None,
     settings: Settings | None = None,
     qdrant_client: Any | None = None,
 ) -> list[dict[str, Any]]:
     resolved_settings = _resolve_settings(settings)
     client = _resolve_qdrant_client(qdrant_client)
-    query_filter = build_document_id_filter(document_ids)
+    query_filter = build_qdrant_filter(document_ids, filters)
     response = client.query_points(
         collection_name=resolved_settings.QDRANT_COLLECTION,
         query=list(query_embedding),
@@ -266,10 +336,160 @@ def search_semantic_chunks(
                 "chunk_type": _normalize_text(payload.get(QdrantPayloadKey.CHUNK_TYPE)),
                 "token_count": _normalize_int(payload.get(QdrantPayloadKey.TOKEN_COUNT)),
                 "qdrant_score": _normalize_float(point_score),
+                "semantic_score": _normalize_float(point_score),
                 "rerank_score": None,
+                "semantic_rank": len(results) + 1,
+                "keyword_rank": None,
+                "keyword_score": None,
+                "fusion_score": None,
+                "retrieval_paths": [RetrievalPath.SEMANTIC],
+                "subquery_ids": [],
             }
         )
     return results
+
+
+def _normalize_semantic_candidate(
+    candidate: Mapping[str, Any],
+    *,
+    rank: int,
+) -> dict[str, Any]:
+    normalized = dict(candidate)
+    chunk_id = _normalize_text(normalized.get("chunk_id") or normalized.get("id"))
+    if chunk_id is not None:
+        normalized["id"] = chunk_id
+        normalized["chunk_id"] = chunk_id
+    normalized.setdefault("file_name", _normalize_text(normalized.get("file_name")) or "")
+    normalized.setdefault("content", normalized.get("text") or "")
+    normalized["semantic_rank"] = _normalize_int(normalized.get("semantic_rank")) or rank
+    semantic_score = _normalize_float(
+        normalized.get("semantic_score") if normalized.get("semantic_score") is not None else normalized.get("qdrant_score")
+    )
+    normalized["semantic_score"] = semantic_score
+    if normalized.get("qdrant_score") is None:
+        normalized["qdrant_score"] = semantic_score
+    normalized.setdefault("keyword_rank", None)
+    normalized.setdefault("keyword_score", None)
+    normalized.setdefault("fusion_score", None)
+    normalized["retrieval_paths"] = [RetrievalPath.SEMANTIC]
+    normalized.setdefault("subquery_ids", [])
+    return normalized
+
+
+def _semantic_search_path(
+    question: str,
+    *,
+    document_ids: Sequence[UUID | str] | None,
+    filters: RetrievalFilters | Mapping[str, Any] | None,
+    settings: Settings,
+    qdrant_client: Any | None,
+    shopaikey_client: Any | None,
+) -> tuple[list[float], list[dict[str, Any]]]:
+    query_embedding = embed_question(
+        question,
+        settings=settings,
+        shopaikey_client=shopaikey_client,
+    )
+    semantic_rows = search_semantic_chunks(
+        query_embedding,
+        document_ids=document_ids,
+        filters=filters,
+        settings=settings,
+        qdrant_client=qdrant_client,
+    )
+    return query_embedding, [
+        _normalize_semantic_candidate(candidate, rank=rank)
+        for rank, candidate in enumerate(semantic_rows, start=1)
+    ]
+
+
+def retrieve_hybrid_chunks(
+    question: str,
+    *,
+    document_ids: Sequence[UUID | str] | None = None,
+    filters: RetrievalFilters | Mapping[str, Any] | None = None,
+    settings: Settings | None = None,
+    qdrant_client: Any | None = None,
+    shopaikey_client: Any | None = None,
+    supabase_client: Any | None = None,
+) -> dict[str, Any]:
+    """Run semantic and keyword retrieval independently and fuse successful paths."""
+
+    resolved_settings = _resolve_settings(settings)
+    normalized_question = _normalize_text(question)
+    if normalized_question is None:
+        raise RetrievalError("question is required")
+
+    normalized_document_ids = _normalize_document_ids(document_ids)
+    normalized_filters = _normalize_filters(filters) if filters is not None else None
+    query_embedding: list[float] = []
+    semantic_candidates: list[dict[str, Any]] = []
+    keyword_candidates: list[dict[str, Any]] = []
+    semantic_error: Exception | None = None
+    keyword_error: Exception | None = None
+
+    try:
+        query_embedding, semantic_candidates = _semantic_search_path(
+            normalized_question,
+            document_ids=normalized_document_ids,
+            filters=normalized_filters,
+            settings=resolved_settings,
+            qdrant_client=qdrant_client,
+            shopaikey_client=shopaikey_client,
+        )
+    except Exception as exc:
+        semantic_error = exc
+
+    if resolved_settings.ENABLE_KEYWORD_SEARCH:
+        try:
+            keyword_candidates = keyword_search.search_keyword_chunks(
+                normalized_question,
+                document_ids=normalized_document_ids,
+                filters=normalized_filters,
+                settings=resolved_settings,
+                supabase_client=supabase_client,
+            )
+        except Exception as exc:
+            keyword_error = exc
+
+    if not resolved_settings.ENABLE_KEYWORD_SEARCH:
+        if semantic_error is not None:
+            raise RetrievalError("semantic retrieval failed") from None
+        retrieved_chunks = semantic_candidates[: resolved_settings.RETRIEVAL_FUSION_TOP_K]
+        fallback_path: str | None = RetrievalPath.SEMANTIC.value
+    elif semantic_error is not None and keyword_error is not None:
+        raise RetrievalError("hybrid retrieval failed") from None
+    elif semantic_error is not None:
+        retrieved_chunks = keyword_candidates[: resolved_settings.RETRIEVAL_FUSION_TOP_K]
+        fallback_path = RetrievalPath.KEYWORD.value
+    elif keyword_error is not None:
+        retrieved_chunks = semantic_candidates[: resolved_settings.RETRIEVAL_FUSION_TOP_K]
+        fallback_path = RetrievalPath.SEMANTIC.value
+    else:
+        retrieved_chunks = score_fusion.fuse_candidates(
+            [semantic_candidates, keyword_candidates],
+            settings=resolved_settings,
+        )
+        fallback_path = None
+
+    return {
+        "question": normalized_question,
+        "document_ids": normalized_document_ids,
+        "query_embedding": query_embedding,
+        "path_candidates": {
+            RetrievalPath.SEMANTIC.value: semantic_candidates,
+            RetrievalPath.KEYWORD.value: keyword_candidates,
+        },
+        "fused_candidates": retrieved_chunks,
+        "retrieved_chunks": retrieved_chunks,
+        "retrieval_metrics": {
+            "semantic_candidate_count": len(semantic_candidates),
+            "keyword_candidate_count": len(keyword_candidates),
+            "fused_candidate_count": len(retrieved_chunks),
+            "fallback_path": fallback_path,
+        },
+        **({"filters": normalized_filters} if normalized_filters is not None else {}),
+    }
 
 
 def _sort_chunks_by_qdrant_score(chunks: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -408,6 +628,7 @@ def retrieve_context_chunks(
     question: str,
     *,
     document_ids: Sequence[UUID | str] | None = None,
+    filters: RetrievalFilters | Mapping[str, Any] | None = None,
     settings: Settings | None = None,
     supabase_client: Any | None = None,
     qdrant_client: Any | None = None,
@@ -433,6 +654,7 @@ def retrieve_context_chunks(
     retrieved_chunks = search_semantic_chunks(
         query_embedding,
         document_ids=normalized_document_ids,
+        filters=filters,
         settings=resolved_settings,
         qdrant_client=qdrant_client,
     )
@@ -449,7 +671,7 @@ def retrieve_context_chunks(
         retrieval_hints=retrieval_hints,
         document_ids=normalized_document_ids,
     )
-    return {
+    result = {
         "question": normalized_question,
         "document_ids": normalized_document_ids,
         "query_embedding": query_embedding,
@@ -458,3 +680,6 @@ def retrieve_context_chunks(
         "reranked_chunks": reranked_chunks,
         "context_chunks": context_chunks,
     }
+    if filters is not None:
+        result["filters"] = _normalize_filters(filters)
+    return result

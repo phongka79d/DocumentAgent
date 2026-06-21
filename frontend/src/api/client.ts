@@ -210,6 +210,66 @@ async function createApiError(response: Response): Promise<ApiError> {
   );
 }
 
+function uniqueTrimmedStrings(values: string[] | undefined): string[] {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const normalized: string[] = [];
+  for (const value of values) {
+    const trimmedValue = value.trim();
+    if (trimmedValue && !normalized.includes(trimmedValue)) {
+      normalized.push(trimmedValue);
+    }
+  }
+  return normalized;
+}
+
+function serializeChatRequest(requestBody: ChatRequest): ChatRequest {
+  const request: ChatRequest = {
+    question: requestBody.question,
+  };
+
+  if (requestBody.save_message !== undefined) {
+    request.save_message = requestBody.save_message;
+  }
+
+  const documentIds = uniqueTrimmedStrings(requestBody.document_ids);
+  if (documentIds.length > 0) {
+    request.document_ids = documentIds;
+  }
+
+  const filters = requestBody.filters;
+  if (filters) {
+    const serializedFilters: NonNullable<ChatRequest["filters"]> = {};
+    const mimeTypes = uniqueTrimmedStrings(filters.mime_types);
+    const sectionPath = uniqueTrimmedStrings(filters.section_path);
+    const heading = filters.heading?.trim();
+
+    if (mimeTypes.length > 0) {
+      serializedFilters.mime_types = mimeTypes;
+    }
+    if (heading) {
+      serializedFilters.heading = heading;
+    }
+    if (sectionPath.length > 0) {
+      serializedFilters.section_path = sectionPath;
+    }
+    if (filters.page_start !== undefined) {
+      serializedFilters.page_start = filters.page_start;
+    }
+    if (filters.page_end !== undefined) {
+      serializedFilters.page_end = filters.page_end;
+    }
+
+    if (Object.keys(serializedFilters).length > 0) {
+      request.filters = serializedFilters;
+    }
+  }
+
+  return request;
+}
+
 function createRequestHandler(config: ApiClientConfig) {
   const runtimeEnv = import.meta as ImportMeta & {
     env?: {
@@ -321,7 +381,7 @@ function createRequestHandler(config: ApiClientConfig) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(serializeChatRequest(requestBody)),
       });
     },
 

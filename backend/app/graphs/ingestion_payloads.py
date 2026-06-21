@@ -55,6 +55,7 @@ def qdrant_payload(
     *,
     chunk: Mapping[str, Any],
     file_name: str,
+    mime_type: str | None,
 ) -> dict[str, Any]:
     return {
         QdrantPayloadKey.DOCUMENT_ID: document_id,
@@ -63,6 +64,7 @@ def qdrant_payload(
         ),
         QdrantPayloadKey.CHUNK_INDEX: chunk.get(ChunkField.CHUNK_INDEX),
         QdrantPayloadKey.FILE_NAME: file_name,
+        QdrantPayloadKey.MIME_TYPE: mime_type,
         QdrantPayloadKey.HEADING: chunk.get(ChunkField.HEADING),
         QdrantPayloadKey.SECTION_PATH: list(chunk.get(ChunkField.SECTION_PATH) or []),
         QdrantPayloadKey.PAGE_START: chunk.get(ChunkField.PAGE_START),

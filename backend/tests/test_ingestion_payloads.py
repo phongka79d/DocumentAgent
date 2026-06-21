@@ -67,6 +67,7 @@ def test_qdrant_payload_uses_payload_key_contracts():
         "doc-1",
         chunk=_chunk(),
         file_name="report.pdf",
+        mime_type="application/pdf",
     )
 
     assert payload == {
@@ -74,6 +75,7 @@ def test_qdrant_payload_uses_payload_key_contracts():
         QdrantPayloadKey.CHUNK_ID: "chunk-1",
         QdrantPayloadKey.CHUNK_INDEX: 3,
         QdrantPayloadKey.FILE_NAME: "report.pdf",
+        QdrantPayloadKey.MIME_TYPE: "application/pdf",
         QdrantPayloadKey.HEADING: "Overview",
         QdrantPayloadKey.SECTION_PATH: ["Root", "Overview"],
         QdrantPayloadKey.PAGE_START: 1,

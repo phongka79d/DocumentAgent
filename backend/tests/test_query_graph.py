@@ -25,6 +25,7 @@ def _test_settings(
     context_mode: str = "section_aware",
     context_window: int = 1,
     section_sibling_window: int = 1,
+    enable_keyword_search: bool = False,
 ) -> Settings:
     return Settings(
         _env_file=None,
@@ -37,6 +38,7 @@ def _test_settings(
         RETRIEVAL_SECTION_SIBLING_WINDOW=section_sibling_window,
         RETRIEVAL_CONTEXT_MAX_CANDIDATES=8,
         ENABLE_RERANK=True,
+        ENABLE_KEYWORD_SEARCH=enable_keyword_search,
         SHOPAIKEY_API_KEY="shopai-key",
         SHOPAIKEY_BASE_URL="https://api.shopaikey.com/v1",
         SHOPAIKEY_EMBEDDING_MODEL="text-embedding-3-small",
@@ -293,6 +295,52 @@ def test_search_semantic_chunks_applies_document_filter_and_default_top_k():
     assert results[0]["qdrant_score"] == 0.9
 
 
+def test_build_qdrant_filter_combines_metadata_conditions_with_document_allow_list():
+    query_filter = retrieval.build_qdrant_filter(
+        [DOC_A, DOC_B],
+        {
+            "mime_types": ["application/pdf", "text/markdown"],
+            "heading": "Pricing",
+            "section_path": ["Plans", "Enterprise"],
+            "page_start": 3,
+            "page_end": 7,
+        },
+    )
+
+    assert query_filter is not None
+    conditions = query_filter.must
+    assert [condition.key for condition in conditions] == [
+        "document_id",
+        "mime_type",
+        "heading",
+        "section_path",
+        "section_path",
+        "page_start",
+        "page_end",
+    ]
+    assert conditions[0].match.any == [DOC_A, DOC_B]
+    assert conditions[1].match.any == ["application/pdf", "text/markdown"]
+    assert conditions[2].match.text == "Pricing"
+    assert [conditions[3].match.value, conditions[4].match.value] == [
+        "Plans",
+        "Enterprise",
+    ]
+    assert conditions[5].range.lte == 7
+    assert conditions[6].range.gte == 3
+
+
+def test_build_qdrant_filter_omits_page_conditions_when_page_filter_is_absent():
+    query_filter = retrieval.build_qdrant_filter(
+        None,
+        {
+            "heading": "Pricing",
+        },
+    )
+
+    assert query_filter is not None
+    assert [condition.key for condition in query_filter.must] == ["heading"]
+
+
 def test_search_semantic_chunks_without_document_ids_queries_all_documents():
     settings = _test_settings()
     qdrant_client = FakeQdrantClient(
@@ -316,6 +364,36 @@ def test_search_semantic_chunks_without_document_ids_queries_all_documents():
     )
 
     assert qdrant_client.query_calls[0]["query_filter"] is None
+
+
+def test_search_semantic_chunks_passes_metadata_filters_to_qdrant():
+    settings = _test_settings()
+    qdrant_client = FakeQdrantClient(points=[])
+
+    retrieval.search_semantic_chunks(
+        [0.1, 0.2, 0.3],
+        document_ids=[DOC_A],
+        filters={
+            "mime_types": ["application/pdf"],
+            "heading": "Pricing",
+            "section_path": ["Enterprise"],
+            "page_start": 2,
+            "page_end": 4,
+        },
+        settings=settings,
+        qdrant_client=qdrant_client,
+    )
+
+    query_filter = qdrant_client.query_calls[0]["query_filter"]
+    assert query_filter is not None
+    assert [condition.key for condition in query_filter.must] == [
+        "document_id",
+        "mime_type",
+        "heading",
+        "section_path",
+        "page_start",
+        "page_end",
+    ]
 
 
 def test_get_chunks_by_document_and_indexes_uses_supabase_lookup_order():
@@ -993,6 +1071,30 @@ def test_prepare_query_node_trims_question_and_normalizes_document_ids():
     }
 
 
+def test_prepare_query_node_preserves_explicit_filters_with_empty_fields_normalized():
+    result = query_nodes.prepare_query_node(
+        {
+            "question": "  What is pricing?  ",
+            "document_ids": [DOC_A],
+            "filters": {
+                "mime_types": [" application/pdf ", "", "application/pdf"],
+                "heading": "  Pricing  ",
+                "section_path": [" Plans ", "", "Enterprise"],
+                "page_start": 2,
+                "page_end": 5,
+            },
+        }
+    )
+
+    assert result["filters"] == {
+        "mime_types": ["application/pdf"],
+        "heading": "Pricing",
+        "section_path": ["Plans", "Enterprise"],
+        "page_start": 2,
+        "page_end": 5,
+    }
+
+
 def test_prepare_query_node_returns_validation_error_for_blank_question():
     result = query_nodes.prepare_query_node(
         {
@@ -1044,6 +1146,111 @@ def test_retrieve_qdrant_node_embeds_prepared_query_and_applies_document_filter(
         DOC_A,
         DOC_B,
     ]
+
+
+def test_retrieve_qdrant_node_passes_filters_to_semantic_search(monkeypatch):
+    settings = _test_settings()
+    captured: dict[str, object] = {}
+    fake_shopaikey_client = FakeShopAIKeyClient(vectors=[[0.1, 0.2, 0.3]])
+
+    def _search_semantic_chunks(query_embedding, **kwargs):
+        captured["query_embedding"] = query_embedding
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(retrieval, "search_semantic_chunks", _search_semantic_chunks)
+
+    result = query_nodes.retrieve_qdrant_node(
+        {
+            "prepared_query": "What is pricing?",
+            "document_ids": [DOC_A],
+            "filters": {
+                "mime_types": ["application/pdf"],
+                "heading": "Pricing",
+                "section_path": ["Enterprise"],
+                "page_start": 2,
+                "page_end": 4,
+            },
+        },
+        settings=settings,
+        qdrant_client=FakeQdrantClient(points=[]),
+        shopaikey_client=fake_shopaikey_client,
+    )
+
+    assert result["filters"] == {
+        "mime_types": ["application/pdf"],
+        "heading": "Pricing",
+        "section_path": ["Enterprise"],
+        "page_start": 2,
+        "page_end": 4,
+    }
+    assert captured["document_ids"] == [DOC_A]
+    assert captured["filters"] == result["filters"]
+
+
+def test_retrieve_qdrant_node_uses_hybrid_retrieval_when_keyword_enabled(monkeypatch):
+    settings = _test_settings(enable_keyword_search=True)
+    captured: dict[str, object] = {}
+
+    def _retrieve_hybrid_chunks(question, **kwargs):
+        captured["question"] = question
+        captured.update(kwargs)
+        return {
+            "query_embedding": [0.1, 0.2, 0.3],
+            "path_candidates": {
+                "semantic": [],
+                "keyword": [
+                    {
+                        "chunk_id": "keyword-a",
+                        "document_id": DOC_A,
+                        "file_name": "alpha.pdf",
+                        "chunk_index": 0,
+                        "content": "keyword chunk",
+                        "keyword_rank": 1,
+                        "keyword_score": 0.7,
+                        "retrieval_paths": ["keyword"],
+                    }
+                ],
+            },
+            "retrieved_chunks": [
+                {
+                    "chunk_id": "keyword-a",
+                    "document_id": DOC_A,
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 0,
+                    "content": "keyword chunk",
+                    "keyword_rank": 1,
+                    "keyword_score": 0.7,
+                    "retrieval_paths": ["keyword"],
+                    "fusion_score": 1 / 61,
+                }
+            ],
+            "retrieval_metrics": {
+                "semantic_candidate_count": 0,
+                "keyword_candidate_count": 1,
+                "fused_candidate_count": 1,
+                "fallback_path": None,
+            },
+        }
+
+    monkeypatch.setattr(retrieval, "retrieve_hybrid_chunks", _retrieve_hybrid_chunks)
+
+    result = query_nodes.retrieve_qdrant_node(
+        {
+            "prepared_query": "What is pricing?",
+            "document_ids": [DOC_A],
+        },
+        settings=settings,
+        qdrant_client=object(),
+        shopaikey_client=object(),
+    )
+
+    assert captured["question"] == "What is pricing?"
+    assert captured["document_ids"] == [DOC_A]
+    assert captured["settings"] == settings
+    assert result["path_candidates"]["keyword"][0]["chunk_id"] == "keyword-a"
+    assert result["retrieved_chunks"][0]["retrieval_paths"] == ["keyword"]
+    assert result["retrieval_metrics"]["fused_candidate_count"] == 1
 
 
 def test_jina_rerank_node_uses_prepared_query_and_returns_reranked_chunks():

@@ -21,6 +21,7 @@ from app.graphs.query_prompts import (
     NO_RELEVANT_INFORMATION_MESSAGE,
     build_answer_messages,
 )
+from app.models.schemas import RetrievalFilters
 from app.services import messages as message_service
 from app.services import retrieval
 from app.services.shopaikey_client import create_shopaikey_client
@@ -62,6 +63,14 @@ def _question_text(state: Mapping[str, Any]) -> str | None:
     return normalize_text(state.get("prepared_query") or state.get("question"))
 
 
+def _normalize_filters(filters: Any) -> dict[str, Any]:
+    if isinstance(filters, RetrievalFilters):
+        model = filters
+    else:
+        model = RetrievalFilters.model_validate(filters)
+    return model.model_dump(mode="json", exclude_none=True)
+
+
 def prepare_query_node(state: Mapping[str, Any], *, settings: Settings | None = None) -> dict[str, Any]:
     _resolve_settings(settings)
 
@@ -71,12 +80,18 @@ def prepare_query_node(state: Mapping[str, Any], *, settings: Settings | None = 
 
     document_ids = _normalize_document_ids(state.get("document_ids"))
     save_message = bool(state.get("save_message", False))
-    return {
+    result = {
         "question": question,
         "prepared_query": question,
         "document_ids": document_ids,
         "save_message": save_message,
     }
+    if "filters" in state:
+        try:
+            result["filters"] = _normalize_filters(state.get("filters") or {})
+        except Exception:
+            return {"error_message": "invalid retrieval filters"}
+    return result
 
 
 def retrieve_qdrant_node(
@@ -85,6 +100,7 @@ def retrieve_qdrant_node(
     settings: Settings | None = None,
     qdrant_client: Any | None = None,
     shopaikey_client: Any | None = None,
+    supabase_client: Any | None = None,
 ) -> dict[str, Any]:
     resolved_settings = _resolve_settings(settings)
     prepared_query = _question_text(state)
@@ -92,30 +108,35 @@ def retrieve_qdrant_node(
         return {"error_message": "prepared_query is required"}
 
     document_ids = _normalize_document_ids(state.get("document_ids"))
+    filters: dict[str, Any] | None = None
+    if "filters" in state:
+        try:
+            filters = _normalize_filters(state.get("filters") or {})
+        except Exception:
+            return {"error_message": "invalid retrieval filters"}
     try:
-        query_embedding = retrieval.embed_question(
+        retrieval_result = retrieval.retrieve_hybrid_chunks(
             prepared_query,
-            settings=resolved_settings,
-            shopaikey_client=shopaikey_client,
-        )
-        retrieved_chunks = retrieval.search_semantic_chunks(
-            query_embedding,
             document_ids=document_ids,
+            filters=filters,
             settings=resolved_settings,
             qdrant_client=qdrant_client,
-        )
-        retrieval_hints = retrieval.extract_retrieval_hints(
-            prepared_query,
-            settings=resolved_settings,
             shopaikey_client=shopaikey_client,
+            supabase_client=supabase_client,
         )
-        return {
+        result = {
             "prepared_query": prepared_query,
             "document_ids": document_ids,
-            "query_embedding": query_embedding,
-            "retrieval_hints": retrieval_hints,
-            "retrieved_chunks": retrieved_chunks,
+            "query_embedding": retrieval_result.get("query_embedding", []),
+            "retrieval_hints": retrieval_result.get("retrieval_hints", {}),
+            "path_candidates": retrieval_result.get("path_candidates", {}),
+            "fused_candidates": retrieval_result.get("fused_candidates", []),
+            "retrieved_chunks": retrieval_result.get("retrieved_chunks", []),
+            "retrieval_metrics": retrieval_result.get("retrieval_metrics", {}),
         }
+        if filters is not None:
+            result["filters"] = filters
+        return result
     except retrieval.RetrievalError as exc:
         return {
             "error_message": safe_detail(

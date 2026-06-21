@@ -210,7 +210,7 @@ Phase 3 routing requires filter-safe, independently recoverable semantic and key
 
 ### Tasks
 
-- [ ] (02A): Add metadata filters to ingestion payloads, chat retrieval, and frontend
+- [x] (02A): Add metadata filters to ingestion payloads, chat retrieval, and frontend
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 2: Metadata-Aware Keyword and Hybrid Retrieval` > `### Task 2.1: Add metadata filters to API, Qdrant payloads, and the frontend`
   - Source Requirements:
     - Store `mime_type` in new Qdrant chunk payloads.
@@ -235,7 +235,7 @@ Phase 3 routing requires filter-safe, independently recoverable semantic and key
   - Blocked Condition: None for implementation; existing document payload migration remains pending reindex in Batch09.
   - Files: `backend/app/graphs/ingestion_payloads.py`, `backend/app/services/retrieval.py`, `backend/app/graphs/query_nodes.py`, `backend/app/api/routes/chat.py`, `backend/tests/test_ingestion_payloads.py`, `backend/tests/test_query_graph.py`, `backend/tests/test_api_chat.py`, `frontend/src/api/types.ts`, `frontend/src/api/client.ts`, `frontend/src/components/RetrievalFiltersPanel.tsx`, `frontend/src/components/ChatPanel.tsx`, `frontend/src/App.tsx`, `frontend/src/styles.css`
 
-- [ ] (02B): Add Postgres full-text keyword retrieval
+- [x] (02B): Add Postgres full-text keyword retrieval
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 2: Metadata-Aware Keyword and Hybrid Retrieval` > `### Task 2.2: Add Postgres full-text keyword retrieval`
   - Source Requirements:
     - Add the `simple`-configuration GIN index and `search_document_chunks_keyword` RPC.
@@ -260,7 +260,7 @@ Phase 3 routing requires filter-safe, independently recoverable semantic and key
   - Blocked Condition: None for unit implementation; `BLOCKED_BY_USER_ACTION` for live RPC acceptance until the Supabase migration is applied.
   - Files: `docs/database/phase3_migration.sql`, `docs/database/supabase_schema.sql`, `backend/app/services/keyword_search.py`, `backend/tests/test_keyword_search.py`
 
-- [ ] (02C): Add deterministic reciprocal-rank fusion and hybrid fallback
+- [x] (02C): Add deterministic reciprocal-rank fusion and hybrid fallback
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 2: Metadata-Aware Keyword and Hybrid Retrieval` > `### Task 2.3: Add deterministic reciprocal-rank fusion`
   - Source Requirements:
     - Fuse by `chunk_id` using `1 / (RETRIEVAL_RRF_CONSTANT + one_based_rank)` across paths and subqueries.
@@ -1050,9 +1050,9 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch02
 
-- [ ] (02A): Add metadata filters to ingestion payloads, chat retrieval, and frontend
-- [ ] (02B): Add Postgres full-text keyword retrieval
-- [ ] (02C): Add deterministic reciprocal-rank fusion and hybrid fallback
+- [x] (02A): Add metadata filters to ingestion payloads, chat retrieval, and frontend
+- [x] (02B): Add Postgres full-text keyword retrieval
+- [x] (02C): Add deterministic reciprocal-rank fusion and hybrid fallback
 
 #### Batch03
 

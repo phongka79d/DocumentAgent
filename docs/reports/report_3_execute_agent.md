@@ -269,3 +269,363 @@ complete
 - next task ID: (02A)
 - can proceed: no, pending A2 re-review, Batch01 scope audit, batch commit, and approval gate.
 - handoff notes: Document rows returned after applying the Phase 3 migration now validate and expose optional stable `error_code` values.
+
+---
+
+# Task Execution Report - (02A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+
+## Task
+(02A) - Add metadata filters to ingestion payloads, chat retrieval, and frontend
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Mandatory Batch02 > (02A)
+- docs/plans/Plan_3.md > Batch 2 > Task 2.1
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+- Task ID: (02A)
+- Task title: Add metadata filters to ingestion payloads, chat retrieval, and frontend
+
+## Completed Work
+- Completed the selected task.
+- Added `mime_type` to new Qdrant payload creation and ingestion upsert calls.
+- Added `build_qdrant_filter(document_ids, filters)` with AND-combined document allow-list, MIME allow-list, heading text, section path segment, and page-overlap conditions.
+- Preserved explicit filters through chat route, query preparation, and semantic retrieval while keeping unfiltered requests backward compatible.
+- Added frontend typed filter state, request serialization that omits empty filter fields, a collapsible filter panel, and send blocking for invalid page ranges.
+- Added backend tests for payloads, Qdrant filter compilation, route/query propagation, strict allow-list behavior, and backward compatibility.
+
+## Files Created or Modified
+- backend/app/core/contracts.py
+- backend/app/graphs/ingestion_nodes.py
+- backend/app/graphs/ingestion_payloads.py
+- backend/app/graphs/query_nodes.py
+- backend/app/services/retrieval.py
+- backend/tests/test_api_chat.py
+- backend/tests/test_ingestion_payloads.py
+- backend/tests/test_query_graph.py
+- frontend/src/App.tsx
+- frontend/src/api/client.ts
+- frontend/src/api/types.ts
+- frontend/src/components/ChatPanel.tsx
+- frontend/src/components/RetrievalFiltersPanel.tsx
+- frontend/src/styles.css
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_ingestion_payloads.py tests/test_query_graph.py tests/test_api_chat.py -v`: Passed
+- Evidence: 41 passed in 7.25s.
+- `cd frontend; npm run build`: Passed
+- Evidence: Vite production build completed successfully with 38 modules transformed.
+
+## Acceptance Check
+- Task acceptance condition: Every populated filter is enforced, old requests behave unchanged, and invalid page ranges cannot be sent from the UI.
+- Status: satisfied
+- Evidence: Backend tests verify populated filter compilation and propagation, document IDs remain a strict Qdrant allow-list, unfiltered requests still query without a filter, and frontend build validates the new filter panel/send-blocking code.
+
+## Artifacts Produced
+- End-to-end metadata filter support across ingestion payloads, chat API/query state, Qdrant retrieval, and frontend chat controls.
+- Appended execution report in docs/reports/report_3_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates remain reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept the old `build_document_id_filter` as a compatibility wrapper while switching active semantic retrieval to `build_qdrant_filter`.
+- Implemented page overlap as `chunk.page_start <= requested_end` and `chunk.page_end >= requested_start`; chunks with unknown page fields therefore match only when no page filter is requested.
+- Serialized frontend filters defensively in the API client so only populated fields are sent even if callers pass empty UI state.
+
+## Risks or Open Issues
+- Existing indexed documents still need later reindexing to acquire `mime_type` Qdrant payloads, as planned for Batch09.
+
+## Minor Issues Fixed During Execution
+- Avoided adding a new `filters: null` key to unfiltered retrieval results to preserve old unfiltered behavior.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture conflicts identified.
+- Implemented only (02A); did not implement (02B), (02C), update checkboxes, run live reindexing, or commit.
+
+## Notes for Next Task
+- next task ID: (02B)
+- can proceed: yes, after A2 review accepts (02A)
+- handoff notes: Keyword retrieval can reuse `RetrievalFilters` semantics and `build_qdrant_filter` behavior as the reference for SQL/RPC filter parity.
+---
+
+# Task Execution Report - (02B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+
+## Task
+(02B) - Add Postgres full-text keyword retrieval
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `(02B): Add Postgres full-text keyword retrieval`
+- `docs/plans/Plan_3.md` > `## Batch 2: Metadata-Aware Keyword and Hybrid Retrieval` > `### Task 2.2: Add Postgres full-text keyword retrieval`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+- Task ID: (02B)
+- Task title: Add Postgres full-text keyword retrieval
+
+## Completed Work
+- Completed the unit implementation for (02B).
+- Added the Postgres `simple` full-text GIN index to both Phase 3 SQL artifacts.
+- Added the `search_document_chunks_keyword` RPC SQL with `websearch_to_tsquery('simple', query_text)`, document/MIME joins, document allow-list filtering, heading filtering, section-path containment, page-overlap semantics, stable ordering, and top-k limiting.
+- Implemented `backend/app/services/keyword_search.py` with `search_keyword_chunks`, Supabase RPC invocation, filter parameter normalization, deterministic local ordering, shared `RetrievalCandidate` output normalization, `keyword_score`, `keyword_rank`, and `retrieval_paths = ["keyword"]`.
+- Added safe typed errors for empty queries and RPC unavailability without exposing provider messages or secrets.
+- Added unit tests for RPC parameters, candidate normalization, tie ordering, top-k limiting, empty-query validation, redacted recoverable failures, and SQL artifact contract fragments.
+
+## Files Created or Modified
+- docs/database/phase3_migration.sql
+- docs/database/supabase_schema.sql
+- backend/app/services/keyword_search.py
+- backend/tests/test_keyword_search.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_keyword_search.py -v`: Passed
+- evidence or reason: 6 passed in 0.69s.
+
+## Acceptance Check
+- Task acceptance condition: Keyword results use the shared candidate shape and exact metadata semantics with deterministic ordering and recoverable errors.
+- Status: satisfied for unit implementation; live RPC acceptance remains deferred to Batch09 until the Supabase migration is applied.
+- Evidence: Tests validate RPC filter parameters, normalized `RetrievalCandidate` fields, `keyword_score`, `keyword_rank`, keyword retrieval path, deterministic tie ordering, top-k enforcement, empty query rejection, redacted recoverable RPC failure, and SQL index/RPC contract fragments.
+
+## Artifacts Produced
+- Keyword-search SQL in `docs/database/phase3_migration.sql` and `docs/database/supabase_schema.sql`.
+- Typed backend keyword retrieval service in `backend/app/services/keyword_search.py`.
+- Unit test suite in `backend/tests/test_keyword_search.py`.
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates remain reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used `filter_heading`, `filter_section_path`, `filter_page_start`, and `filter_page_end` RPC argument names to avoid Postgres `RETURNS TABLE` output-name collisions while preserving returned chunk metadata names.
+- Normalized absent list filters to `null` for RPC calls so SQL can treat `null` as no filter, matching Qdrant's omitted-condition behavior.
+- Sorted RPC rows in the service by `keyword_score desc`, `document_id asc`, and `chunk_index asc` before assigning `keyword_rank` so unit behavior stays deterministic even with mocked unordered RPC responses.
+- Kept RPC failures recoverable and generic by raising `KeywordSearchError` with code `keyword_rpc_unavailable` and no raw provider exception text.
+
+## Risks or Open Issues
+- Live keyword retrieval remains `BLOCKED_BY_USER_ACTION` until the Supabase migration containing the index and RPC is applied in Batch09.
+
+## Minor Issues Fixed During Execution
+- Adjusted the SQL function argument names for filter fields to avoid collisions with returned metadata columns.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or architecture conflicts identified.
+- Dependency note: (02A) changes were present as accepted uncommitted work and were preserved.
+- Implemented only (02B); did not implement (02C), score fusion, hybrid orchestration, fallback behavior, checkbox updates, live migration application, or commits.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes, after A2 review accepts (02B)
+- handoff notes: (02C) can consume `search_keyword_chunks` candidates with `keyword_score`, `keyword_rank`, and `retrieval_paths = ["keyword"]`; live RPC behavior still requires the later Supabase migration application in Batch09.
+---
+
+# Task Execution Report - (02B) Repair
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+
+## Task
+(02B) - Add Postgres full-text keyword retrieval
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `(02B): Add Postgres full-text keyword retrieval`
+- A2 repair instructions for rejected `(02B)` review: KeywordSearchError traceback safety and unexplained README diff
+
+## Supplemental Documents Used
+- `docs/review/review_3_review_agent.md` for the latest A2 rejection details
+- Provided `docs/plans/Master_Plan.md` was not needed for this narrow repair
+
+## Selected Scope
+- Batch: Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+- Task ID: (02B)
+- Task title: Add Postgres full-text keyword retrieval
+
+## Completed Work
+- Completed the `(02B)` repair scope.
+- Verified `backend/app/services/keyword_search.py` raises `KeywordSearchError() from None` for Supabase RPC failures, leaving no raw provider exception as `__cause__` and suppressing the provider context from formatted tracebacks.
+- Tightened `backend/tests/test_keyword_search.py` so the RPC failure regression formats both the caught traceback and visible exception-chain output, then asserts synthetic provider details and credential markers are absent.
+- Verified `README.md` has no current diff and no unexplained README change remains in the `(02B)` review scope.
+- Did not implement `(02C)`, fusion, hybrid fallback, future-task behavior, checkbox updates, or commits.
+
+## Files Created or Modified
+- backend/app/services/keyword_search.py
+- backend/tests/test_keyword_search.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_keyword_search.py -v`: Passed
+- evidence or reason: 6 passed in 0.63s.
+- `git diff --check`: Passed
+- evidence or reason: no whitespace errors; Git emitted LF-to-CRLF working-copy warnings only.
+- `git diff -- README.md`: Passed
+- evidence or reason: no output; README has no diff.
+- `git status --short README.md backend\app\services\keyword_search.py backend\tests\test_keyword_search.py docs\reports\report_3_execute_agent.md`: Passed
+- evidence or reason: README did not appear; scoped output showed only `docs/reports/report_3_execute_agent.md` modified and keyword service/test files untracked as expected for `(02B)` work.
+
+## Acceptance Check
+- Task acceptance condition: Keyword results use the shared candidate shape and exact metadata semantics with deterministic ordering and recoverable errors.
+- Status: satisfied for this repair scope; live RPC acceptance remains deferred to Batch09 until the Supabase migration is applied.
+- Evidence: The focused test suite passes, and the RPC failure test now verifies safe typed error metadata plus formatted traceback/visible-chain redaction for `super-secret`, `password`, and `supabase.co` markers.
+
+## Artifacts Produced
+- Strengthened traceback-safety regression in `backend/tests/test_keyword_search.py`.
+- Appended repair execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run; checkbox and batch updates remain reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Used `raise KeywordSearchError() from None` as the safe wrapping pattern for RPC failures, matching A2 repair guidance.
+- Kept the existing generic `KeywordSearchError` message and code so provider details are not included in the exposed error contract.
+- Treated README as resolved because current `git diff -- README.md` is empty and scoped status no longer shows README changes.
+
+## Risks or Open Issues
+- Live keyword retrieval remains `BLOCKED_BY_USER_ACTION` until the Supabase migration containing the index and RPC is applied in Batch09.
+- Repository still contains unrelated dirty files from surrounding accepted/pending work; this repair changed only the `(02B)` test/report scope and verified the `(02B)` service repair state.
+
+## Minor Issues Fixed During Execution
+- Strengthened the redaction test to check formatted visible exception-chain output in addition to the caught traceback.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or dependency issues identified for the repair.
+- `(02B)` repair remained limited to A2's two listed issues.
+- README out-of-scope diff is resolved by absence of any README diff in current status/diff checks.
+
+## Notes for Next Task
+- next task ID: (02C)
+- can proceed: yes, after A2 review accepts the repaired `(02B)`
+- handoff notes: `(02C)` can proceed only after review acceptance; keyword retrieval still requires later live migration application in Batch09.
+
+---
+
+# Task Execution Report - (02C)
+
+## Source Task File
+`docs/tasks/task_3.md`
+
+## Report File
+`docs/reports/report_3_execute_agent.md`
+
+## Batch
+Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+
+## Task
+(02C) - Add deterministic reciprocal-rank fusion and hybrid fallback
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `(02C): Add deterministic reciprocal-rank fusion and hybrid fallback`
+- `docs/plans/Plan_3.md` > `## Batch 2: Metadata-Aware Keyword and Hybrid Retrieval` > `### Task 2.3: Add deterministic reciprocal-rank fusion`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+- Task ID: (02C)
+- Task title: Add deterministic reciprocal-rank fusion and hybrid fallback
+
+## Completed Work
+- Status: complete.
+- Added deterministic reciprocal-rank fusion by `chunk_id` with contributions of `1 / (RETRIEVAL_RRF_CONSTANT + one_based_rank)`.
+- Preserved best semantic/Qdrant and keyword scores/ranks while deduplicating retrieval paths and subquery IDs.
+- Added stable fusion ordering by `fusion_score` descending, best rank ascending, then `chunk_id` ascending, capped by `RETRIEVAL_FUSION_TOP_K`.
+- Added hybrid retrieval orchestration that runs semantic and keyword paths independently, fuses successful dual-path output, and falls back to the successful path when one provider fails.
+- Wired the existing query retrieval node through the hybrid retrieval function while preserving the node name and existing graph shape.
+- Covered semantic-only, keyword-only, empty-result, both-failed, keyword-disabled, deduplication, ordering, capping, repeated-run stability, and typed error behavior.
+
+## Files Created or Modified
+- `backend/app/services/score_fusion.py`
+- `backend/app/services/retrieval.py`
+- `backend/app/graphs/query_nodes.py`
+- `backend/tests/test_score_fusion.py`
+- `backend/tests/test_query_graph.py`
+- `docs/reports/report_3_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_score_fusion.py tests/test_query_graph.py::test_retrieve_qdrant_node_uses_hybrid_retrieval_when_keyword_enabled -v`: Passed after implementation; initial RED run failed as expected because `app.services.score_fusion` did not exist.
+- `cd backend; python -m pytest tests/test_score_fusion.py tests/test_keyword_search.py tests/test_query_graph.py -v`: Passed, 45 passed in 2.16s.
+
+## Acceptance Check
+- Task acceptance condition: Duplicate chunks merge correctly, dual-path evidence gains both contributions, and all fallback cases match the plan.
+- Status: satisfied.
+- Evidence: `tests/test_score_fusion.py` verifies duplicate merge, dual semantic/keyword contribution accumulation, stable ordering/capping, repeated-run stability, semantic-failed keyword fallback, keyword-failed semantic fallback, both-empty result, both-failed `RetrievalError`, and keyword-disabled semantic-only behavior. The required validation passed with 45 tests.
+
+## Artifacts Produced
+- Deterministic fusion service in `backend/app/services/score_fusion.py`.
+- Hybrid retrieval function in `backend/app/services/retrieval.py`.
+- Focused unit coverage in `backend/tests/test_score_fusion.py` and `backend/tests/test_query_graph.py`.
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Fallback outputs preserve the successful path candidates and metadata instead of forcing a synthetic fused shape.
+- Dual-path successful outputs are fused and exposed as both `fused_candidates` and `retrieved_chunks` for compatibility with the existing rerank/context graph.
+- Query graph integration kept the existing `retrieve_qdrant` node name to avoid broad graph topology changes in Batch02.
+
+## Risks or Open Issues
+- Live keyword retrieval still depends on the Batch09 user action to apply the Supabase migration containing the keyword RPC.
+- The repository contains accepted/pending dirty work from (02A)/(02B) and review/report files; this task preserved those changes and added only the (02C)-scoped files listed above.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture concerns identified.
+- (02A) and (02B) were already present in the task file as checked dependencies; this task did not alter their checkboxes.
+
+## Notes for Next Task
+- next task ID: (03A)
+- can proceed: yes, after A2 reviews and accepts (02C) and the orchestrator handles Batch02 audit/commit gates.
+- handoff notes: Hybrid retrieval now returns fused candidates with path metadata for later routing/reranking work; Batch03 should not require additional Batch02 implementation.

@@ -48,24 +48,25 @@ graph TD
 ```
 
 ### 2. Retrieval & Query Pipeline
-When a user asks a question, the query workflow performs retrieval, context enrichment, reranking, and generation.
+When a user asks a question, the query workflow performs metadata-aware hybrid retrieval, context enrichment, reranking, and generation.
 
 ```mermaid
 graph TD
     A[User Prompt / Question] --> B[Validate Question]
-    B --> C[Retrieve Top-K Chunks from Qdrant with Filters]
-    C --> D{Jina Rerank Enabled?}
-    D -->|Yes| E[Rerank Chunks via Jina API]
-    D -->|No| F[Fall Back to Qdrant Scores]
-    E --> G[Filter & Limit to Top-N Chunks]
-    F --> G
-    G --> H[Expand Adjacent Chunks within the Same Section]
-    H --> I[Deduplicate & Cap Total Context Window]
-    I --> J[Generate Grounded Answer with Citations via LLM]
-    J --> K{Save Message Enabled?}
-    K -->|Yes| L[Save Q&A Row to Supabase Messages Table]
-    K -->|No| M[Return Response to Client]
-    L --> M
+    B --> C[Run Semantic Qdrant + Keyword Postgres Retrieval with Filters]
+    C --> D[Deterministic Reciprocal-Rank Fusion]
+    D --> E{Jina Rerank Enabled?}
+    E -->|Yes| F[Rerank Chunks via Jina API]
+    E -->|No| G[Use Fused or Successful-Path Scores]
+    F --> H[Filter & Limit to Top-N Chunks]
+    G --> H
+    H --> I[Expand Adjacent Chunks within the Same Section]
+    I --> J[Deduplicate & Cap Total Context Window]
+    J --> K[Generate Grounded Answer with Citations via LLM]
+    K --> L{Save Message Enabled?}
+    L -->|Yes| M[Save Q&A Row to Supabase Messages Table]
+    L -->|No| N[Return Response to Client]
+    M --> N
 ```
 
 ---
@@ -77,6 +78,7 @@ graph TD
 - **Unified Document Parsing**: Normalized parser registry ([backend/app/parsing/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/parsing)) supporting PDF, DOCX, TXT, Markdown, and HTML format parsing. The parser extracts hierarchical structures such as headings, paragraphs, bullet lists, blockquotes, code, and tables.
 - **Smart Section Chunking**: Dynamic, structural chunking strategy ([backend/app/chunking/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/chunking)) utilizing deterministic heading scoring to preserve section hierarchies and keep tables intact, falling back to fixed-token boundaries only when structural components exceed length limits.
 - **Section-Aware Retrieval**: Context retrieval expanding adjacent chunks belonging to the same section (`RETRIEVAL_CONTEXT_MODE=section_aware`), which preserves document context flow and reduces retrieval fragmentation.
+- **Metadata-Aware Hybrid Retrieval**: Chat requests can filter by document allow-list, MIME type, heading, section path, and page range; semantic Qdrant retrieval and Postgres full-text keyword retrieval run independently, recover from single-path failures, and merge candidates with deterministic reciprocal-rank fusion.
 - **Deduplication & Validation**: Deterministic SHA-256 upload hashing prevent duplicate storage and indexing of identical documents.
 - **Message History API**: Fast lookups for chat history from the `messages` table with bounded retrieval and failure isolation.
 - **Phase 3 Contract Foundation**: Typed retrieval filters, planning/candidate/grounding/citation contracts, compact LangGraph state fields, and bounded Phase 3 settings are available for later advanced RAG batches.
@@ -87,6 +89,7 @@ graph TD
 - **Document Management Console**: Browser UI for file upload, list status polling, details inspection, reindexing, and full deletion cleanups (removes from database, storage bucket, and vector store).
 - **Advanced Chat Interface**:
   - Selection of target documents for focused queries.
+  - Collapsible retrieval filters for MIME/file type, heading, section path, and page range, with invalid page ranges blocked before send.
   - Contextual citation rendering (both page-present e.g., `[Doc, p. 3]` and page-absent e.g., `[Doc]` styles).
   - Multi-chunk navigation drawer (browse preceding or succeeding adjacent source chunks directly in the browser).
   - Single-click restore of old messages and sources into the active chat session without needing to hit the LLM again.
@@ -164,6 +167,9 @@ Phase 3 adds compact derived-data and workflow telemetry storage:
 | `document_summaries` | Stores one document summary per document and section summaries keyed by section path. |
 | `document_relations` | Stores canonical, non-self document pairs with relation type, evidence chunk IDs, confidence, and model metadata. |
 | `workflow_runs` | Stores ingestion/query workflow status, compact trace events, error codes, and timing metadata. |
+
+### 5. Phase 3 Keyword Retrieval SQL
+Phase 3 SQL also defines a language-neutral Postgres full-text GIN index over chunk heading/content and the `search_document_chunks_keyword` RPC. This RPC applies the same document, MIME, heading, section path, and page-overlap filters used by semantic retrieval, then returns deterministic keyword candidates for hybrid fusion.
 
 ---
 
@@ -279,7 +285,7 @@ MAX_UPLOAD_BYTES=25000000
 
 ### Prerequisite External Resources
 1. **Supabase Database**: Execute the contents of [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql) in your project's SQL editor.
-   - Existing Phase 2 databases can apply [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) to add the Phase 3 column and persistence tables when authorized for manual migration.
+   - Existing Phase 2 databases can apply [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) to add the Phase 3 column, persistence tables, keyword-search index, and keyword RPC when authorized for manual migration.
 2. **Supabase Bucket**: Create a private storage bucket named `documents` (or matching `SUPABASE_STORAGE_BUCKET`).
 3. **Qdrant Collection**: Initialize a collection named `document_chunks_v1` (matching `QDRANT_COLLECTION`). Ensure the vector size matches your embedding model's dimensions (1532 for `text-embedding-3-small` or standard default).
 
@@ -316,7 +322,7 @@ Execute pytest across the suite:
 ```powershell
 cd backend
 python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
-python -m pytest tests/test_contracts.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py -v
+python -m pytest tests/test_contracts.py tests/test_keyword_search.py tests/test_score_fusion.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py -v
 ```
 
 ### 2. Run Frontend Build Check

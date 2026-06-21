@@ -67,6 +67,15 @@ export interface ChatRequest {
   question: string;
   document_ids?: string[];
   save_message?: boolean;
+  filters?: RetrievalFilters;
+}
+
+export interface RetrievalFilters {
+  mime_types?: string[];
+  heading?: string;
+  section_path?: string[];
+  page_start?: number;
+  page_end?: number;
 }
 
 export interface SourceCitation {
