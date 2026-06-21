@@ -9,6 +9,7 @@ import SourceList from "./SourceList";
 
 interface ChatPanelProps {
   question: string;
+  activeQuestion: string;
   response: ChatResponse;
   error: string | null;
   isSubmitting: boolean;
@@ -38,6 +39,7 @@ export default function ChatPanel({
   onSelectSource,
   onSubmit,
   question,
+  activeQuestion,
   response,
   selectedSource,
 }: ChatPanelProps) {
@@ -64,7 +66,7 @@ export default function ChatPanel({
     }
   }
 
-  const hasAsked = isSubmitting || response.answer !== MOCK_CHAT_ANSWER;
+  const hasAsked = Boolean(activeQuestion) || isSubmitting;
 
   return (
     <section className="chat-messages-wrapper" style={{ display: "flex", flexDirection: "column", height: "100%" }} aria-label="Chat Area">
@@ -92,7 +94,7 @@ export default function ChatPanel({
               </div>
               <div className="chat-bubble-body">
                 <div className="chat-bubble-content">
-                  {question.trim() || "Research Query"}
+                  {activeQuestion}
                 </div>
               </div>
             </div>

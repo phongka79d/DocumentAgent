@@ -30,7 +30,7 @@ const MESSAGE_HISTORY_LIMIT = 25;
 
 const MOCK_CHAT_RESPONSE = {
   answer:
-    "Hello! I've indexed your latest Q3 Financial Reports and Market Analysis documents. How can I assist your research today?",
+    "Hello! i'm DocuRAG, how can i help you today?",
   sources: [],
 } satisfies ChatResponse;
 
@@ -98,6 +98,7 @@ export default function App() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [activeQuestion, setActiveQuestion] = useState("");
 
   const readyDocuments = useMemo(
     () => documents.filter((document) => document.status === "ready"),
@@ -428,6 +429,7 @@ export default function App() {
 
     setIsSendingChat(true);
     setChatError(null);
+    setActiveQuestion(trimmedQuestion);
 
     try {
       const request: ChatRequest = {
@@ -442,6 +444,7 @@ export default function App() {
       const response = await apiClient.sendChatMessage(request);
       setSelectedMessageId(null);
       setChatResponse(response);
+      setQuestion("");
     } catch (error) {
       setChatError(getErrorMessage(error, "Unable to send question."));
     } finally {
@@ -461,6 +464,7 @@ export default function App() {
     (message: MessageHistoryItem) => {
       setSelectedMessageId(message.id);
       setChatError(null);
+      setActiveQuestion(message.question);
       setChatResponse({
         answer: message.answer,
         sources: Array.isArray(message.sources) ? message.sources : [],
@@ -483,6 +487,7 @@ export default function App() {
 
   const handleNewChat = () => {
     setQuestion("");
+    setActiveQuestion("");
     setChatResponse(MOCK_CHAT_RESPONSE);
     setSelectedSource(null);
     setSelectedChunkIndex(null);
@@ -504,7 +509,7 @@ export default function App() {
   return (
     <div className="app-layout">
       {/* Sidebar Overlay for mobile screen */}
-      <div 
+      <div
         className={`app-sidebar-overlay ${isMobileSidebarOpen ? "open" : ""}`}
         onClick={() => setIsMobileSidebarOpen(false)}
       />
@@ -525,7 +530,7 @@ export default function App() {
           onChange={handleFileChange}
           disabled={isUploading}
         />
-        <button 
+        <button
           className="btn-primary mb-8"
           onClick={handleUploadClick}
           disabled={isUploading}
@@ -557,7 +562,7 @@ export default function App() {
 
         {/* Sidebar Navigation Options */}
         <nav className="sidebar-menu">
-          <button 
+          <button
             className={`menu-item ${activeView === "chat" ? "active" : ""}`}
             onClick={() => {
               setActiveView("chat");
@@ -568,7 +573,7 @@ export default function App() {
             Active Chat
           </button>
 
-          <button 
+          <button
             className={`menu-item ${activeView === "documents" ? "active" : ""}`}
             onClick={() => {
               setActiveView("documents");
@@ -579,7 +584,7 @@ export default function App() {
             All Documents
           </button>
 
-          <button 
+          <button
             className={`menu-item ${activeView === "history" ? "active" : ""}`}
             onClick={() => {
               setActiveView("history");
@@ -628,7 +633,7 @@ export default function App() {
         {/* Topbar/Header */}
         <header className="app-topbar">
           <div className="flex items-center gap-4 flex-1">
-            <button 
+            <button
               className="mobile-sidebar-toggle"
               onClick={() => setIsMobileSidebarOpen(true)}
               aria-label="Open sidebar menu"
@@ -652,13 +657,13 @@ export default function App() {
               <span className="api-dot" aria-hidden="true" />
               <span>{apiBaseUrl}</span>
             </div>
-            
+
             <button className="topbar-action-button" aria-label="Notifications">
               <span className="material-symbols-outlined">notifications</span>
             </button>
-            
-            <button 
-              className="topbar-action-button" 
+
+            <button
+              className="topbar-action-button"
               onClick={() => setActiveView("documents")}
               aria-label="Settings"
             >
@@ -666,9 +671,9 @@ export default function App() {
             </button>
 
             <div className="topbar-avatar">
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcCw0_qGkLU5bX1wJiMYH1_xOr5JPaOLk2JIEEioy-ac2VmNMbCm5eZ1Na2iOw7gTfFe2rfZZAOic56GQaQEiINDiQWysoSWrlhWwSNa-xPFHiWWBls9I0WIAZ4tB8wkZrc4ZGWLgKfKidT45E-X4VVTszd532gAtF0KopoJNWn2nycKs_Kn9FR2ERxzRDLBhDDbnaF2vjlzAXGo0bdXi8amQI_AIbKZ6y4uu8T8vWuo4IVmwOfsWejoYlj2n9uOKFN9EN4-4UZqcC" 
-                alt="User headshot avatar" 
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcCw0_qGkLU5bX1wJiMYH1_xOr5JPaOLk2JIEEioy-ac2VmNMbCm5eZ1Na2iOw7gTfFe2rfZZAOic56GQaQEiINDiQWysoSWrlhWwSNa-xPFHiWWBls9I0WIAZ4tB8wkZrc4ZGWLgKfKidT45E-X4VVTszd532gAtF0KopoJNWn2nycKs_Kn9FR2ERxzRDLBhDDbnaF2vjlzAXGo0bdXi8amQI_AIbKZ6y4uu8T8vWuo4IVmwOfsWejoYlj2n9uOKFN9EN4-4UZqcC"
+                alt="User headshot avatar"
               />
             </div>
           </div>
@@ -688,6 +693,7 @@ export default function App() {
               onViewNextChunk={handleViewNextChunk}
               onViewPreviousChunk={handleViewPreviousChunk}
               question={question}
+              activeQuestion={activeQuestion}
               readyDocuments={readyDocuments}
               response={chatResponse}
               selectedChunk={selectedChunk}
@@ -772,8 +778,8 @@ export default function App() {
             <span className="material-symbols-outlined">description</span>
             <h2>{selectedSource?.file_name ?? "Document Preview"}</h2>
           </div>
-          <button 
-            className="preview-close-button" 
+          <button
+            className="preview-close-button"
             onClick={() => setSelectedSource(null)}
             aria-label="Close preview panel"
           >
