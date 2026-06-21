@@ -5,6 +5,9 @@ class TableName(StrEnum):
     DOCUMENTS = "documents"
     DOCUMENT_CHUNKS = "document_chunks"
     MESSAGES = "messages"
+    DOCUMENT_SUMMARIES = "document_summaries"
+    DOCUMENT_RELATIONS = "document_relations"
+    WORKFLOW_RUNS = "workflow_runs"
 
 
 class DocumentStatus(StrEnum):
@@ -32,6 +35,38 @@ class ContextMode(StrEnum):
 class RetrievalBoundary(StrEnum):
     BEGINNING = "beginning"
     END = "end"
+
+
+class RetrievalStrategy(StrEnum):
+    SEMANTIC = "semantic"
+    KEYWORD = "keyword"
+    HYBRID = "hybrid"
+    METADATA = "metadata"
+    RELATION = "relation"
+
+
+class RetrievalPath(StrEnum):
+    SEMANTIC = "semantic"
+    KEYWORD = "keyword"
+    RELATION = "relation"
+
+
+class SummaryType(StrEnum):
+    SECTION = "section"
+    DOCUMENT = "document"
+
+
+class RelationType(StrEnum):
+    SAME_TOPIC = "same_topic"
+    SUPPORTS = "supports"
+    CONTRADICTS = "contradicts"
+    REFERENCES = "references"
+
+
+class WorkflowStatus(StrEnum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class ChunkField(StrEnum):

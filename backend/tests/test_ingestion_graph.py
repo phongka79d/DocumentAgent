@@ -388,12 +388,17 @@ def test_ingestion_state_contains_required_fields_and_excludes_binary_fields():
         "embedding_model",
         "embedding_dimension",
         "qdrant_collection",
+        "summary_records",
+        "relation_update_result",
+        "trace_id",
+        "retry_attempts",
         "status",
         "error_message",
     }
     assert "original_file_bytes" not in hints
     assert "upload_file_path" not in hints
     assert "large_binary_data" not in hints
+    assert all("prompt" not in field for field in hints)
 
 
 def test_load_document_record_node_populates_small_state_fields(monkeypatch):

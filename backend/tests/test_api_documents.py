@@ -39,6 +39,7 @@ def _document_row(
     title: str | None = "Quarterly report",
     created_at: datetime | str | None = None,
     qdrant_collection: str | None = None,
+    error_code: str | None = None,
 ) -> dict[str, object]:
     return {
         "id": str(document_id),
@@ -61,6 +62,7 @@ def _document_row(
         "qdrant_collection": qdrant_collection,
         "indexed_at": None,
         "error_message": None,
+        "error_code": error_code,
         "created_at": created_at
         or datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
         "updated_at": datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
@@ -295,7 +297,12 @@ def test_list_documents_returns_document_models_in_created_order(monkeypatch):
 
 def test_get_document_and_find_document_by_hash_return_expected_rows():
     settings = _test_settings()
-    row = _document_row(document_id=FIXED_DOCUMENT_ID, file_hash="abc123")
+    row = _document_row(
+        document_id=FIXED_DOCUMENT_ID,
+        file_hash="abc123",
+        status="failed",
+        error_code="embedding_timeout",
+    )
     client = FakeSupabaseClient(documents=[row])
 
     by_id = document_service.get_document(
@@ -312,8 +319,10 @@ def test_get_document_and_find_document_by_hash_return_expected_rows():
     assert by_id is not None
     assert by_id.id == FIXED_DOCUMENT_ID
     assert by_id.file_hash == "abc123"
+    assert by_id.error_code == "embedding_timeout"
     assert by_hash is not None
     assert by_hash.id == FIXED_DOCUMENT_ID
+    assert by_hash.error_code == "embedding_timeout"
 
 
 def test_upload_original_file_uses_storage_bucket_and_content_type():

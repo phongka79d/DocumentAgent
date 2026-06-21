@@ -28,6 +28,10 @@ ALL_SETTINGS_FIELDS = {
     "QDRANT_API_KEY",
     "QDRANT_COLLECTION",
     "ENABLE_RERANK",
+    "ENABLE_KEYWORD_SEARCH",
+    "ENABLE_SUMMARIES",
+    "ENABLE_RELATION_RETRIEVAL",
+    "ENABLE_WORKFLOW_TRACING",
     "JINA_API_KEY",
     "JINA_RERANK_MODEL",
     "RETRIEVAL_SEMANTIC_TOP_K",
@@ -40,6 +44,22 @@ ALL_SETTINGS_FIELDS = {
     "RETRIEVAL_HINT_MAX_TOKENS",
     "RETRIEVAL_BOUNDARY_START_CHUNKS",
     "RETRIEVAL_BOUNDARY_END_CHUNKS",
+    "RETRIEVAL_KEYWORD_TOP_K",
+    "RETRIEVAL_FUSION_TOP_K",
+    "RETRIEVAL_RRF_CONSTANT",
+    "RETRIEVAL_RERANK_CANDIDATE_TOP_K",
+    "RETRIEVAL_CONTEXT_MAX_TOKENS",
+    "QUERY_MAX_SUBQUERIES",
+    "QUERY_PLANNER_TEMPERATURE",
+    "QUERY_PLANNER_MAX_TOKENS",
+    "SUMMARY_SECTION_MAX_TOKENS",
+    "SUMMARY_DOCUMENT_MAX_TOKENS",
+    "RELATION_MAX_RELATED_DOCUMENTS",
+    "GROUNDING_MIN_SCORE",
+    "GROUNDING_MAX_REGENERATIONS",
+    "WORKFLOW_MAX_ATTEMPTS",
+    "WORKFLOW_RETRY_BASE_DELAY_SECONDS",
+    "WORKFLOW_RETRY_MAX_DELAY_SECONDS",
     "CHUNKING_STRATEGY",
     "HEADER_SCORE_THRESHOLD",
     "TABLE_CHUNK_MAX_TOKENS",
@@ -115,6 +135,26 @@ def test_settings_load_defaults_from_master_plan(monkeypatch):
     assert settings.RETRIEVAL_HINT_MAX_TOKENS == 120
     assert settings.RETRIEVAL_BOUNDARY_START_CHUNKS == 2
     assert settings.RETRIEVAL_BOUNDARY_END_CHUNKS == 2
+    assert settings.ENABLE_KEYWORD_SEARCH is True
+    assert settings.RETRIEVAL_KEYWORD_TOP_K == 40
+    assert settings.RETRIEVAL_FUSION_TOP_K == 40
+    assert settings.RETRIEVAL_RRF_CONSTANT == 60
+    assert settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K == 20
+    assert settings.RETRIEVAL_CONTEXT_MAX_TOKENS == 4000
+    assert settings.QUERY_MAX_SUBQUERIES == 4
+    assert settings.QUERY_PLANNER_TEMPERATURE == 0.0
+    assert settings.QUERY_PLANNER_MAX_TOKENS == 500
+    assert settings.ENABLE_SUMMARIES is True
+    assert settings.SUMMARY_SECTION_MAX_TOKENS == 200
+    assert settings.SUMMARY_DOCUMENT_MAX_TOKENS == 400
+    assert settings.ENABLE_RELATION_RETRIEVAL is True
+    assert settings.RELATION_MAX_RELATED_DOCUMENTS == 5
+    assert settings.GROUNDING_MIN_SCORE == 0.8
+    assert settings.GROUNDING_MAX_REGENERATIONS == 1
+    assert settings.WORKFLOW_MAX_ATTEMPTS == 3
+    assert settings.WORKFLOW_RETRY_BASE_DELAY_SECONDS == 0.25
+    assert settings.WORKFLOW_RETRY_MAX_DELAY_SECONDS == 2.0
+    assert settings.ENABLE_WORKFLOW_TRACING is True
     assert settings.CHUNKING_STRATEGY == "smart_section"
     assert settings.HEADER_SCORE_THRESHOLD == 4
     assert settings.TABLE_CHUNK_MAX_TOKENS == 500
@@ -139,6 +179,10 @@ def test_settings_read_environment_overrides(monkeypatch):
     monkeypatch.setenv("RETRIEVAL_BOUNDARY_START_CHUNKS", "3")
     monkeypatch.setenv("RETRIEVAL_BOUNDARY_END_CHUNKS", "4")
     monkeypatch.setenv("MAX_OUTPUT_TOKENS", "2048")
+    monkeypatch.setenv("ENABLE_KEYWORD_SEARCH", "false")
+    monkeypatch.setenv("QUERY_MAX_SUBQUERIES", "6")
+    monkeypatch.setenv("GROUNDING_MIN_SCORE", "0.9")
+    monkeypatch.setenv("WORKFLOW_MAX_ATTEMPTS", "4")
 
     settings = Settings(_env_file=None)
 
@@ -154,6 +198,27 @@ def test_settings_read_environment_overrides(monkeypatch):
     assert settings.RETRIEVAL_BOUNDARY_START_CHUNKS == 3
     assert settings.RETRIEVAL_BOUNDARY_END_CHUNKS == 4
     assert settings.MAX_OUTPUT_TOKENS == 2048
+    assert settings.ENABLE_KEYWORD_SEARCH is False
+    assert settings.QUERY_MAX_SUBQUERIES == 6
+    assert settings.GROUNDING_MIN_SCORE == 0.9
+    assert settings.WORKFLOW_MAX_ATTEMPTS == 4
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("RETRIEVAL_KEYWORD_TOP_K", 0),
+        ("QUERY_MAX_SUBQUERIES", 0),
+        ("QUERY_PLANNER_TEMPERATURE", -0.1),
+        ("GROUNDING_MIN_SCORE", 1.01),
+        ("GROUNDING_MAX_REGENERATIONS", -1),
+        ("WORKFLOW_MAX_ATTEMPTS", 0),
+        ("WORKFLOW_RETRY_BASE_DELAY_SECONDS", -0.1),
+    ],
+)
+def test_phase3_settings_reject_out_of_bounds_values(name, value):
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, **{name: value})
 
 
 def test_cors_uses_frontend_origin_from_settings():

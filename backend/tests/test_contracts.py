@@ -1,5 +1,8 @@
 from types import SimpleNamespace
 
+import pytest
+from pydantic import ValidationError
+
 from app.core.config import Settings
 from app.core.contracts import (
     ChunkField,
@@ -9,9 +12,23 @@ from app.core.contracts import (
     DocumentStatus,
     MessageField,
     QdrantPayloadKey,
+    RelationType,
     RetrievalBoundary,
+    RetrievalPath,
+    RetrievalStrategy,
     SOURCE_PREVIEW_CHARS,
+    SummaryType,
     TableName,
+    WorkflowStatus,
+)
+from app.models.schemas import (
+    ChatRequest,
+    CitationValidationResult,
+    GroundingResult,
+    QueryPlan,
+    RetrievalCandidate,
+    RetrievalFilters,
+    WorkflowTraceEvent,
 )
 from app.services import retrieval
 
@@ -140,3 +157,107 @@ def test_retrieval_uses_qdrant_payload_key_contract(monkeypatch):
         "qdrant_score": 0.8,
         "rerank_score": None,
     }
+
+
+def test_phase3_enums_use_exact_values_and_reject_unknown_values():
+    assert [item.value for item in RetrievalStrategy] == [
+        "semantic", "keyword", "hybrid", "metadata", "relation"
+    ]
+    assert [item.value for item in RetrievalPath] == ["semantic", "keyword", "relation"]
+    assert [item.value for item in SummaryType] == ["section", "document"]
+    assert [item.value for item in RelationType] == [
+        "same_topic", "supports", "contradicts", "references"
+    ]
+    assert [item.value for item in WorkflowStatus] == ["running", "completed", "failed"]
+
+    with pytest.raises(ValueError):
+        RetrievalStrategy("vector")
+
+
+def test_retrieval_filters_normalize_empty_values_and_validate_pages():
+    filters = RetrievalFilters(
+        mime_types=[" application/pdf ", "", "application/pdf"],
+        heading="   ",
+        section_path=[" Policies ", "", "Leave"],
+        page_start=0,
+        page_end=4,
+    )
+
+    assert filters.mime_types == ["application/pdf"]
+    assert filters.heading is None
+    assert filters.section_path == ["Policies", "Leave"]
+
+    with pytest.raises(ValidationError):
+        RetrievalFilters(page_start=-1)
+    with pytest.raises(ValidationError):
+        RetrievalFilters(page_start=5, page_end=4)
+
+
+def test_old_chat_request_payload_remains_valid():
+    request = ChatRequest(question="What is the policy?")
+
+    assert request.document_ids == []
+    assert request.save_message is False
+    assert request.filters is None
+
+
+def test_phase3_internal_models_validate_required_metadata():
+    plan = QueryPlan.model_validate(
+        {
+            "is_complex": True,
+            "strategy": "hybrid",
+            "subqueries": [{"id": "q1", "text": "Compare policies"}],
+            "inferred_filters": {},
+            "needs_relations": False,
+        }
+    )
+    assert plan.strategy is RetrievalStrategy.HYBRID
+
+    candidate = RetrievalCandidate.model_validate(
+        {
+            "chunk_id": "chunk-1",
+            "document_id": "doc-1",
+            "file_name": "policy.pdf",
+            "chunk_index": 0,
+            "content": "Policy text",
+            "semantic_rank": 1,
+            "semantic_score": 0.9,
+            "keyword_rank": 2,
+            "keyword_score": 0.8,
+            "fusion_score": 0.04,
+            "retrieval_paths": ["semantic", "keyword"],
+            "subquery_ids": ["q1"],
+        }
+    )
+    assert candidate.retrieval_paths == [RetrievalPath.SEMANTIC, RetrievalPath.KEYWORD]
+
+    grounding = GroundingResult(
+        grounded=True,
+        score=0.95,
+        unsupported_claims=[],
+        missing_citations=[],
+    )
+    citation = CitationValidationResult(
+        valid=True,
+        cited_keys=["S1"],
+        cited_chunk_ids=["chunk-1"],
+    )
+    trace = WorkflowTraceEvent(
+        node_name="retrieve",
+        status="completed",
+        attempt=1,
+        duration_ms=12,
+        input_count=1,
+        output_count=3,
+    )
+    assert grounding.score == 0.95
+    assert citation.invalid_keys == []
+    assert trace.status is WorkflowStatus.COMPLETED
+
+    with pytest.raises(ValidationError):
+        GroundingResult(
+            grounded=True,
+            score=1.1,
+            unsupported_claims=[],
+            missing_citations=[],
+        )

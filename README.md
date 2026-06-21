@@ -79,6 +79,8 @@ graph TD
 - **Section-Aware Retrieval**: Context retrieval expanding adjacent chunks belonging to the same section (`RETRIEVAL_CONTEXT_MODE=section_aware`), which preserves document context flow and reduces retrieval fragmentation.
 - **Deduplication & Validation**: Deterministic SHA-256 upload hashing prevent duplicate storage and indexing of identical documents.
 - **Message History API**: Fast lookups for chat history from the `messages` table with bounded retrieval and failure isolation.
+- **Phase 3 Contract Foundation**: Typed retrieval filters, planning/candidate/grounding/citation contracts, compact LangGraph state fields, and bounded Phase 3 settings are available for later advanced RAG batches.
+- **Phase 3 Persistence Foundation**: Idempotent SQL and lazy Supabase services provide document summaries, canonical document relations, and best-effort workflow trace storage.
 
 ### Frontend Capabilities
 - **React Vite TypeScript Frontend**: Quick build time and typed API integrations. Secret keys remain strictly on the server-side.
@@ -126,6 +128,7 @@ Tracks global status, file characteristics, and parsing configuration.
 | `chunking_strategy` | `text` | Configured chunking type (e.g., `smart_section`). |
 | `qdrant_collection` | `text` | The Qdrant collection vectors are saved to. |
 | `error_message` | `text` | Capture of fatal ingestion exception details. |
+| `error_code` | `text` | Stable optional failure code for migrated Phase 3 ingestion errors. |
 
 ### 2. `document_chunks` Table
 Stores parsed texts and layout metadata.
@@ -152,6 +155,15 @@ Maintains historical interactions.
 | `answer` | `text` | Synthesized grounded answer. |
 | `sources` | `jsonb` | References array including headers, page ranges, and previews. |
 | `metadata` | `jsonb` | Runtime configurations and retrieval metrics. |
+
+### 4. Phase 3 Persistence Tables
+Phase 3 adds compact derived-data and workflow telemetry storage:
+
+| Table | Purpose |
+| :--- | :--- |
+| `document_summaries` | Stores one document summary per document and section summaries keyed by section path. |
+| `document_relations` | Stores canonical, non-self document pairs with relation type, evidence chunk IDs, confidence, and model metadata. |
+| `workflow_runs` | Stores ingestion/query workflow status, compact trace events, error codes, and timing metadata. |
 
 ---
 
@@ -233,6 +245,28 @@ RETRIEVAL_SECTION_SIBLING_WINDOW=1
 RETRIEVAL_CONTEXT_WINDOW=1
 RETRIEVAL_CONTEXT_MAX_CANDIDATES=8
 
+# Phase 3 retrieval, planning, summaries, relations, grounding, and tracing
+ENABLE_KEYWORD_SEARCH=true
+RETRIEVAL_KEYWORD_TOP_K=40
+RETRIEVAL_FUSION_TOP_K=40
+RETRIEVAL_RRF_CONSTANT=60
+RETRIEVAL_RERANK_CANDIDATE_TOP_K=20
+RETRIEVAL_CONTEXT_MAX_TOKENS=4000
+QUERY_MAX_SUBQUERIES=4
+QUERY_PLANNER_TEMPERATURE=0.0
+QUERY_PLANNER_MAX_TOKENS=500
+ENABLE_SUMMARIES=true
+SUMMARY_SECTION_MAX_TOKENS=200
+SUMMARY_DOCUMENT_MAX_TOKENS=400
+ENABLE_RELATION_RETRIEVAL=true
+RELATION_MAX_RELATED_DOCUMENTS=5
+GROUNDING_MIN_SCORE=0.80
+GROUNDING_MAX_REGENERATIONS=1
+WORKFLOW_MAX_ATTEMPTS=3
+WORKFLOW_RETRY_BASE_DELAY_SECONDS=0.25
+WORKFLOW_RETRY_MAX_DELAY_SECONDS=2.0
+ENABLE_WORKFLOW_TRACING=true
+
 # LLM Generation Parameters
 TEMPERATURE=0.2
 MAX_OUTPUT_TOKENS=1200
@@ -245,6 +279,7 @@ MAX_UPLOAD_BYTES=25000000
 
 ### Prerequisite External Resources
 1. **Supabase Database**: Execute the contents of [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql) in your project's SQL editor.
+   - Existing Phase 2 databases can apply [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) to add the Phase 3 column and persistence tables when authorized for manual migration.
 2. **Supabase Bucket**: Create a private storage bucket named `documents` (or matching `SUPABASE_STORAGE_BUCKET`).
 3. **Qdrant Collection**: Initialize a collection named `document_chunks_v1` (matching `QDRANT_COLLECTION`). Ensure the vector size matches your embedding model's dimensions (1532 for `text-embedding-3-small` or standard default).
 
@@ -281,6 +316,7 @@ Execute pytest across the suite:
 ```powershell
 cd backend
 python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
+python -m pytest tests/test_contracts.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py -v
 ```
 
 ### 2. Run Frontend Build Check

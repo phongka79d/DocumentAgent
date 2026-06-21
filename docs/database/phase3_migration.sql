@@ -1,55 +1,7 @@
-create table documents (
-  id uuid primary key default gen_random_uuid(),
-  title text,
-  file_name text not null,
-  mime_type text,
-  file_size bigint,
-  file_hash text,
-  storage_path text not null,
-  status text default 'uploaded',
-  total_pages int,
-  total_chunks int default 0,
-  parser_name text,
-  parser_version text,
-  chunking_strategy text,
-  chunking_version text,
-  embedding_model text,
-  embedding_dimension int,
-  qdrant_collection text,
-  indexed_at timestamptz,
-  error_message text,
-  error_code text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
+begin;
 
-create table document_chunks (
-  id uuid primary key default gen_random_uuid(),
-  document_id uuid references documents(id) on delete cascade,
-  chunk_index int not null,
-  content text not null,
-  content_hash text,
-  token_count int,
-  chunk_type text,
-  heading text,
-  section_path jsonb,
-  page_start int,
-  page_end int,
-  token_start int,
-  token_end int,
-  qdrant_point_id text,
-  metadata jsonb,
-  created_at timestamptz default now()
-);
-
-create table messages (
-  id uuid primary key default gen_random_uuid(),
-  question text not null,
-  answer text not null,
-  sources jsonb,
-  metadata jsonb,
-  created_at timestamptz default now()
-);
+alter table documents
+  add column if not exists error_code text;
 
 create table if not exists document_summaries (
   id uuid primary key default gen_random_uuid(),
@@ -64,6 +16,17 @@ create table if not exists document_summaries (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create unique index if not exists idx_document_summaries_document_unique
+  on document_summaries(document_id)
+  where summary_type = 'document';
+create unique index if not exists idx_document_summaries_section_unique
+  on document_summaries(document_id, section_path)
+  where summary_type = 'section';
+create index if not exists idx_document_summaries_document_id
+  on document_summaries(document_id);
+create index if not exists idx_document_summaries_summary_type
+  on document_summaries(summary_type);
 
 create table if not exists document_relations (
   id uuid primary key default gen_random_uuid(),
@@ -86,6 +49,11 @@ create table if not exists document_relations (
     unique (source_document_id, target_document_id, relation_type)
 );
 
+create index if not exists idx_document_relations_source_document_id
+  on document_relations(source_document_id);
+create index if not exists idx_document_relations_target_document_id
+  on document_relations(target_document_id);
+
 create table if not exists workflow_runs (
   id uuid primary key default gen_random_uuid(),
   workflow_type text not null constraint workflow_runs_workflow_type_check
@@ -102,30 +70,12 @@ create table if not exists workflow_runs (
   created_at timestamptz not null default now()
 );
 
-create index idx_documents_status on documents(status);
-create index idx_documents_created_at on documents(created_at desc);
-create unique index idx_documents_file_hash on documents(file_hash);
-create index idx_document_chunks_document_id on document_chunks(document_id);
-create unique index idx_document_chunks_doc_index on document_chunks(document_id, chunk_index);
-create index idx_document_chunks_qdrant_point_id on document_chunks(qdrant_point_id);
-create index idx_messages_created_at on messages(created_at desc);
-create unique index if not exists idx_document_summaries_document_unique
-  on document_summaries(document_id)
-  where summary_type = 'document';
-create unique index if not exists idx_document_summaries_section_unique
-  on document_summaries(document_id, section_path)
-  where summary_type = 'section';
-create index if not exists idx_document_summaries_document_id
-  on document_summaries(document_id);
-create index if not exists idx_document_summaries_summary_type
-  on document_summaries(summary_type);
-create index if not exists idx_document_relations_source_document_id
-  on document_relations(source_document_id);
-create index if not exists idx_document_relations_target_document_id
-  on document_relations(target_document_id);
 create index if not exists idx_workflow_runs_created_at
   on workflow_runs(created_at desc);
 create index if not exists idx_workflow_runs_workflow_type
   on workflow_runs(workflow_type);
 create index if not exists idx_workflow_runs_status
   on workflow_runs(status);
+
+commit;
+

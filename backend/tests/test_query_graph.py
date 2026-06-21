@@ -951,16 +951,29 @@ def test_query_state_contains_required_fields_and_no_extra_fields():
         "question",
         "document_ids",
         "save_message",
+        "filters",
         "prepared_query",
         "query_embedding",
         "retrieval_hints",
+        "query_plan",
+        "subqueries",
+        "route",
+        "path_candidates",
+        "fused_candidates",
         "retrieved_chunks",
         "reranked_chunks",
         "context_chunks",
         "answer",
         "sources",
+        "citation_validation_result",
+        "grounding_result",
+        "verification_attempt_count",
+        "trace_id",
+        "retrieval_metrics",
         "error_message",
     }
+    assert all("prompt" not in field for field in hints)
+    assert all("binary" not in field and "bytes" not in field for field in hints)
 
 
 def test_prepare_query_node_trims_question_and_normalizes_document_ids():

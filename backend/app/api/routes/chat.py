@@ -31,10 +31,13 @@ def _response_payload(result: Mapping[str, Any]) -> dict[str, Any]:
             str(error_message),
         )
 
-    return {
+    payload = {
         "answer": result.get("answer"),
         "sources": result.get("sources") or [],
     }
+    if result.get("trace_id") is not None:
+        payload["trace_id"] = result["trace_id"]
+    return payload
 
 
 @router.post("", response_model=ChatResponse)
@@ -42,7 +45,7 @@ def chat(request: ChatRequest) -> ChatResponse:
     settings = _resolve_settings()
     try:
         graph = build_query_graph(settings=settings)
-        result = graph.invoke(request.model_dump(mode="json"))
+        result = graph.invoke(request.model_dump(mode="json", exclude_none=True))
     except Exception as exc:  # pragma: no cover - defensive API boundary
         raise safe_http_exception(
             status.HTTP_500_INTERNAL_SERVER_ERROR,

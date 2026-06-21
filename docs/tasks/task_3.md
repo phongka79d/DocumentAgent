@@ -115,7 +115,7 @@ Every later retrieval, planning, verification, evaluation, and observability fea
 
 ### Tasks
 
-- [ ] (01A): Add typed retrieval, planning, verification, and state contracts
+- [x] (01A): Add typed retrieval, planning, verification, and state contracts
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 1: Phase 3 Contracts, Settings, and Persistence` > `### Task 1.1: Add typed retrieval, planning, and verification contracts`
   - Source Requirements:
     - Add the specified retrieval, path, summary, relation, and workflow-status enums.
@@ -140,7 +140,7 @@ Every later retrieval, planning, verification, evaluation, and observability fea
   - Blocked Condition: None.
   - Files: `backend/app/core/contracts.py`, `backend/app/core/config.py`, `backend/app/models/schemas.py`, `backend/app/graphs/query_state.py`, `backend/app/graphs/ingestion_state.py`, `backend/tests/test_config.py`, `backend/tests/test_contracts.py`, `backend/tests/test_query_graph.py`, `backend/tests/test_ingestion_graph.py`
 
-- [ ] (01B): Add the idempotent Phase 3 schema and persistence services
+- [x] (01B): Add the idempotent Phase 3 schema and persistence services
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 1: Phase 3 Contracts, Settings, and Persistence` > `### Task 1.2: Add idempotent Phase 3 database migration and data services`
   - Source Requirements:
     - Add `documents.error_code`, `document_summaries`, `document_relations`, and `workflow_runs` with exact constraints and indexes.
@@ -1045,8 +1045,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch01
 
-- [ ] (01A): Add typed retrieval, planning, verification, and state contracts
-- [ ] (01B): Add the idempotent Phase 3 schema and persistence services
+- [x] (01A): Add typed retrieval, planning, verification, and state contracts
+- [x] (01B): Add the idempotent Phase 3 schema and persistence services
 
 #### Batch02
 

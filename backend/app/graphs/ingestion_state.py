@@ -30,5 +30,10 @@ class IngestionState(TypedDict, total=False):
     embedding_dimension: int | None
     qdrant_collection: str | None
 
+    summary_records: list[dict[str, Any]]
+    relation_update_result: dict[str, Any]
+    trace_id: str
+    retry_attempts: dict[str, int]
+
     status: DocumentStatus
     error_message: str | None
