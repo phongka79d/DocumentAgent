@@ -1,57 +1,291 @@
 # RagDocument
 
-RagDocument is a personal, single-user document RAG app.
+RagDocument is a personal, single-user document Retrieval-Augmented Generation (RAG) application. It features a robust Python FastAPI backend leveraging LangGraph for orchestration, Supabase for file storage and metadata, Qdrant as a vector database, ShopAIKey for language models, and Jina AI for state-of-the-art reranking. The UI is built using React, Vite, and TypeScript.
 
-This repository currently reflects the Phase 2 Batch06 implementation and validation. The accepted behavior is:
+---
 
-- a FastAPI backend titled `RagDocument API`
-- `GET /api/health` returning `{"status": "ok"}`
-- a typed settings layer in `backend/app/core/config.py`
-- CORS configured from `FRONTEND_ORIGIN`
-- an optional `X-Admin-API-Token` gate that is disabled when `ADMIN_API_TOKEN` is empty and enforced when it is set
-- a Supabase MVP schema contract in `docs/database/supabase_schema.sql` for `documents`, `document_chunks`, and optional `messages`
-- lazy backend service client factories under `backend/app/services/` for Supabase, Qdrant, ShopAIKey, and Jina
-- document schemas, SHA-256 upload hashing, and deterministic upload validation for PDF, DOCX, TXT, Markdown, and HTML files
-- document service functions for listing, lookup, duplicate detection, original-file upload, row creation, and deletion cleanup
-- document API routes for upload, list, detail, index, reindex, delete, and typed chunk inspection under `/api/documents`
-- normalized document parsers for PDF, DOCX, TXT, Markdown, and HTML under `backend/app/parsing/`, with optional structured block output for paragraphs, headings, tables, and visible HTML blocks
-- a parser registry that resolves supported file extensions and MIME types, including `text/html`
-- deterministic heading scoring and chunkers under `backend/app/chunking/`, including fixed-token chunking plus smart section chunking with heading/section-path metadata, table preservation, and fixed-token fallback
-- chunking settings for `CHUNKING_STRATEGY`, `HEADER_SCORE_THRESHOLD`, `TABLE_CHUNK_MAX_TOKENS`, `CHUNK_SIZE_TOKENS`, and `CHUNK_OVERLAP_TOKENS`
-- retrieval context settings for `RETRIEVAL_CONTEXT_MODE` and `RETRIEVAL_SECTION_SIBLING_WINDOW`
-- a LangGraph ingestion workflow under `backend/app/graphs/` that loads existing document rows, marks processing, parses, selects the configured chunking strategy, saves chunks, embeds, upserts Qdrant vectors with section metadata, marks ready, and marks fatal failures as failed with clear errors
-- index and reindex document routes that invoke the ingestion graph with only the document ID; reindex deletes old Qdrant vectors and old Supabase chunks before rebuilding
-- existing documents should be re-indexed after smart section chunking is enabled so stored chunks and source citations receive `heading` and `section_path` metadata
-- retrieval helpers that embed questions, query Qdrant with optional document filters, rerank with Jina, fall back to Qdrant scores, and expand neighboring chunks with section-aware same-section preference, boundary hints, deduplication, and context caps
-- a LangGraph query workflow under `backend/app/graphs/` that validates questions, retrieves context, reranks, expands neighbors, generates grounded answers with source citations, includes optional section path, content preview, and neighbor-context metadata, and optionally saves messages without failing chat responses
-- a `POST /api/chat` route that accepts `question`, optional `document_ids`, and `save_message`, invokes the query graph, and returns `answer` plus `sources`
-- a `GET /api/messages` route that returns saved Q&A history from the optional `messages` table, newest first, with bounded limits and safe error responses
-- a React Vite TypeScript frontend under `frontend/` that reads `VITE_API_BASE_URL`, keeps backend service secrets out of browser code, and builds with `npm run build`
-- a typed frontend API client for upload, list, detail, index, reindex, delete, chat, document chunk inspection, and message history requests, with `X-Admin-API-Token` sent only when configured in browser session state
-- browser UI for uploading PDF, DOCX, TXT, and Markdown files, listing documents, refreshing document state, indexing, re-indexing, deleting, and showing failed-document errors
-- browser chat UI with optional ready-document selection, answer rendering, selectable richer source citations, source chunk inspection with adjacent chunk navigation, and source citations in the required page-present and page-absent formats
-- browser message history UI that loads saved Q&A rows, supports refresh, and restores saved answers and sources into the chat response area without resending the question
-- local run documentation in `backend/README.md` covering backend, frontend, Supabase, Qdrant, and required environment setup
-- live MVP smoke validation for a TXT document covering upload, duplicate upload, indexing to ready, chat with source citation, delete, and disappearance from the document list
-- Phase 2 automated validation with the full backend test list passing and the frontend production build passing
-- Phase 2 manual browser smoke validation for smart-section Markdown ingestion, table-grounded chat, source inspection, message-history restore without resending chat, and HTML ingestion/source inspection
+## Table of Contents
+1. [System Architecture](#system-architecture)
+2. [Key Features](#key-features)
+3. [Technology Stack](#technology-stack)
+4. [Database Schema](#database-schema)
+5. [Directory Structure](#directory-structure)
+6. [Configuration & Environment Variables](#configuration--environment-variables)
+7. [Installation & Setup](#installation--setup)
+8. [Testing & Verification](#testing--verification)
 
-The current backend uses safe local-development defaults for its settings layer. External service clients are constructed only when their factories are called. Upload route tests use local fakes/mocks; live Supabase, Qdrant, ShopAIKey, and Jina validation still requires real user-provided credentials, and the Supabase SQL and storage bucket must be applied manually before live document workflow validation.
+---
 
-Index and reindex endpoints run the ingestion graph against stored originals. Retrieval and chat are implemented with mock-backed tests. The frontend is implemented and build-validated; Batch06 verified the full automated backend/frontend checks and the Phase 2 manual smoke flow against configured external services after the Supabase schema/storage and Qdrant setup were in place.
+## System Architecture
 
-## Validation
+RagDocument utilizes **LangGraph** to model stateful multi-step pipelines for document ingestion and retrieval queries.
 
-Run the current backend checks with:
+### 1. Ingestion Pipeline
+When a document is uploaded, it transitions through the ingestion graph to process raw content into vector embeddings.
 
-```bash
+```mermaid
+graph TD
+    A[Start Ingestion] --> B[Load Document from Supabase]
+    B --> C[Set Status to 'processing']
+    C --> D[Fetch & Parse Original File]
+    D --> E{Determine Strategy}
+    E -->|smart_section| F[Smart Heading Scoring & Table Preservation]
+    E -->|fixed_token| G[Fixed-Token Splitting]
+    F --> H[Save Chunks to Supabase]
+    G --> H
+    H --> I[Generate Embeddings via ShopAIKey]
+    I --> J[Upsert Vector & Section Metadata to Qdrant]
+    J --> K[Set Status to 'ready']
+    K --> L[Finish]
+    
+    subgraph Error Handling
+        D -->|Fatal Error| M[Set Status to 'failed']
+        F -->|Fatal Error| M
+        I -->|Fatal Error| M
+        J -->|Fatal Error| M
+        M --> L
+    end
+```
+
+### 2. Retrieval & Query Pipeline
+When a user asks a question, the query workflow performs retrieval, context enrichment, reranking, and generation.
+
+```mermaid
+graph TD
+    A[User Prompt / Question] --> B[Validate Question]
+    B --> C[Retrieve Top-K Chunks from Qdrant with Filters]
+    C --> D{Jina Rerank Enabled?}
+    D -->|Yes| E[Rerank Chunks via Jina API]
+    D -->|No| F[Fall Back to Qdrant Scores]
+    E --> G[Filter & Limit to Top-N Chunks]
+    F --> G
+    G --> H[Expand Adjacent Chunks within the Same Section]
+    H --> I[Deduplicate & Cap Total Context Window]
+    I --> J[Generate Grounded Answer with Citations via LLM]
+    J --> K{Save Message Enabled?}
+    K -->|Yes| L[Save Q&A Row to Supabase Messages Table]
+    K -->|No| M[Return Response to Client]
+    L --> M
+```
+
+---
+
+## Key Features
+
+### Backend Capabilities
+- **FastAPI Core**: A typed settings layer managed via Pydantic and secured through optional `X-Admin-API-Token` validation (configured on demand via `ADMIN_API_TOKEN`).
+- **Unified Document Parsing**: Normalized parser registry ([backend/app/parsing/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/parsing)) supporting PDF, DOCX, TXT, Markdown, and HTML format parsing. The parser extracts hierarchical structures such as headings, paragraphs, bullet lists, blockquotes, code, and tables.
+- **Smart Section Chunking**: Dynamic, structural chunking strategy ([backend/app/chunking/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/chunking)) utilizing deterministic heading scoring to preserve section hierarchies and keep tables intact, falling back to fixed-token boundaries only when structural components exceed length limits.
+- **Section-Aware Retrieval**: Context retrieval expanding adjacent chunks belonging to the same section (`RETRIEVAL_CONTEXT_MODE=section_aware`), which preserves document context flow and reduces retrieval fragmentation.
+- **Deduplication & Validation**: Deterministic SHA-256 upload hashing prevent duplicate storage and indexing of identical documents.
+- **Message History API**: Fast lookups for chat history from the `messages` table with bounded retrieval and failure isolation.
+
+### Frontend Capabilities
+- **React Vite TypeScript Frontend**: Quick build time and typed API integrations. Secret keys remain strictly on the server-side.
+- **Document Management Console**: Browser UI for file upload, list status polling, details inspection, reindexing, and full deletion cleanups (removes from database, storage bucket, and vector store).
+- **Advanced Chat Interface**:
+  - Selection of target documents for focused queries.
+  - Contextual citation rendering (both page-present e.g., `[Doc, p. 3]` and page-absent e.g., `[Doc]` styles).
+  - Multi-chunk navigation drawer (browse preceding or succeeding adjacent source chunks directly in the browser).
+  - Single-click restore of old messages and sources into the active chat session without needing to hit the LLM again.
+
+---
+
+## Technology Stack
+
+- **Backend Framework**: Python 3.12, FastAPI, Uvicorn, Pydantic v2
+- **Orchestration**: LangGraph, LangChain Community
+- **Primary Database (Relational & Blob)**: Supabase (PostgreSQL & Storage Bucket)
+- **Vector Database**: Qdrant
+- **LLM & Embeddings Provider**: ShopAIKey API (`gpt-4o-mini`, `text-embedding-3-small`)
+- **Reranker API**: Jina AI (`jina-reranker-v2-base-multilingual`)
+- **Frontend Framework**: React 18, Vite, TypeScript, Vanilla CSS
+
+---
+
+## Database Schema
+
+Applied database definitions are tracked in [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql):
+
+### 1. `documents` Table
+Tracks global status, file characteristics, and parsing configuration.
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `uuid` (PK) | Unique document identifier. |
+| `title` | `text` | Document title (defaults to file name). |
+| `file_name` | `text` | Raw uploaded file name. |
+| `mime_type` | `text` | Detected MIME type (e.g., `application/pdf`, `text/html`). |
+| `file_size` | `bigint` | Byte size of the file. |
+| `file_hash` | `text` (Unique) | SHA-256 hash of file content. |
+| `storage_path` | `text` | Reference to the file in Supabase Storage. |
+| `status` | `text` | `uploaded`, `processing`, `ready`, or `failed`. |
+| `total_pages` | `int` | Total pages in the document. |
+| `total_chunks` | `int` | Number of chunks generated. |
+| `parser_name` | `text` | Parser engine used. |
+| `chunking_strategy` | `text` | Configured chunking type (e.g., `smart_section`). |
+| `qdrant_collection` | `text` | The Qdrant collection vectors are saved to. |
+| `error_message` | `text` | Capture of fatal ingestion exception details. |
+
+### 2. `document_chunks` Table
+Stores parsed texts and layout metadata.
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `uuid` (PK) | Unique chunk ID. |
+| `document_id` | `uuid` (FK) | Reference to `documents.id` (on delete cascade). |
+| `chunk_index` | `int` | Sequential chunk index. |
+| `content` | `text` | Raw textual content. |
+| `token_count` | `int` | Computed token length. |
+| `heading` | `text` | Section heading the chunk belongs to. |
+| `section_path` | `jsonb` | JSON list of parent headings leading to the chunk. |
+| `page_start` / `page_end` | `int` | Page coverage details. |
+| `qdrant_point_id` | `text` | Link to the corresponding point in Qdrant. |
+
+### 3. `messages` Table
+Maintains historical interactions.
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `uuid` (PK) | Message ID. |
+| `question` | `text` | Question queried by the user. |
+| `answer` | `text` | Synthesized grounded answer. |
+| `sources` | `jsonb` | References array including headers, page ranges, and previews. |
+| `metadata` | `jsonb` | Runtime configurations and retrieval metrics. |
+
+---
+
+## Directory Structure
+
+```
+RagDocument/
+├── backend/
+│   ├── app/
+│   │   ├── api/             # API Router definitions (/health, /documents, /chat, /messages)
+│   │   ├── chunking/        # Heading scoring and smart-section chunkers
+│   │   ├── core/            # Configuration setting loader (Pydantic Settings)
+│   │   ├── graphs/          # LangGraph ingestion and query workflow graphs
+│   │   ├── models/          # SQLAlchemy or Pydantic models
+│   │   ├── parsing/         # Extensible document parsers (PDF, DOCX, TXT, MD, HTML)
+│   │   ├── services/        # Lazy-initialization factories for DB & third-party services
+│   │   └── main.py          # FastAPI application entry point
+│   ├── tests/               # pytest test cases covering graphs, chunkers, and APIs
+│   ├── pyproject.toml
+│   └── README.md            # Backend environment and local activation guides
+├── docs/
+│   └── database/
+│       └── supabase_schema.sql  # SQL schema migrations
+├── frontend/
+│   ├── src/
+│   │   ├── api/             # Frontend client communicating with API routes
+│   │   ├── components/      # UI components (Chat, Upload, History)
+│   │   ├── App.tsx          # Main React Application
+│   │   └── styles.css       # Core styling definitions
+│   ├── tsconfig.json
+│   └── vite.config.ts
+└── README.md                # Root project entry point
+```
+
+---
+
+## Configuration & Environment Variables
+
+Create a file named `.env` in the `backend/` subdirectory.
+
+```env
+APP_ENV=development
+FRONTEND_ORIGIN=http://localhost:5173
+ADMIN_API_TOKEN=your-random-token-here
+
+# Supabase Credentials
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+SUPABASE_STORAGE_BUCKET=documents
+
+# ShopAIKey Config
+SHOPAIKEY_API_KEY=your-shopaikey-token
+SHOPAIKEY_BASE_URL=https://api.shopaikey.com/v1
+SHOPAIKEY_CHAT_MODEL=gpt-4o-mini
+SHOPAIKEY_EMBEDDING_MODEL=text-embedding-3-small
+
+# Qdrant Database Config
+QDRANT_URL=https://your-cluster-url.cloud.qdrant.io
+QDRANT_API_KEY=your-qdrant-key
+QDRANT_COLLECTION=document_chunks_v1
+
+# Reranker Options
+ENABLE_RERANK=true
+JINA_API_KEY=your-jina-token
+JINA_RERANK_MODEL=jina-reranker-v2-base-multilingual
+
+# Ingestion & Chunking parameters
+CHUNKING_STRATEGY=smart_section
+HEADER_SCORE_THRESHOLD=4
+TABLE_CHUNK_MAX_TOKENS=500
+CHUNK_SIZE_TOKENS=500
+CHUNK_OVERLAP_TOKENS=150
+
+# Retrieval & Search parameters
+RETRIEVAL_SEMANTIC_TOP_K=40
+RETRIEVAL_FINAL_TOP_K=5
+RETRIEVAL_CONTEXT_MODE=section_aware
+RETRIEVAL_SECTION_SIBLING_WINDOW=1
+RETRIEVAL_CONTEXT_WINDOW=1
+RETRIEVAL_CONTEXT_MAX_CANDIDATES=8
+
+# LLM Generation Parameters
+TEMPERATURE=0.2
+MAX_OUTPUT_TOKENS=1200
+MAX_UPLOAD_BYTES=25000000
+```
+
+---
+
+## Installation & Setup
+
+### Prerequisite External Resources
+1. **Supabase Database**: Execute the contents of [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql) in your project's SQL editor.
+2. **Supabase Bucket**: Create a private storage bucket named `documents` (or matching `SUPABASE_STORAGE_BUCKET`).
+3. **Qdrant Collection**: Initialize a collection named `document_chunks_v1` (matching `QDRANT_COLLECTION`). Ensure the vector size matches your embedding model's dimensions (1532 for `text-embedding-3-small` or standard default).
+
+### Backend Launch
+Run the backend with Python 3.12 from the root folder:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+uvicorn app.main:app --reload --port 8000
+```
+
+### Frontend Launch
+Launch the React application:
+
+```powershell
+cd frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+Ensure `FRONTEND_ORIGIN` in your backend `.env` matches the frontend deployment address (`http://127.0.0.1:5173` or `http://localhost:5173`) to satisfy CORS configurations.
+
+---
+
+## Testing & Verification
+
+Verify API functionality and parsing algorithms.
+
+### 1. Run Backend Tests
+Execute pytest across the suite:
+```powershell
 cd backend
 python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
 ```
 
-Run the current frontend build check with:
-
-```bash
+### 2. Run Frontend Build Check
+Ensure TypeScript checks and compilation compile smoothly:
+```powershell
 cd frontend
 npm run build
 ```
