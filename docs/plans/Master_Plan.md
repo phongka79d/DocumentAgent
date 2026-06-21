@@ -89,6 +89,21 @@ The MVP graphs should be deterministic, simple, and easy to debug.
 
 ---
 
+### 2.3. Extractable Text Only
+
+OCR is intentionally out of scope for this MVP and roadmap.
+
+The system only supports documents with extractable/selectable text. Scanned PDFs, image-only documents, screenshots, and image-only slides are not supported. If parsing returns empty or whitespace-only text, indexing must fail clearly instead of attempting any fallback extraction.
+
+Use this explicit failure:
+
+```text
+error_code: NO_EXTRACTABLE_TEXT
+message: This document has no extractable text. OCR is not supported in this project.
+```
+
+---
+
 ## 3. Technology Stack
 
 | Layer | Technology |
@@ -197,9 +212,7 @@ Move later:
 
 ```text
 HTML
-PPTX
-OCR for scanned PDFs
-Image/chart extraction
+PPTX files with extractable/selectable text
 ```
 
 ---
@@ -373,6 +386,7 @@ class IngestionState(TypedDict, total=False):
 
     # Status / errors
     status: str
+    error_code: Optional[str]
     error_message: Optional[str]
 ```
 
@@ -421,6 +435,7 @@ Responsibilities:
 
 ```text
 update documents.status = processing
+clear previous error_code
 clear previous error_message
 ```
 
@@ -462,7 +477,7 @@ Failure:
 
 ```text
 parser failure → mark_failed
-empty extracted text → mark_failed
+empty or whitespace-only extracted text → mark_failed with error_code = NO_EXTRACTABLE_TEXT
 unsupported file type → mark_failed
 ```
 
@@ -563,6 +578,7 @@ embedding_model
 embedding_dimension
 qdrant_collection
 indexed_at = now()
+error_code = null
 error_message = null
 ```
 
@@ -574,6 +590,7 @@ Responsibilities:
 
 ```text
 status = failed
+error_code = stable machine-readable failure code when available
 error_message = clear failure reason
 ```
 
@@ -1009,6 +1026,7 @@ create table documents (
   embedding_dimension int,
   qdrant_collection text,
   indexed_at timestamptz,
+  error_code text,
   error_message text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -1278,8 +1296,11 @@ If any fatal step fails:
 
 ```text
 status = failed
+error_code = stable machine-readable failure code when available
 error_message = clear failure reason
 ```
+
+If parsing returns empty or whitespace-only text during re-indexing, use `NO_EXTRACTABLE_TEXT` and the message defined in Section 2.3.
 
 A safer staged re-index can be added later:
 
@@ -1452,7 +1473,7 @@ Never expose service/API keys in the frontend.
 | Document row not found | Return 404 or mark failed if graph already started |
 | Missing storage_path | Mark failed |
 | Parser failure | Mark failed |
-| Empty parsed text | Mark failed |
+| Empty or whitespace-only parsed text | Mark failed with `NO_EXTRACTABLE_TEXT` and the message defined in Section 2.3 |
 | Chunking failure | Mark failed |
 | Embedding failure | Mark failed |
 | Qdrant upsert failure | Mark failed |
@@ -1461,6 +1482,7 @@ If ingestion fails:
 
 ```text
 documents.status = failed
+documents.error_code = stable machine-readable failure code when available
 documents.error_message = clear reason
 ```
 
@@ -1627,78 +1649,83 @@ Source 1: report.pdf, chunk 12
 
 ### Phase 1: Minimal Useful RAG with LangGraph
 
+Status: Completed.
+
 Tasks:
 
-- [ ] React.js Vite frontend.
-- [ ] FastAPI backend.
-- [ ] Supabase Storage bucket.
-- [ ] Supabase tables: `documents`, `document_chunks`, optional `messages`.
-- [ ] Qdrant collection `document_chunks_v1`.
-- [ ] `POST /api/documents/upload`.
-- [ ] File validation.
-- [ ] File hash duplicate detection.
-- [ ] Original file storage.
-- [ ] Document row creation with `status = uploaded`.
-- [ ] `POST /api/documents/{document_id}/index`.
-- [ ] LangGraph ingestion graph.
-- [ ] PDF parser.
-- [ ] DOCX parser.
-- [ ] TXT parser.
-- [ ] Markdown parser.
-- [ ] Fixed token chunking.
-- [ ] Chunk saving.
-- [ ] ShopAIKey embeddings.
-- [ ] Qdrant upsert.
-- [ ] Document status updates.
-- [ ] `POST /api/chat`.
-- [ ] LangGraph query graph.
-- [ ] Qdrant Top 40 retrieval.
-- [ ] Optional document_id filtering.
-- [ ] Jina Top 5 reranking.
-- [ ] Neighbor context expansion up to 8 chunks.
-- [ ] ShopAIKey answer generation.
-- [ ] Source citations.
+- [x] React.js Vite frontend.
+- [x] FastAPI backend.
+- [x] Supabase Storage bucket.
+- [x] Supabase tables: `documents`, `document_chunks`, optional `messages`.
+- [x] Qdrant collection `document_chunks_v1`.
+- [x] `POST /api/documents/upload`.
+- [x] File validation.
+- [x] File hash duplicate detection.
+- [x] Original file storage.
+- [x] Document row creation with `status = uploaded`.
+- [x] `POST /api/documents/{document_id}/index`.
+- [x] LangGraph ingestion graph.
+- [x] PDF parser.
+- [x] DOCX parser.
+- [x] TXT parser.
+- [x] Markdown parser.
+- [x] Fixed token chunking.
+- [x] Chunk saving.
+- [x] ShopAIKey embeddings.
+- [x] Qdrant upsert.
+- [x] Document status updates.
+- [x] `POST /api/chat`.
+- [x] LangGraph query graph.
+- [x] Qdrant Top 40 retrieval.
+- [x] Optional document_id filtering.
+- [x] Jina Top 5 reranking.
+- [x] Neighbor context expansion up to 8 chunks.
+- [x] ShopAIKey answer generation.
+- [x] Source citations.
 
 ---
 
 ### Phase 2: Usability and Retrieval Quality
 
+Status: Completed.
+
 Tasks:
 
-- [ ] Document list UI.
-- [ ] Document status UI.
-- [ ] Source viewer panel.
-- [ ] Document deletion.
-- [ ] Re-indexing.
-- [ ] Chunk inspection endpoint.
-- [ ] Message history if useful.
-- [ ] Smart section chunking.
-- [ ] Header scoring heuristic.
-- [ ] Table preservation.
-- [ ] Neighbor context tuning.
-- [ ] Optional HTML parsing.
+- [x] Document list UI.
+- [x] Document status UI.
+- [x] Source viewer panel.
+- [x] Document deletion.
+- [x] Re-indexing.
+- [x] Chunk inspection endpoint.
+- [x] Message history if useful.
+- [x] Smart section chunking.
+- [x] Header scoring heuristic.
+- [x] Table preservation.
+- [x] Neighbor context tuning.
+- [x] Optional HTML parsing.
 
 ---
 
 ### Phase 3: Advanced RAG
 
+Status: Planned.
+
 Tasks:
 
-- [ ] Query decomposition.
-- [ ] LLM-based chunk relationship extraction.
-- [ ] `document_relations` table.
-- [ ] Relation graph expansion.
-- [ ] Grounding verification.
-- [ ] Hybrid search.
-- [ ] OCR.
-- [ ] PPTX support.
-- [ ] Image/chart captioning.
-- [ ] Document summaries.
-- [ ] Section summaries.
-- [ ] Multi-vector chunks.
-- [ ] RAG evaluation dataset.
-- [ ] Retrieval quality metrics.
-- [ ] Answer faithfulness metrics.
+- [ ] LangGraph query decomposition for complex questions.
+- [ ] LangGraph retrieval routing between semantic, keyword, metadata-filtered, and relation-aware paths.
+- [ ] Hybrid search using Qdrant semantic retrieval and Postgres full-text search, followed by score fusion.
+- [ ] Metadata-aware filtering for document, file type, heading, section, and page range.
+- [ ] Improved reranking with configurable candidate stages and deterministic fallback behavior.
+- [ ] Better chunk-neighbor expansion using section boundaries and context budgets.
+- [ ] Document summaries and section summaries generated from extracted text.
+- [ ] Lightweight document relation graph and cross-document reasoning where retrieval quality justifies it.
+- [ ] Grounding verification before returning an answer.
+- [ ] Citation validation against the exact retrieved chunks used by the answer.
+- [ ] RAG evaluation dataset with retrieval, grounding, citation, and answer-quality checks.
+- [ ] Retrieval metrics including recall-at-k, precision-at-k, rerank lift, and no-result rate.
+- [ ] Ingestion and query observability for node timing, retries, external API failures, and retrieval traces.
+- [ ] LangGraph failure recovery for retryable indexing and query-node failures.
 
 ---
 
@@ -1722,9 +1749,6 @@ query classification
 query decomposition
 LLM relation extraction
 grounding verification
-OCR
-PPTX parsing
-image/chart captioning
 hybrid search
 document summaries
 section summaries
@@ -1802,3 +1826,13 @@ Jina Reranker
 ```
 
 The design is intentionally lean. LangGraph stays as the orchestration backbone, but the MVP avoids agents, relation graphs, multi-user authentication, and enterprise patterns until they are actually needed.
+
+---
+
+## 31. Roadmap Verification Checklist
+
+- [ ] Prohibited extraction capabilities appear only in the intentional out-of-scope note in Section 2.3.
+- [ ] Phase 3 contains only text-based advanced RAG features.
+- [ ] Unsupported document categories are clearly defined in Section 2.3.
+- [ ] Empty or whitespace-only text extraction fails with `NO_EXTRACTABLE_TEXT`.
+- [ ] LangGraph remains central to ingestion and query workflows.
