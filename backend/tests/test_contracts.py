@@ -156,6 +156,13 @@ def test_retrieval_uses_qdrant_payload_key_contract(monkeypatch):
         "token_count": 5,
         "qdrant_score": 0.8,
         "rerank_score": None,
+        "semantic_rank": 1,
+        "semantic_score": 0.8,
+        "keyword_rank": None,
+        "keyword_score": None,
+        "fusion_score": None,
+        "retrieval_paths": [RetrievalPath.SEMANTIC],
+        "subquery_ids": [],
     }
 
 
