@@ -1033,8 +1033,8 @@ There are no optional tracks outside this mandatory chain.
 
 - [x] Batch01 - Phase 3 Contracts, Settings, and Persistence
 - [x] Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
-- [ ] Batch03 - Document Summaries and Lightweight Relations
-- [ ] Batch04 - Query Decomposition and LangGraph Retrieval Routing
+- [x] Batch03 - Document Summaries and Lightweight Relations
+- [x] Batch04 - Query Decomposition and LangGraph Retrieval Routing
 - [x] Batch05 - Candidate Stages, Reranking, and Context Budgets
 - [x] Batch06 - Exact Citations and Grounding Verification
 - [x] Batch07 - RAG Evaluation Dataset and Metrics
