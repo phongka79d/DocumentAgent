@@ -91,6 +91,9 @@ export interface SourceCitation {
   section_path?: string[];
   content_preview?: string;
   is_neighbor_context?: boolean;
+  fusion_score?: number | null;
+  retrieval_paths?: string[] | null;
+  citation_key?: string | null;
 }
 
 export interface ChatResponse {

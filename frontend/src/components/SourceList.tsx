@@ -36,6 +36,22 @@ export default function SourceList({
         const pageInfo = source.page_start !== null
           ? `Page ${source.page_start}${source.page_end && source.page_end !== source.page_start ? `-${source.page_end}` : ""}`
           : `Chunk ${source.chunk_index}`;
+        const metadataParts: string[] = [];
+        if (source.fusion_score !== null && source.fusion_score !== undefined) {
+          metadataParts.push(`Fusion: ${(source.fusion_score * 100).toFixed(0)}%`);
+        }
+        if (source.retrieval_paths && source.retrieval_paths.length > 0) {
+          metadataParts.push(`Paths: ${source.retrieval_paths.join(", ")}`);
+        }
+        if (source.citation_key) {
+          metadataParts.push(`Citation: ${source.citation_key}`);
+        }
+        const scoreText =
+          source.rerank_score !== null
+            ? `Score: ${(source.rerank_score * 100).toFixed(0)}%`
+            : source.qdrant_score !== null
+              ? `Score: ${(source.qdrant_score * 100).toFixed(0)}%`
+              : "";
 
         return (
           <button
@@ -51,8 +67,14 @@ export default function SourceList({
                 {source.file_name}
               </div>
               <div className="citation-card-meta">
-                {pageInfo} {source.rerank_score !== null ? `• Score: ${(source.rerank_score * 100).toFixed(0)}%` : source.qdrant_score !== null ? `• Score: ${(source.qdrant_score * 100).toFixed(0)}%` : ""}
+                {pageInfo}
+                {scoreText ? ` | ${scoreText}` : ""}
               </div>
+              {metadataParts.length > 0 && (
+                <div className="citation-card-meta">
+                  {metadataParts.join(" | ")}
+                </div>
+              )}
             </div>
           </button>
         );
@@ -60,4 +82,3 @@ export default function SourceList({
     </div>
   );
 }
-

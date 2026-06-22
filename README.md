@@ -52,7 +52,7 @@ graph TD
 ```
 
 ### 2. Retrieval & Query Pipeline
-When a user asks a question, the query workflow creates a bounded typed plan, routes each subquery through its allowed retrieval paths, merges the candidates, and continues through context enrichment, reranking, and generation.
+When a user asks a question, the query workflow creates a bounded typed plan, routes each subquery through its allowed retrieval paths, merges the candidates, applies independent candidate and reranking caps, and continues through token-budgeted context selection and generation.
 
 ```mermaid
 graph TD
@@ -63,11 +63,11 @@ graph TD
     E --> F[Merge and Cap Candidates by Chunk ID]
     F --> G{Jina Rerank Enabled?}
     G -->|Yes| H[Rerank Chunks via Jina API]
-    G -->|No| I[Use Fused or Successful-Path Scores]
+    G -->|No / Fallback| I[Use Deterministic Fusion, Path Score, and Chunk-ID Order]
     H --> J[Filter & Limit to Top-N Chunks]
     I --> J
-    J --> K[Expand Adjacent Chunks within the Same Section]
-    K --> L[Deduplicate & Cap Total Context Window]
+    J --> K[Select Ranked, Boundary, Same-Section, then Generic Neighbor Chunks]
+    K --> L[Deduplicate & Enforce Candidate and Token Budgets]
     L --> M[Generate Grounded Answer with Citations via LLM]
     M --> N{Save Message Enabled?}
     N -->|Yes| O[Save Q&A Row to Supabase Messages Table]
@@ -83,8 +83,9 @@ graph TD
 - **FastAPI Core**: A typed settings layer managed via Pydantic and secured through optional `X-Admin-API-Token` validation (configured on demand via `ADMIN_API_TOKEN`).
 - **Unified Document Parsing**: Normalized parser registry ([backend/app/parsing/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/parsing)) supporting PDF, DOCX, TXT, Markdown, and HTML format parsing. The parser extracts hierarchical structures such as headings, paragraphs, bullet lists, blockquotes, code, and tables.
 - **Smart Section Chunking**: Dynamic, structural chunking strategy ([backend/app/chunking/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/chunking)) utilizing deterministic heading scoring to preserve section hierarchies and keep tables intact, falling back to fixed-token boundaries only when structural components exceed length limits.
-- **Section-Aware Retrieval**: Context retrieval expanding adjacent chunks belonging to the same section (`RETRIEVAL_CONTEXT_MODE=section_aware`), which preserves document context flow and reduces retrieval fragmentation.
+- **Section-Aware Retrieval**: Context retrieval selects final ranked chunks first, then requested boundary chunks, exact same-section neighbors, and generic same-document neighbors (`RETRIEVAL_CONTEXT_MODE=section_aware`), while enforcing candidate and token budgets and preserving prompt-only truncation for oversized top chunks.
 - **Metadata-Aware Hybrid Retrieval**: Chat requests can filter by document allow-list, MIME type, heading, section path, and page range; semantic Qdrant retrieval and Postgres full-text keyword retrieval run independently, recover from single-path failures, and merge candidates with deterministic reciprocal-rank fusion.
+- **Bounded Candidate Stages and Reranking**: Retrieval enforces per-path, fused, rerank-candidate, final-reranked, and context-stage caps independently. Jina receives only the configured rerank candidate window, and disabled or invalid reranking falls back deterministically by fusion score, path scores, and chunk ID.
 - **Bounded Query Planning and Routing**: The query graph normalizes and caps planned subqueries, preserves explicit document scope and filter precedence, routes semantic, keyword, hybrid, metadata, and one-hop relation strategies only through approved paths, and merges candidates while retaining subquery coverage.
 - **Deduplication & Validation**: Deterministic SHA-256 upload hashing prevent duplicate storage and indexing of identical documents.
 - **Message History API**: Fast lookups for chat history from the `messages` table with bounded retrieval and failure isolation.
@@ -100,6 +101,7 @@ graph TD
   - Selection of target documents for focused queries.
   - Collapsible retrieval filters for MIME/file type, heading, section path, and page range, with invalid page ranges blocked before send.
   - Contextual citation rendering (both page-present e.g., `[Doc, p. 3]` and page-absent e.g., `[Doc]` styles).
+  - Optional retrieval metadata display for fusion score, retrieval paths, and citation key when available.
   - Multi-chunk navigation drawer (browse preceding or succeeding adjacent source chunks directly in the browser).
   - Single-click restore of old messages and sources into the active chat session without needing to hit the LLM again.
 
@@ -331,7 +333,7 @@ Execute pytest across the suite:
 ```powershell
 cd backend
 python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
-python -m pytest tests/test_contracts.py tests/test_keyword_search.py tests/test_score_fusion.py tests/test_query_planning.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py -v
+python -m pytest tests/test_contracts.py tests/test_keyword_search.py tests/test_score_fusion.py tests/test_retrieval_context.py tests/test_query_planning.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py -v
 ```
 
 ### 2. Run Frontend Build Check

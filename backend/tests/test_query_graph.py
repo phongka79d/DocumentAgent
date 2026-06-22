@@ -919,6 +919,9 @@ def test_expand_neighbor_context_keeps_reranked_chunks_first_deduplicates_and_ca
             "content": "chunk 1",
             "qdrant_score": 0.95,
             "rerank_score": 0.99,
+            "fusion_score": 0.42,
+            "retrieval_paths": [RetrievalPath.SEMANTIC, RetrievalPath.KEYWORD],
+            "citation_key": "S1",
         },
         {
             "chunk_id": "chunk-2",
@@ -1016,11 +1019,267 @@ def test_expand_neighbor_context_keeps_reranked_chunks_first_deduplicates_and_ca
         "chunk-4",
         "chunk-5",
     ]
+    assert context_chunks[0]["fusion_score"] == 0.42
+    assert context_chunks[0]["retrieval_paths"] == ["semantic", "keyword"]
+    assert context_chunks[0]["citation_key"] == "S1"
     assert len({chunk["chunk_id"] for chunk in context_chunks}) == len(context_chunks)
     assert [chunk["chunk_id"] for chunk in context_chunks[5:]] == [
         "chunk-0",
         "chunk-6",
         "chunk-7",
+    ]
+
+
+def test_jina_rerank_node_limits_jina_documents_to_candidate_top_k_and_requests_final_top_k():
+    settings = _test_settings()
+    retrieved_chunks = [
+        {
+            "chunk_id": f"chunk-{index}",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": index,
+            "content": f"chunk {index}",
+            "qdrant_score": 1.0 - (index * 0.1),
+            "fusion_score": 1.0 - (index * 0.1),
+            "retrieval_paths": [RetrievalPath.SEMANTIC],
+        }
+        for index in range(5)
+    ]
+    fake_jina_client = SimpleNamespace(
+        http_client=FakeHttpClient(
+            response=FakeHttpResponse(
+                {
+                    "results": [
+                        {"index": 2, "relevance_score": 0.97},
+                        {"index": 0, "relevance_score": 0.94},
+                    ]
+                }
+            )
+        ),
+        model=settings.JINA_RERANK_MODEL,
+    )
+    candidate_settings = settings.model_copy(
+        update={
+            "RETRIEVAL_RERANK_CANDIDATE_TOP_K": 3,
+            "RETRIEVAL_FINAL_TOP_K": 2,
+        }
+    )
+
+    result = query_nodes.jina_rerank_node(
+        {
+            "prepared_query": "What is pricing?",
+            "retrieved_chunks": retrieved_chunks,
+            "retrieval_metrics": {},
+        },
+        settings=candidate_settings,
+        jina_client=fake_jina_client,
+    )
+
+    assert [chunk["chunk_id"] for chunk in result["reranked_chunks"]] == [
+        "chunk-2",
+        "chunk-0",
+    ]
+    assert [chunk["rerank_score"] for chunk in result["reranked_chunks"]] == [
+        0.97,
+        0.94,
+    ]
+    assert fake_jina_client.http_client.post_calls[0]["json"]["documents"] == [
+        "chunk 0",
+        "chunk 1",
+        "chunk 2",
+    ]
+    assert fake_jina_client.http_client.post_calls[0]["json"]["top_n"] == 2
+    assert result["retrieval_metrics"] == {
+        "rerank_candidate_count": 3,
+        "final_reranked_count": 2,
+    }
+
+
+def test_jina_rerank_node_preserves_subquery_covered_candidate_order_before_fallback_sort():
+    settings = _test_settings()
+    retrieved_chunks = [
+        {
+            "chunk_id": "chunk-left",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 0,
+            "content": "left coverage",
+            "qdrant_score": 0.1,
+            "fusion_score": 0.1,
+            "keyword_score": 0.1,
+            "subquery_ids": ["q1"],
+        },
+        {
+            "chunk_id": "chunk-right",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 1,
+            "content": "right coverage",
+            "qdrant_score": 0.9,
+            "fusion_score": 0.9,
+            "keyword_score": 0.9,
+            "subquery_ids": ["q2"],
+        },
+        {
+            "chunk_id": "chunk-bridge",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 2,
+            "content": "bridge coverage",
+            "qdrant_score": 0.5,
+            "fusion_score": 0.5,
+            "keyword_score": 0.5,
+            "subquery_ids": ["q1", "q2"],
+        },
+        {
+            "chunk_id": "chunk-ignored",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 3,
+            "content": "ignored tail",
+            "qdrant_score": 0.8,
+            "fusion_score": 0.8,
+            "keyword_score": 0.8,
+            "subquery_ids": ["q3"],
+        },
+    ]
+    fake_jina_client = SimpleNamespace(
+        http_client=FakeHttpClient(
+            response=FakeHttpResponse(
+                {
+                    "results": [
+                        {"index": 1, "relevance_score": 0.9},
+                        {"index": 0, "relevance_score": 0.8},
+                    ]
+                }
+            )
+        ),
+        model=settings.JINA_RERANK_MODEL,
+    )
+    candidate_settings = settings.model_copy(
+        update={
+            "RETRIEVAL_RERANK_CANDIDATE_TOP_K": 3,
+            "RETRIEVAL_FINAL_TOP_K": 2,
+        }
+    )
+
+    result = query_nodes.jina_rerank_node(
+        {
+            "prepared_query": "What is pricing?",
+            "retrieved_chunks": retrieved_chunks,
+            "retrieval_metrics": {},
+        },
+        settings=candidate_settings,
+        jina_client=fake_jina_client,
+    )
+
+    assert fake_jina_client.http_client.post_calls[0]["json"]["documents"] == [
+        "left coverage",
+        "right coverage",
+        "bridge coverage",
+    ]
+    assert [chunk["chunk_id"] for chunk in result["reranked_chunks"]] == [
+        "chunk-right",
+        "chunk-left",
+    ]
+    assert [chunk["rerank_score"] for chunk in result["reranked_chunks"]] == [
+        0.9,
+        0.8,
+    ]
+    assert result["retrieval_metrics"] == {
+        "rerank_candidate_count": 3,
+        "final_reranked_count": 2,
+    }
+
+
+def test_rerank_chunks_falls_back_to_fusion_qdrant_keyword_chunk_id_sort_when_jina_returns_invalid_indexes():
+    settings = _test_settings().model_copy(update={"RETRIEVAL_FINAL_TOP_K": 5})
+    chunks = [
+        {
+            "chunk_id": "chunk-a",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 0,
+            "content": "alpha",
+            "fusion_score": 0.9,
+            "qdrant_score": 0.4,
+            "keyword_score": 0.1,
+        },
+        {
+            "chunk_id": "chunk-b",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 1,
+            "content": "beta",
+            "fusion_score": 0.9,
+            "qdrant_score": 0.4,
+            "keyword_score": 0.2,
+        },
+        {
+            "chunk_id": "chunk-c",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 2,
+            "content": "gamma",
+            "fusion_score": 0.8,
+            "qdrant_score": 0.9,
+            "keyword_score": 0.9,
+        },
+        {
+            "chunk_id": "chunk-d",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 3,
+            "content": "delta",
+            "qdrant_score": 0.95,
+            "keyword_score": 0.3,
+        },
+        {
+            "chunk_id": "chunk-e",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 4,
+            "content": "epsilon",
+            "qdrant_score": 0.95,
+            "keyword_score": 0.8,
+        },
+        {
+            "chunk_id": "chunk-f",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 5,
+            "content": "zeta",
+            "qdrant_score": 0.95,
+            "keyword_score": 0.8,
+        },
+    ]
+    jina_client = SimpleNamespace(
+        http_client=FakeHttpClient(
+            response=FakeHttpResponse(
+                {
+                    "results": [
+                        {"index": 99, "relevance_score": 0.99},
+                        {"index": 1, "relevance_score": 0.88},
+                    ]
+                }
+            )
+        ),
+        model=settings.JINA_RERANK_MODEL,
+    )
+
+    results = retrieval.rerank_chunks(
+        "What does the document say?",
+        chunks,
+        settings=settings,
+        jina_client=jina_client,
+    )
+
+    assert [chunk["chunk_id"] for chunk in results] == [
+        "chunk-b",
+        "chunk-a",
+        "chunk-c",
+        "chunk-e",
+        "chunk-f",
     ]
 
 
@@ -1378,6 +1637,78 @@ def test_expand_neighbor_context_node_adds_neighbors_and_deduplicates():
     )
 
 
+def test_expand_neighbor_context_node_records_context_budget_metrics():
+    settings = _test_settings(context_mode="neighbor").model_copy(
+        update={"RETRIEVAL_CONTEXT_MAX_TOKENS": 4}
+    )
+    reranked_chunks = [
+        {
+            "chunk_id": "chunk-a",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 2,
+            "content": "anchor",
+            "token_count": 3,
+            "subquery_ids": ["left"],
+        },
+        {
+            "chunk_id": "chunk-b",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 6,
+            "content": "second anchor",
+            "token_count": 2,
+            "subquery_ids": ["right"],
+        },
+    ]
+    fake_client = FakeSupabaseClient(
+        tables={
+            "document_chunks": [
+                {
+                    "id": "neighbor-a",
+                    "document_id": DOC_A,
+                    "chunk_index": 1,
+                    "content": "neighbor a",
+                    "token_count": 1,
+                    "file_name": "alpha.pdf",
+                },
+                {
+                    "id": "neighbor-b",
+                    "document_id": DOC_A,
+                    "chunk_index": 3,
+                    "content": "neighbor b",
+                    "token_count": 1,
+                    "file_name": "alpha.pdf",
+                },
+            ]
+        }
+    )
+
+    result = query_nodes.expand_neighbor_context_node(
+        {
+            "reranked_chunks": reranked_chunks,
+            "retrieval_metrics": {"existing_metric": 7},
+        },
+        settings=settings,
+        supabase_client=fake_client,
+    )
+
+    assert [chunk["chunk_id"] for chunk in result["context_chunks"]] == [
+        "chunk-a",
+        "neighbor-a",
+    ]
+    assert result["retrieval_metrics"] == {
+        "existing_metric": 7,
+        "context_token_count": 4,
+        "context_candidate_count": 2,
+        "context_neighbor_count": 1,
+        "context_subquery_coverage": {
+            "left": 1,
+            "right": 0,
+        },
+    }
+
+
 def test_generate_answer_node_builds_sources_and_uses_only_context():
     settings = _test_settings()
     long_content = ("Pricing is based on usage tiers. " * 10).strip()
@@ -1470,6 +1801,44 @@ def test_generate_answer_node_builds_sources_and_uses_only_context():
     assert chat_call["messages"][1]["content"].endswith("Answer using only the context.")
 
 
+def test_generate_answer_node_uses_truncated_prompt_copy_without_changing_source_preview():
+    settings = _test_settings()
+    full_content = "Alpha Beta Gamma Delta Epsilon Zeta Eta Theta"
+    fake_client = FakeShopAIKeyClient(
+        chat_response=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="Answer"))]
+        )
+    )
+
+    result = query_nodes.generate_answer_node(
+        {
+            "question": "What matters here?",
+            "context_chunks": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "heading": "Pricing",
+                    "section_path": ["Pricing"],
+                    "content": full_content,
+                    "prompt_content": "Alpha Beta",
+                    "context_truncated": True,
+                    "token_count": 99,
+                }
+            ],
+        },
+        settings=settings,
+        shopaikey_client=fake_client,
+    )
+
+    chat_call = fake_client.chat.completions.calls[0]
+    assert "Alpha Beta\n\n" in chat_call["messages"][1]["content"]
+    assert full_content not in chat_call["messages"][1]["content"]
+    assert result["sources"][0]["content_preview"] == full_content
+    assert "context_truncated" not in result["sources"][0]
+
+
 def test_source_citation_preview_uses_shared_limit():
     long_content = "x" * 300
     citation = query_nodes._build_source_citations(
@@ -1484,6 +1853,52 @@ def test_source_citation_preview_uses_shared_limit():
     )[0]
 
     assert citation["content_preview"] == "x" * 240
+
+
+def test_source_citations_carry_optional_phase3_metadata_without_dropping_phase2_fields():
+    from app.graphs import query_formatting
+
+    citations = query_formatting.build_source_citations(
+        [
+            {
+                "document_id": DOC_A,
+                "chunk_id": "chunk-1",
+                "chunk_index": 7,
+                "file_name": "alpha.pdf",
+                "content": "Pricing is based on usage tiers.",
+                "heading": "Pricing",
+                "section_path": ["Pricing", "Tier 1"],
+                "qdrant_score": 0.91,
+                "rerank_score": 0.99,
+                "fusion_score": 0.73,
+                "retrieval_paths": [
+                    "semantic",
+                    "keyword",
+                ],
+                "citation_key": "S1",
+            }
+        ]
+    )
+
+    assert citations == [
+        {
+            "document_id": DOC_A,
+            "chunk_id": "chunk-1",
+            "file_name": "alpha.pdf",
+            "chunk_index": 7,
+            "page_start": None,
+            "page_end": None,
+            "heading": "Pricing",
+            "qdrant_score": 0.91,
+            "rerank_score": 0.99,
+            "section_path": ["Pricing", "Tier 1"],
+            "content_preview": "Pricing is based on usage tiers.",
+            "is_neighbor_context": False,
+            "fusion_score": 0.73,
+            "retrieval_paths": ["semantic", "keyword"],
+            "citation_key": "S1",
+        }
+    ]
 
 
 def test_query_formatting_exposes_cross_module_helpers_as_public_api():

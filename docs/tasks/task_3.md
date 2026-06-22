@@ -516,7 +516,7 @@ Routing alone does not bound cost or context quality; independent caps and predi
 
 ### Tasks
 
-- [ ] (05A): Add configurable candidate stages and stable reranking fallback
+- [x] (05A): Add configurable candidate stages and stable reranking fallback
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 5: Candidate Stages, Reranking, and Context Budgets` > `### Task 5.1: Add configurable candidate stages and stable reranking fallback`
   - Source Requirements:
     - Enforce per-path, fused, rerank-candidate, final reranked, and context-stage caps independently in order.
@@ -541,7 +541,7 @@ Routing alone does not bound cost or context quality; independent caps and predi
   - Blocked Condition: None.
   - Files: `backend/app/services/retrieval.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_formatting.py`, `backend/app/models/schemas.py`, `backend/tests/test_query_graph.py`, `frontend/src/api/types.ts`, `frontend/src/components/SourceList.tsx`
 
-- [ ] (05B): Enforce section boundaries and token-budgeted context
+- [x] (05B): Enforce section boundaries and token-budgeted context
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 5: Candidate Stages, Reranking, and Context Budgets` > `### Task 5.2: Enforce section boundaries and a token context budget`
   - Source Requirements:
     - Use stored token counts or the chunking tokenizer fallback.
@@ -1035,7 +1035,7 @@ There are no optional tracks outside this mandatory chain.
 - [x] Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
 - [ ] Batch03 - Document Summaries and Lightweight Relations
 - [ ] Batch04 - Query Decomposition and LangGraph Retrieval Routing
-- [ ] Batch05 - Candidate Stages, Reranking, and Context Budgets
+- [x] Batch05 - Candidate Stages, Reranking, and Context Budgets
 - [ ] Batch06 - Exact Citations and Grounding Verification
 - [ ] Batch07 - RAG Evaluation Dataset and Metrics
 - [ ] Batch08 - Workflow Observability and Failure Recovery
@@ -1066,8 +1066,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch05
 
-- [ ] (05A): Add configurable candidate stages and stable reranking fallback
-- [ ] (05B): Enforce section boundaries and token-budgeted context
+- [x] (05A): Add configurable candidate stages and stable reranking fallback
+- [x] (05B): Enforce section boundaries and token-budgeted context
 
 #### Batch06
 

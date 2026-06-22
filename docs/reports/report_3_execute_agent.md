@@ -1089,3 +1089,431 @@ complete
 - next task ID: (05A)
 - can proceed: yes, after A2 reviews and accepts this (04B) repair.
 - handoff notes: Retrieval route metrics now distinguish attempted and successful paths; downstream nodes should treat `error_message` from `retrieve_candidates_node` as a route failure and empty successful path candidates as valid insufficient-context input.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+[docs/tasks/task_3.md]
+
+## Report File
+[docs/reports/report_3_execute_agent.md]
+
+## Batch
+[Batch05 - Candidate Stages, Reranking, and Context Budgets]
+
+## Task
+[(05A)] - Add configurable candidate stages and stable reranking fallback
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_3.md` > `## Batch 5: Candidate Stages, Reranking, and Context Budgets` > `### Task 5.1: Add configurable candidate stages and stable reranking fallback`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05A)
+- Task title: Add configurable candidate stages and stable reranking fallback
+
+## Completed Work
+- Enforced rerank candidate capping before Jina calls and kept final rerank output capped independently.
+- Changed Jina fallback behavior to deterministic sorting by fusion score, Qdrant score, keyword score, then chunk ID, and rejected invalid provider indexes instead of inferring rank from response position.
+- Preserved optional fusion score, retrieval paths, and citation key through context normalization and source citation formatting.
+- Extended frontend source types and source cards to display optional retrieval metadata while remaining compatible with Phase 2 message data.
+- Added regression tests for candidate caps, invalid-index fallback, metadata propagation, and backend source formatting.
+
+## Files Created or Modified
+- backend/app/services/retrieval.py
+- backend/app/graphs/query_nodes.py
+- backend/app/graphs/query_formatting.py
+- backend/app/services/retrieval_context.py
+- backend/tests/test_query_graph.py
+- frontend/src/api/types.ts
+- frontend/src/components/SourceList.tsx
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_graph.py -k "expand_neighbor_context_keeps_reranked_chunks_first_deduplicates_and_caps_context or jina_rerank_node_limits_jina_documents_to_candidate_top_k_and_requests_final_top_k or rerank_chunks_falls_back_to_fusion_qdrant_keyword_chunk_id_sort_when_jina_returns_invalid_indexes or source_citations_carry_optional_phase3_metadata_without_dropping_phase2_fields" -v`: Passed
+- `cd backend; python -m pytest tests/test_query_graph.py tests/test_score_fusion.py -v`: Passed
+- `cd frontend; npm run build`: Passed
+
+## Acceptance Check
+- Task acceptance condition: Every configured cap is independently enforced, Jina receives the configured candidate count, fallback order is deterministic, and frontend displays optional retrieval metadata while remaining compatible with saved Phase 2 messages.
+- Status: satisfied
+- Evidence: Backend query-graph and score-fusion tests passed, the rerank node now reports candidate/final counts and only sends the capped candidate set to Jina, invalid provider indexes now fall back to deterministic ordering, and the frontend production build completed successfully.
+
+## Artifacts Produced
+- Updated backend retrieval and source-formatting behavior for deterministic reranking.
+- Updated frontend source metadata rendering for optional Phase 3 fields.
+- Execution report appended to `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User instructed not to update checkboxes in this orchestrated run.
+
+## Key Implementation Decisions
+- Applied the rerank candidate cap inside the rerank service so every caller gets the same deterministic truncation before Jina.
+- Treated any invalid Jina index as a full fallback condition rather than partially trusting the provider response.
+- Preserved optional retrieval metadata as plain string values through context expansion and source serialization to keep API and frontend compatibility straightforward.
+
+## Risks or Open Issues
+- None identified for this task.
+
+## Minor Issues Fixed During Execution
+- Adjusted the rerank tests to reflect deterministic pre-Jina ordering and serialized retrieval metadata.
+
+## Workflow Integrity Check
+- Source-of-truth fields were present and consistent.
+- Dependencies (02C) and (04B) were already accepted.
+- No user-action blocker was present.
+- No scope beyond (05A) was implemented.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: Candidate-stage caps, deterministic rerank fallback, and optional retrieval metadata propagation are in place. The next task can build on the same retrieval pipeline to enforce section boundaries and token-budgeted context.
+
+---
+
+# Task Execution Report - (05A)
+
+## Source Task File
+[docs/tasks/task_3.md]
+
+## Report File
+[docs/reports/report_3_execute_agent.md]
+
+## Batch
+[Batch05 - Candidate Stages, Reranking, and Context Budgets]
+
+## Task
+[(05A)] - Add configurable candidate stages and stable reranking fallback
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/plans/Plan_3.md` > `## Batch 5: Candidate Stages, Reranking, and Context Budgets` > `### Task 5.1: Add configurable candidate stages and stable reranking fallback`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md`
+
+## Selected Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05A)
+- Task title: Add configurable candidate stages and stable reranking fallback
+
+## Completed Work
+- Fixed rerank candidate selection so `RETRIEVAL_RERANK_CANDIDATE_TOP_K` is applied to the incoming fused/subquery-covered chunk order before any fallback sorting.
+- Kept deterministic fusion/Qdrant/keyword/chunk-ID sorting only for fallback output ordering after the candidate set is chosen.
+- Added a regression that proves Jina receives the preserved candidate order for a subquery-covered chunk list.
+- Updated the stale rerank test expectation that was still asserting the old pre-fix index mapping.
+
+## Files Created or Modified
+- backend/app/services/retrieval.py
+- backend/tests/test_query_graph.py
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_graph.py tests/test_score_fusion.py -v`: Passed
+- `cd frontend; npm run build`: Passed
+
+## Acceptance Check
+- Task acceptance condition: Every configured cap is independently enforced, Jina receives the configured candidate count, fallback order is deterministic, and frontend displays optional retrieval metadata while remaining compatible with saved Phase 2 messages.
+- Status: satisfied
+- Evidence: The backend rerank path now preserves incoming candidate order for the Jina window, fallback sorting is applied only after candidate selection, the new regression covers subquery-covered ordering, and the required backend tests plus frontend build both passed.
+
+## Artifacts Produced
+- Corrected rerank candidate selection in `backend/app/services/retrieval.py`.
+- Added candidate-order regression coverage in `backend/tests/test_query_graph.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User instructed not to update checkboxes in this orchestrated run.
+
+## Key Implementation Decisions
+- Preserved the fused/subquery-covered order as the source ordering for the Jina candidate window.
+- Limited deterministic fallback sorting to the post-selection output path so the rerank service remains stable without changing candidate membership order.
+
+## Risks or Open Issues
+- None identified for this repair.
+
+## Minor Issues Fixed During Execution
+- Corrected the stale test expectation that still reflected the pre-repair rerank mapping.
+
+## Workflow Integrity Check
+- Review finding was verified against the code before editing.
+- Scope stayed within (05A) and only the reported rerank ordering issue was repaired.
+- No task checkbox or review report was modified.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: Candidate selection now preserves fused/subquery-covered ordering before Jina; later context-budget work can build on this boundary without reintroducing pre-cap re-sorting.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch05 - Candidate Stages, Reranking, and Context Budgets
+
+## Task
+(05B) - Enforce section boundaries and token-budgeted context
+
+## Status
+partial
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch05 - Candidate Stages, Reranking, and Context Budgets > (05B)
+- docs/plans/Plan_3.md > ## Batch 5: Candidate Stages, Reranking, and Context Budgets > ### Task 5.2: Enforce section boundaries and a token context budget
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05B)
+- Task title: Enforce section boundaries and token-budgeted context
+
+## Completed Work
+- Status is partial.
+- Inspected the dirty worktree and preserved accepted 05A changes already present in ackend/app/services/retrieval_context.py, ackend/app/graphs/query_formatting.py, and ackend/app/graphs/query_nodes.py.
+- Added 05B-focused failing regression coverage in ackend/tests/test_retrieval_context.py and ackend/tests/test_query_graph.py for subquery coverage reservation, global same-section-before-generic ordering, token-budget enforcement, prompt-only truncation, tokenizer fallback, and context metrics.
+- Did not complete the runtime 05B implementation or wire the required context-selection metrics into the query path.
+
+## Files Created or Modified
+- backend/tests/test_retrieval_context.py
+- backend/tests/test_query_graph.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- cd backend; python -m pytest tests/test_retrieval_context.py tests/test_query_graph.py -v: Failed
+- evidence or reason: 53 tests collected; 47 passed and 6 failed.
+- failing tests:
+  - 	ests/test_retrieval_context.py::test_expand_neighbor_context_result_reserves_multi_subquery_coverage_before_lower_ranked_fill
+  - 	ests/test_retrieval_context.py::test_expand_neighbor_context_result_keeps_all_same_section_neighbors_before_any_generic_neighbor
+  - 	ests/test_retrieval_context.py::test_expand_neighbor_context_result_truncates_only_prompt_copy_for_oversized_top_chunk
+  - 	ests/test_retrieval_context.py::test_expand_neighbor_context_result_uses_chunking_tokenizer_fallback_when_token_count_missing
+  - 	ests/test_query_graph.py::test_expand_neighbor_context_node_records_context_budget_metrics
+  - 	ests/test_query_graph.py::test_generate_answer_node_uses_truncated_prompt_copy_without_changing_source_preview
+- failure detail: the 05B APIs and behavior are still missing. expand_neighbor_context_result and _count_text_tokens do not exist yet, context expansion still keeps over-budget reranked chunks without the required 05B metrics, and answer prompt building still uses full stored content instead of a truncated prompt copy.
+
+## Acceptance Check
+- Task acceptance condition: Context obeys configured caps and ordering, coverage is preserved when possible, and prompt truncation never alters source identity or persistence.
+- Status: not satisfied
+- Evidence: Fresh validation fails on every new 05B regression, and no runtime 05B implementation was completed in this attempt.
+
+## Artifacts Produced
+- Added 05B regression cases in ackend/tests/test_retrieval_context.py.
+- Added 05B integration expectations in ackend/tests/test_query_graph.py.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User instructed not to update checkboxes, and the task is not complete.
+
+## Key Implementation Decisions
+- Preserved the existing dirty worktree and accepted 05A changes instead of reverting or restaging them.
+- Stopped with failing regression coverage in place once instructed to stop implementation work, so the remaining 05B scope is explicit and reproducible.
+
+## Risks or Open Issues
+- ackend/app/services/retrieval_context.py still lacks the 05B context-selection result path, tokenizer fallback helpers, token-budget enforcement, prompt-only truncation, and compact selection metrics.
+- ackend/app/graphs/query_formatting.py still builds prompts from full stored chunk content, so truncation behavior is not wired.
+- ackend/app/graphs/query_nodes.py still returns unbudgeted context output and does not merge the required 05B selection metrics.
+- The current tree will keep failing the required 05B validation until those runtime changes are implemented.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No source-of-truth conflict identified.
+- Dependency (05A) was treated as already present in the dirty worktree and was preserved.
+- The selected task remained limited to (05B); no Batch06 work was started and no task checkboxes were changed.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: implement the missing expand_neighbor_context_result and token-budget logic in ackend/app/services/retrieval_context.py, use prompt-only truncated content in ackend/app/graphs/query_formatting.py, merge the returned metrics in ackend/app/graphs/query_nodes.py, then rerun cd backend; python -m pytest tests/test_retrieval_context.py tests/test_query_graph.py -v.
+
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch05 - Candidate Stages, Reranking, and Context Budgets
+
+## Task
+(05B) - Enforce section boundaries and token-budgeted context
+
+## Status
+partial
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch05 - Candidate Stages, Reranking, and Context Budgets > (05B)
+- docs/plans/Plan_3.md > ## Batch 5: Candidate Stages, Reranking, and Context Budgets > ### Task 5.2: Enforce section boundaries and a token context budget
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05B)
+- Task title: Enforce section boundaries and token-budgeted context
+
+## Completed Work
+- Status is partial.
+- Inspected the dirty worktree and preserved accepted 05A changes already present in `backend/app/services/retrieval_context.py`, `backend/app/graphs/query_formatting.py`, and `backend/app/graphs/query_nodes.py`.
+- Added 05B-focused failing regression coverage in `backend/tests/test_retrieval_context.py` and `backend/tests/test_query_graph.py` for subquery coverage reservation, global same-section-before-generic ordering, token-budget enforcement, prompt-only truncation, tokenizer fallback, and context metrics.
+- Did not complete the runtime 05B implementation or wire the required context-selection metrics into the query path.
+
+## Files Created or Modified
+- backend/tests/test_retrieval_context.py
+- backend/tests/test_query_graph.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_retrieval_context.py tests/test_query_graph.py -v`: Failed
+- evidence or reason: 53 tests collected; 47 passed and 6 failed.
+- failing tests:
+  - `tests/test_retrieval_context.py::test_expand_neighbor_context_result_reserves_multi_subquery_coverage_before_lower_ranked_fill`
+  - `tests/test_retrieval_context.py::test_expand_neighbor_context_result_keeps_all_same_section_neighbors_before_any_generic_neighbor`
+  - `tests/test_retrieval_context.py::test_expand_neighbor_context_result_truncates_only_prompt_copy_for_oversized_top_chunk`
+  - `tests/test_retrieval_context.py::test_expand_neighbor_context_result_uses_chunking_tokenizer_fallback_when_token_count_missing`
+  - `tests/test_query_graph.py::test_expand_neighbor_context_node_records_context_budget_metrics`
+  - `tests/test_query_graph.py::test_generate_answer_node_uses_truncated_prompt_copy_without_changing_source_preview`
+- failure detail: the 05B APIs and behavior are still missing. `expand_neighbor_context_result` and `_count_text_tokens` do not exist yet, context expansion still keeps over-budget reranked chunks without the required 05B metrics, and answer prompt building still uses full stored content instead of a truncated prompt copy.
+
+## Acceptance Check
+- Task acceptance condition: Context obeys configured caps and ordering, coverage is preserved when possible, and prompt truncation never alters source identity or persistence.
+- Status: not satisfied
+- Evidence: Fresh validation fails on every new 05B regression, and no runtime 05B implementation was completed in this attempt.
+
+## Artifacts Produced
+- Added 05B regression cases in `backend/tests/test_retrieval_context.py`.
+- Added 05B integration expectations in `backend/tests/test_query_graph.py`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User instructed not to update checkboxes, and the task is not complete.
+
+## Key Implementation Decisions
+- Preserved the existing dirty worktree and accepted 05A changes instead of reverting or restaging them.
+- Stopped with failing regression coverage in place once instructed to stop implementation work, so the remaining 05B scope is explicit and reproducible.
+
+## Risks or Open Issues
+- `backend/app/services/retrieval_context.py` still lacks the 05B context-selection result path, tokenizer fallback helpers, token-budget enforcement, prompt-only truncation, and compact selection metrics.
+- `backend/app/graphs/query_formatting.py` still builds prompts from full stored chunk content, so truncation behavior is not wired.
+- `backend/app/graphs/query_nodes.py` still returns unbudgeted context output and does not merge the required 05B selection metrics.
+- The current tree will keep failing the required 05B validation until those runtime changes are implemented.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No source-of-truth conflict identified.
+- Dependency (05A) was treated as already present in the dirty worktree and was preserved.
+- The selected task remained limited to (05B); no Batch06 work was started and no task checkboxes were changed.
+
+## Notes for Next Task
+- next task ID: (05B)
+- can proceed: yes
+- handoff notes: implement the missing `expand_neighbor_context_result` and token-budget logic in `backend/app/services/retrieval_context.py`, use prompt-only truncated content in `backend/app/graphs/query_formatting.py`, merge the returned metrics in `backend/app/graphs/query_nodes.py`, then rerun `cd backend; python -m pytest tests/test_retrieval_context.py tests/test_query_graph.py -v`.
+---
+
+# Task Execution Report - (05B)
+
+## Source Task File
+[docs/tasks/task_3.md]
+
+## Report File
+[docs/reports/report_3_execute_agent.md]
+
+## Batch
+Batch05 - Candidate Stages, Reranking, and Context Budgets
+
+## Task
+(05B) - Enforce section boundaries and token-budgeted context
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/plans/Plan_3.md > ## Batch 5: Candidate Stages, Reranking, and Context Budgets > ### Task 5.2: Enforce section boundaries and a token context budget
+- docs/tasks/task_3.md > Batch05 - Candidate Stages, Reranking, and Context Budgets > (05B)
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05B)
+- Task title: Enforce section boundaries and token-budgeted context
+
+## Completed Work
+- Complete. The 05B context-selection path now honors section-aware ordering, multi-subquery coverage reservation, independent candidate/token caps, oversized-top prompt truncation, deduplication by chunk ID, and compact retrieval metrics.
+- `backend/app/services/retrieval_context.py` now selects top reranked chunks first, prefers same-section neighbors before generic neighbors, truncates only the prompt copy for an oversized top chunk, and falls back to tokenizer-based token counting when stored counts are missing.
+- `backend/app/graphs/query_nodes.py` now merges the context-budget metrics into the query state, and `backend/app/graphs/query_formatting.py` now uses `prompt_content` for prompt assembly while preserving stored content for citations and previews.
+
+## Files Created or Modified
+- backend/app/services/retrieval_context.py
+- backend/app/graphs/query_nodes.py
+- backend/app/graphs/query_formatting.py
+- backend/tests/test_retrieval_context.py
+- backend/tests/test_query_graph.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_retrieval_context.py tests/test_query_graph.py -v`: Passed
+- evidence: 53 tests collected, 53 passed
+
+## Acceptance Check
+- Task acceptance condition: Context obeys configured caps and ordering, coverage is preserved when possible, and prompt truncation never alters source identity or persistence.
+- Status: satisfied
+- Evidence: The focused 05B regression suite passed in full, covering subquery coverage reservation, same-section-first neighbor ordering, token-budget enforcement, tokenizer fallback, and prompt-only truncation.
+
+## Artifacts Produced
+- Appended this execution report to `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated execution rule and user instruction both required leaving checkbox updates to A2 after review.
+
+## Key Implementation Decisions
+- Preserve stored chunk content and citation metadata unchanged while using a separate prompt copy for truncation.
+- Keep context selection bounded by candidate count and token budget, with one oversized top chunk allowed only when it is the first selected chunk.
+
+## Risks or Open Issues
+- None identified in the validated 05B scope.
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- No source-of-truth conflict identified.
+- Dependency (05A) remained intact and was not reverted.
+- No Batch06 work was started.
+
+## Notes for Next Task
+- next task ID: (06A)
+- can proceed: yes
+- handoff notes: Batch05 validation is complete; the next task can start from the current dirty tree without further 05B changes.

@@ -118,6 +118,20 @@ def _normalize_float(value: Any) -> float | None:
         return None
 
 
+def _fallback_rerank_sort_key(candidate: Mapping[str, Any]) -> tuple[float, float, float, str]:
+    fusion_score = _normalize_float(candidate.get("fusion_score"))
+    qdrant_score = _normalize_float(candidate.get("qdrant_score"))
+    if qdrant_score is None:
+        qdrant_score = _normalize_float(candidate.get("semantic_score"))
+    keyword_score = _normalize_float(candidate.get("keyword_score"))
+    return (
+        -(fusion_score if fusion_score is not None else float("-inf")),
+        -(qdrant_score if qdrant_score is not None else float("-inf")),
+        -(keyword_score if keyword_score is not None else float("-inf")),
+        str(candidate.get("chunk_id") or candidate.get("id") or ""),
+    )
+
+
 def _normalize_section_path(value: Any) -> list[str]:
     if value is None:
         return []
@@ -376,6 +390,12 @@ def _normalize_semantic_candidate(
     return normalized
 
 
+def _sort_chunks_by_rerank_fallback(
+    chunks: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [dict(chunk) for chunk in sorted(chunks, key=_fallback_rerank_sort_key)]
+
+
 def _semantic_search_path(
     question: str,
     *,
@@ -553,7 +573,7 @@ def _extract_jina_rankings(response_payload: Any) -> list[dict[str, Any]]:
 
         normalized.append(
             {
-                "index": _normalize_int(index) if index is not None else position,
+                "index": _normalize_int(index) if index is not None else None,
                 "score": _normalize_float(score),
             }
         )
@@ -575,7 +595,11 @@ def rerank_chunks(
     if not chunks:
         return []
 
-    fallback_chunks = _sort_chunks_by_qdrant_score(chunks)[
+    candidate_chunks = [
+        dict(chunk)
+        for chunk in chunks[: resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K]
+    ]
+    fallback_chunks = _sort_chunks_by_rerank_fallback(candidate_chunks)[
         : resolved_settings.RETRIEVAL_FINAL_TOP_K
     ]
     if not resolved_settings.ENABLE_RERANK:
@@ -585,7 +609,9 @@ def rerank_chunks(
     transport = getattr(client, "http_client", client)
     model = getattr(client, "model", resolved_settings.JINA_RERANK_MODEL)
 
-    documents = [str(chunk.get("content") or chunk.get("text") or "") for chunk in chunks]
+    documents = [
+        str(chunk.get("content") or chunk.get("text") or "") for chunk in candidate_chunks
+    ]
     try:
         response = transport.post(
             "/rerank",
@@ -601,18 +627,23 @@ def rerank_chunks(
         payload = response.json()
         rankings = _extract_jina_rankings(payload)
     except Exception as exc:  # pragma: no cover - fallback exercised in tests
-        logger.warning("Jina rerank failed, falling back to Qdrant scores: %s", exc)
+        logger.warning("Jina rerank failed, falling back to deterministic order: %s", exc)
         return fallback_chunks
 
     if not rankings:
         return fallback_chunks
 
     ranked_chunks: list[dict[str, Any]] = []
+    seen_indexes: set[int] = set()
     for ranking in rankings:
         index = ranking["index"]
-        if index is None or index < 0 or index >= len(chunks):
-            continue
-        chunk = dict(chunks[index])
+        if index is None or index < 0 or index >= len(candidate_chunks) or index in seen_indexes:
+            logger.warning(
+                "Jina rerank returned invalid indexes, falling back to deterministic order"
+            )
+            return fallback_chunks
+        seen_indexes.add(index)
+        chunk = dict(candidate_chunks[index])
         chunk["rerank_score"] = ranking["score"]
         ranked_chunks.append(chunk)
         if len(ranked_chunks) >= resolved_settings.RETRIEVAL_FINAL_TOP_K:

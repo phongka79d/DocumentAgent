@@ -2499,3 +2499,605 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+`docs/tasks/task_3.md`
+
+## Execution Report Reviewed
+`docs/reports/report_3_execute_agent.md`
+
+## Review Report File
+`docs/review/review_3_review_agent.md`
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05A)
+- Task title: Add configurable candidate stages and stable reranking fallback
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 5: Candidate Stages, Reranking, and Context Budgets` > `### Task 5.1: Add configurable candidate stages and stable reranking fallback`
+- Supplemental documents: `docs/plans/Master_Plan.md` (provided, not needed for the decision)
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A)
+- Correct selection: yes
+- Notes: The latest appended execution report entry is the requested Batch05 task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/retrieval.py`
+  - `backend/app/graphs/query_nodes.py`
+  - `backend/app/graphs/query_formatting.py`
+  - `backend/app/services/retrieval_context.py`
+  - `backend/tests/test_query_graph.py`
+  - `frontend/src/api/types.ts`
+  - `frontend/src/components/SourceList.tsx`
+  - `docs/reports/report_3_execute_agent.md`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/retrieval.py`: in scope - rerank candidate cap, Jina request sizing, invalid-index fallback handling.
+- `backend/app/graphs/query_nodes.py`: in scope - fused-to-rerank handoff and rerank metrics.
+- `backend/app/graphs/query_formatting.py`: in scope - source citation propagation for optional Phase 3 metadata.
+- `backend/app/services/retrieval_context.py`: in scope - metadata passthrough needed to preserve the (05A) context-stage boundary; no early (05B) token-budget work added.
+- `backend/tests/test_query_graph.py`: in scope - targeted regression coverage for rerank caps, fallback ordering, and source metadata propagation.
+- `frontend/src/api/types.ts`: in scope - optional source metadata typing for Phase 3 fields.
+- `frontend/src/components/SourceList.tsx`: in scope - optional metadata rendering while retaining Phase 2 fields.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest execution report entry for (05A).
+- `backend/app/models/schemas.py`: in scope support file - verified existing Phase 2/3 source schema compatibility; not part of this batch diff.
+- `backend/app/services/score_fusion.py`: in scope support file - verified existing fused ordering and top-k behavior used before reranking.
+- `docs/plans/Plan_3.md`: in scope authority - reviewed Batch 5 Task 5.1 requirements and Batch 4 rerank-precap dependency.
+- `docs/tasks/task_3.md`: in scope authority - reviewed full (05A) task block and progress entries.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the core rerank logic changes, but its pre-Jina resorting breaks the exact stage-order requirement.
+- file from execution report: `backend/app/graphs/query_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Correctly records rerank candidate/final counts.
+- file from execution report: `backend/app/graphs/query_formatting.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Correctly carries optional metadata into source citations.
+- file from execution report: `backend/app/services/retrieval_context.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Limited to metadata preservation; no premature (05B) budgeting logic.
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Real tests, but they do not cover preserving fused/subquery-covered order when applying the rerank-candidate cap.
+- file from execution report: `frontend/src/api/types.ts`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Optional fields added without removing existing ones.
+- file from execution report: `frontend/src/components/SourceList.tsx`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Optional metadata rendering is backward compatible with Phase 2 fields.
+
+## Dependency Review
+- Required dependencies: (02C), (04B), existing Jina integration, source citation UI.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed:
+  - Jina receives only the capped candidate documents and requests `RETRIEVAL_FINAL_TOP_K` outputs.
+  - Invalid or duplicate Jina indexes trigger deterministic fallback instead of trusting response position.
+  - Optional `fusion_score`, `retrieval_paths`, and `citation_key` propagate through backend formatting and frontend display.
+  - `backend/app/services/retrieval_context.py` stays inside the (05A) metadata-preservation boundary.
+- Failed:
+  - `backend/app/services/retrieval.py:598` re-sorts `retrieved_chunks` by fallback score before applying `RETRIEVAL_RERANK_CANDIDATE_TOP_K`, which changes the already-fused, already-subquery-covered ordering instead of applying the next cap to the prior stage's output.
+- Uncertain:
+  - None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The diff changes real retrieval, formatting, context, test, and frontend code paths, and the required backend/frontend validations pass locally.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Fallback ordering and metadata propagation use general score/field handling rather than fixture-specific values.
+
+## Validations Reviewed
+- Command/check: `python -m pytest tests/test_query_graph.py tests/test_score_fusion.py -v`
+- Reported result: Passed
+- Rerun result: Passed (51 passed)
+- Status: passed
+- Notes: Required backend validation rerun completed successfully.
+- Command/check: `npm run build`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Required frontend production build rerun completed successfully.
+
+## Acceptance Review
+- Task acceptance: Every stage cap is independent and ordered, Jina input/output counts are correct, fallback order is deterministic, and source metadata remains backward compatible.
+- Status: partially satisfied
+- Evidence: Jina request sizing, invalid-index fallback handling, metadata propagation, tests, and build are all correct. The remaining gap is stage ordering: the rerank-candidate cap is applied after `_sort_chunks_by_rerank_fallback(...)` in `backend/app/services/retrieval.py:598`, so the candidate stage can reshuffle the capped fused/subquery-covered list instead of capping that list directly.
+
+## Progress Tracking
+- Selected task checkbox: unchecked
+- Checkbox updated by reviewer: no
+- Batch status: unchanged
+- Execution report entry: appended
+- Review report entry: appended
+- Other: Because the task is rejected, neither `(05A)` checkbox was updated.
+
+## Report Accuracy
+- partial
+- Mismatches:
+  - The execution report marks the acceptance condition as satisfied, but repository evidence still shows a stage-order violation in the rerank-candidate cap path.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- `backend/app/services/retrieval.py:598` applies the rerank-candidate cap to a newly fallback-sorted list instead of to the prior fused/subquery-covered output. This violates the required stage order from `docs/plans/Plan_3.md:750` and weakens the Batch04 dependency that candidates are capped before reranking while preserving cross-subquery coverage from `docs/plans/Plan_3.md:713`.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- `backend/app/services/retrieval_context.py:150-158` is a justified (05A) change: it only preserves metadata through context normalization and does not introduce early token-budget or section-selection behavior from (05B).
+- The current test additions are valuable, but they miss the exact ordering edge that caused the rejection.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/app/services/retrieval.py`
+- change: Apply `RETRIEVAL_RERANK_CANDIDATE_TOP_K` to the incoming `chunks` in their existing fused/subquery-covered order, and use the deterministic fusion/Qdrant/keyword/chunk-ID sort only for fallback output ordering after that candidate set has been chosen.
+- validation: Add or update a regression test showing that a subquery-covered `retrieved_chunks` order is preserved when selecting the Jina candidate set, then rerun `python -m pytest tests/test_query_graph.py tests/test_score_fusion.py -v` and `npm run build`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch05 - Candidate Stages, Reranking, and Context Budgets",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/retrieval.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/graphs/query_formatting.py",
+    "backend/app/services/retrieval_context.py",
+    "backend/tests/test_query_graph.py",
+    "frontend/src/api/types.ts",
+    "frontend/src/components/SourceList.tsx",
+    "docs/reports/report_3_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "backend/app/services/retrieval.py:598 applies the rerank-candidate cap after fallback re-sorting, violating the required stage order and risking loss of prior fused/subquery-covered ordering."
+  ],
+  "warnings": [],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05A)
+
+## Source Task File
+`docs/tasks/task_3.md`
+
+## Execution Report Reviewed
+`docs/reports/report_3_execute_agent.md`
+
+## Review Report File
+`docs/review/review_3_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05A)
+- Task title: Add configurable candidate stages and stable reranking fallback
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 5: Candidate Stages, Reranking, and Context Budgets` > `### Task 5.1: Add configurable candidate stages and stable reranking fallback`
+- Supplemental documents: `docs/plans/Master_Plan.md` (provided, not needed for the decision)
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05A)
+- Reviewed task ID: (05A) repair
+- Correct selection: yes
+- Notes: The latest matching `(05A)` entry is the repair execution report. The earlier `(05A)` implementation entry and prior A2 rejection were reviewed as context for verifying the repair.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/query_formatting.py`, `backend/app/graphs/query_nodes.py`, `backend/app/services/retrieval.py`, `backend/app/services/retrieval_context.py`, `backend/tests/test_query_graph.py`, `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`, `frontend/src/api/types.ts`, `frontend/src/components/SourceList.tsx`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/retrieval.py`: in scope - repair now slices `candidate_chunks` from the incoming fused/subquery-covered order before any fallback sorting, and keeps deterministic sorting only for fallback output.
+- `backend/tests/test_query_graph.py`: in scope - adds direct regression coverage proving Jina receives the preserved candidate order for a subquery-covered list and keeps the existing candidate-count and fallback-order coverage passing.
+- `backend/app/graphs/query_nodes.py`: in scope - still reports rerank candidate/final counts correctly and passes unchanged required behavior.
+- `backend/app/graphs/query_formatting.py`: in scope - preserves optional Phase 3 source metadata added by the original `(05A)` implementation.
+- `backend/app/services/retrieval_context.py`: in scope - preserves optional metadata through context normalization without introducing `(05B)` token-budget behavior.
+- `frontend/src/api/types.ts`: in scope - keeps optional source metadata typing backward compatible.
+- `frontend/src/components/SourceList.tsx`: in scope - renders optional metadata without dropping Phase 2 source fields.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest `(05A)` repair report appended and matches the repaired behavior.
+- `docs/tasks/task_3.md`: in scope - reviewer updated only the selected `(05A)` checkboxes after acceptance; Batch05 and `(05B)` remain unchecked.
+- `docs/review/review_3_review_agent.md`: in scope - reviewer append only for this review entry.
+- `docs/plans/Plan_3.md`: in scope authority - reviewed Task 5.1 ordering and fallback requirements plus the Batch04 pre-rerank dependency.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the actual repair. `candidate_chunks` is now sliced from `chunks` before `_sort_chunks_by_rerank_fallback(...)` builds fallback output.
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the missing regression for preserved subquery-covered candidate order.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest repair report accurately describes the ordering fix and validation scope.
+
+## Dependency Review
+- Required dependencies: (02C), (04B), existing Jina integration, and source citation UI.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed:
+  - `docs/plans/Plan_3.md:750-762` requires stage caps in order and deterministic fallback. `backend/app/services/retrieval.py:598-603` now caps the incoming fused/subquery-covered list before any fallback sort is applied.
+  - `docs/plans/Plan_3.md:713` requires fused/subquery coverage to be preserved before reranking. The repaired candidate selection no longer reshuffles that incoming order.
+  - Invalid Jina indexes still fall back to deterministic `fusion_score`, Qdrant, keyword, then `chunk_id` ordering.
+  - Optional source metadata propagation remains backward compatible and stays within Task 5.1 scope.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The repair changed production rerank selection logic in `backend/app/services/retrieval.py` and added a concrete regression in `backend/tests/test_query_graph.py` that inspects the exact Jina request document order.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Candidate selection uses the incoming stage output and configured caps; fallback ranking uses general score fields and stable chunk IDs rather than fixture-specific values.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_query_graph.py tests/test_score_fusion.py -v`
+- Reported result: Passed
+- Rerun result: Passed; 52 passed in 4.18s
+- Status: passed
+- Notes: Includes the new preserved-order regression and the existing deterministic fallback coverage.
+
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed
+- Rerun result: Passed; Vite production build completed successfully in 496ms
+- Status: passed
+- Notes: Frontend compatibility for optional source metadata remains intact.
+
+## Acceptance Review
+- Task acceptance: Every stage cap is independent and ordered, Jina input/output counts are correct, fallback order is deterministic, and source metadata remains backward compatible.
+- Status: satisfied
+- Evidence: The previous rejection root cause is fixed in code because the rerank candidate cap now applies directly to the incoming `chunks` order before fallback sorting. The regression at `backend/tests/test_query_graph.py:1098-1193` proves Jina receives `left coverage`, `right coverage`, `bridge coverage` in preserved order, and the required backend/frontend validations both pass.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch05 task entry and the matching progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: remains unchecked because `(05B)` is still incomplete.
+- Execution report entry: appended and accurately reviewed.
+- Review report entry: appended to the physical end of this file.
+- Other: No sibling task checkbox, Batch05 checkbox, or commit was created.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- Earlier `(05A)` metadata-propagation changes in `backend/app/graphs/query_formatting.py`, `backend/app/services/retrieval_context.py`, `frontend/src/api/types.ts`, and `frontend/src/components/SourceList.tsx` remain within Task 5.1 scope and continue to pass review.
+- Batch05 is still not complete because `(05B)` remains unchecked.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch05 - Candidate Stages, Reranking, and Context Budgets",
+  "selected_task_id": "(05A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/query_formatting.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/services/retrieval.py",
+    "backend/app/services/retrieval_context.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/review/review_3_review_agent.md",
+    "docs/tasks/task_3.md",
+    "frontend/src/api/types.ts",
+    "frontend/src/components/SourceList.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (05B)
+
+## Source Task File
+`docs/tasks/task_3.md`
+
+## Execution Report Reviewed
+`docs/reports/report_3_execute_agent.md`
+
+## Review Report File
+`docs/review/review_3_review_agent.md`
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch05 - Candidate Stages, Reranking, and Context Budgets
+- Task ID: (05B)
+- Task title: Enforce section boundaries and token-budgeted context
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 5: Candidate Stages, Reranking, and Context Budgets` > `### Task 5.2: Enforce section boundaries and a token context budget`
+- Supplemental documents: `docs/plans/Master_Plan.md` (provided, not needed for the decision)
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (05B)
+- Reviewed task ID: (05B)
+- Correct selection: yes
+- Notes: The report file contains multiple `(05B)` entries. This review covers the latest matching `(05B)` execution report, which is the final `complete` entry.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/query_formatting.py`, `backend/app/graphs/query_nodes.py`, `backend/app/services/retrieval.py`, `backend/app/services/retrieval_context.py`, `backend/tests/test_query_graph.py`, `backend/tests/test_retrieval_context.py`, `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`, `frontend/src/api/types.ts`, `frontend/src/components/SourceList.tsx`
+- untracked files: none
+
+## Files Reviewed
+- `backend/app/services/retrieval_context.py`: in scope - implements token counting fallback, prompt-only truncation, subquery coverage reservation, same-section-before-generic ordering, stable deduplication, and compact context metrics.
+- `backend/app/graphs/query_formatting.py`: in scope - uses `prompt_content` for prompt assembly while preserving stored `content` for previews and citations.
+- `backend/app/graphs/query_nodes.py`: in scope - merges the 05B context-selection metrics into query state and passes the selected context to answer generation.
+- `backend/tests/test_retrieval_context.py`: in scope - covers multi-subquery reservation, same-section priority, oversized-top truncation, and tokenizer fallback.
+- `backend/tests/test_query_graph.py`: in scope - covers metrics wiring and prompt-only truncation behavior through the query node path.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest `(05B)` execution report appended and matches repository behavior.
+- `backend/app/services/retrieval.py`: out of scope - accepted `(05A)` rerank-stage work already present in the dirty tree; not part of `(05B)`.
+- `frontend/src/api/types.ts`: out of scope - accepted earlier source-metadata work, not required by `(05B)`.
+- `frontend/src/components/SourceList.tsx`: out of scope - accepted earlier source-metadata UI work, not required by `(05B)`.
+- `docs/review/review_3_review_agent.md`: questionable - prior A2 review history plus this appended review entry.
+- `docs/tasks/task_3.md`: in scope - reviewer updated only the selected `(05B)` task checkboxes after acceptance; batch and sibling task checkboxes remain unchanged.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/retrieval_context.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the substantive 05B selector implementation at `expand_neighbor_context_result(...)` and its helpers.
+- file from execution report: `backend/app/graphs/query_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Not listed in the task file's file list, but it is required to expose 05B retrieval metrics in graph state.
+- file from execution report: `backend/app/graphs/query_formatting.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Uses truncated prompt copy without mutating stored chunk content or source previews.
+- file from execution report: `backend/tests/test_retrieval_context.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Real focused 05B regression coverage.
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Real graph-level 05B coverage for metrics and prompt assembly.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest 05B report is present and consistent with the current repository state.
+
+## Dependency Review
+- Required dependencies: (05A), current retrieval context expansion, and tokenizer behavior shared with chunking.
+- Dependency status: satisfied.
+- Missing or invalid dependency: none.
+
+## Architecture Alignment
+- Passed:
+  - `backend/app/services/retrieval_context.py:351-613` preserves the required selection order: ranked chunks first, then requested boundary chunks, then same-section neighbors, then generic same-document neighbors.
+  - `backend/app/services/retrieval_context.py:140-157` uses stored `token_count` first and falls back to the chunking tokenizer when it is missing.
+  - `backend/app/services/retrieval_context.py:393-420` enforces candidate/token caps before each addition and keeps only the documented oversized-top-chunk exception via `prompt_content` plus `context_truncated=true`.
+  - `backend/app/graphs/query_formatting.py:101-145` builds the answer prompt from `prompt_content` while `build_source_citations(...)` still reads stored content for previews.
+  - `backend/app/graphs/query_nodes.py:590-614` merges compact context metrics into retrieval state rather than changing source identity or persistence.
+- Failed: none.
+- Uncertain: none.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The production code adds real selection, truncation, tokenizer, and metrics behavior in runtime paths and the focused validation passes against that code.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: The logic uses general chunk metadata, token counts, tokenizer fallback, subquery IDs, and configured caps; it does not depend on fixture-specific IDs or text.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_retrieval_context.py tests/test_query_graph.py -v`
+- Reported result: Passed; 53 collected and 53 passed.
+- Rerun result: Passed; 53 collected and 53 passed in 3.58s.
+- Status: passed
+- Notes: Rerun completed during review.
+
+## Acceptance Review
+- Task acceptance: Context obeys configured caps and ordering, coverage is preserved when possible, and prompt truncation never alters source identity or persistence.
+- Status: satisfied
+- Evidence: `backend/tests/test_retrieval_context.py:162`, `:212`, `:312`, and `:356` cover subquery reservation, global same-section priority, oversized-top prompt truncation, and tokenizer fallback; `backend/tests/test_query_graph.py:1640` and `:1804` cover metrics wiring and prompt-only truncation in the query path.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch05 task entry and the matching progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: unchanged
+- Execution report entry: appended
+- Review report entry: appended to the physical end of this file
+- Other: No sibling/future task checkbox or batch checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The worktree also contains earlier accepted `(05A)` and prior-review changes, but the latest `(05B)` report accurately describes the implemented `(05B)` behavior now present in the repository.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- None.
+
+### Observations
+- The repository dirty tree includes prior accepted `(05A)` and review-history changes. They are distinguishable from `(05B)` and do not undermine acceptance of the selected task.
+- `backend/app/graphs/query_nodes.py` is a justified in-scope runtime touch even though the task file's file list omitted it, because the plan requires compact selection metrics to reach graph state.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, this review remains limited to the selected task and does not update batch status in `docs/tasks/task_3.md`
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch05 - Candidate Stages, Reranking, and Context Budgets",
+  "selected_task_id": "(05B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/query_formatting.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/services/retrieval.py",
+    "backend/app/services/retrieval_context.py",
+    "backend/tests/test_query_graph.py",
+    "backend/tests/test_retrieval_context.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/review/review_3_review_agent.md",
+    "docs/tasks/task_3.md",
+    "frontend/src/api/types.ts",
+    "frontend/src/components/SourceList.tsx"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

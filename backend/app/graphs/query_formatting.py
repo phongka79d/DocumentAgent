@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from app.core.contracts import SOURCE_PREVIEW_CHARS
+from app.core.contracts import RetrievalPath, SOURCE_PREVIEW_CHARS
 
 
 def normalize_text(value: Any) -> str | None:
@@ -31,6 +31,27 @@ def _normalize_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _normalize_retrieval_paths(value: Any) -> list[str]:
+    allowed_paths = {path.value for path in RetrievalPath}
+    if value is None:
+        return []
+    if isinstance(value, (str, bytes)):
+        text = normalize_text(value)
+        return [text] if text in allowed_paths else []
+    if isinstance(value, Sequence):
+        paths: list[str] = []
+        for item in value:
+            if isinstance(item, RetrievalPath):
+                text = item.value
+            else:
+                text = normalize_text(item)
+            if text is not None and text in allowed_paths and text not in paths:
+                paths.append(text)
+        return paths
+    text = normalize_text(value)
+    return [text] if text in allowed_paths else []
 
 
 def _normalize_section_path(value: Any) -> list[str]:
@@ -77,6 +98,12 @@ def _chunk_content(chunk: Mapping[str, Any]) -> str:
     return normalize_text(chunk.get("content") or chunk.get("text")) or ""
 
 
+def _chunk_prompt_content(chunk: Mapping[str, Any]) -> str:
+    return normalize_text(
+        chunk.get("prompt_content") or chunk.get("content") or chunk.get("text")
+    ) or ""
+
+
 def _format_page_range(
     page_start: Any,
     page_end: Any,
@@ -111,7 +138,7 @@ def _format_context_chunk(chunk: Mapping[str, Any], position: int) -> str:
     if heading is not None:
         parts.append(f"Heading: {heading}")
     parts.append("Text:")
-    parts.append(_chunk_content(chunk))
+    parts.append(_chunk_prompt_content(chunk))
     return "\n".join(parts)
 
 
@@ -134,7 +161,7 @@ def _source_citation_from_chunk(chunk: Mapping[str, Any]) -> dict[str, Any]:
     content_preview = _chunk_content_preview(chunk)
     is_neighbor_context = bool(chunk.get("is_neighbor_context"))
 
-    return {
+    citation: dict[str, Any] = {
         "document_id": document_id,
         "chunk_id": chunk_id,
         "file_name": normalize_text(chunk.get("file_name")) or "unknown",
@@ -148,6 +175,20 @@ def _source_citation_from_chunk(chunk: Mapping[str, Any]) -> dict[str, Any]:
         "content_preview": content_preview,
         "is_neighbor_context": is_neighbor_context,
     }
+
+    fusion_score = _normalize_float(chunk.get("fusion_score"))
+    if fusion_score is not None:
+        citation["fusion_score"] = fusion_score
+
+    retrieval_paths = _normalize_retrieval_paths(chunk.get("retrieval_paths"))
+    if retrieval_paths:
+        citation["retrieval_paths"] = retrieval_paths
+
+    citation_key = normalize_text(chunk.get("citation_key"))
+    if citation_key is not None:
+        citation["citation_key"] = citation_key
+
+    return citation
 
 
 def build_source_citations(context_chunks: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -226,6 +267,7 @@ __all__ = [
     "_build_context_prompt",
     "_build_source_citations",
     "_chunk_content",
+    "_chunk_prompt_content",
     "_chunk_content_preview",
     "_extract_chat_content",
     "_format_context_chunk",

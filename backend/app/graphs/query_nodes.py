@@ -25,7 +25,7 @@ from app.core.contracts import RetrievalStrategy
 from app.models.schemas import RetrievalFilters
 from app.models.schemas import QueryPlan, QuerySubquery
 from app.services import messages as message_service
-from app.services import query_planning, retrieval, score_fusion
+from app.services import query_planning, retrieval, retrieval_context, score_fusion
 from app.services import relations as relation_service
 from app.services.shopaikey_client import create_shopaikey_client
 
@@ -544,6 +544,10 @@ def jina_rerank_node(
     if not isinstance(retrieved_chunks, list) or not retrieved_chunks:
         return {"reranked_chunks": []}
 
+    candidate_count = min(
+        len(retrieved_chunks),
+        resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K,
+    )
     try:
         reranked_chunks = retrieval.rerank_chunks(
             question,
@@ -551,7 +555,13 @@ def jina_rerank_node(
             settings=resolved_settings,
             jina_client=jina_client,
         )
-        return {"reranked_chunks": reranked_chunks}
+        metrics = dict(state.get("retrieval_metrics") or {})
+        metrics["rerank_candidate_count"] = candidate_count
+        metrics["final_reranked_count"] = len(reranked_chunks)
+        return {
+            "reranked_chunks": reranked_chunks,
+            "retrieval_metrics": metrics,
+        }
     except retrieval.RetrievalError as exc:
         return {
             "error_message": safe_detail(
@@ -584,19 +594,24 @@ def expand_neighbor_context_node(
     supabase_client: Any | None = None,
 ) -> dict[str, Any]:
     resolved_settings = _resolve_settings(settings)
+    metrics = dict(state.get("retrieval_metrics") or {})
     reranked_chunks = state.get("reranked_chunks")
     if not isinstance(reranked_chunks, list) or not reranked_chunks:
-        return {"context_chunks": []}
+        return {"context_chunks": [], "retrieval_metrics": metrics}
 
     try:
-        context_chunks = retrieval.expand_neighbor_context(
+        context_result = retrieval_context.expand_neighbor_context_result(
             reranked_chunks,
             settings=resolved_settings,
             supabase_client=supabase_client,
             retrieval_hints=state.get("retrieval_hints"),
             document_ids=_normalize_document_ids(state.get("document_ids")),
         )
-        return {"context_chunks": context_chunks}
+        metrics.update(context_result.get("retrieval_metrics") or {})
+        return {
+            "context_chunks": context_result.get("context_chunks", []),
+            "retrieval_metrics": metrics,
+        }
     except retrieval.RetrievalError as exc:
         return {
             "error_message": safe_detail(
