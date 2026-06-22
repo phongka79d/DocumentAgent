@@ -486,6 +486,59 @@ def list_relations(
     )
 
 
+def _related_document_id(row: Mapping[str, Any], document_id: str) -> str | None:
+    source = _normalize_uuid(row.get("source_document_id"), "source_document_id")
+    target = _normalize_uuid(row.get("target_document_id"), "target_document_id")
+    if source == document_id:
+        return target
+    if target == document_id:
+        return source
+    return None
+
+
+def resolve_related_document_scope(
+    document_ids: Iterable[UUID | str] | None,
+    *,
+    settings: Settings | None = None,
+    supabase_client: Any | None = None,
+) -> list[str]:
+    """Resolve one-hop related documents without widening explicit selection."""
+
+    resolved_settings = _resolve_settings(settings)
+    normalized_ids: list[str] = []
+    seen: set[str] = set()
+    for value in document_ids or []:
+        document_id = _normalize_uuid(value, "document_ids")
+        if document_id in seen:
+            continue
+        normalized_ids.append(document_id)
+        seen.add(document_id)
+
+    if not normalized_ids or not resolved_settings.ENABLE_RELATION_RETRIEVAL:
+        return normalized_ids
+
+    allow_list = set(normalized_ids)
+    related_ids: list[str] = []
+    client = _resolve_supabase_client(supabase_client)
+    for source_id in normalized_ids:
+        for relation in list_relations(source_id, supabase_client=client):
+            related_id = _related_document_id(relation, source_id)
+            if (
+                related_id is None
+                or related_id not in allow_list
+                or related_id in seen
+            ):
+                continue
+            related_ids.append(related_id)
+            seen.add(related_id)
+            if len(related_ids) >= resolved_settings.RELATION_MAX_RELATED_DOCUMENTS:
+                break
+        if len(related_ids) >= resolved_settings.RELATION_MAX_RELATED_DOCUMENTS:
+            break
+
+    return normalized_ids + related_ids
+
+
 def replace_document_relations(
     document_id: UUID | str,
     relation_records: Iterable[Mapping[str, Any]],

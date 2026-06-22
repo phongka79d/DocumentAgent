@@ -403,6 +403,26 @@ def _semantic_search_path(
     ]
 
 
+def retrieve_semantic_candidates(
+    question: str,
+    *,
+    document_ids: Sequence[UUID | str] | None = None,
+    filters: RetrievalFilters | Mapping[str, Any] | None = None,
+    settings: Settings | None = None,
+    qdrant_client: Any | None = None,
+    shopaikey_client: Any | None = None,
+) -> tuple[list[float], list[dict[str, Any]]]:
+    resolved_settings = _resolve_settings(settings)
+    return _semantic_search_path(
+        question,
+        document_ids=document_ids,
+        filters=filters,
+        settings=resolved_settings,
+        qdrant_client=qdrant_client,
+        shopaikey_client=shopaikey_client,
+    )
+
+
 def retrieve_hybrid_chunks(
     question: str,
     *,

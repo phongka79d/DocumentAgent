@@ -93,26 +93,50 @@ def build_query_graph(settings: Settings | None = None):
         ),
     )
     graph.add_node(
-        "retrieve_qdrant",
+        "plan_query",
         _wrap_node(
-            "retrieve_qdrant",
-            query_nodes.retrieve_qdrant_node,
+            "plan_query",
+            query_nodes.plan_query_node,
             settings=resolved_settings,
         ),
     )
     graph.add_node(
-        "jina_rerank",
+        "resolve_relation_scope",
         _wrap_node(
-            "jina_rerank",
-            query_nodes.jina_rerank_node,
+            "resolve_relation_scope",
+            query_nodes.resolve_relation_scope_node,
             settings=resolved_settings,
         ),
     )
     graph.add_node(
-        "expand_neighbor_context",
+        "retrieve_candidates",
         _wrap_node(
-            "expand_neighbor_context",
-            query_nodes.expand_neighbor_context_node,
+            "retrieve_candidates",
+            query_nodes.retrieve_candidates_node,
+            settings=resolved_settings,
+        ),
+    )
+    graph.add_node(
+        "fuse_candidates",
+        _wrap_node(
+            "fuse_candidates",
+            query_nodes.fuse_candidates_node,
+            settings=resolved_settings,
+        ),
+    )
+    graph.add_node(
+        "rerank_candidates",
+        _wrap_node(
+            "rerank_candidates",
+            query_nodes.rerank_candidates_node,
+            settings=resolved_settings,
+        ),
+    )
+    graph.add_node(
+        "expand_context",
+        _wrap_node(
+            "expand_context",
+            query_nodes.expand_context_node,
             settings=resolved_settings,
         ),
     )
@@ -121,6 +145,30 @@ def build_query_graph(settings: Settings | None = None):
         _wrap_node(
             "generate_answer",
             query_nodes.generate_answer_node,
+            settings=resolved_settings,
+        ),
+    )
+    graph.add_node(
+        "validate_citations",
+        _wrap_node(
+            "validate_citations",
+            query_nodes.validate_citations_node,
+            settings=resolved_settings,
+        ),
+    )
+    graph.add_node(
+        "verify_grounding",
+        _wrap_node(
+            "verify_grounding",
+            query_nodes.verify_grounding_node,
+            settings=resolved_settings,
+        ),
+    )
+    graph.add_node(
+        "finalize_answer",
+        _wrap_node(
+            "finalize_answer",
+            query_nodes.finalize_answer_node,
             settings=resolved_settings,
         ),
     )
@@ -136,30 +184,54 @@ def build_query_graph(settings: Settings | None = None):
     graph.add_edge(START, "prepare_query")
     graph.add_conditional_edges(
         "prepare_query",
-        _route_or_end("retrieve_qdrant"),
+        _route_or_end("plan_query"),
         {
-            "retrieve_qdrant": "retrieve_qdrant",
+            "plan_query": "plan_query",
             END_ROUTE: END,
         },
     )
     graph.add_conditional_edges(
-        "retrieve_qdrant",
-        _route_or_end("jina_rerank"),
+        "plan_query",
+        _route_or_end("resolve_relation_scope"),
         {
-            "jina_rerank": "jina_rerank",
+            "resolve_relation_scope": "resolve_relation_scope",
             END_ROUTE: END,
         },
     )
     graph.add_conditional_edges(
-        "jina_rerank",
-        _route_or_end("expand_neighbor_context"),
+        "resolve_relation_scope",
+        _route_or_end("retrieve_candidates"),
         {
-            "expand_neighbor_context": "expand_neighbor_context",
+            "retrieve_candidates": "retrieve_candidates",
             END_ROUTE: END,
         },
     )
     graph.add_conditional_edges(
-        "expand_neighbor_context",
+        "retrieve_candidates",
+        _route_or_end("fuse_candidates"),
+        {
+            "fuse_candidates": "fuse_candidates",
+            END_ROUTE: END,
+        },
+    )
+    graph.add_conditional_edges(
+        "fuse_candidates",
+        _route_or_end("rerank_candidates"),
+        {
+            "rerank_candidates": "rerank_candidates",
+            END_ROUTE: END,
+        },
+    )
+    graph.add_conditional_edges(
+        "rerank_candidates",
+        _route_or_end("expand_context"),
+        {
+            "expand_context": "expand_context",
+            END_ROUTE: END,
+        },
+    )
+    graph.add_conditional_edges(
+        "expand_context",
         _route_or_end("generate_answer"),
         {
             "generate_answer": "generate_answer",
@@ -168,6 +240,30 @@ def build_query_graph(settings: Settings | None = None):
     )
     graph.add_conditional_edges(
         "generate_answer",
+        _route_or_end("validate_citations"),
+        {
+            "validate_citations": "validate_citations",
+            END_ROUTE: END,
+        },
+    )
+    graph.add_conditional_edges(
+        "validate_citations",
+        _route_or_end("verify_grounding"),
+        {
+            "verify_grounding": "verify_grounding",
+            END_ROUTE: END,
+        },
+    )
+    graph.add_conditional_edges(
+        "verify_grounding",
+        _route_or_end("finalize_answer"),
+        {
+            "finalize_answer": "finalize_answer",
+            END_ROUTE: END,
+        },
+    )
+    graph.add_conditional_edges(
+        "finalize_answer",
         _route_or_end("save_message_optional"),
         {
             "save_message_optional": "save_message_optional",

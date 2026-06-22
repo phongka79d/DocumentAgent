@@ -819,3 +819,273 @@ complete
 - next task ID: (04A)
 - can proceed: yes, after A2 accepts (03B) and the orchestrator allows moving out of Batch03.
 - handoff notes: Relation rows are canonical in storage; API consumers should use `related_document_id` from the inspection endpoint when viewing relations relative to one requested document.
+
+---
+
+# Task Execution Report - (04A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch04 - Query Decomposition and LangGraph Retrieval Routing
+
+## Task
+(04A) - Add bounded query planning with deterministic fallback
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch04 > (04A)
+- docs/plans/Plan_3.md > ## Batch 4: Query Decomposition and LangGraph Retrieval Routing > ### Task 4.1: Add bounded query planning and deterministic fallback
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Query Decomposition and LangGraph Retrieval Routing
+- Task ID: (04A)
+- Task title: Add bounded query planning with deterministic fallback
+
+## Completed Work
+- Status: complete.
+- Added a typed `plan_query(question, document_ids, explicit_filters)` service returning the existing `QueryPlan` contract.
+- Added strict JSON query-planning prompt support and response schema wiring using `SHOPAIKEY_INPUT_MODEL`, `QUERY_PLANNER_TEMPERATURE`, and `QUERY_PLANNER_MAX_TOKENS`.
+- Implemented bounded subquery normalization: blank and duplicate subqueries are removed, retained IDs stay stable, output is capped by `QUERY_MAX_SUBQUERIES`, and empty normalized plans restore the original question.
+- Implemented field-by-field filter merging where explicit request filters override inferred filters while explicit document IDs remain an external allow-list and are never accepted from planner output.
+- Converted planner timeout/provider failure, invalid JSON, unknown strategy, invalid filters, and malformed scope-widening responses into one deterministic original-question fallback plan using `hybrid` when keyword search is enabled and `semantic` when disabled.
+- Did not implement (04B) or route the query graph through the planner.
+
+## Files Created or Modified
+- backend/app/services/query_planning.py
+- backend/app/graphs/query_prompts.py
+- backend/tests/test_query_planning.py
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_planning.py -v`: Passed
+- Evidence: 11 passed.
+- `cd backend; python -m pytest tests/test_query_graph.py -v`: Passed
+- Evidence: 32 passed.
+
+## Acceptance Check
+- Task acceptance condition: Every plan is bounded and typed; planner output never widens explicit scope; all failures return the deterministic fallback.
+- Status: satisfied
+- Evidence: Focused tests cover simple/complex normalization, cap enforcement, explicit filter precedence, document scope preservation, strict response request wiring, timeout/provider failures, invalid JSON, unknown strategy, invalid filters, scope-widening response rejection, and keyword-disabled semantic fallback.
+
+## Artifacts Produced
+- Typed query planning service.
+- Query planning prompt constants, strict JSON schema, response format, and message builder.
+- Focused unit test suite for query planning.
+- Appended execution report in docs/reports/report_3_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution only; checkbox and batch updates are reserved for A2 after an ACCEPTED review per user instructions.
+
+## Key Implementation Decisions
+- Reused existing `QueryPlan`, `QuerySubquery`, `RetrievalFilters`, and `RetrievalStrategy` contracts instead of adding parallel planning models.
+- Kept `document_ids` outside `QueryPlan`; they are included in planner input only as a fixed allow-list and any planner response attempting to return document scope is treated as invalid.
+- Merged explicit filters only for fields explicitly supplied by the caller so partial explicit filters override the matching inferred fields without discarding unrelated inferred filters.
+- Used deterministic fallback for all planner/provider exceptions after validating the original question.
+
+## Risks or Open Issues
+- Live planning still depends on configured ShopAIKey credentials and model support for strict JSON schema response formatting; unit validation uses mocked provider responses as required.
+- The query graph is not routed through the planner yet by design; that belongs to (04B).
+
+## Minor Issues Fixed During Execution
+- None
+
+## Workflow Integrity Check
+- Dependencies checked in docs/tasks/task_3.md: (01A), (02C), shared filters, and current query prompts are present; no dependency blocker identified.
+- No missing source-of-truth fields or architecture conflicts identified.
+- Implemented only (04A); did not update task checkboxes and did not commit.
+
+## Notes for Next Task
+- next task ID: (04B)
+- can proceed: yes, after A2 reviews and accepts (04A).
+- handoff notes: `plan_query` is ready for graph integration; use `plan.inferred_filters` as the merged effective filter contract and keep existing state `document_ids` as the allow-list.
+---
+
+# Task Execution Report - (04B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch04 - Query Decomposition and LangGraph Retrieval Routing
+
+## Task
+(04B) - Route and merge semantic, keyword, metadata, and relation paths
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch04 - Query Decomposition and LangGraph Retrieval Routing > (04B)
+- docs/plans/Plan_3.md > ## Batch 4: Query Decomposition and LangGraph Retrieval Routing > ### Task 4.2: Route and merge semantic, keyword, metadata, and relation paths
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Query Decomposition and LangGraph Retrieval Routing
+- Task ID: (04B)
+- Task title: Route and merge semantic, keyword, metadata, and relation paths
+
+## Completed Work
+- Status: complete.
+- Rewired the query graph to the exact Phase 3 ordered flow from `prepare_query` through `save_message_optional`.
+- Added planning, relation scope, route-specific retrieval, candidate fusion, rerank/context aliases, and citation/grounding/finalization placeholders.
+- Routed semantic, keyword, hybrid, metadata, and relation strategies to their documented paths, with metadata requiring at least one active filter.
+- Added one-hop relation scope resolution that respects explicit `document_ids` as a strict allow-list and falls back to original scope on relation failure.
+- Fused candidates across paths and subqueries by `chunk_id`, preserved subquery IDs, capped before reranking, and reserved subquery coverage for multi-subquery comparison-style plans.
+- Preserved safe insufficient-context behavior when retrieval succeeds with no candidates.
+
+## Files Created or Modified
+- backend/app/graphs/query_state.py
+- backend/app/graphs/query_nodes.py
+- backend/app/graphs/query_graph.py
+- backend/app/services/retrieval.py
+- backend/app/services/relations.py
+- backend/tests/test_query_graph.py
+- backend/tests/test_relations.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_relations.py::test_resolve_related_document_scope_is_one_hop_bounded_and_respects_allow_list tests/test_query_graph.py::test_build_query_graph_invokes_nodes_in_required_order tests/test_query_graph.py::test_retrieve_candidates_node_routes_each_strategy_to_allowed_paths tests/test_query_graph.py::test_retrieve_candidates_node_requires_active_filter_for_metadata tests/test_query_graph.py::test_fuse_candidates_node_deduplicates_and_reserves_subquery_coverage -q`: Passed
+- Evidence: 5 passed after the implementation.
+- `cd backend; python -m pytest tests/test_query_planning.py tests/test_relations.py tests/test_score_fusion.py tests/test_query_graph.py -v`: Passed
+- Evidence: 64 passed.
+
+## Acceptance Check
+- Task acceptance condition: Every strategy uses only allowed paths, relation expansion remains bounded, and graph behavior is deterministic under failure.
+- Status: satisfied
+- Evidence: Tests cover Phase 3 graph order, strategy-to-path routing, metadata filter gating, bounded allow-list relation scope, multi-subquery deduplication/coverage, planner fallback, one-path retrieval fallback, and no-result insufficient-context behavior.
+
+## Artifacts Produced
+- Phase 3 query graph routing and multi-subquery candidate merging.
+- Appended execution report in docs/reports/report_3_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution only; checkbox and batch updates are reserved for A2 after an ACCEPTED review per user instructions.
+
+## Key Implementation Decisions
+- Kept existing Phase 2 node functions available and added Phase 3 node aliases/wrappers so older tests and callers remain compatible.
+- Used `QueryPlan.inferred_filters` as the effective merged filter source produced by (04A), while preserving `document_ids` as the strict scope allow-list.
+- Exposed `retrieve_semantic_candidates` in retrieval service so graph routing does not call the private semantic helper directly.
+- Implemented citation validation, grounding verification, and finalization as no-op placeholders only, leaving Batch05+ behavior untouched.
+
+## Risks or Open Issues
+- Existing unrelated worktree changes were present before this execution and were preserved: `backend/app/graphs/query_prompts.py`, `backend/app/services/query_planning.py`, `backend/tests/test_query_planning.py`, `docs/tasks/task_3.md`, `docs/review/review_3_review_agent.md`, and prior report content.
+- Relation expansion without explicit document scope remains conservative; with explicit `document_ids`, the implementation never widens the allow-list as required.
+
+## Minor Issues Fixed During Execution
+- Updated the query state shape test to include the new `relation_document_ids` state field.
+- Added a public semantic retrieval helper to avoid direct graph use of a private retrieval function.
+
+## Workflow Integrity Check
+- Dependencies checked in docs/tasks/task_3.md: (04A), (02C), and (03B) are marked complete; no user action required; no dependency blocker identified.
+- No missing source-of-truth fields or architecture conflicts identified.
+- Implemented only (04B); did not update task checkboxes and did not commit.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after A2 reviews and accepts (04B).
+- handoff notes: Phase 3 routing now produces capped `retrieved_chunks` before rerank and keeps `fused_candidates`, `path_candidates`, route, subqueries, and relation scope data in query state for later candidate-stage and context-budget work.
+---
+
+# Task Execution Report - (04B) Repair
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch04 - Query Decomposition and LangGraph Retrieval Routing
+
+## Task
+(04B) - Route and merge semantic, keyword, metadata, and relation paths
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch04 - Query Decomposition and LangGraph Retrieval Routing > (04B)
+- docs/plans/Plan_3.md > ## Batch 4: Query Decomposition and LangGraph Retrieval Routing > ### Task 4.2: Route and merge semantic, keyword, metadata, and relation paths
+- A2 review repair instruction for (04B): track attempted/successful paths separately and return route failure when every attempted path fails.
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch04 - Query Decomposition and LangGraph Retrieval Routing
+- Task ID: (04B)
+- Task title: Route and merge semantic, keyword, metadata, and relation paths
+
+## Completed Work
+- Status: complete.
+- Repaired `retrieve_candidates_node` so it now records attempted paths and successful paths separately.
+- Counts a path returning an empty candidate list as successful, preserving safe no-result behavior for successful empty retrieval.
+- Preserves hybrid/relation one-path fallback when one allowed path fails and another succeeds.
+- Returns a route-specific `error_message` when every attempted path for semantic, keyword, hybrid, or relation retrieval fails.
+- Added focused tests for hybrid/relation both-path failure, semantic-only failure, keyword-only failure, hybrid one-path fallback, and both-path successful empty no-result behavior.
+
+## Files Created or Modified
+- backend/app/graphs/query_nodes.py
+- backend/tests/test_query_graph.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_query_graph.py::test_retrieve_candidates_node_returns_error_when_both_allowed_paths_fail tests/test_query_graph.py::test_retrieve_candidates_node_returns_error_when_single_allowed_path_fails tests/test_query_graph.py::test_retrieve_candidates_node_preserves_hybrid_one_path_fallback tests/test_query_graph.py::test_retrieve_candidates_node_preserves_empty_no_result_for_successful_paths -q`: Passed
+- Evidence: 6 passed.
+- `cd backend; python -m pytest tests/test_query_planning.py tests/test_relations.py tests/test_score_fusion.py tests/test_query_graph.py -v`: Passed
+- Evidence: 70 passed.
+
+## Acceptance Check
+- Task acceptance condition: Every strategy uses only allowed paths, relation expansion remains bounded, and graph behavior is deterministic under failure.
+- Status: satisfied
+- Evidence: Required validation passes; new tests prove all-attempted-path failure returns route errors, one-path fallback remains deterministic, and successful empty paths preserve no-result behavior.
+
+## Artifacts Produced
+- Repaired Phase 3 retrieval route failure accounting.
+- Focused regression coverage in `backend/tests/test_query_graph.py`.
+- Appended repair execution report in docs/reports/report_3_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: A1 repair execution only; checkbox and batch updates are reserved for A2 after an ACCEPTED review per user instructions.
+
+## Key Implementation Decisions
+- Treated path success as no exception, even when the candidate list is empty, so successful no-result retrieval can continue to the existing insufficient-context response.
+- Returned route-level errors only when at least one path was attempted and none succeeded.
+- Added compact route metrics: `attempted_paths`, `successful_paths`, `attempted_path_count`, `successful_path_count`, and `fallback_path` when a successful path carries a failed-path fallback.
+
+## Risks or Open Issues
+- Existing unrelated dirty worktree files from prior Batch04 work remain preserved and were not reverted.
+- Metadata strategy without active filters remains governed by existing skip behavior from the prior (04B) implementation; this repair changed only A2's requested attempted/successful path failure semantics.
+
+## Minor Issues Fixed During Execution
+- None outside A2's requested repair.
+
+## Workflow Integrity Check
+- Dependencies checked in docs/tasks/task_3.md: (04A), (02C), and (03B) are marked complete; no user action required; no dependency blocker identified.
+- Repair stayed inside (04B) and did not implement Batch05 or later behavior.
+- Did not update task checkboxes and did not commit.
+
+## Notes for Next Task
+- next task ID: (05A)
+- can proceed: yes, after A2 reviews and accepts this (04B) repair.
+- handoff notes: Retrieval route metrics now distinguish attempted and successful paths; downstream nodes should treat `error_message` from `retrieve_candidates_node` as a route failure and empty successful path candidates as valid insufficient-context input.

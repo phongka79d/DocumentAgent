@@ -21,9 +21,12 @@ from app.graphs.query_prompts import (
     NO_RELEVANT_INFORMATION_MESSAGE,
     build_answer_messages,
 )
+from app.core.contracts import RetrievalStrategy
 from app.models.schemas import RetrievalFilters
+from app.models.schemas import QueryPlan, QuerySubquery
 from app.services import messages as message_service
-from app.services import retrieval
+from app.services import query_planning, retrieval, score_fusion
+from app.services import relations as relation_service
 from app.services.shopaikey_client import create_shopaikey_client
 
 logger = logging.getLogger(__name__)
@@ -71,6 +74,119 @@ def _normalize_filters(filters: Any) -> dict[str, Any]:
     return model.model_dump(mode="json", exclude_none=True)
 
 
+def _filters_model(filters: Any) -> RetrievalFilters:
+    if isinstance(filters, RetrievalFilters):
+        return filters
+    return RetrievalFilters.model_validate(filters or {})
+
+
+def _query_plan(state: Mapping[str, Any]) -> QueryPlan | None:
+    raw_plan = state.get("query_plan")
+    if raw_plan is None:
+        return None
+    if isinstance(raw_plan, QueryPlan):
+        return raw_plan
+    return QueryPlan.model_validate(raw_plan)
+
+
+def _subqueries_from_plan(plan: QueryPlan) -> list[QuerySubquery]:
+    return [QuerySubquery.model_validate(item) for item in plan.subqueries]
+
+
+def _has_active_filter(filters: RetrievalFilters) -> bool:
+    data = filters.model_dump(mode="json")
+    return any(value not in (None, [], "") for value in data.values())
+
+
+def _with_subquery_id(candidate: Mapping[str, Any], subquery_id: str) -> dict[str, Any]:
+    normalized = dict(candidate)
+    existing_ids = normalized.get("subquery_ids") or []
+    subquery_ids: list[str] = []
+    for value in [*existing_ids, subquery_id]:
+        text = normalize_text(value)
+        if text is not None and text not in subquery_ids:
+            subquery_ids.append(text)
+    normalized["subquery_ids"] = subquery_ids
+    return normalized
+
+
+def _candidate_groups(path_candidates: Mapping[str, Any]) -> list[list[dict[str, Any]]]:
+    groups: list[list[dict[str, Any]]] = []
+    for candidates in path_candidates.values():
+        if not isinstance(candidates, list):
+            continue
+        groups.append([dict(candidate) for candidate in candidates if isinstance(candidate, Mapping)])
+    return groups
+
+
+def _subquery_ids(plan: QueryPlan | None) -> list[str]:
+    if plan is None:
+        return []
+    ids: list[str] = []
+    for subquery in plan.subqueries:
+        text = normalize_text(subquery.id)
+        if text is not None and text not in ids:
+            ids.append(text)
+    return ids
+
+
+def _select_with_subquery_coverage(
+    fused_candidates: list[dict[str, Any]],
+    *,
+    subquery_ids: list[str],
+    limit: int,
+) -> list[dict[str, Any]]:
+    if limit <= 0:
+        return []
+    if len(subquery_ids) <= 1:
+        return fused_candidates[:limit]
+
+    selected: list[dict[str, Any]] = []
+    selected_chunks: set[str] = set()
+    for subquery_id in subquery_ids:
+        candidate = next(
+            (
+                item
+                for item in fused_candidates
+                if subquery_id in (item.get("subquery_ids") or [])
+                and normalize_text(item.get("chunk_id")) not in selected_chunks
+            ),
+            None,
+        )
+        if candidate is None:
+            continue
+        selected.append(candidate)
+        selected_chunks.add(str(candidate["chunk_id"]))
+        if len(selected) >= limit:
+            return selected
+
+    for candidate in fused_candidates:
+        chunk_id = normalize_text(candidate.get("chunk_id"))
+        if chunk_id is None or chunk_id in selected_chunks:
+            continue
+        selected.append(candidate)
+        selected_chunks.add(chunk_id)
+        if len(selected) >= limit:
+            break
+    return selected
+
+
+def _path_name(path_key: str) -> str:
+    return path_key.rsplit(":", 1)[-1]
+
+
+def _route_failure_message(strategy: RetrievalStrategy) -> str:
+    if strategy is RetrievalStrategy.SEMANTIC:
+        return "semantic retrieval failed"
+    if strategy is RetrievalStrategy.KEYWORD:
+        return "keyword retrieval failed"
+    if strategy is RetrievalStrategy.RELATION:
+        return "relation retrieval failed"
+    if strategy is RetrievalStrategy.METADATA:
+        return "metadata retrieval failed"
+    return "hybrid retrieval failed"
+
+
 def prepare_query_node(state: Mapping[str, Any], *, settings: Settings | None = None) -> dict[str, Any]:
     _resolve_settings(settings)
 
@@ -92,6 +208,266 @@ def prepare_query_node(state: Mapping[str, Any], *, settings: Settings | None = 
         except Exception:
             return {"error_message": "invalid retrieval filters"}
     return result
+
+
+def plan_query_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+    shopaikey_client: Any | None = None,
+) -> dict[str, Any]:
+    resolved_settings = _resolve_settings(settings)
+    prepared_query = _question_text(state)
+    if prepared_query is None:
+        return {"error_message": "prepared_query is required"}
+
+    try:
+        filters = _filters_model(state.get("filters") or {})
+    except Exception:
+        return {"error_message": "invalid retrieval filters"}
+
+    plan = query_planning.plan_query(
+        prepared_query,
+        _normalize_document_ids(state.get("document_ids")),
+        filters,
+        settings=resolved_settings,
+        shopaikey_client=shopaikey_client,
+    )
+    return {
+        "query_plan": plan,
+        "subqueries": _subqueries_from_plan(plan),
+        "route": plan.strategy,
+        "filters": plan.inferred_filters.model_dump(mode="json", exclude_none=True),
+    }
+
+
+def resolve_relation_scope_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+    supabase_client: Any | None = None,
+) -> dict[str, Any]:
+    resolved_settings = _resolve_settings(settings)
+    plan = _query_plan(state)
+    if plan is None:
+        return {"error_message": "query_plan is required"}
+
+    document_ids = _normalize_document_ids(state.get("document_ids"))
+    if plan.strategy is not RetrievalStrategy.RELATION and not plan.needs_relations:
+        return {"relation_document_ids": document_ids}
+
+    try:
+        scoped_document_ids = relation_service.resolve_related_document_scope(
+            document_ids,
+            settings=resolved_settings,
+            supabase_client=supabase_client,
+        )
+    except Exception as exc:
+        logger.warning("Relation scope resolution failed; using original scope: %s", exc)
+        scoped_document_ids = document_ids
+        metrics = dict(state.get("retrieval_metrics") or {})
+        metrics["relation_scope_fallback"] = "original_scope"
+        return {
+            "document_ids": scoped_document_ids,
+            "relation_document_ids": scoped_document_ids,
+            "retrieval_metrics": metrics,
+        }
+
+    return {
+        "document_ids": scoped_document_ids,
+        "relation_document_ids": scoped_document_ids,
+    }
+
+
+def _run_semantic_path(
+    subquery: QuerySubquery,
+    *,
+    document_ids: list[str],
+    filters: RetrievalFilters,
+    settings: Settings,
+    qdrant_client: Any | None,
+    shopaikey_client: Any | None,
+) -> tuple[list[float], list[dict[str, Any]]]:
+    query_embedding, candidates = retrieval.retrieve_semantic_candidates(
+        subquery.text,
+        document_ids=document_ids,
+        filters=filters,
+        settings=settings,
+        qdrant_client=qdrant_client,
+        shopaikey_client=shopaikey_client,
+    )
+    return query_embedding, [
+        _with_subquery_id(candidate, subquery.id) for candidate in candidates
+    ]
+
+
+def _run_keyword_path(
+    subquery: QuerySubquery,
+    *,
+    document_ids: list[str],
+    filters: RetrievalFilters,
+    settings: Settings,
+    supabase_client: Any | None,
+) -> list[dict[str, Any]]:
+    if not settings.ENABLE_KEYWORD_SEARCH:
+        return []
+    return [
+        _with_subquery_id(candidate, subquery.id)
+        for candidate in retrieval.keyword_search.search_keyword_chunks(
+            subquery.text,
+            document_ids=document_ids,
+            filters=filters,
+            settings=settings,
+            supabase_client=supabase_client,
+        )
+    ]
+
+
+def retrieve_candidates_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+    qdrant_client: Any | None = None,
+    shopaikey_client: Any | None = None,
+    supabase_client: Any | None = None,
+) -> dict[str, Any]:
+    resolved_settings = _resolve_settings(settings)
+    plan = _query_plan(state)
+    if plan is None:
+        return {"error_message": "query_plan is required"}
+
+    filters = _filters_model(plan.inferred_filters)
+    document_ids = _normalize_document_ids(state.get("document_ids"))
+    subqueries = _subqueries_from_plan(plan)
+    path_candidates: dict[str, list[dict[str, Any]]] = {}
+    path_errors: dict[str, str] = {}
+    attempted_paths: list[str] = []
+    successful_paths: list[str] = []
+    query_embedding: list[float] = []
+    metadata_skipped_count = 0
+
+    def _record(path_key: str, candidates: list[dict[str, Any]]) -> None:
+        path_candidates[path_key] = candidates
+        successful_paths.append(path_key)
+
+    for subquery in subqueries:
+        strategy = plan.strategy
+        if strategy is RetrievalStrategy.METADATA and not _has_active_filter(filters):
+            metadata_skipped_count += 1
+            continue
+
+        run_semantic = strategy in {
+            RetrievalStrategy.SEMANTIC,
+            RetrievalStrategy.HYBRID,
+            RetrievalStrategy.METADATA,
+            RetrievalStrategy.RELATION,
+        }
+        run_keyword = strategy in {
+            RetrievalStrategy.KEYWORD,
+            RetrievalStrategy.HYBRID,
+            RetrievalStrategy.METADATA,
+            RetrievalStrategy.RELATION,
+        }
+
+        if run_semantic:
+            path_key = f"{subquery.id}:semantic"
+            attempted_paths.append(path_key)
+            try:
+                embedding, candidates = _run_semantic_path(
+                    subquery,
+                    document_ids=document_ids,
+                    filters=filters,
+                    settings=resolved_settings,
+                    qdrant_client=qdrant_client,
+                    shopaikey_client=shopaikey_client,
+                )
+                if embedding and not query_embedding:
+                    query_embedding = embedding
+                _record(path_key, candidates)
+            except Exception as exc:
+                path_errors[path_key] = safe_detail(
+                    str(exc), fallback="semantic retrieval failed"
+                )
+
+        if run_keyword:
+            path_key = f"{subquery.id}:keyword"
+            attempted_paths.append(path_key)
+            try:
+                _record(
+                    path_key,
+                    _run_keyword_path(
+                        subquery,
+                        document_ids=document_ids,
+                        filters=filters,
+                        settings=resolved_settings,
+                        supabase_client=supabase_client,
+                    ),
+                )
+            except Exception as exc:
+                path_errors[path_key] = safe_detail(
+                    str(exc), fallback="keyword retrieval failed"
+                )
+
+    metrics = {
+        "path_count": len(path_candidates),
+        "candidate_count": sum(len(candidates) for candidates in path_candidates.values()),
+        "path_error_count": len(path_errors),
+        "metadata_skipped_count": metadata_skipped_count,
+        "attempted_paths": attempted_paths,
+        "successful_paths": successful_paths,
+        "attempted_path_count": len(attempted_paths),
+        "successful_path_count": len(successful_paths),
+    }
+    if path_errors:
+        metrics["path_errors"] = path_errors
+    if path_errors and successful_paths:
+        metrics["fallback_path"] = _path_name(successful_paths[0])
+
+    if attempted_paths and not successful_paths:
+        return {
+            "error_message": _route_failure_message(plan.strategy),
+            "query_embedding": query_embedding,
+            "path_candidates": path_candidates,
+            "retrieval_metrics": metrics,
+        }
+
+    return {
+        "query_embedding": query_embedding,
+        "path_candidates": path_candidates,
+        "retrieval_metrics": metrics,
+    }
+
+
+def fuse_candidates_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    resolved_settings = _resolve_settings(settings)
+    path_candidates = state.get("path_candidates") or {}
+    if not isinstance(path_candidates, Mapping):
+        return {"error_message": "path_candidates must be a mapping"}
+
+    groups = _candidate_groups(path_candidates)
+    uncapped_settings = resolved_settings.model_copy(
+        update={"RETRIEVAL_FUSION_TOP_K": 1000}
+    )
+    fused_candidates = score_fusion.fuse_candidates(groups, settings=uncapped_settings)
+    plan = _query_plan(state)
+    retrieved_chunks = _select_with_subquery_coverage(
+        fused_candidates,
+        subquery_ids=_subquery_ids(plan),
+        limit=resolved_settings.RETRIEVAL_FUSION_TOP_K,
+    )
+
+    metrics = dict(state.get("retrieval_metrics") or {})
+    metrics["fused_candidate_count"] = len(fused_candidates)
+    metrics["retrieved_candidate_count"] = len(retrieved_chunks)
+    return {
+        "fused_candidates": fused_candidates,
+        "retrieved_chunks": retrieved_chunks,
+        "retrieval_metrics": metrics,
+    }
 
 
 def retrieve_qdrant_node(
@@ -192,6 +568,15 @@ def jina_rerank_node(
         }
 
 
+def rerank_candidates_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+    jina_client: Any | None = None,
+) -> dict[str, Any]:
+    return jina_rerank_node(state, settings=settings, jina_client=jina_client)
+
+
 def expand_neighbor_context_node(
     state: Mapping[str, Any],
     *,
@@ -226,6 +611,19 @@ def expand_neighbor_context_node(
                 fallback=DEFAULT_QUERY_ERROR,
             )
         }
+
+
+def expand_context_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+    supabase_client: Any | None = None,
+) -> dict[str, Any]:
+    return expand_neighbor_context_node(
+        state,
+        settings=settings,
+        supabase_client=supabase_client,
+    )
 
 
 def generate_answer_node(
@@ -280,6 +678,33 @@ def generate_answer_node(
         }
 
 
+def validate_citations_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    _resolve_settings(settings)
+    return {}
+
+
+def verify_grounding_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    _resolve_settings(settings)
+    return {}
+
+
+def finalize_answer_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    _resolve_settings(settings)
+    return {}
+
+
 def save_message_optional_node(
     state: Mapping[str, Any],
     *,
@@ -323,9 +748,18 @@ __all__ = [
     "DEFAULT_QUERY_ERROR",
     "NO_RELEVANT_INFORMATION_MESSAGE",
     "expand_neighbor_context_node",
+    "expand_context_node",
+    "finalize_answer_node",
+    "fuse_candidates_node",
     "generate_answer_node",
     "jina_rerank_node",
+    "plan_query_node",
     "prepare_query_node",
+    "rerank_candidates_node",
     "retrieve_qdrant_node",
+    "retrieve_candidates_node",
+    "resolve_relation_scope_node",
     "save_message_optional_node",
+    "validate_citations_node",
+    "verify_grounding_node",
 ]

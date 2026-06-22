@@ -340,3 +340,34 @@ def test_update_document_relations_discards_invalid_json_without_failing_indexin
     assert result["status"] == "updated"
     assert result["accepted_relation_count"] == 0
     assert result["discarded_relation_count"] == 1
+
+
+def test_resolve_related_document_scope_is_one_hop_bounded_and_respects_allow_list():
+    client = FakeClient(
+        [
+            _relation(source_document_id=LOW_ID, target_document_id=HIGH_ID),
+            _relation(
+                source_document_id=LOW_ID,
+                target_document_id=THIRD_ID,
+                relation_type="references",
+            ),
+        ],
+        [
+            _relation(source_document_id=LOW_ID, target_document_id=HIGH_ID),
+            _relation(
+                source_document_id=HIGH_ID,
+                target_document_id=THIRD_ID,
+                relation_type="same_topic",
+            ),
+        ],
+    )
+
+    result = relations.resolve_related_document_scope(
+        [LOW_ID, HIGH_ID],
+        settings=_settings(max_related=1),
+        supabase_client=client,
+    )
+
+    assert result == [str(LOW_ID), str(HIGH_ID)]
+    assert len(client.calls) == 2
+    assert all(str(THIRD_ID) not in document_id for document_id in result)

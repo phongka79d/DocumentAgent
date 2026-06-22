@@ -25,6 +25,7 @@ class QueryState(TypedDict, total=False):
     query_plan: QueryPlan
     subqueries: list[QuerySubquery]
     route: RetrievalStrategy
+    relation_document_ids: list[str]
     path_candidates: dict[str, list[RetrievalCandidate]]
     fused_candidates: list[RetrievalCandidate]
 

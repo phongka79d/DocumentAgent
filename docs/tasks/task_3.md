@@ -424,7 +424,7 @@ Complex and cross-document questions require controlled decomposition and path s
 
 ### Tasks
 
-- [ ] (04A): Add bounded query planning with deterministic fallback
+- [x] (04A): Add bounded query planning with deterministic fallback
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 4: Query Decomposition and LangGraph Retrieval Routing` > `### Task 4.1: Add bounded query planning and deterministic fallback`
   - Source Requirements:
     - Request and validate the exact typed plan shape using the configured input model and strict JSON.
@@ -448,7 +448,7 @@ Complex and cross-document questions require controlled decomposition and path s
   - Blocked Condition: None for unit implementation; `BLOCKED_BY_USER_ACTION` for live planning if model credentials are missing.
   - Files: `backend/app/services/query_planning.py`, `backend/app/graphs/query_prompts.py`, `backend/tests/test_query_planning.py`
 
-- [ ] (04B): Route and merge semantic, keyword, metadata, and relation paths
+- [x] (04B): Route and merge semantic, keyword, metadata, and relation paths
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 4: Query Decomposition and LangGraph Retrieval Routing` > `### Task 4.2: Route and merge semantic, keyword, metadata, and relation paths`
   - Source Requirements:
     - Replace the Phase 2 graph start with the exact ordered Phase 3 query-node flow.
@@ -1061,8 +1061,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch04
 
-- [ ] (04A): Add bounded query planning with deterministic fallback
-- [ ] (04B): Route and merge semantic, keyword, metadata, and relation paths
+- [x] (04A): Add bounded query planning with deterministic fallback
+- [x] (04B): Route and merge semantic, keyword, metadata, and relation paths
 
 #### Batch05
 

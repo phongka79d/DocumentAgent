@@ -8,9 +8,11 @@ from uuid import uuid4
 import pytest
 
 from app.core.config import Settings
+from app.core.contracts import RetrievalPath, RetrievalStrategy
 from app.graphs import query_nodes
 from app.graphs.query_graph import build_query_graph
 from app.graphs.query_state import QueryState
+from app.models.schemas import QueryPlan, QuerySubquery, RetrievalFilters
 from app.services import chunks as chunk_service
 from app.services import messages as message_service
 from app.services import retrieval
@@ -1036,6 +1038,7 @@ def test_query_state_contains_required_fields_and_no_extra_fields():
         "query_plan",
         "subqueries",
         "route",
+        "relation_document_ids",
         "path_candidates",
         "fused_candidates",
         "retrieved_chunks",
@@ -1694,13 +1697,92 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
     )
     monkeypatch.setattr(
         query_nodes,
-        "retrieve_qdrant_node",
+        "plan_query_node",
         _record_node(
-            "retrieve_qdrant",
+            "plan_query",
             {
-                "prepared_query": "What does the document say about pricing?",
+                "query_plan": QueryPlan(
+                    is_complex=False,
+                    strategy=RetrievalStrategy.SEMANTIC,
+                    subqueries=[
+                        QuerySubquery(
+                            id="q1",
+                            text="What does the document say about pricing?",
+                        )
+                    ],
+                    inferred_filters=RetrievalFilters(),
+                    needs_relations=False,
+                ),
+                "subqueries": [
+                    QuerySubquery(
+                        id="q1",
+                        text="What does the document say about pricing?",
+                    )
+                ],
+                "route": RetrievalStrategy.SEMANTIC,
+            },
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        query_nodes,
+        "resolve_relation_scope_node",
+        _record_node(
+            "resolve_relation_scope",
+            {
                 "document_ids": [DOC_A],
-                "query_embedding": [0.1, 0.2, 0.3],
+            },
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        query_nodes,
+        "retrieve_candidates_node",
+        _record_node(
+            "retrieve_candidates",
+            {
+                "path_candidates": {
+                    "q1:semantic": [
+                        {
+                            "document_id": DOC_A,
+                            "chunk_id": "chunk-1",
+                            "file_name": "alpha.pdf",
+                            "chunk_index": 1,
+                            "page_start": 3,
+                            "page_end": 4,
+                            "heading": "Pricing",
+                            "qdrant_score": 0.91,
+                            "semantic_rank": 1,
+                            "content": "Pricing is based on usage tiers.",
+                            "retrieval_paths": [RetrievalPath.SEMANTIC],
+                            "subquery_ids": ["q1"],
+                        }
+                    ]
+                },
+            },
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        query_nodes,
+        "fuse_candidates_node",
+        _record_node(
+            "fuse_candidates",
+            {
+                "fused_candidates": [
+                    {
+                        "document_id": DOC_A,
+                        "chunk_id": "chunk-1",
+                        "file_name": "alpha.pdf",
+                        "chunk_index": 1,
+                        "page_start": 3,
+                        "page_end": 4,
+                        "heading": "Pricing",
+                        "qdrant_score": 0.91,
+                        "fusion_score": 0.5,
+                        "content": "Pricing is based on usage tiers.",
+                    }
+                ],
                 "retrieved_chunks": [
                     {
                         "document_id": DOC_A,
@@ -1716,12 +1798,13 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
                 ],
             },
         ),
+        raising=False,
     )
     monkeypatch.setattr(
         query_nodes,
-        "jina_rerank_node",
+        "rerank_candidates_node",
         _record_node(
-            "jina_rerank",
+            "rerank_candidates",
             {
                 "reranked_chunks": [
                     {
@@ -1739,12 +1822,13 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
                 ]
             },
         ),
+        raising=False,
     )
     monkeypatch.setattr(
         query_nodes,
-        "expand_neighbor_context_node",
+        "expand_context_node",
         _record_node(
-            "expand_neighbor_context",
+            "expand_context",
             {
                 "context_chunks": [
                     {
@@ -1762,6 +1846,7 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
                 ]
             },
         ),
+        raising=False,
     )
     monkeypatch.setattr(
         query_nodes,
@@ -1788,6 +1873,24 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
     )
     monkeypatch.setattr(
         query_nodes,
+        "validate_citations_node",
+        _record_node("validate_citations", {}),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        query_nodes,
+        "verify_grounding_node",
+        _record_node("verify_grounding", {}),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        query_nodes,
+        "finalize_answer_node",
+        _record_node("finalize_answer", {}),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        query_nodes,
         "save_message_optional_node",
         _record_node("save_message_optional", {}),
     )
@@ -1803,14 +1906,396 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
 
     assert call_order == [
         "prepare_query",
-        "retrieve_qdrant",
-        "jina_rerank",
-        "expand_neighbor_context",
+        "plan_query",
+        "resolve_relation_scope",
+        "retrieve_candidates",
+        "fuse_candidates",
+        "rerank_candidates",
+        "expand_context",
         "generate_answer",
+        "validate_citations",
+        "verify_grounding",
+        "finalize_answer",
         "save_message_optional",
     ]
     assert result["answer"] == "Pricing is based on usage tiers."
     assert result["sources"][0]["chunk_id"] == "chunk-1"
+
+
+def test_retrieve_candidates_node_routes_each_strategy_to_allowed_paths(monkeypatch):
+    settings = _test_settings(enable_keyword_search=True)
+    calls: list[tuple[str, str, list[str]]] = []
+
+    def _semantic(question, *, document_ids=None, **kwargs):
+        calls.append(("semantic", question, list(document_ids or [])))
+        return [0.1], [
+            {
+                "chunk_id": f"{question}-semantic",
+                "document_id": (document_ids or [DOC_A])[0],
+                "file_name": "alpha.pdf",
+                "chunk_index": 0,
+                "content": "semantic",
+                "semantic_rank": 1,
+                "semantic_score": 0.9,
+                "qdrant_score": 0.9,
+                "retrieval_paths": [RetrievalPath.SEMANTIC],
+                "subquery_ids": [],
+            }
+        ]
+
+    def _keyword(query, *, document_ids=None, **kwargs):
+        calls.append(("keyword", query, list(document_ids or [])))
+        return [
+            {
+                "chunk_id": f"{query}-keyword",
+                "document_id": (document_ids or [DOC_A])[0],
+                "file_name": "alpha.pdf",
+                "chunk_index": 0,
+                "content": "keyword",
+                "keyword_rank": 1,
+                "keyword_score": 0.8,
+                "retrieval_paths": [RetrievalPath.KEYWORD],
+                "subquery_ids": [],
+            }
+        ]
+
+    monkeypatch.setattr(retrieval, "retrieve_semantic_candidates", _semantic)
+    monkeypatch.setattr(retrieval.keyword_search, "search_keyword_chunks", _keyword)
+
+    for strategy, expected_paths, filters in [
+        (RetrievalStrategy.SEMANTIC, ["semantic"], RetrievalFilters()),
+        (RetrievalStrategy.KEYWORD, ["keyword"], RetrievalFilters()),
+        (RetrievalStrategy.HYBRID, ["semantic", "keyword"], RetrievalFilters()),
+        (
+            RetrievalStrategy.METADATA,
+            ["semantic", "keyword"],
+            RetrievalFilters(heading="Pricing"),
+        ),
+        (RetrievalStrategy.RELATION, ["semantic", "keyword"], RetrievalFilters()),
+    ]:
+        calls.clear()
+        result = query_nodes.retrieve_candidates_node(
+            {
+                "query_plan": QueryPlan(
+                    is_complex=False,
+                    strategy=strategy,
+                    subqueries=[QuerySubquery(id="q1", text="pricing")],
+                    inferred_filters=filters,
+                    needs_relations=strategy is RetrievalStrategy.RELATION,
+                ),
+                "subqueries": [QuerySubquery(id="q1", text="pricing")],
+                "document_ids": [DOC_A],
+            },
+            settings=settings,
+        )
+
+        assert [call[0] for call in calls] == expected_paths
+        assert all(
+            candidate["subquery_ids"] == ["q1"]
+            for candidates in result["path_candidates"].values()
+            for candidate in candidates
+        )
+
+
+def test_retrieve_candidates_node_requires_active_filter_for_metadata(monkeypatch):
+    settings = _test_settings(enable_keyword_search=True)
+    calls: list[str] = []
+    monkeypatch.setattr(
+        retrieval,
+        "retrieve_semantic_candidates",
+        lambda *args, **kwargs: calls.append("semantic") or ([0.1], []),
+    )
+    monkeypatch.setattr(
+        retrieval.keyword_search,
+        "search_keyword_chunks",
+        lambda *args, **kwargs: calls.append("keyword") or [],
+    )
+
+    result = query_nodes.retrieve_candidates_node(
+        {
+            "query_plan": QueryPlan(
+                is_complex=False,
+                strategy=RetrievalStrategy.METADATA,
+                subqueries=[QuerySubquery(id="q1", text="pricing")],
+                inferred_filters=RetrievalFilters(),
+                needs_relations=False,
+            ),
+            "subqueries": [QuerySubquery(id="q1", text="pricing")],
+            "document_ids": [DOC_A],
+        },
+        settings=settings,
+    )
+
+    assert result["path_candidates"] == {}
+    assert result["retrieval_metrics"]["metadata_skipped_count"] == 1
+    assert calls == []
+
+
+def _query_plan_for_strategy(
+    strategy: RetrievalStrategy,
+    *,
+    filters: RetrievalFilters | None = None,
+) -> QueryPlan:
+    return QueryPlan(
+        is_complex=False,
+        strategy=strategy,
+        subqueries=[QuerySubquery(id="q1", text="pricing")],
+        inferred_filters=filters or RetrievalFilters(),
+        needs_relations=strategy is RetrievalStrategy.RELATION,
+    )
+
+
+def _retrieval_state_for_strategy(
+    strategy: RetrievalStrategy,
+    *,
+    filters: RetrievalFilters | None = None,
+) -> dict[str, object]:
+    plan = _query_plan_for_strategy(strategy, filters=filters)
+    return {
+        "query_plan": plan,
+        "subqueries": plan.subqueries,
+        "document_ids": [DOC_A],
+    }
+
+
+def _candidate_for_path(path: RetrievalPath) -> dict[str, object]:
+    return {
+        "chunk_id": f"{path.value}-chunk",
+        "document_id": DOC_A,
+        "file_name": "alpha.pdf",
+        "chunk_index": 0,
+        "content": f"{path.value} content",
+        "semantic_rank": 1 if path is RetrievalPath.SEMANTIC else None,
+        "semantic_score": 0.9 if path is RetrievalPath.SEMANTIC else None,
+        "qdrant_score": 0.9 if path is RetrievalPath.SEMANTIC else None,
+        "keyword_rank": 1 if path is RetrievalPath.KEYWORD else None,
+        "keyword_score": 0.8 if path is RetrievalPath.KEYWORD else None,
+        "retrieval_paths": [path],
+        "subquery_ids": [],
+    }
+
+
+@pytest.mark.parametrize(
+    ("strategy", "expected_error"),
+    [
+        (RetrievalStrategy.HYBRID, "hybrid retrieval failed"),
+        (RetrievalStrategy.RELATION, "relation retrieval failed"),
+    ],
+)
+def test_retrieve_candidates_node_returns_error_when_both_allowed_paths_fail(
+    monkeypatch,
+    strategy,
+    expected_error,
+):
+    settings = _test_settings(enable_keyword_search=True)
+    monkeypatch.setattr(
+        retrieval,
+        "retrieve_semantic_candidates",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            retrieval.RetrievalError("semantic unavailable")
+        ),
+    )
+    monkeypatch.setattr(
+        retrieval.keyword_search,
+        "search_keyword_chunks",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            retrieval.keyword_search.KeywordSearchError("keyword unavailable")
+        ),
+    )
+
+    result = query_nodes.retrieve_candidates_node(
+        _retrieval_state_for_strategy(strategy),
+        settings=settings,
+    )
+
+    assert result["error_message"] == expected_error
+    assert result["retrieval_metrics"]["attempted_paths"] == [
+        "q1:semantic",
+        "q1:keyword",
+    ]
+    assert result["retrieval_metrics"]["successful_paths"] == []
+    assert sorted(result["retrieval_metrics"]["path_errors"]) == [
+        "q1:keyword",
+        "q1:semantic",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("strategy", "expected_error"),
+    [
+        (RetrievalStrategy.SEMANTIC, "semantic retrieval failed"),
+        (RetrievalStrategy.KEYWORD, "keyword retrieval failed"),
+    ],
+)
+def test_retrieve_candidates_node_returns_error_when_single_allowed_path_fails(
+    monkeypatch,
+    strategy,
+    expected_error,
+):
+    settings = _test_settings(enable_keyword_search=True)
+    monkeypatch.setattr(
+        retrieval,
+        "retrieve_semantic_candidates",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            retrieval.RetrievalError("semantic unavailable")
+        ),
+    )
+    monkeypatch.setattr(
+        retrieval.keyword_search,
+        "search_keyword_chunks",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            retrieval.keyword_search.KeywordSearchError("keyword unavailable")
+        ),
+    )
+
+    result = query_nodes.retrieve_candidates_node(
+        _retrieval_state_for_strategy(strategy),
+        settings=settings,
+    )
+
+    assert result["error_message"] == expected_error
+    assert result["retrieval_metrics"]["successful_paths"] == []
+    assert len(result["retrieval_metrics"]["attempted_paths"]) == 1
+
+
+def test_retrieve_candidates_node_preserves_hybrid_one_path_fallback(monkeypatch):
+    settings = _test_settings(enable_keyword_search=True)
+    monkeypatch.setattr(
+        retrieval,
+        "retrieve_semantic_candidates",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            retrieval.RetrievalError("semantic unavailable")
+        ),
+    )
+    monkeypatch.setattr(
+        retrieval.keyword_search,
+        "search_keyword_chunks",
+        lambda *args, **kwargs: [_candidate_for_path(RetrievalPath.KEYWORD)],
+    )
+
+    result = query_nodes.retrieve_candidates_node(
+        _retrieval_state_for_strategy(RetrievalStrategy.HYBRID),
+        settings=settings,
+    )
+
+    assert "error_message" not in result
+    assert result["retrieval_metrics"]["attempted_paths"] == [
+        "q1:semantic",
+        "q1:keyword",
+    ]
+    assert result["retrieval_metrics"]["successful_paths"] == ["q1:keyword"]
+    assert result["path_candidates"]["q1:keyword"][0]["subquery_ids"] == ["q1"]
+    assert result["retrieval_metrics"]["fallback_path"] == "keyword"
+
+
+def test_retrieve_candidates_node_preserves_empty_no_result_for_successful_paths(
+    monkeypatch,
+):
+    settings = _test_settings(enable_keyword_search=True)
+    monkeypatch.setattr(
+        retrieval,
+        "retrieve_semantic_candidates",
+        lambda *args, **kwargs: ([0.1], []),
+    )
+    monkeypatch.setattr(
+        retrieval.keyword_search,
+        "search_keyword_chunks",
+        lambda *args, **kwargs: [],
+    )
+
+    result = query_nodes.retrieve_candidates_node(
+        _retrieval_state_for_strategy(RetrievalStrategy.HYBRID),
+        settings=settings,
+    )
+
+    assert "error_message" not in result
+    assert result["path_candidates"] == {"q1:semantic": [], "q1:keyword": []}
+    assert result["retrieval_metrics"]["attempted_paths"] == [
+        "q1:semantic",
+        "q1:keyword",
+    ]
+    assert result["retrieval_metrics"]["successful_paths"] == [
+        "q1:semantic",
+        "q1:keyword",
+    ]
+    assert result["retrieval_metrics"]["candidate_count"] == 0
+
+
+def test_fuse_candidates_node_deduplicates_and_reserves_subquery_coverage():
+    settings = _test_settings(enable_keyword_search=True)
+    settings.RETRIEVAL_FUSION_TOP_K = 3
+    state = {
+        "query_plan": QueryPlan(
+            is_complex=True,
+            strategy=RetrievalStrategy.HYBRID,
+            subqueries=[
+                QuerySubquery(id="left", text="left side"),
+                QuerySubquery(id="right", text="right side"),
+            ],
+            inferred_filters=RetrievalFilters(),
+            needs_relations=False,
+        ),
+        "path_candidates": {
+            "left:semantic": [
+                {
+                    "chunk_id": "shared",
+                    "document_id": DOC_A,
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 0,
+                    "content": "shared left",
+                    "semantic_rank": 1,
+                    "semantic_score": 0.9,
+                    "retrieval_paths": [RetrievalPath.SEMANTIC],
+                    "subquery_ids": ["left"],
+                },
+                {
+                    "chunk_id": "left-only",
+                    "document_id": DOC_A,
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "content": "left",
+                    "semantic_rank": 2,
+                    "semantic_score": 0.8,
+                    "retrieval_paths": [RetrievalPath.SEMANTIC],
+                    "subquery_ids": ["left"],
+                },
+            ],
+            "right:keyword": [
+                {
+                    "chunk_id": "shared",
+                    "document_id": DOC_B,
+                    "file_name": "bravo.pdf",
+                    "chunk_index": 0,
+                    "content": "shared right",
+                    "keyword_rank": 1,
+                    "keyword_score": 0.95,
+                    "retrieval_paths": [RetrievalPath.KEYWORD],
+                    "subquery_ids": ["right"],
+                },
+                {
+                    "chunk_id": "right-only",
+                    "document_id": DOC_B,
+                    "file_name": "bravo.pdf",
+                    "chunk_index": 1,
+                    "content": "right",
+                    "keyword_rank": 5,
+                    "keyword_score": 0.2,
+                    "retrieval_paths": [RetrievalPath.KEYWORD],
+                    "subquery_ids": ["right"],
+                },
+            ],
+        },
+    }
+
+    result = query_nodes.fuse_candidates_node(state, settings=settings)
+
+    assert len(result["retrieved_chunks"]) == 3
+    assert len({chunk["chunk_id"] for chunk in result["retrieved_chunks"]}) == 3
+    assert "left" in result["retrieved_chunks"][0]["subquery_ids"]
+    assert {chunk["chunk_id"] for chunk in result["retrieved_chunks"]} >= {
+        "left-only",
+        "right-only",
+    }
 
 
 def test_build_query_graph_routes_blank_question_to_validation_error(monkeypatch):

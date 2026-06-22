@@ -1923,3 +1923,579 @@ After the `(03B)` review report was appended, a final `git status --short --untr
 - Final Outcome: ACCEPTED
 - Checkbox update status: `(03B)` detailed and progress-tracker checkboxes are checked; Batch03 remains unchecked.
 - Next task can proceed: yes, after the orchestrator/batch gate handles Batch03 completion and commit workflow.
+---
+
+# Task Review Report - (04A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Query Decomposition and LangGraph Retrieval Routing
+- Task ID: (04A)
+- Task title: Add bounded query planning with deterministic fallback
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 4: Query Decomposition and LangGraph Retrieval Routing` > `### Task 4.1: Add bounded query planning and deterministic fallback`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04A)
+- Reviewed task ID: (04A)
+- Correct selection: yes
+- Notes: The latest matching `(04A)` execution report was appended after `(03B)` and was the selected review target. `(04B)` was not reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/query_prompts.py`, `docs/reports/report_3_execute_agent.md`; after acceptance review also `docs/tasks/task_3.md`
+- untracked files: `backend/app/services/query_planning.py`, `backend/tests/test_query_planning.py`
+
+## Files Reviewed
+- `backend/app/services/query_planning.py`: in scope - typed planning service, strict-response call, normalization, explicit-filter merge, and deterministic fallback.
+- `backend/app/graphs/query_prompts.py`: in scope - planning prompt, strict JSON schema, response format, and message builder.
+- `backend/tests/test_query_planning.py`: in scope - focused planner unit coverage with mocked provider responses.
+- `docs/reports/report_3_execute_agent.md`: in scope - appended execution report for `(04A)`.
+- `docs/tasks/task_3.md`: in scope - selected `(04A)` checkbox updates only after accepted outcome.
+- `docs/plans/Plan_3.md`: in scope - cited source section reviewed.
+- `backend/app/models/schemas.py`: in scope - shared `QueryPlan`, `QuerySubquery`, and `RetrievalFilters` contracts reviewed.
+- `backend/app/core/config.py`: in scope - planner model, temperature, token cap, and subquery bounds reviewed.
+- `backend/app/core/contracts.py`: in scope - `RetrievalStrategy` enum reviewed.
+- `backend/app/graphs/query_formatting.py`: in scope - response content and text normalization helpers reviewed.
+- `backend/app/services/shopaikey_client.py`: in scope - configured ShopAIKey client boundary reviewed.
+- `backend/app/graphs/query_nodes.py`: in scope - dependency/context check for filter normalization and future graph integration.
+- `backend/app/api/routes/chat.py`: in scope - dependency/context check for request serialization and future graph integration.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/query_planning.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Created as the bounded planning service.
+- file from execution report: `backend/app/graphs/query_prompts.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains planning prompt and strict JSON schema support.
+- file from execution report: `backend/tests/test_query_planning.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Created with focused mocked-provider tests.
+
+## Dependency Review
+- Required dependencies: (01A), (02C), shared filters, and current query prompts.
+- Dependency status: satisfied for unit implementation; the referenced contracts, settings, filters, hybrid/keyword strategy contracts, and prompt module exist.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Uses existing Pydantic contracts, existing settings, ShopAIKey OpenAI-compatible client boundary, query prompt module, and deterministic fallback. Keeps document IDs outside planner-owned output and does not wire graph routing early.
+- Failed: none.
+- Uncertain: live strict JSON schema support depends on configured provider behavior, which is correctly deferred to live validation.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `plan_query` calls the configured input model with strict JSON response format, validates/normalizes strategy, filters, and subqueries, preserves bounded output, and converts provider/parsing/validation failures into a deterministic single-subquery plan.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-specific answers or document IDs in production logic; tests use fixed UUIDs only as mock scope data.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_query_planning.py -v`
+- Reported result: Passed; 11 passed.
+- Rerun result: Passed; 11 passed in 1.72s.
+- Status: satisfied
+- Notes: This is the required validation for `(04A)`.
+- Command/check: `cd backend; python -m pytest tests/test_query_graph.py -v`
+- Reported result: Passed; 32 passed.
+- Rerun result: Passed; 32 passed in 1.81s.
+- Status: satisfied
+- Notes: Additional regression check reported by executor; not required by `(04A)` but passed.
+
+## Acceptance Review
+- Task acceptance: Every plan is bounded and typed; planner output never widens explicit scope; all failures return deterministic fallback.
+- Status: satisfied
+- Evidence: Strict response schema is requested, subqueries are deduplicated/blank-filtered/capped with original-question restoration, explicit filters are merged field-by-field when field presence is preserved, planner-supplied document scope is rejected, and timeout/provider/JSON/strategy/filter failures return the documented fallback strategy.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch04 task entry and the progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked because `(04B)` is not complete/accepted.
+- Execution report entry: appended, not overwritten.
+- Review report entry: appended, not overwritten.
+- Other: No sibling or future task checkboxes were updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The executor correctly reported that graph routing through the planner was not implemented because it belongs to `(04B)`.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live planning still requires configured ShopAIKey credentials and provider support for strict JSON schema response formatting.
+- Future `(04B)` integration should preserve which filter fields were explicitly supplied when passing filters into `plan_query`; the service treats mapping key presence as explicit precedence.
+
+### Observations
+- `git diff --stat` does not include untracked created files, so `query_planning.py` and `test_query_planning.py` were separately reviewed from `git status --short --untracked-files=all`.
+- The service intentionally catches planner/provider exceptions broadly to enforce the deterministic fallback requirement.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch04 - Query Decomposition and LangGraph Retrieval Routing",
+  "selected_task_id": "(04A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/query_planning.py",
+    "backend/app/graphs/query_prompts.py",
+    "backend/tests/test_query_planning.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live planning still requires configured ShopAIKey credentials and provider support for strict JSON schema response formatting.",
+    "Future (04B) integration should preserve which filter fields were explicitly supplied when passing filters into plan_query; the service treats mapping key presence as explicit precedence."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (04B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch04 - Query Decomposition and LangGraph Retrieval Routing
+- Task ID: (04B)
+- Task title: Route and merge semantic, keyword, metadata, and relation paths
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 4: Query Decomposition and LangGraph Retrieval Routing` > `### Task 4.2: Route and merge semantic, keyword, metadata, and relation paths`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B)
+- Correct selection: yes
+- Notes: The latest report entry is the `(04B)` execution report. Prior accepted `(04A)` report/review/task updates were treated as existing uncommitted work, not part of this selected review.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_prompts.py`, `backend/app/graphs/query_state.py`, `backend/app/services/relations.py`, `backend/app/services/retrieval.py`, `backend/tests/test_query_graph.py`, `backend/tests/test_relations.py`, `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`
+- untracked files: `backend/app/services/query_planning.py`, `backend/tests/test_query_planning.py`
+
+## Files Reviewed
+- `backend/app/graphs/query_state.py`: in scope - added `relation_document_ids` and retained Phase 3 query state fields.
+- `backend/app/graphs/query_nodes.py`: in scope - reviewed planning integration, relation scope resolution, strategy routing, path error handling, fusion, rerank/context aliases, no-result behavior, and placeholders.
+- `backend/app/graphs/query_graph.py`: in scope - reviewed Phase 3 ordered graph nodes and edges.
+- `backend/app/services/retrieval.py`: in scope - reviewed public semantic helper and existing hybrid fallback contract used as comparison evidence.
+- `backend/app/services/relations.py`: in scope - reviewed one-hop bounded relation scope helper.
+- `backend/tests/test_query_graph.py`: in scope - reviewed graph order, routing, metadata gating, fusion coverage, and no-result tests.
+- `backend/tests/test_relations.py`: in scope - reviewed relation scope allow-list test.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest `(04B)` execution report appended.
+- `docs/tasks/task_3.md`: in scope - selected `(04B)` task and progress tracker reviewed; `(04B)` remains unchecked.
+- `docs/plans/Plan_3.md`: in scope - cited Task 4.2 source section reviewed.
+- `backend/app/graphs/query_prompts.py`: prior accepted `(04A)` - preserved and not reviewed as selected implementation except as dependency context.
+- `backend/app/services/query_planning.py`: prior accepted `(04A)` - dependency context only.
+- `backend/tests/test_query_planning.py`: prior accepted `(04A)` - dependency validation only.
+- `docs/review/review_3_review_agent.md`: prior accepted `(04A)` plus this appended review report; in scope only for append behavior.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/query_state.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the new relation scope state field.
+- file from execution report: `backend/app/graphs/query_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains route orchestration and the rejected failure behavior.
+- file from execution report: `backend/app/graphs/query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Graph order matches the documented Phase 3 sequence.
+- file from execution report: `backend/app/services/retrieval.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds public semantic retrieval helper; existing hybrid fallback still fails when both paths fail.
+- file from execution report: `backend/app/services/relations.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds one-hop bounded relation scope helper.
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers order, allowed paths, metadata gating, fusion, and empty-result behavior but misses all-path-failure behavior.
+- file from execution report: `backend/tests/test_relations.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Covers bounded explicit allow-list relation scope.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest `(04B)` report is appended.
+
+## Dependency Review
+- Required dependencies: (04A), (02C), (03B), existing query state/nodes/graph, and Phase 2 insufficient-context behavior.
+- Dependency status: satisfied for review; `(04A)`, `(02C)`, and `(03B)` are marked accepted/complete in the task file and progress tracker, and their artifacts exist in the worktree.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: Graph node order matches Task 4.2; strategies call only documented semantic/keyword path combinations; metadata strategy is gated on active filters; relation scope is bounded to one hop and does not widen explicit document IDs; fusion deduplicates by chunk ID and preserves subquery IDs.
+- Failed: Retrieval path failure semantics are not architecture-aligned. `retrieve_candidates_node` catches path exceptions, records them only in metrics, and returns no `error_message` even when every attempted path failed. `fuse_candidates_node` then converts the empty path map into empty `retrieved_chunks`, and `generate_answer_node` returns the insufficient-context response. This conflates failed retrieval with successful empty retrieval, contrary to Task 4.2's successful-empty no-result requirement and deterministic fallback expectation.
+- Uncertain: Relation strategy without explicit `document_ids` remains effectively unexpanded because there is no seed scope; this is conservative and not the rejection reason.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: The graph and route orchestration are real, but the all-path-failure branch is incomplete. A review probe with both semantic and keyword retrieval functions raising returned `{'query_embedding': [], 'path_candidates': {}, 'retrieval_metrics': {'path_error_count': 2, ...}}` and no `error_message`.
+
+## Hardcoding Review
+- Hardcoding found: no blocking hardcoding
+- Evidence: No fixture-specific production behavior found. The internal `RETRIEVAL_FUSION_TOP_K=1000` uncapped fusion setting is arbitrary but currently above the planned per-path/subquery candidate volume and is not the rejection basis.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_query_planning.py tests/test_relations.py tests/test_score_fusion.py tests/test_query_graph.py -v`
+- Reported result: Passed; 64 passed.
+- Rerun result: Passed; 64 passed in 3.01s.
+- Status: passed but incomplete
+- Notes: Required validation passes, but it does not cover all attempted retrieval paths failing inside `retrieve_candidates_node`.
+- Command/check: review probe of `retrieve_candidates_node` with hybrid strategy where semantic and keyword functions both raise.
+- Reported result: not reported by executor.
+- Rerun result: Returned no `error_message`, empty `path_candidates`, and `path_error_count=2`.
+- Status: failed acceptance probe
+- Notes: This proves failed retrieval can be surfaced as a no-result answer instead of a deterministic failure/fallback.
+
+## Acceptance Review
+- Task acceptance: Every strategy uses only allowed paths, relation expansion remains bounded, and graph behavior is deterministic under failure.
+- Status: partially satisfied
+- Evidence: Allowed path routing, relation bounds, graph order, deduplication, and subquery coverage are implemented. Failure handling is not acceptable because all attempted path failures are silently transformed into the same downstream behavior as successful empty retrieval. Task 4.2 specifically preserves insufficient-context behavior when all successful paths return no candidates, not when no path succeeds.
+
+## Progress Tracking
+- Selected task checkbox: unchecked in both the detailed Batch04 task entry and progress tracker entry.
+- Checkbox updated by reviewer: no
+- Batch status: Batch04 remains unchecked.
+- Execution report entry: appended, not overwritten.
+- Review report entry: appended, not overwritten.
+- Other: Prior accepted `(04A)` checkbox updates remain untouched; no sibling or future task checkboxes were updated.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report claims graph behavior is deterministic under failure and that planner/relation/one-path fallbacks are covered. Repository evidence shows all attempted retrieval path failures are only recorded in metrics and then treated as empty results, and tests do not cover that case.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- `backend/app/graphs/query_nodes.py:366` and `backend/app/graphs/query_nodes.py:383` catch semantic/keyword path failures, but `backend/app/graphs/query_nodes.py:397` returns success-shaped state even when all attempted paths failed. This allows `backend/app/graphs/query_nodes.py:604` to return the no-result answer for an outage or retrieval exception, violating the Task 4.2 requirement to preserve insufficient-context behavior only for successful empty paths and the expected deterministic fallback behavior.
+
+### Minor
+- None.
+
+### Warnings
+- `retrieval_metrics` stores a nested `path_errors` dictionary although `QueryState.retrieval_metrics` is typed as scalar values only. This is not the rejection reason but should be reconciled while repairing failure reporting.
+
+### Observations
+- The required test command passes locally: 64 tests passed.
+- Prior accepted `(04A)` files remain uncommitted and were preserved: `backend/app/services/query_planning.py`, `backend/app/graphs/query_prompts.py`, and `backend/tests/test_query_planning.py`.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete and accepted
+
+## Repair Instructions
+- target: `backend/app/graphs/query_nodes.py` retrieval orchestration, with focused tests in `backend/tests/test_query_graph.py`.
+- change: Track attempted paths and successful paths separately. Preserve one-path fallback when at least one allowed path succeeds, preserve insufficient-context only when at least one attempted path succeeds with empty candidates and no required path failures remain, and return an `error_message` or typed retrieval failure when every attempted path for the route fails. Semantic-only and keyword-only route failures must not become no-result answers. Keep metadata no-filter gating explicit and separate from retrieval failures.
+- validation: Add tests for hybrid/relation both-path failure, semantic-only failure, keyword-only failure, hybrid one-path fallback, and both-path successful empty no-result behavior; then rerun `cd backend; python -m pytest tests/test_query_planning.py tests/test_relations.py tests/test_score_fusion.py tests/test_query_graph.py -v`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch04 - Query Decomposition and LangGraph Retrieval Routing",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/query_state.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/graphs/query_graph.py",
+    "backend/app/services/retrieval.py",
+    "backend/app/services/relations.py",
+    "backend/tests/test_query_graph.py",
+    "backend/tests/test_relations.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "Review probe: retrieve_candidates_node returns success-shaped empty state when all attempted retrieval paths fail"
+  ],
+  "validations_blocked": [],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "All attempted retrieval path failures are conflated with successful empty retrieval and can produce the insufficient-context answer."
+  ],
+  "warnings": [
+    "retrieval_metrics currently stores nested path_errors despite the QueryState scalar metrics type."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (04B) Repair
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch04 - Query Decomposition and LangGraph Retrieval Routing
+- Task ID: (04B)
+- Task title: Route and merge semantic, keyword, metadata, and relation paths
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 4: Query Decomposition and LangGraph Retrieval Routing` > `### Task 4.2: Route and merge semantic, keyword, metadata, and relation paths`
+- Supplemental documents: None
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (04B)
+- Reviewed task ID: (04B) repair
+- Correct selection: yes
+- Notes: The latest matching `(04B)` entry is `# Task Execution Report - (04B) Repair`. This re-review checks only whether the prior A2 rejection was fixed and whether the repair stayed inside `(04B)` scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_prompts.py`, `backend/app/graphs/query_state.py`, `backend/app/services/relations.py`, `backend/app/services/retrieval.py`, `backend/tests/test_query_graph.py`, `backend/tests/test_relations.py`, `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`
+- untracked files: `backend/app/services/query_planning.py`, `backend/tests/test_query_planning.py`
+
+## Files Reviewed
+- `backend/app/graphs/query_nodes.py`: in scope - repair tracks attempted and successful paths separately, records successful empty paths, preserves one-path fallback, and returns route-level errors when every attempted path fails.
+- `backend/tests/test_query_graph.py`: in scope - added regression tests for hybrid/relation both-path failure, semantic/keyword single-path failure, hybrid one-path fallback, and successful empty no-result behavior.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest `(04B)` repair report appended.
+- `docs/tasks/task_3.md`: in scope - `(04B)` detailed and progress-tracker checkboxes updated by reviewer after acceptance; Batch04 remains unchecked.
+- `docs/plans/Plan_3.md`: in scope - Task 4.2 requirements rechecked.
+- `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_state.py`, `backend/app/services/retrieval.py`, `backend/app/services/relations.py`, `backend/tests/test_relations.py`: existing `(04B)` implementation context, still in scope from the original execution.
+- `backend/app/graphs/query_prompts.py`, `backend/app/services/query_planning.py`, `backend/tests/test_query_planning.py`: prior accepted `(04A)` dependency work, preserved and not reviewed as selected repair implementation.
+- `docs/review/review_3_review_agent.md`: in scope only for appending this repair review.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/graphs/query_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the requested attempted/successful path accounting and all-path-failure route error.
+- file from execution report: `backend/tests/test_query_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the requested focused regression tests.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Latest repair report is appended and accurately describes the repair.
+
+## Dependency Review
+- Required dependencies: (04A), (02C), (03B), existing query state/nodes/graph, and Phase 2 insufficient-context behavior.
+- Dependency status: satisfied for this repair review; required dependencies remain present and previously accepted in the task file.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: The repair preserves the approved Phase 3 flow and route boundaries while distinguishing failed retrieval paths from successful empty retrieval. Hybrid/relation routes still use semantic plus keyword, one successful path remains a deterministic fallback, and all attempted path failures now stop the graph with a route-specific `error_message`.
+- Failed: none.
+- Uncertain: none material to the repair.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `retrieve_candidates_node` now appends `attempted_paths` before each path call, appends `successful_paths` only after a path returns without exception, includes counts in metrics, and returns `_route_failure_message(plan.strategy)` when `attempted_paths` is non-empty and `successful_paths` is empty.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Route error strings are strategy-level failure labels, not fixture-specific values. Tests use mocked path failures and candidates to exercise behavior, not production hardcoding.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_query_graph.py::test_retrieve_candidates_node_returns_error_when_both_allowed_paths_fail tests/test_query_graph.py::test_retrieve_candidates_node_returns_error_when_single_allowed_path_fails tests/test_query_graph.py::test_retrieve_candidates_node_preserves_hybrid_one_path_fallback tests/test_query_graph.py::test_retrieve_candidates_node_preserves_empty_no_result_for_successful_paths -q`
+- Reported result: Passed; 6 passed.
+- Rerun result: Passed; 6 passed in 1.81s.
+- Status: satisfied
+- Notes: This directly covers the prior A2 repair instructions.
+- Command/check: `cd backend; python -m pytest tests/test_query_planning.py tests/test_relations.py tests/test_score_fusion.py tests/test_query_graph.py -v`
+- Reported result: Passed; 70 passed.
+- Rerun result: Passed; 70 passed in 3.76s.
+- Status: satisfied
+- Notes: Required `(04B)` validation passes.
+- Command/check: manual review probe reproducing the rejected hybrid all-path-failure condition.
+- Reported result: not applicable.
+- Rerun result: Returned `error_message: hybrid retrieval failed` with attempted paths and no successful paths.
+- Status: satisfied
+- Notes: The previous rejection condition is fixed.
+
+## Acceptance Review
+- Task acceptance: Every strategy uses only allowed paths, relation expansion remains bounded, and graph behavior is deterministic under failure.
+- Status: satisfied
+- Evidence: Original `(04B)` graph/routing/relation/fusion behavior remains in place, and the repair fixes the only rejection by preventing all attempted path failures from becoming an insufficient-context answer. Successful empty paths still preserve no-result behavior.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch04 task entry and the progress tracker entry.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch04 remains unchecked per instruction; no batch checkbox was updated.
+- Execution report entry: appended, not overwritten.
+- Review report entry: appended, not overwritten.
+- Other: No future task checkbox, sibling outside `(04B)`, batch checkbox, or commit was changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The reported changed files, test counts, repair behavior, and no-checkbox-update-by-A1 status match repository evidence.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- `QueryState.retrieval_metrics` remains typed as scalar values while runtime metrics now include `attempted_paths`, `successful_paths`, and `path_errors`. This is a non-blocking type-hygiene issue because the existing code and tests do not enforce the TypedDict at runtime, but later observability work should normalize the metric shape.
+
+### Observations
+- Prior accepted `(04A)` uncommitted files remain present and were preserved.
+- Batch04 has both task IDs checked after this review, but the Batch04 checkbox remains unchecked as requested.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, after the orchestrator handles the Batch04 gate/audit workflow.
+- Should batch be marked complete? no in this review; Batch04 remains unchecked by instruction.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch04 - Query Decomposition and LangGraph Retrieval Routing",
+  "selected_task_id": "(04B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/graphs/query_nodes.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "QueryState.retrieval_metrics remains typed as scalar values while runtime metrics include attempted_paths, successful_paths, and path_errors."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
