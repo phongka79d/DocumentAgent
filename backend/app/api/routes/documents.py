@@ -13,11 +13,15 @@ from app.graphs.ingestion_graph import build_ingestion_graph
 from app.models.schemas import (
     DocumentChunkListResponse,
     DocumentListResponse,
+    DocumentRelationListResponse,
     DocumentResponse,
+    DocumentSummaryListResponse,
     UploadDocumentResponse,
 )
 from app.services.chunks import list_chunks_by_document
 from app.services import documents as document_service
+from app.services import relations as relation_service
+from app.services import summaries as summary_service
 from app.services.hashing import compute_sha256
 from app.services.qdrant_client import create_qdrant_client
 from app.services.supabase_client import create_supabase_client
@@ -211,3 +215,40 @@ def get_document_chunks(document_id: UUID) -> DocumentChunkListResponse:
     _get_document_or_404(document_id, settings=settings)
     chunks = list_chunks_by_document(document_id, settings=settings)
     return DocumentChunkListResponse(document_id=str(document_id), chunks=chunks)
+
+
+@router.get("/{document_id}/summaries", response_model=DocumentSummaryListResponse)
+def get_document_summaries(document_id: UUID) -> DocumentSummaryListResponse:
+    settings = _resolve_settings()
+    _get_document_or_404(document_id, settings=settings)
+    summaries = summary_service.list_summaries(document_id)
+    return DocumentSummaryListResponse(
+        document_id=str(document_id),
+        summaries=summaries,
+    )
+
+
+@router.get("/{document_id}/relations", response_model=DocumentRelationListResponse)
+def get_document_relations(document_id: UUID) -> DocumentRelationListResponse:
+    settings = _resolve_settings()
+    _get_document_or_404(document_id, settings=settings)
+    normalized_document_id = str(document_id)
+    rows = []
+    for relation in relation_service.list_relations(document_id):
+        source_document_id = str(relation["source_document_id"])
+        target_document_id = str(relation["target_document_id"])
+        related_document_id = (
+            target_document_id
+            if source_document_id == normalized_document_id
+            else source_document_id
+        )
+        rows.append(
+            {
+                **relation,
+                "related_document_id": related_document_id,
+            }
+        )
+    return DocumentRelationListResponse(
+        document_id=normalized_document_id,
+        relations=rows,
+    )

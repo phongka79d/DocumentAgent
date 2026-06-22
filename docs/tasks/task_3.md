@@ -329,7 +329,7 @@ Relation-aware retrieval requires compact document representations and safe insp
 
 ### Tasks
 
-- [ ] (03A): Generate section and document summaries during ingestion
+- [x] (03A): Generate section and document summaries during ingestion
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 3: Document Summaries and Lightweight Relations` > `### Task 3.1: Generate section and document summaries during ingestion`
   - Source Requirements:
     - Group saved chunks by normalized section path with heading fallback.
@@ -354,7 +354,7 @@ Relation-aware retrieval requires compact document representations and safe insp
   - Blocked Condition: None for unit implementation; `BLOCKED_BY_USER_ACTION` for live generation if external model configuration is missing.
   - Files: `backend/app/services/summaries.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/ingestion_nodes.py`, `backend/app/graphs/ingestion_graph.py`, `backend/app/api/routes/documents.py`, `backend/app/models/schemas.py`, `backend/tests/test_summaries.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_api_documents.py`
 
-- [ ] (03B): Build and query bounded document relations
+- [x] (03B): Build and query bounded document relations
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 3: Document Summaries and Lightweight Relations` > `### Task 3.2: Build and query a bounded document relation graph`
   - Source Requirements:
     - Select at most the configured number of ready candidate documents from summary embedding search.
@@ -1056,8 +1056,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch03
 
-- [ ] (03A): Generate section and document summaries during ingestion
-- [ ] (03B): Build and query bounded document relations
+- [x] (03A): Generate section and document summaries during ingestion
+- [x] (03B): Build and query bounded document relations
 
 #### Batch04
 

@@ -629,3 +629,193 @@ complete
 - next task ID: (03A)
 - can proceed: yes, after A2 reviews and accepts (02C) and the orchestrator handles Batch02 audit/commit gates.
 - handoff notes: Hybrid retrieval now returns fused candidates with path metadata for later routing/reranking work; Batch03 should not require additional Batch02 implementation.
+---
+
+# Task Execution Report - (03A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch03 - Document Summaries and Lightweight Relations
+
+## Task
+(03A) - Generate section and document summaries during ingestion
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `(03A): Generate section and document summaries during ingestion`
+- `docs/plans/Plan_3.md` > `## Batch 3: Document Summaries and Lightweight Relations` > `### Task 3.1: Generate section and document summaries during ingestion`
+
+## Supplemental Documents Used
+- `docs/plans/Master_Plan.md` was provided but not needed beyond confirming Phase 3 remains text-only and single-user scoped.
+
+## Selected Scope
+- Batch: Batch03 - Document Summaries and Lightweight Relations
+- Task ID: (03A)
+- Task title: Generate section and document summaries during ingestion
+
+## Completed Work
+- Status: complete.
+- Added summary generation from saved chunk text with normalized section-path grouping and heading fallback when section paths are empty.
+- Generated section summaries first with temperature-zero prompts constrained to extracted chunk text, then generated the document summary only from the section summaries.
+- Preserved exact source chunk IDs, model name, heading, and section path in summary records.
+- Kept summary replacement atomic at the service boundary by generating all records before deleting or inserting persisted summaries.
+- Added disabled-summary behavior that returns an empty summary set without model or persistence calls.
+- Added `summarize_document` to the ingestion graph after `save_chunks` and before `embed_chunks`.
+- Added typed `GET /api/documents/{document_id}/summaries` response models and route, ordered through the summary service with document summary first.
+- Added focused tests for summary generation, atomic failure behavior, disabled behavior, ingestion node/order, and API response shape.
+
+## Files Created or Modified
+- backend/app/services/summaries.py
+- backend/app/graphs/ingestion_nodes.py
+- backend/app/graphs/ingestion_graph.py
+- backend/app/api/routes/documents.py
+- backend/app/models/schemas.py
+- backend/tests/test_summaries.py
+- backend/tests/test_ingestion_graph.py
+- backend/tests/test_api_documents.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_summaries.py tests/test_ingestion_graph.py::test_summarize_document_node_generates_summary_records tests/test_ingestion_graph.py::test_summarize_document_node_returns_empty_records_when_disabled tests/test_ingestion_graph.py::test_build_ingestion_graph_invokes_nodes_in_required_order tests/test_api_documents.py::test_get_document_summaries_route_returns_typed_ordered_rows_without_external_provider_calls -v`: Passed after RED failures and implementation; 14 passed in 1.86s.
+- `cd backend; python -m pytest tests/test_summaries.py tests/test_ingestion_graph.py tests/test_api_documents.py -v`: Passed; 43 passed in 1.97s.
+- `git diff --check`: Passed; Git emitted LF-to-CRLF working-copy warnings only.
+
+## Acceptance Check
+- Task acceptance condition: Summaries are extracted-text-only, attributable, atomically replaced, ordered, and safely disabled.
+- Status: satisfied.
+- Evidence: Tests verify section prompts contain only grouped chunk text, document summary prompts contain section summaries rather than original chunk text, exact source chunk IDs are retained, model calls are skipped when disabled, persistence is untouched on generation failure, graph order is `save_chunks -> summarize_document -> embed_chunks`, and the summaries endpoint returns typed rows ordered document-first.
+
+## Artifacts Produced
+- Summary generation service in `backend/app/services/summaries.py`.
+- Ingestion graph summary node and edge in `backend/app/graphs/ingestion_nodes.py` and `backend/app/graphs/ingestion_graph.py`.
+- Summary API schemas and route in `backend/app/models/schemas.py` and `backend/app/api/routes/documents.py`.
+- Focused unit/API coverage in `backend/tests/test_summaries.py`, `backend/tests/test_ingestion_graph.py`, and `backend/tests/test_api_documents.py`.
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: A1 execution report only; checkbox update is reserved for A2 review acceptance per the requested A1/A2 flow.
+
+## Key Implementation Decisions
+- Used the existing `document_summaries` persistence helpers from Batch01 instead of adding a separate repository layer.
+- Used heading fallback as a synthetic section path only when `section_path` is empty, which keeps section summaries distinguishable under the existing unique section-path persistence contract.
+- Preserved first chunk encounter order for generation calls while relying on the existing summary sort for persisted/listed order.
+
+## Risks or Open Issues
+- Live summary generation still depends on configured ShopAIKey credentials; unit tests mock the provider per task requirements.
+- (03B) relations were not implemented and remain the next unchecked task.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture conflicts identified.
+- Implemented only (03A); did not implement relation generation, relation retrieval, relation endpoints, task checkbox updates, batch completion, or commits.
+
+## Notes for Next Task
+- next task ID: (03B)
+- can proceed: yes, after A2 review accepts (03A)
+- handoff notes: (03B) can consume document summaries through `list_summaries` and the new summary records in ingestion state, but relation extraction/querying was intentionally left untouched.
+
+---
+
+# Task Execution Report - (03B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch03 - Document Summaries and Lightweight Relations
+
+## Task
+(03B) - Build and query bounded document relations
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch03 - Document Summaries and Lightweight Relations > (03B)
+- docs/plans/Plan_3.md > ## Batch 3: Document Summaries and Lightweight Relations > ### Task 3.2: Build and query a bounded document relation graph
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch03 - Document Summaries and Lightweight Relations
+- Task ID: (03B)
+- Task title: Build and query bounded document relations
+
+## Completed Work
+- Status: complete.
+- Implemented bounded relation candidate selection by embedding the current document summary, querying Qdrant, excluding the source document, grouping by document, requiring ready document rows, and capping by RELATION_MAX_RELATED_DOCUMENTS.
+- Added strict relation JSON parsing and validation for allowed target documents, RelationType values, confidence range, non-empty descriptions, and evidence chunk IDs from selected candidates.
+- Canonicalized accepted relation pairs and deduplicated replacement payloads to keep at most one row per pair/type, preferring the highest-confidence duplicate.
+- Added relation update integration after Qdrant upsert and before mark_ready, including disabled/no-summary skips and nonfatal warning results on relation update failures.
+- Added typed GET /api/documents/{document_id}/relations inspection with related_document_id normalized for the requested document.
+- Added focused relation, ingestion graph, and API tests for bounded candidates, invalid JSON safety, evidence validation, duplicate-free canonical replacement, nonfatal relation failure, graph ordering, and bidirectional inspection.
+
+## Files Created or Modified
+- backend/app/services/relations.py
+- backend/app/graphs/ingestion_nodes.py
+- backend/app/graphs/ingestion_graph.py
+- backend/app/api/routes/documents.py
+- backend/app/models/schemas.py
+- backend/tests/test_relations.py
+- backend/tests/test_ingestion_graph.py
+- backend/tests/test_api_documents.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_relations.py tests/test_ingestion_graph.py tests/test_api_documents.py -v`: Passed; 46 passed in 2.56s.
+- `cd backend; python -m pytest tests/test_contracts.py -v`: Passed; 6 passed in 1.60s.
+
+## Acceptance Check
+- Task acceptance condition: Relations are canonical, bounded, evidence-backed, safe under invalid model output, and nonfatal to valid indexing.
+- Status: satisfied.
+- Evidence: Tests verify source exclusion and candidate cap, ready-document filtering, strict model JSON discard behavior, allowed relation type/target/confidence/evidence validation, canonical pair/type deduplication, graph placement after Qdrant and before ready, nonfatal relation failure warnings, and normalized bidirectional relation inspection.
+
+## Artifacts Produced
+- Bounded relation generation/query service in backend/app/services/relations.py.
+- Ingestion relation update node and graph edge in backend/app/graphs/ingestion_nodes.py and backend/app/graphs/ingestion_graph.py.
+- Typed relation inspection schemas and route in backend/app/models/schemas.py and backend/app/api/routes/documents.py.
+- Focused unit/API coverage in backend/tests/test_relations.py, backend/tests/test_ingestion_graph.py, and backend/tests/test_api_documents.py.
+- Appended execution report in docs/reports/report_3_execute_agent.md.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated A1 execution only; checkbox and batch updates are reserved for A2/A3 review flow per user instructions.
+
+## Key Implementation Decisions
+- Used the existing `document_relations` persistence service as the storage boundary and added one-purpose generation/validation functions in the same service.
+- Ready-document filtering is performed after Qdrant grouping by checking candidate document rows, keeping Qdrant as a similarity source and Supabase as lifecycle authority.
+- Invalid model output clears stale relations for the reindexed document through normal replacement semantics but does not fail indexing.
+- Relation update exceptions are captured as safe warning state so the graph can still reach `mark_ready` for otherwise valid indexing.
+
+## Risks or Open Issues
+- Live relation generation still depends on configured ShopAIKey, Qdrant, and Supabase services; unit tests mock providers per task requirements.
+- The worktree had pre-existing uncommitted edits from earlier agents, including summary work, task/review/report files; those were preserved and not reverted.
+
+## Minor Issues Fixed During Execution
+- Existing relation replacement now collapses duplicate canonical pair/type rows before insert, satisfying the one-row-per-pair/type requirement.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields, dependency issues, or architecture conflicts identified.
+- Implemented only (03B); did not implement Batch04 or future relation retrieval expansion behavior.
+- Did not update task checkboxes and did not commit.
+
+## Notes for Next Task
+- next task ID: (04A)
+- can proceed: yes, after A2 accepts (03B) and the orchestrator allows moving out of Batch03.
+- handoff notes: Relation rows are canonical in storage; API consumers should use `related_document_id` from the inspection endpoint when viewing relations relative to one requested document.

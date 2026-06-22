@@ -14,6 +14,8 @@ from app.graphs import ingestion_payloads
 from app.graphs.ingestion_state import IngestionState
 from app.parsing import get_parser_for_file
 from app.services import documents as document_service
+from app.services import relations
+from app.services import summaries
 from app.services.qdrant_client import create_qdrant_client
 from app.services.shopaikey_client import create_shopaikey_client
 from app.services.supabase_client import create_supabase_client
@@ -276,6 +278,31 @@ def save_chunks_node(state: IngestionState) -> dict[str, Any]:
         return _failure_state(document_id, f"Chunk save failed: {exc}")
 
 
+def summarize_document_node(state: IngestionState) -> dict[str, Any]:
+    settings = _resolve_settings()
+    document_id = _resolve_document_id(state)
+    if document_id is None:
+        return _failure_state(None, "document_id is required")
+
+    if not settings.ENABLE_SUMMARIES:
+        return {"summary_records": []}
+
+    chunks = state.get("chunks") or []
+    if not isinstance(chunks, list) or not chunks:
+        return _failure_state(document_id, "chunks are required before summarization")
+
+    result = summaries.generate_document_summaries(
+        document_id,
+        chunks,
+        settings=settings,
+    )
+    if isinstance(result, Mapping) and result.get("status") == DocumentStatus.FAILED:
+        return _failure_state(document_id, str(result.get("error_message")))
+    if not isinstance(result, list):
+        return _failure_state(document_id, "Summary generation returned invalid state")
+    return {"summary_records": result}
+
+
 def embed_chunks_node(state: IngestionState) -> dict[str, Any]:
     settings = _resolve_settings()
     document_id = _resolve_document_id(state)
@@ -397,6 +424,56 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
         "chunks": updated_chunks,
         "qdrant_collection": collection_name,
     }
+
+
+def update_document_relations_node(state: IngestionState) -> dict[str, Any]:
+    settings = _resolve_settings()
+    document_id = _resolve_document_id(state)
+    if document_id is None:
+        return _failure_state(None, "document_id is required")
+
+    if not settings.ENABLE_RELATION_RETRIEVAL:
+        return {
+            "relation_update_result": {
+                "status": "skipped",
+                "reason": "relation retrieval disabled",
+            }
+        }
+
+    summary_records = state.get("summary_records") or []
+    document_summary = next(
+        (
+            record
+            for record in summary_records
+            if isinstance(record, Mapping) and record.get("summary_type") == "document"
+        ),
+        None,
+    )
+    if document_summary is None or not str(document_summary.get("content") or "").strip():
+        return {
+            "relation_update_result": {
+                "status": "skipped",
+                "reason": "document summary missing",
+            }
+        }
+
+    try:
+        result = relations.update_document_relations(
+            document_id,
+            summary_records=summary_records,
+            settings=settings,
+        )
+        return {"relation_update_result": result}
+    except Exception as exc:
+        return {
+            "relation_update_result": {
+                "status": "warning",
+                "warning": safe_detail(
+                    f"Relation update failed: {exc}",
+                    fallback="Relation update failed",
+                ),
+            }
+        }
 
 
 def mark_ready_node(state: IngestionState) -> dict[str, Any]:

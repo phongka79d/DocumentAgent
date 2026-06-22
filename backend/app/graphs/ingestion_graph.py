@@ -87,12 +87,23 @@ def build_ingestion_graph(settings: Settings | None = None):
         _wrap_node("save_chunks", ingestion_nodes.save_chunks_node),
     )
     graph.add_node(
+        "summarize_document",
+        _wrap_node("summarize_document", ingestion_nodes.summarize_document_node),
+    )
+    graph.add_node(
         "embed_chunks",
         _wrap_node("embed_chunks", ingestion_nodes.embed_chunks_node),
     )
     graph.add_node(
         "upsert_qdrant",
         _wrap_node("upsert_qdrant", ingestion_nodes.upsert_qdrant_node),
+    )
+    graph.add_node(
+        "update_document_relations",
+        _wrap_node(
+            "update_document_relations",
+            ingestion_nodes.update_document_relations_node,
+        ),
     )
     graph.add_node("mark_ready", _wrap_node("mark_ready", ingestion_nodes.mark_ready_node))
     graph.add_node("mark_failed", _wrap_node("mark_failed", ingestion_nodes.mark_failed_node))
@@ -132,6 +143,14 @@ def build_ingestion_graph(settings: Settings | None = None):
     )
     graph.add_conditional_edges(
         "save_chunks",
+        _route_or_fail("summarize_document"),
+        {
+            "summarize_document": "summarize_document",
+            FAILURE_ROUTE: "mark_failed",
+        },
+    )
+    graph.add_conditional_edges(
+        "summarize_document",
         _route_or_fail("embed_chunks"),
         {
             "embed_chunks": "embed_chunks",
@@ -148,6 +167,14 @@ def build_ingestion_graph(settings: Settings | None = None):
     )
     graph.add_conditional_edges(
         "upsert_qdrant",
+        _route_or_fail("update_document_relations"),
+        {
+            "update_document_relations": "update_document_relations",
+            FAILURE_ROUTE: "mark_failed",
+        },
+    )
+    graph.add_conditional_edges(
+        "update_document_relations",
         _route_or_fail("mark_ready"),
         {
             "mark_ready": "mark_ready",

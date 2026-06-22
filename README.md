@@ -33,16 +33,20 @@ graph TD
     E -->|fixed_token| G[Fixed-Token Splitting]
     F --> H[Save Chunks to Supabase]
     G --> H
-    H --> I[Generate Embeddings via ShopAIKey]
-    I --> J[Upsert Vector & Section Metadata to Qdrant]
-    J --> K[Set Status to 'ready']
-    K --> L[Finish]
+    H --> I[Generate Section & Document Summaries]
+    I --> J[Generate Embeddings via ShopAIKey]
+    J --> K[Upsert Vector & Section Metadata to Qdrant]
+    K --> R[Update Lightweight Document Relations]
+    R --> S[Set Status to 'ready']
+    S --> L[Finish]
     
     subgraph Error Handling
         D -->|Fatal Error| M[Set Status to 'failed']
         F -->|Fatal Error| M
         I -->|Fatal Error| M
         J -->|Fatal Error| M
+        K -->|Fatal Error| M
+        R -->|Nonfatal Warning| S
         M --> L
     end
 ```
@@ -82,6 +86,8 @@ graph TD
 - **Deduplication & Validation**: Deterministic SHA-256 upload hashing prevent duplicate storage and indexing of identical documents.
 - **Message History API**: Fast lookups for chat history from the `messages` table with bounded retrieval and failure isolation.
 - **Phase 3 Contract Foundation**: Typed retrieval filters, planning/candidate/grounding/citation contracts, compact LangGraph state fields, and bounded Phase 3 settings are available for later advanced RAG batches.
+- **Document Summaries**: Ingestion can generate extracted-text-only section and document summaries, store exact source chunk IDs, replace summaries atomically after complete generation, and expose typed `GET /api/documents/{document_id}/summaries` inspection.
+- **Lightweight Document Relations**: Ingestion can build bounded, evidence-backed, canonical document relations from summary embedding search, keep relation failures nonfatal to valid indexing, and expose typed `GET /api/documents/{document_id}/relations` inspection with normalized related document IDs.
 - **Phase 3 Persistence Foundation**: Idempotent SQL and lazy Supabase services provide document summaries, canonical document relations, and best-effort workflow trace storage.
 
 ### Frontend Capabilities

@@ -13,7 +13,13 @@ from pydantic import (
     model_validator,
 )
 
-from app.core.contracts import RetrievalPath, RetrievalStrategy, WorkflowStatus
+from app.core.contracts import (
+    RelationType,
+    RetrievalPath,
+    RetrievalStrategy,
+    SummaryType,
+    WorkflowStatus,
+)
 
 
 DocumentStatus = Literal["uploaded", "processing", "ready", "failed"]
@@ -186,6 +192,43 @@ class DocumentChunkResponse(APIModel):
 class DocumentChunkListResponse(APIModel):
     document_id: str = Field(min_length=1)
     chunks: list[DocumentChunkResponse] = Field(default_factory=list)
+
+
+class DocumentSummaryResponse(APIModel):
+    id: str | None = None
+    document_id: str = Field(min_length=1)
+    summary_type: SummaryType
+    heading: str | None = None
+    section_path: list[str] = Field(default_factory=list)
+    content: str = Field(min_length=1)
+    source_chunk_ids: list[str] = Field(default_factory=list)
+    model: str = Field(min_length=1)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class DocumentSummaryListResponse(APIModel):
+    document_id: str = Field(min_length=1)
+    summaries: list[DocumentSummaryResponse] = Field(default_factory=list)
+
+
+class DocumentRelationResponse(APIModel):
+    id: str | None = None
+    source_document_id: str = Field(min_length=1)
+    target_document_id: str = Field(min_length=1)
+    related_document_id: str = Field(min_length=1)
+    relation_type: RelationType
+    description: str = Field(min_length=1)
+    evidence_chunk_ids: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0.0, le=1.0)
+    model: str = Field(min_length=1)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class DocumentRelationListResponse(APIModel):
+    document_id: str = Field(min_length=1)
+    relations: list[DocumentRelationResponse] = Field(default_factory=list)
 
 
 class UploadDocumentResponse(APIModel):

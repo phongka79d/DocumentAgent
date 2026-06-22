@@ -14,6 +14,8 @@ from app.models.schemas import DocumentChunkResponse, DocumentResponse
 from app.services.hashing import compute_sha256
 from app.services import chunks as chunk_service
 from app.services import documents as document_service
+from app.services import relations as relation_service
+from app.services import summaries as summary_service
 
 
 FIXED_DOCUMENT_ID = UUID("11111111-1111-1111-1111-111111111111")
@@ -228,6 +230,7 @@ class FakeSupabaseClient:
         self.tables: dict[str, list[dict[str, object]]] = {
             "documents": list(documents or []),
             "document_chunks": list(document_chunks or []),
+            "document_summaries": [],
         }
         self.events: list[tuple[object, ...]] = []
         self._bucket = FakeStorageBucket()
@@ -887,3 +890,187 @@ def test_get_document_chunks_route_returns_404_for_unknown_document_without_exte
 
     assert response.status_code == 404
     assert response.json()["detail"] == f"Document {THIRD_DOCUMENT_ID} not found"
+
+
+def test_get_document_summaries_route_returns_typed_ordered_rows_without_external_provider_calls(monkeypatch):
+    settings = _test_settings()
+    summary_a_id = UUID("88888888-8888-8888-8888-888888888888")
+    summary_b_id = UUID("99999999-9999-9999-9999-999999999999")
+    summary_c_id = UUID("aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa")
+    fake_client = FakeSupabaseClient(
+        documents=[
+            _document_row(
+                document_id=FIXED_DOCUMENT_ID,
+                file_hash="summary-source",
+                status="ready",
+            )
+        ],
+    )
+    fake_client.tables["document_summaries"] = [
+        {
+            "id": str(summary_b_id),
+            "document_id": str(FIXED_DOCUMENT_ID),
+            "summary_type": "section",
+            "heading": "Zeta",
+            "section_path": ["Zeta"],
+            "content": "Zeta summary",
+            "source_chunk_ids": [],
+            "model": "summary-model",
+            "created_at": datetime(2026, 6, 18, 8, 45, tzinfo=timezone.utc),
+            "updated_at": datetime(2026, 6, 18, 8, 45, tzinfo=timezone.utc),
+        },
+        {
+            "id": str(summary_a_id),
+            "document_id": str(FIXED_DOCUMENT_ID),
+            "summary_type": "document",
+            "heading": None,
+            "section_path": [],
+            "content": "Document summary",
+            "source_chunk_ids": [],
+            "model": "summary-model",
+            "created_at": datetime(2026, 6, 18, 8, 40, tzinfo=timezone.utc),
+            "updated_at": datetime(2026, 6, 18, 8, 40, tzinfo=timezone.utc),
+        },
+        {
+            "id": str(summary_c_id),
+            "document_id": str(FIXED_DOCUMENT_ID),
+            "summary_type": "section",
+            "heading": "Alpha",
+            "section_path": ["Alpha"],
+            "content": "Alpha summary",
+            "source_chunk_ids": [str(UUID("66666666-6666-6666-6666-666666666666"))],
+            "model": "summary-model",
+            "created_at": datetime(2026, 6, 18, 8, 42, tzinfo=timezone.utc),
+            "updated_at": datetime(2026, 6, 18, 8, 42, tzinfo=timezone.utc),
+        },
+    ]
+
+    _patch_route_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        document_service,
+        "_resolve_supabase_client",
+        lambda supabase_client=None: fake_client,
+    )
+    monkeypatch.setattr(
+        summary_service,
+        "create_supabase_client",
+        lambda settings=None: fake_client,
+    )
+    monkeypatch.setattr(
+        "app.services.qdrant_client.create_qdrant_client",
+        _unexpected_provider_client_factory("Qdrant"),
+    )
+    monkeypatch.setattr(
+        "app.services.shopaikey_client.create_shopaikey_client",
+        _unexpected_provider_client_factory("ShopAIKey"),
+    )
+    monkeypatch.setattr(
+        "app.services.jina_client.create_jina_client",
+        _unexpected_provider_client_factory("Jina"),
+    )
+
+    app = _test_app(settings)
+
+    with TestClient(app) as test_client:
+        response = test_client.get(f"/api/documents/{FIXED_DOCUMENT_ID}/summaries")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["document_id"] == str(FIXED_DOCUMENT_ID)
+    assert [row["summary_type"] for row in payload["summaries"]] == [
+        "document",
+        "section",
+        "section",
+    ]
+    assert [row["section_path"] for row in payload["summaries"]] == [
+        [],
+        ["Alpha"],
+        ["Zeta"],
+    ]
+    assert payload["summaries"][0]["content"] == "Document summary"
+    assert payload["summaries"][1]["source_chunk_ids"] == [
+        "66666666-6666-6666-6666-666666666666"
+    ]
+
+
+def test_get_document_relations_route_returns_both_directions_with_normalized_related_id(monkeypatch):
+    settings = _test_settings()
+    relation_id_a = UUID("aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa")
+    relation_id_b = UUID("bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb")
+    fake_client = FakeSupabaseClient(
+        documents=[
+            _document_row(
+                document_id=FIXED_DOCUMENT_ID,
+                file_hash="relation-source",
+                status="ready",
+            )
+        ],
+    )
+
+    _patch_route_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        document_service,
+        "_resolve_supabase_client",
+        lambda supabase_client=None: fake_client,
+    )
+    monkeypatch.setattr(
+        relation_service,
+        "list_relations",
+        lambda document_id: [
+            {
+                "id": str(relation_id_a),
+                "source_document_id": str(FIXED_DOCUMENT_ID),
+                "target_document_id": str(SECOND_DOCUMENT_ID),
+                "relation_type": "supports",
+                "description": "Requested document supports the related document.",
+                "evidence_chunk_ids": [
+                    "66666666-6666-6666-6666-666666666666"
+                ],
+                "confidence": 0.8,
+                "model": "relation-model",
+                "created_at": datetime(2026, 6, 18, 8, 45, tzinfo=timezone.utc),
+                "updated_at": datetime(2026, 6, 18, 8, 45, tzinfo=timezone.utc),
+            },
+            {
+                "id": str(relation_id_b),
+                "source_document_id": str(THIRD_DOCUMENT_ID),
+                "target_document_id": str(FIXED_DOCUMENT_ID),
+                "relation_type": "references",
+                "description": "Related document references the requested document.",
+                "evidence_chunk_ids": [
+                    "77777777-7777-7777-7777-777777777777"
+                ],
+                "confidence": 0.7,
+                "model": "relation-model",
+                "created_at": datetime(2026, 6, 18, 8, 46, tzinfo=timezone.utc),
+                "updated_at": datetime(2026, 6, 18, 8, 46, tzinfo=timezone.utc),
+            },
+        ],
+    )
+    monkeypatch.setattr(
+        "app.services.qdrant_client.create_qdrant_client",
+        _unexpected_provider_client_factory("Qdrant"),
+    )
+    monkeypatch.setattr(
+        "app.services.shopaikey_client.create_shopaikey_client",
+        _unexpected_provider_client_factory("ShopAIKey"),
+    )
+    monkeypatch.setattr(
+        "app.services.jina_client.create_jina_client",
+        _unexpected_provider_client_factory("Jina"),
+    )
+
+    app = _test_app(settings)
+
+    with TestClient(app) as test_client:
+        response = test_client.get(f"/api/documents/{FIXED_DOCUMENT_ID}/relations")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["document_id"] == str(FIXED_DOCUMENT_ID)
+    assert [row["related_document_id"] for row in payload["relations"]] == [
+        str(SECOND_DOCUMENT_ID),
+        str(THIRD_DOCUMENT_ID),
+    ]
+    assert payload["relations"][0]["source_document_id"] == str(FIXED_DOCUMENT_ID)
+    assert payload["relations"][1]["target_document_id"] == str(FIXED_DOCUMENT_ID)

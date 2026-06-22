@@ -772,6 +772,127 @@ def test_upsert_qdrant_node_upserts_points_with_smart_section_chunk_payloads(mon
     assert result["chunks"][0]["qdrant_point_id"] == "chunk-1"
 
 
+def test_summarize_document_node_generates_summary_records(monkeypatch):
+    settings = _test_settings()
+    generated = [
+        {
+            "summary_type": "document",
+            "content": "Document summary",
+            "source_chunk_ids": ["chunk-1"],
+            "model": settings.SHOPAIKEY_CHAT_MODEL,
+        }
+    ]
+
+    _patch_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        ingestion_nodes.summaries,
+        "generate_document_summaries",
+        lambda document_id, chunks, settings=None, **kwargs: generated,
+    )
+
+    result = ingestion_nodes.summarize_document_node(
+        {
+            "document_id": FIXED_DOCUMENT_ID,
+            "chunks": [
+                {
+                    "id": "chunk-1",
+                    "chunk_index": 0,
+                    "content": "chunk zero",
+                    "heading": "Overview",
+                    "section_path": ["Overview"],
+                }
+            ],
+        }
+    )
+
+    assert result == {"summary_records": generated}
+
+
+def test_summarize_document_node_returns_empty_records_when_disabled(monkeypatch):
+    settings = _test_settings()
+    settings.ENABLE_SUMMARIES = False
+
+    _patch_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        ingestion_nodes.summaries,
+        "generate_document_summaries",
+        lambda *args, **kwargs: pytest.fail("summary service should not be called"),
+    )
+
+    result = ingestion_nodes.summarize_document_node(
+        {
+            "document_id": FIXED_DOCUMENT_ID,
+            "chunks": [
+                {
+                    "id": "chunk-1",
+                    "chunk_index": 0,
+                    "content": "chunk zero",
+                }
+            ],
+        }
+    )
+
+    assert result == {"summary_records": []}
+
+
+def test_update_document_relations_node_skips_when_disabled(monkeypatch):
+    settings = _test_settings()
+    settings.ENABLE_RELATION_RETRIEVAL = False
+
+    _patch_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        ingestion_nodes.relations,
+        "update_document_relations",
+        lambda *args, **kwargs: pytest.fail("relation service should not be called"),
+    )
+
+    result = ingestion_nodes.update_document_relations_node(
+        {
+            "document_id": FIXED_DOCUMENT_ID,
+            "summary_records": [
+                {
+                    "summary_type": "document",
+                    "content": "Document summary",
+                }
+            ],
+        }
+    )
+
+    assert result == {
+        "relation_update_result": {
+            "status": "skipped",
+            "reason": "relation retrieval disabled",
+        }
+    }
+
+
+def test_update_document_relations_node_records_warning_without_failing_indexing(monkeypatch):
+    settings = _test_settings()
+
+    _patch_settings(monkeypatch, settings)
+
+    def _raise(*args, **kwargs):
+        raise RuntimeError("relation provider unavailable")
+
+    monkeypatch.setattr(ingestion_nodes.relations, "update_document_relations", _raise)
+
+    result = ingestion_nodes.update_document_relations_node(
+        {
+            "document_id": FIXED_DOCUMENT_ID,
+            "summary_records": [
+                {
+                    "summary_type": "document",
+                    "content": "Document summary",
+                }
+            ],
+        }
+    )
+
+    assert result.get("status") != "failed"
+    assert result["relation_update_result"]["status"] == "warning"
+    assert "relation provider unavailable" in result["relation_update_result"]["warning"]
+
+
 def test_mark_ready_node_updates_completion_metadata(monkeypatch):
     settings = _test_settings()
     fake_client = FakeSupabaseClient(documents=[_document_row(status="processing")])
@@ -889,6 +1010,21 @@ def test_build_ingestion_graph_invokes_nodes_in_required_order(monkeypatch):
     )
     monkeypatch.setattr(
         ingestion_nodes,
+        "summarize_document_node",
+        _record_node(
+            "summarize_document",
+            {
+                "summary_records": [
+                    {
+                        "summary_type": "document",
+                        "content": "Document summary",
+                    }
+                ]
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        ingestion_nodes,
         "embed_chunks_node",
         _record_node("embed_chunks", {"embeddings": [[0.1, 0.2, 0.3]], "embedding_model": "model", "embedding_dimension": 3}),
     )
@@ -907,6 +1043,19 @@ def test_build_ingestion_graph_invokes_nodes_in_required_order(monkeypatch):
                     }
                 ],
                 "qdrant_collection": settings.QDRANT_COLLECTION,
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        ingestion_nodes,
+        "update_document_relations_node",
+        _record_node(
+            "update_document_relations",
+            {
+                "relation_update_result": {
+                    "status": "updated",
+                    "accepted_relation_count": 0,
+                }
             },
         ),
     )
@@ -938,8 +1087,10 @@ def test_build_ingestion_graph_invokes_nodes_in_required_order(monkeypatch):
         "parse_document",
         "chunk_document",
         "save_chunks",
+        "summarize_document",
         "embed_chunks",
         "upsert_qdrant",
+        "update_document_relations",
         "mark_ready",
     ]
     assert result["status"] == "ready"

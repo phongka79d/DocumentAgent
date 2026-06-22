@@ -1478,3 +1478,448 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+---
+
+# Task Review Report - (03A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Document Summaries and Lightweight Relations
+- Task ID: (03A)
+- Task title: Generate section and document summaries during ingestion
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 3: Document Summaries and Lightweight Relations` > `### Task 3.1: Generate section and document summaries during ingestion`
+- Supplemental documents: `docs/plans/Master_Plan.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03A)
+- Reviewed task ID: (03A)
+- Correct selection: yes
+- Notes: The latest execution report is the appended `(03A)` entry and matches the selected unchecked task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/services/summaries.py`
+  - `backend/app/graphs/ingestion_nodes.py`
+  - `backend/app/graphs/ingestion_graph.py`
+  - `backend/app/api/routes/documents.py`
+  - `backend/app/models/schemas.py`
+  - `backend/tests/test_summaries.py`
+  - `backend/tests/test_ingestion_graph.py`
+  - `backend/tests/test_api_documents.py`
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/tasks/task_3.md`
+  - `docs/review/review_3_review_agent.md`
+- untracked files: none observed in the reviewed status output
+
+## Files Reviewed
+- `backend/app/services/summaries.py`: in scope - Adds chunk grouping, section/document model prompts, disabled behavior, atomic pre-generation before replace, and source chunk attribution.
+- `backend/app/graphs/ingestion_nodes.py`: in scope - Adds `summarize_document_node` after saved chunks and before embedding requirements.
+- `backend/app/graphs/ingestion_graph.py`: in scope - Adds `summarize_document` node and routes `save_chunks -> summarize_document -> embed_chunks`.
+- `backend/app/api/routes/documents.py`: in scope - Adds `GET /api/documents/{document_id}/summaries` after document existence validation.
+- `backend/app/models/schemas.py`: in scope - Adds typed summary list and row response models.
+- `backend/tests/test_summaries.py`: in scope - Covers generation, extracted-text-only prompt boundaries, source IDs, atomic failure, disabled behavior, and ordering.
+- `backend/tests/test_ingestion_graph.py`: in scope - Covers summary node behavior and required graph order.
+- `backend/tests/test_api_documents.py`: in scope - Covers typed summary endpoint ordering and no external provider calls.
+- `docs/reports/report_3_execute_agent.md`: in scope - Contains the appended `(03A)` execution report.
+- `docs/tasks/task_3.md`: in scope - `(03A)` detailed and progress-tracker checkboxes updated by reviewer after acceptance.
+- `docs/review/review_3_review_agent.md`: in scope - This appended review report.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/summaries.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements summary generation and atomic replacement behavior.
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds the ingestion summary node.
+- file from execution report: `backend/app/graphs/ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds the required graph node position before embeddings.
+- file from execution report: `backend/app/api/routes/documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds the summary inspection endpoint.
+- file from execution report: `backend/app/models/schemas.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds typed response models.
+- file from execution report: `backend/tests/test_summaries.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_api_documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Focused coverage exists for the task acceptance surface.
+
+## Dependency Review
+- Required dependencies: (01A), (01B), existing saved chunks, ShopAIKey chat integration, Batch02 accepted retrieval primitives.
+- Dependency status: satisfied for unit implementation; existing `document_summaries` persistence helpers and settings were already present.
+- Missing or invalid dependency: none. Live model credentials are deferred per task instructions and not required for unit acceptance.
+
+## Architecture Alignment
+- Passed: Preserves text-only behavior, uses saved chunk content as the only section-summary source, uses section summaries as the only document-summary source, keeps summaries optional through `ENABLE_SUMMARIES`, and uses existing service/API/graph patterns.
+- Failed: none.
+- Uncertain: none material; live provider behavior remains covered by mocked unit tests and later manual acceptance.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: The summary service calls the configured ShopAIKey chat client, builds bounded prompts, records exact source chunk IDs, and persists through the existing `replace_document_summaries` helper only after generation completes.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Tests use fixture values, but production logic groups arbitrary chunks by normalized section path/heading and uses settings for model name and max-token limits.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_summaries.py tests/test_ingestion_graph.py tests/test_api_documents.py -v`
+- Reported result: Passed, 43 passed in 1.97s.
+- Rerun result: Passed, 43 passed in 2.30s.
+- Status: passed
+- Notes: Required `(03A)` validation was rerun during review.
+- Command/check: `git diff --check`
+- Reported result: Passed with LF-to-CRLF warnings only.
+- Rerun result: Passed earlier in this task execution; no whitespace errors were reported.
+- Status: passed
+- Notes: Git line-ending warnings are existing working-copy behavior on this Windows checkout.
+
+## Acceptance Review
+- Task acceptance: Summaries are extracted-text-only, attributable, atomically replaced, ordered, and safely disabled.
+- Status: satisfied
+- Evidence: Tests verify section prompts exclude other groups, document prompts exclude original chunk text and include only section summaries, source chunk IDs are exact, failed generation does not touch persistence, disabled mode avoids model and persistence calls, graph order is correct, and endpoint output is typed and document-first.
+
+## Progress Tracking
+- Selected task checkbox: checked in detailed task list and progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked because `(03B)` is still unchecked.
+- Execution report entry: `(03A)` execution report is appended.
+- Review report entry: appended to the physical end of this file.
+- Other: No sibling or future task checkbox was updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live summary generation depends on configured ShopAIKey credentials and is not exercised by unit tests, as allowed by the task.
+
+### Observations
+- Heading fallback is stored as the section path when the original section path is empty, which keeps fallback groups distinguishable under the existing unique section summary contract.
+- `(03B)` relation generation and relation endpoints remain intentionally unimplemented.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, because `(03B)` remains unchecked.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch03 - Document Summaries and Lightweight Relations",
+  "selected_task_id": "(03A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/summaries.py",
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/app/graphs/ingestion_graph.py",
+    "backend/app/api/routes/documents.py",
+    "backend/app/models/schemas.py",
+    "backend/tests/test_summaries.py",
+    "backend/tests/test_ingestion_graph.py",
+    "backend/tests/test_api_documents.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live summary generation depends on configured ShopAIKey credentials and is deferred to later acceptance."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (03B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch03 - Document Summaries and Lightweight Relations
+- Task ID: (03B)
+- Task title: Build and query bounded document relations
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 3: Document Summaries and Lightweight Relations` > `### Task 3.2: Build and query a bounded document relation graph`
+- Supplemental documents: none used beyond the cited plan section
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (03B)
+- Reviewed task ID: (03B)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is the appended `(03B)` report and matches the requested task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git:
+  - `backend/app/api/routes/documents.py`
+  - `backend/app/graphs/ingestion_graph.py`
+  - `backend/app/graphs/ingestion_nodes.py`
+  - `backend/app/models/schemas.py`
+  - `backend/app/services/relations.py`
+  - `backend/app/services/summaries.py`
+  - `backend/tests/test_api_documents.py`
+  - `backend/tests/test_ingestion_graph.py`
+  - `backend/tests/test_relations.py`
+  - `backend/tests/test_summaries.py`
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/review/review_3_review_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: `.commandcode/settings.json`, `.commandcode/taste/taste.md` (unrelated to selected task)
+
+## Files Reviewed
+- `backend/app/services/relations.py`: in scope - Adds bounded candidate selection, strict relation parsing/validation, canonical deduped replacement, relation listing, and update orchestration.
+- `backend/app/graphs/ingestion_nodes.py`: in scope - Adds `update_document_relations_node`; also contains prior accepted `(03A)` summary node changes.
+- `backend/app/graphs/ingestion_graph.py`: in scope - Places `update_document_relations` after `upsert_qdrant` and before `mark_ready`; also contains prior accepted `(03A)` summary graph changes.
+- `backend/app/api/routes/documents.py`: in scope - Adds relation inspection route; summary route changes are prior accepted `(03A)` work.
+- `backend/app/models/schemas.py`: in scope - Adds typed relation response schemas; summary schemas are prior accepted `(03A)` work.
+- `backend/tests/test_relations.py`: in scope - Covers canonical replacement, candidate bounds, strict validation, invalid JSON safety, and replacement output.
+- `backend/tests/test_ingestion_graph.py`: in scope - Covers relation skip/failure behavior and graph ordering; summary tests are prior accepted `(03A)` work.
+- `backend/tests/test_api_documents.py`: in scope - Covers relation inspection normalization; summary route tests are prior accepted `(03A)` work.
+- `backend/app/services/summaries.py`: prior accepted uncommitted `(03A)` scope - not part of selected `(03B)` implementation.
+- `backend/tests/test_summaries.py`: prior accepted uncommitted `(03A)` scope - not part of selected `(03B)` implementation.
+- `docs/reports/report_3_execute_agent.md`: in scope - Contains appended `(03B)` execution report.
+- `docs/tasks/task_3.md`: in scope - `(03B)` detailed and progress-tracker checkboxes updated by reviewer after acceptance; Batch03 left unchecked.
+- `docs/review/review_3_review_agent.md`: in scope - This appended review report.
+- `.commandcode/`: out of scope - untracked local files, not referenced by the task or report.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/relations.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Implements the relation service surface required by `(03B)`.
+- file from execution report: `backend/app/graphs/ingestion_nodes.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds nonfatal relation update node behavior.
+- file from execution report: `backend/app/graphs/ingestion_graph.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds the required node ordering after Qdrant upsert and before ready.
+- file from execution report: `backend/app/api/routes/documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds typed relation inspection endpoint.
+- file from execution report: `backend/app/models/schemas.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Adds relation response models with normalized `related_document_id`.
+- file from execution report: `backend/tests/test_relations.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_api_documents.py`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Focused coverage exists for the selected acceptance surface.
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Contains the appended `(03B)` execution entry.
+
+## Dependency Review
+- Required dependencies: accepted `(03A)`, relation persistence from `(01B)`, existing Qdrant and ingestion lifecycle.
+- Dependency status: satisfied for unit implementation; `(03A)` is already checked and reviewed, and `replace_document_relations`/`list_relations` persistence services are extended rather than bypassed.
+- Missing or invalid dependency: none. Live provider/database acceptance remains deferred by task instruction.
+
+## Architecture Alignment
+- Passed: Uses existing service boundaries, lazy provider clients, Supabase as document lifecycle authority, Qdrant only for similarity candidates, canonical persisted relation pairs, and FastAPI/Pydantic response models.
+- Failed: none.
+- Uncertain: Retry exhaustion is represented by the current nonfatal relation-node warning path; the reusable retry helper itself is scheduled for Batch08 and is not introduced here.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `update_document_relations` embeds the document summary, queries Qdrant, filters/group candidates by ready documents, requests model JSON, validates relation rows, replaces only rows involving the reindexed document, and the API route returns both relation directions.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Production behavior uses settings, enums, payload keys, UUID normalization, and dynamic candidate/evidence sets. Literal prompt text and test UUID fixtures are appropriate for this task.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_relations.py tests/test_ingestion_graph.py tests/test_api_documents.py -v`
+- Reported result: Passed, 46 passed in 2.56s.
+- Rerun result: Passed, 46 passed in 4.75s.
+- Status: passed
+- Notes: Required `(03B)` validation was rerun during review.
+- Command/check: `cd backend; python -m pytest tests/test_contracts.py -v`
+- Reported result: Passed, 6 passed in 1.60s.
+- Rerun result: Passed, 6 passed in 1.66s.
+- Status: passed
+- Notes: Extra executor-reported validation was also rerun.
+
+## Acceptance Review
+- Task acceptance: Relations are canonical, bounded, evidence-backed, safe under invalid model output, and nonfatal to valid indexing.
+- Status: satisfied
+- Evidence: Code and tests cover source exclusion, ready candidate filtering, max candidate cap, strict JSON discard behavior, relation type/target/confidence/evidence validation, canonical pair/type deduplication, replacement limited to rows involving the reindexed document, graph placement before `mark_ready`, nonfatal warning state on relation failure, and normalized bidirectional inspection output.
+
+## Progress Tracking
+- Selected task checkbox: checked in detailed task list and progress tracker after acceptance.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch03 remains unchecked per user instruction; no batch checkbox was updated.
+- Execution report entry: `(03B)` execution report is appended.
+- Review report entry: appended to the physical end of this file.
+- Other: `(03A)` and Batch01/Batch02 checkbox changes were pre-existing accepted work; no sibling or future task checkbox was changed by this review.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none material. The executor-reported validations reran successfully with slightly different local durations.
+
+## Issues
+
+### Blocking
+- None.
+
+### Major
+- None.
+
+### Minor
+- None.
+
+### Warnings
+- Live relation generation still depends on configured ShopAIKey, Qdrant, and Supabase services and was not exercised by unit tests, as allowed by the task.
+- The reusable retry helper for true configured retry exhaustion is still a later Batch08 responsibility; this task correctly keeps relation update failure nonfatal through the current ingestion warning path.
+
+### Observations
+- Invalid or empty generated relation output replaces existing relations for the reindexed document with the accepted set, which is consistent with replacement semantics.
+- `.commandcode/` is untracked and unrelated to `(03B)`.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, after the orchestrator/batch gate decides how to handle Batch03 completion and commit workflow.
+- Should batch be marked complete? no in this review, per user instruction not to mark Batch03 complete.
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch03 - Document Summaries and Lightweight Relations",
+  "selected_task_id": "(03B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/relations.py",
+    "backend/app/graphs/ingestion_nodes.py",
+    "backend/app/graphs/ingestion_graph.py",
+    "backend/app/api/routes/documents.py",
+    "backend/app/models/schemas.py",
+    "backend/tests/test_relations.py",
+    "backend/tests/test_ingestion_graph.py",
+    "backend/tests/test_api_documents.py",
+    "backend/app/services/summaries.py",
+    "backend/tests/test_summaries.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md",
+    "docs/review/review_3_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live relation generation depends on configured ShopAIKey, Qdrant, and Supabase services and is deferred to later acceptance.",
+    "Configured retry helper behavior remains scheduled for Batch08; current relation update failure is nonfatal as required for this task."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report Addendum - (03B)
+
+## Status Correction
+After the `(03B)` review report was appended, a final `git status --short --untracked-files=all` check showed `.commandcode/` no longer listed as untracked and `.gitignore` modified with an out-of-scope `/.commandcode` ignore entry.
+
+## Corrected Git Diff Evidence
+- Current extra changed file: `.gitignore`
+- Current untracked files: none shown by `git status --short --untracked-files=all`
+- Scope classification: `.gitignore` is out of scope for `(03B)` and was not listed in the execution report.
+- Review impact: no change to the selected task outcome. The `.gitignore` change is unrelated to the relation implementation and should be handled separately before any batch commit.
+
+## Corrected Decision
+- Final Outcome: ACCEPTED
+- Checkbox update status: `(03B)` detailed and progress-tracker checkboxes are checked; Batch03 remains unchecked.
+- Next task can proceed: yes, after the orchestrator/batch gate handles Batch03 completion and commit workflow.
