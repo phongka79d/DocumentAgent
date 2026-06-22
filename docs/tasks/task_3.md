@@ -1031,8 +1031,8 @@ There are no optional tracks outside this mandatory chain.
 
 ### Batches
 
-- [ ] Batch01 - Phase 3 Contracts, Settings, and Persistence
-- [ ] Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
+- [x] Batch01 - Phase 3 Contracts, Settings, and Persistence
+- [x] Batch02 - Metadata-Aware Keyword and Hybrid Retrieval
 - [ ] Batch03 - Document Summaries and Lightweight Relations
 - [ ] Batch04 - Query Decomposition and LangGraph Retrieval Routing
 - [ ] Batch05 - Candidate Stages, Reranking, and Context Budgets

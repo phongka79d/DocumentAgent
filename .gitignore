@@ -2,7 +2,7 @@
 .env
 .env.*
 !.env.example
-
+/.commandcode
 # Logs
 *.log
 npm-debug.log*
