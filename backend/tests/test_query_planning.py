@@ -71,6 +71,45 @@ class FakeShopAIKeyClient:
         )
 
 
+@dataclass
+class SequenceChatCompletionsEndpoint:
+    responses: list[object]
+    calls: list[dict[str, object]] = field(default_factory=list)
+
+    def create(
+        self,
+        *,
+        model: str,
+        messages: list[dict[str, object]],
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        **kwargs,
+    ):
+        self.calls.append(
+            {
+                "model": model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "kwargs": kwargs,
+            }
+        )
+        response = self.responses[min(len(self.calls) - 1, len(self.responses) - 1)]
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+
+@dataclass
+class SequenceShopAIKeyClient:
+    responses: list[object]
+
+    def __post_init__(self):
+        self.chat = SimpleNamespace(
+            completions=SequenceChatCompletionsEndpoint(self.responses)
+        )
+
+
 def _chat_response(payload: object) -> object:
     content = payload if isinstance(payload, str) else json.dumps(payload)
     return SimpleNamespace(
@@ -293,6 +332,68 @@ def test_plan_query_falls_back_to_one_hybrid_subquery_for_planner_failures(respo
         "page_end": None,
     }
     assert plan.needs_relations is False
+
+
+def test_plan_query_retries_transient_planner_failures_before_using_response():
+    settings = _settings(enable_keyword_search=True).model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 3,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+    client = SequenceShopAIKeyClient(
+        [
+            TimeoutError("planner timed out"),
+            ConnectionError("planner connection failed"),
+            _chat_response(
+                {
+                    "is_complex": False,
+                    "strategy": "keyword",
+                    "subqueries": [{"id": "q7", "text": "renewal terms"}],
+                    "inferred_filters": {},
+                    "needs_relations": False,
+                }
+            ),
+        ]
+    )
+
+    plan = query_planning.plan_query(
+        "renewal",
+        [DOC_A],
+        None,
+        settings=settings,
+        shopaikey_client=client,
+    )
+
+    assert plan.strategy is RetrievalStrategy.KEYWORD
+    assert [(item.id, item.text) for item in plan.subqueries] == [
+        ("q7", "renewal terms")
+    ]
+    assert len(client.chat.completions.calls) == 3
+
+
+def test_plan_query_non_retryable_contract_failure_runs_once_before_fallback():
+    settings = _settings(enable_keyword_search=True).model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 3,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+    client = SequenceShopAIKeyClient([_chat_response("not json")])
+
+    plan = query_planning.plan_query(
+        "renewal",
+        [DOC_A],
+        None,
+        settings=settings,
+        shopaikey_client=client,
+    )
+
+    assert plan.strategy is RetrievalStrategy.HYBRID
+    assert [(item.id, item.text) for item in plan.subqueries] == [("q1", "renewal")]
+    assert len(client.chat.completions.calls) == 1
 
 
 def test_plan_query_falls_back_when_planner_attempts_to_return_document_scope():

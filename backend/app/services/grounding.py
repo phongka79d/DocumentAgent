@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from app.core.config import Settings, get_settings
+from app.core.retry import RetryAttempt, retry_sync
 from app.graphs.query_formatting import extract_chat_content, normalize_text
 from app.graphs.query_prompts import build_grounding_messages
 from app.models.schemas import GroundingResult
@@ -73,6 +74,7 @@ def verify_answer_grounding(
     evidence: Sequence[Mapping[str, Any]],
     settings: Settings | None = None,
     shopaikey_client: Any | None = None,
+    retry_attempts: list[RetryAttempt] | None = None,
 ) -> GroundingResult:
     resolved_settings = _resolve_settings(settings)
     try:
@@ -81,11 +83,16 @@ def verify_answer_grounding(
             if shopaikey_client is not None
             else create_shopaikey_client(resolved_settings)
         )
-        response = client.chat.completions.create(
-            model=resolved_settings.SHOPAIKEY_INPUT_MODEL,
-            messages=build_grounding_messages(answer=answer, evidence=evidence),
-            temperature=0,
-            max_tokens=resolved_settings.QUERY_PLANNER_MAX_TOKENS,
+        response = retry_sync(
+            "grounding_verification",
+            lambda: client.chat.completions.create(
+                model=resolved_settings.SHOPAIKEY_INPUT_MODEL,
+                messages=build_grounding_messages(answer=answer, evidence=evidence),
+                temperature=0,
+                max_tokens=resolved_settings.QUERY_PLANNER_MAX_TOKENS,
+            ),
+            settings=resolved_settings,
+            on_attempt=retry_attempts.append if retry_attempts is not None else None,
         )
     except Exception as exc:
         raise GroundingProviderError("Grounding verifier provider failure") from exc

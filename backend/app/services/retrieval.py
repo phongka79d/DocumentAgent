@@ -9,6 +9,7 @@ from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
 from app.core.contracts import QdrantPayloadKey
+from app.core.retry import RetryAttempt, retry_sync
 from app.models.schemas import RetrievalFilters
 from app.core.contracts import RetrievalPath
 from app.services import keyword_search, score_fusion
@@ -268,6 +269,7 @@ def embed_question(
     *,
     settings: Settings | None = None,
     shopaikey_client: Any | None = None,
+    retry_attempts: list[RetryAttempt] | None = None,
 ) -> list[float]:
     resolved_settings = _resolve_settings(settings)
     normalized_question = _normalize_text(question)
@@ -275,9 +277,14 @@ def embed_question(
         raise RetrievalError("question is required")
 
     client = _resolve_shopaikey_client(shopaikey_client)
-    response = client.embeddings.create(
-        model=resolved_settings.SHOPAIKEY_EMBEDDING_MODEL,
-        input=[normalized_question],
+    response = retry_sync(
+        "embedding_generation",
+        lambda: client.embeddings.create(
+            model=resolved_settings.SHOPAIKEY_EMBEDDING_MODEL,
+            input=[normalized_question],
+        ),
+        settings=resolved_settings,
+        on_attempt=retry_attempts.append if retry_attempts is not None else None,
     )
     items = getattr(response, "data", response)
     if not items:
@@ -303,17 +310,23 @@ def search_semantic_chunks(
     filters: RetrievalFilters | Mapping[str, Any] | None = None,
     settings: Settings | None = None,
     qdrant_client: Any | None = None,
+    retry_attempts: list[RetryAttempt] | None = None,
 ) -> list[dict[str, Any]]:
     resolved_settings = _resolve_settings(settings)
     client = _resolve_qdrant_client(qdrant_client)
     query_filter = build_qdrant_filter(document_ids, filters)
-    response = client.query_points(
-        collection_name=resolved_settings.QDRANT_COLLECTION,
-        query=list(query_embedding),
-        query_filter=query_filter,
-        limit=resolved_settings.RETRIEVAL_SEMANTIC_TOP_K,
-        with_payload=True,
-        with_vectors=False,
+    response = retry_sync(
+        "qdrant_search",
+        lambda: client.query_points(
+            collection_name=resolved_settings.QDRANT_COLLECTION,
+            query=list(query_embedding),
+            query_filter=query_filter,
+            limit=resolved_settings.RETRIEVAL_SEMANTIC_TOP_K,
+            with_payload=True,
+            with_vectors=False,
+        ),
+        settings=resolved_settings,
+        on_attempt=retry_attempts.append if retry_attempts is not None else None,
     )
 
     results: list[dict[str, Any]] = []
@@ -404,11 +417,13 @@ def _semantic_search_path(
     settings: Settings,
     qdrant_client: Any | None,
     shopaikey_client: Any | None,
+    retry_attempts: list[RetryAttempt] | None = None,
 ) -> tuple[list[float], list[dict[str, Any]]]:
     query_embedding = embed_question(
         question,
         settings=settings,
         shopaikey_client=shopaikey_client,
+        retry_attempts=retry_attempts,
     )
     semantic_rows = search_semantic_chunks(
         query_embedding,
@@ -416,6 +431,7 @@ def _semantic_search_path(
         filters=filters,
         settings=settings,
         qdrant_client=qdrant_client,
+        retry_attempts=retry_attempts,
     )
     return query_embedding, [
         _normalize_semantic_candidate(candidate, rank=rank)
@@ -431,6 +447,7 @@ def retrieve_semantic_candidates(
     settings: Settings | None = None,
     qdrant_client: Any | None = None,
     shopaikey_client: Any | None = None,
+    retry_attempts: list[RetryAttempt] | None = None,
 ) -> tuple[list[float], list[dict[str, Any]]]:
     resolved_settings = _resolve_settings(settings)
     return _semantic_search_path(
@@ -440,6 +457,7 @@ def retrieve_semantic_candidates(
         settings=resolved_settings,
         qdrant_client=qdrant_client,
         shopaikey_client=shopaikey_client,
+        retry_attempts=retry_attempts,
     )
 
 
@@ -476,6 +494,7 @@ def retrieve_hybrid_chunks(
             settings=resolved_settings,
             qdrant_client=qdrant_client,
             shopaikey_client=shopaikey_client,
+            retry_attempts=None,
         )
     except Exception as exc:
         semantic_error = exc
@@ -586,6 +605,7 @@ def rerank_chunks(
     *,
     settings: Settings | None = None,
     jina_client: Any | None = None,
+    retry_attempts: list[RetryAttempt] | None = None,
 ) -> list[dict[str, Any]]:
     resolved_settings = _resolve_settings(settings)
     normalized_question = _normalize_text(question)
@@ -613,17 +633,26 @@ def rerank_chunks(
         str(chunk.get("content") or chunk.get("text") or "") for chunk in candidate_chunks
     ]
     try:
-        response = transport.post(
-            "/rerank",
-            json={
-                "model": model,
-                "query": normalized_question,
-                "documents": documents,
-                "top_n": min(resolved_settings.RETRIEVAL_FINAL_TOP_K, len(documents)),
-                "return_documents": False,
-            },
+        def _post_rerank() -> Any:
+            rerank_response = transport.post(
+                "/rerank",
+                json={
+                    "model": model,
+                    "query": normalized_question,
+                    "documents": documents,
+                    "top_n": min(resolved_settings.RETRIEVAL_FINAL_TOP_K, len(documents)),
+                    "return_documents": False,
+                },
+            )
+            rerank_response.raise_for_status()
+            return rerank_response
+
+        response = retry_sync(
+            "jina_rerank",
+            _post_rerank,
+            settings=resolved_settings,
+            on_attempt=retry_attempts.append if retry_attempts is not None else None,
         )
-        response.raise_for_status()
         payload = response.json()
         rankings = _extract_jina_rankings(payload)
     except Exception as exc:  # pragma: no cover - fallback exercised in tests

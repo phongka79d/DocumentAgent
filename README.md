@@ -102,6 +102,8 @@ graph TD
 - **Document Summaries**: Ingestion can generate extracted-text-only section and document summaries, store exact source chunk IDs, replace summaries atomically after complete generation, and expose typed `GET /api/documents/{document_id}/summaries` inspection.
 - **Lightweight Document Relations**: Ingestion can build bounded, evidence-backed, canonical document relations from summary embedding search, keep relation failures nonfatal to valid indexing, and expose typed `GET /api/documents/{document_id}/relations` inspection with normalized related document IDs.
 - **Phase 3 Persistence Foundation**: Idempotent SQL and lazy Supabase services provide document summaries, canonical document relations, and best-effort workflow trace storage.
+- **Workflow Observability**: Ingestion and query workflows create compact, redacted trace runs with node timing, attempts, counts, routes, fallbacks, safe error codes, and aggregate retrieval metrics. Admin-token-protected `GET /api/observability/runs` and `GET /api/observability/runs/{run_id}` endpoints inspect traces without persisting prompts, source text, full answers, secrets, headers, or credential-bearing URLs.
+- **Bounded Failure Recovery**: Retryable timeout, connection, HTTP 429, and HTTP 5xx failures use configured capped exponential retries across storage, model, database, vector, rerank, summary, relation, grounding, planner, and Qdrant delete operations. Contract, validation, unsupported file, missing document, and documented non-retryable 4xx failures run once, with deterministic planner, retrieval-path, rerank, grounding, message-persistence, ingestion, and relation-update fallbacks.
 
 ### Frontend Capabilities
 - **React Vite TypeScript Frontend**: Quick build time and typed API integrations. Secret keys remain strictly on the server-side.
@@ -344,7 +346,7 @@ Execute pytest across the suite:
 ```powershell
 cd backend
 python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
-python -m pytest tests/test_contracts.py tests/test_keyword_search.py tests/test_score_fusion.py tests/test_retrieval_context.py tests/test_query_planning.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py -v
+python -m pytest tests/test_contracts.py tests/test_keyword_search.py tests/test_score_fusion.py tests/test_retrieval_context.py tests/test_query_planning.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py tests/test_api_observability.py tests/test_retry.py -v
 python -m pytest tests/test_evaluation_metrics.py -v
 python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl
 python scripts/run_rag_evaluation.py --help

@@ -795,7 +795,7 @@ Advanced workflows require inspectable timing/failure evidence and controlled tr
 
 ### Tasks
 
-- [ ] (08A): Persist compact ingestion and query traces
+- [x] (08A): Persist compact ingestion and query traces
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 8: Workflow Observability and Failure Recovery` > `### Task 8.1: Persist compact ingestion and query traces`
   - Source Requirements:
     - Create/close workflow runs at API boundaries and instrument every graph node with exact compact event fields.
@@ -820,7 +820,7 @@ Advanced workflows require inspectable timing/failure evidence and controlled tr
   - Blocked Condition: None for unit implementation; `BLOCKED_BY_USER_ACTION` for live trace persistence until migration and Supabase configuration are complete.
   - Files: `backend/app/services/observability.py`, `backend/app/graphs/ingestion_graph.py`, `backend/app/graphs/query_graph.py`, `backend/app/api/routes/chat.py`, `backend/app/api/routes/documents.py`, `backend/app/api/routes/observability.py`, `backend/app/main.py`, `backend/tests/test_api_observability.py`, `backend/tests/test_observability.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_query_graph.py`
 
-- [ ] (08B): Add retry classification and deterministic recovery
+- [x] (08B): Add retry classification and deterministic recovery
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 8: Workflow Observability and Failure Recovery` > `### Task 8.2: Add retry classification and deterministic recovery`
   - Source Requirements:
     - Implement injectable synchronous exponential backoff bounded by configured attempts and maximum delay.
@@ -1081,8 +1081,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch08
 
-- [ ] (08A): Persist compact ingestion and query traces
-- [ ] (08B): Add retry classification and deterministic recovery
+- [x] (08A): Persist compact ingestion and query traces
+- [x] (08B): Add retry classification and deterministic recovery
 
 #### Batch09
 

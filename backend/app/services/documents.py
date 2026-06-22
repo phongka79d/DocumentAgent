@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
+from app.core.retry import retry_sync
 from app.models.schemas import DocumentResponse
 from app.services.qdrant_client import create_qdrant_client
 from app.services.supabase_client import create_supabase_client
@@ -328,9 +329,13 @@ def delete_document_and_file(
             )
         ]
     )
-    resolved_qdrant_client.delete(
-        collection_name=collection_name,
-        points_selector=payload_filter,
+    retry_sync(
+        "qdrant_delete",
+        lambda: resolved_qdrant_client.delete(
+            collection_name=collection_name,
+            points_selector=payload_filter,
+        ),
+        settings=resolved_settings,
     )
 
     bucket = client.storage.from_(resolved_settings.SUPABASE_STORAGE_BUCKET)

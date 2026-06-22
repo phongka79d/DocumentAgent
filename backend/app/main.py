@@ -11,6 +11,7 @@ OPTIONAL_API_ROUTE_MODULES = (
     "app.api.routes.documents",
     "app.api.routes.chat",
     "app.api.routes.messages",
+    "app.api.routes.observability",
 )
 
 
@@ -34,6 +35,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="RagDocument API")
     app.state.settings = settings
+    app.dependency_overrides[get_settings] = lambda: settings
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[_get_frontend_origin(settings)],

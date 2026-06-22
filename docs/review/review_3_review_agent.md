@@ -3884,3 +3884,733 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (08A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch08 - Workflow Observability and Failure Recovery
+- Task ID: (08A)
+- Task title: Persist compact ingestion and query traces
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 8: Workflow Observability and Failure Recovery` > `### Task 8.1: Persist compact ingestion and query traces`
+- Supplemental documents: None needed
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08A)
+- Reviewed task ID: (08A)
+- Correct selection: yes
+- Notes: The latest matching (08A) execution report was reviewed; (08B) was not reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/api/routes/chat.py`, `backend/app/api/routes/documents.py`, `backend/app/graphs/ingestion_graph.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_state.py`, `backend/app/main.py`, `backend/app/services/observability.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_observability.py`, `backend/tests/test_query_graph.py`, `docs/reports/report_3_execute_agent.md`
+- untracked files: `backend/app/api/routes/observability.py`, `backend/tests/test_api_observability.py`
+
+## Files Reviewed
+- `backend/app/services/observability.py`: in scope - compact trace persistence, redaction, list/detail service, timing helpers, and trace event builders reviewed.
+- `backend/app/graphs/ingestion_graph.py`: in scope - node wrapping, node events, failure routing, and trace accumulation reviewed.
+- `backend/app/graphs/ingestion_state.py`: in scope - `workflow_trace` state field reviewed.
+- `backend/app/graphs/query_graph.py`: in scope - node wrapping, query trace accumulation, route/fallback/count helpers reviewed.
+- `backend/app/graphs/query_state.py`: in scope - `workflow_trace` state field reviewed.
+- `backend/app/api/routes/chat.py`: in scope - query workflow run lifecycle, trace ID propagation, and completion/failure updates reviewed.
+- `backend/app/api/routes/documents.py`: in scope - ingestion workflow run lifecycle and trace ID propagation reviewed.
+- `backend/app/api/routes/observability.py`: in scope - protected list/detail endpoints, clamping, and 404 behavior reviewed.
+- `backend/app/main.py`: in scope - route registration and app settings dependency override reviewed.
+- `backend/tests/test_api_observability.py`: in scope - endpoint protection, query lifecycle, and persistence failure isolation tests reviewed.
+- `backend/tests/test_observability.py`: in scope - service normalization, redaction, limits, and nonfatal write tests reviewed.
+- `backend/tests/test_ingestion_graph.py`: in scope - ingestion trace assertions reviewed.
+- `backend/tests/test_query_graph.py`: in scope - query trace assertions reviewed.
+- `docs/reports/report_3_execute_agent.md`: in scope - selected execution report reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/observability.py` - present in git/repo: yes - matches task scope: yes - notes: Contains the major issue described below.
+- file from execution report: `backend/app/graphs/ingestion_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Uses dynamic exception/result error messages as trace event error-code input.
+- file from execution report: `backend/app/graphs/ingestion_state.py` - present in git/repo: yes - matches task scope: yes - notes: Adds compact trace state field.
+- file from execution report: `backend/app/graphs/query_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Uses dynamic exception/result error messages as trace event error-code input.
+- file from execution report: `backend/app/graphs/query_state.py` - present in git/repo: yes - matches task scope: yes - notes: Adds compact trace state field.
+- file from execution report: `backend/app/api/routes/chat.py` - present in git/repo: yes - matches task scope: yes - notes: Query run lifecycle implemented.
+- file from execution report: `backend/app/api/routes/documents.py` - present in git/repo: yes - matches task scope: yes - notes: Ingestion run lifecycle implemented.
+- file from execution report: `backend/app/api/routes/observability.py` - present in git/repo: yes - matches task scope: yes - notes: New untracked file exists.
+- file from execution report: `backend/app/main.py` - present in git/repo: yes - matches task scope: yes - notes: Router registered.
+- file from execution report: `backend/tests/test_api_observability.py` - present in git/repo: yes - matches task scope: yes - notes: New untracked file exists.
+- file from execution report: `backend/tests/test_observability.py` - present in git/repo: yes - matches task scope: yes - notes: Focused service tests updated.
+- file from execution report: `backend/tests/test_ingestion_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Focused graph tests updated.
+- file from execution report: `backend/tests/test_query_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Focused graph tests updated.
+
+## Dependency Review
+- Required dependencies: (01B), completed ingestion/query graphs, API token dependency, retrieval metrics, accepted Batches01 through 07.
+- Dependency status: satisfied based on task file progress and repository code.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Work stays within FastAPI/LangGraph/Supabase service boundaries; uses existing `workflow_runs`; adds admin-token-protected API routes; persistence writes are best-effort in service functions; (08B) retry implementation was not added early.
+- Failed: Trace redaction is not complete for allow-listed `error_code` values because `node_trace_event` applies `safe_error_code()` before redaction and the graph wrappers feed it dynamic exception/error-message text.
+- Uncertain: Live Supabase trace persistence was not exercised, which is acceptable for this unit task and remains user-action gated.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: Lifecycle, route, graph event, persistence service, and endpoint code is real. However, the safety contract is not fully implemented because prohibited data can still enter persisted trace events through `error_code`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-specific or answer-specific behavior found. Constants are task-level route/provider/status labels and bounded limits.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_observability.py tests/test_api_observability.py tests/test_ingestion_graph.py tests/test_query_graph.py -v`
+- Reported result: Passed; 87 passed in 4.71s.
+- Rerun result: Passed; 87 passed in 4.24s.
+- Status: passed
+- Notes: Required focused validation passes.
+
+- Command/check: `cd backend; git diff --check`
+- Reported result: Passed with line-ending warnings only.
+- Rerun result: Passed with line-ending warnings only.
+- Status: passed
+- Notes: No whitespace errors.
+
+- Command/check: Redaction probe for credential-bearing URL in trace `error_code`.
+- Reported result: Not reported.
+- Rerun result: Failed safety expectation; `observability.node_trace_event(..., error_code='https://example.test/path?api_key=SECRET123')` returned `error_code: 'https___example_test_path_api_key_secret123'`.
+- Status: failed
+- Notes: This demonstrates a concrete path where a credential-bearing URL/secret value can be transformed and persisted in an allow-listed field.
+
+## Acceptance Review
+- Task acceptance: Every workflow is closed when persistence is available; traces contain useful counts/routes but no prohibited content; trace failure is nonfatal.
+- Status: not satisfied
+- Evidence: Workflow lifecycle and nonfatal persistence behavior are implemented and tested, but the no-prohibited-content requirement is not satisfied for dynamic error-code inputs.
+
+## Progress Tracking
+- Selected task checkbox: unchecked before review and left unchecked
+- Checkbox updated by reviewer: no
+- Batch status: Batch08 remains unchecked
+- Execution report entry: appended and selected correctly
+- Review report entry: appended at EOF
+- Other: (08B) and future task checkboxes were not changed.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report states traces contain no prohibited content and redaction is complete, but repository evidence shows credential-bearing URL data can persist through `error_code`. Reported validation commands are accurate and were rerun successfully.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `backend/app/services/observability.py:330` and `backend/app/services/observability.py:370`: `safe_error_code()` normalizes arbitrary dynamic error values before `_safe_event()` redaction, and `error_code` is an allow-listed persisted key. A credential-bearing URL such as `https://example.test/path?api_key=SECRET123` becomes `https___example_test_path_api_key_secret123` and would persist in the trace. The graph wrappers pass `str(exc)` and node `error_message` values into this path from `backend/app/graphs/query_graph.py:66`, `backend/app/graphs/query_graph.py:89`, `backend/app/graphs/ingestion_graph.py:44`, and `backend/app/graphs/ingestion_graph.py:69`. This violates the Task 8.1 requirement that credential-bearing URLs, API keys, prompts, source text, and model responses cannot persist in workflow traces.
+
+### Minor
+- None
+
+### Warnings
+- API lifecycle tests cover query run create/close and persistence failure isolation, but do not directly assert document ingestion route create/close behavior at the API boundary. The graph-level ingestion trace behavior is covered.
+
+### Observations
+- Scope is otherwise tight: (08B) retry classification/recovery was not implemented early.
+- Admin route protection, limit clamping, newest-first service ordering, and 404 behavior are covered by tests.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/app/services/observability.py` and graph wrapper error-code call sites in `backend/app/graphs/query_graph.py` and `backend/app/graphs/ingestion_graph.py`
+- change: Ensure persisted `error_code` values are stable safe codes, not normalized arbitrary exception messages or node error text. Redact or drop credential-bearing URLs, API-key-like strings, source/prompt/answer/content text, and headers before the allow-list stage. Prefer mapping graph wrapper failures to deterministic node/status codes such as `{node_name}_exception`, `{node_name}_failed`, or `invalid_state` rather than deriving codes from raw error messages.
+- validation: Add a regression test proving `node_trace_event()` and/or `_normalize_trace()` cannot persist `https://...?...api_key=SECRET`, bearer/header-like values, or raw content through `error_code`; rerun `cd backend; python -m pytest tests/test_observability.py tests/test_api_observability.py tests/test_ingestion_graph.py tests/test_query_graph.py -v` and `cd backend; git diff --check`.
+- blocks next task: yes
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "REJECTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch08 - Workflow Observability and Failure Recovery",
+  "selected_task_id": "(08A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/routes/chat.py",
+    "backend/app/api/routes/documents.py",
+    "backend/app/api/routes/observability.py",
+    "backend/app/graphs/ingestion_graph.py",
+    "backend/app/graphs/ingestion_state.py",
+    "backend/app/graphs/query_graph.py",
+    "backend/app/graphs/query_state.py",
+    "backend/app/main.py",
+    "backend/app/services/observability.py",
+    "backend/tests/test_api_observability.py",
+    "backend/tests/test_ingestion_graph.py",
+    "backend/tests/test_observability.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_3_execute_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": false,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [
+    "redaction probe: credential-bearing URL persisted through error_code as https___example_test_path_api_key_secret123"
+  ],
+  "validations_blocked": [
+    "live trace persistence: BLOCKED_BY_USER_ACTION until Phase 3 migration and Supabase configuration are available"
+  ],
+  "acceptance_satisfied": false,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": false,
+  "execution_report_accurate": false,
+  "blocking_issues": [],
+  "major_issues": [
+    "Trace error_code redaction can persist credential-bearing URL/API-key material derived from dynamic exception or error-message text."
+  ],
+  "warnings": [
+    "No direct document ingestion API lifecycle test for run create/close; graph-level ingestion trace coverage exists."
+  ],
+  "next_task_can_proceed": false,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (08A) Re-review
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch08 - Workflow Observability and Failure Recovery
+- Task ID: (08A)
+- Task title: Persist compact ingestion and query traces
+- Task status reported by executor: complete repair
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 8: Workflow Observability and Failure Recovery` > `### Task 8.1: Persist compact ingestion and query traces`
+- Supplemental documents: prior A2 review in `docs/review/review_3_review_agent.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08A)
+- Reviewed task ID: (08A)
+- Correct selection: yes
+- Notes: Reviewed the latest `Task Execution Report - (08A) Repair` entry and checked only the prior rejected issue plus current (08A) scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `backend/app/api/routes/chat.py`, `backend/app/api/routes/documents.py`, `backend/app/graphs/ingestion_graph.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_state.py`, `backend/app/main.py`, `backend/app/services/observability.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_observability.py`, `backend/tests/test_query_graph.py`, `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`
+- untracked files: `backend/app/api/routes/observability.py`, `backend/tests/test_api_observability.py`
+
+## Files Reviewed
+- `backend/app/services/observability.py`: in scope - repair hardens `safe_error_code()` and `node_trace_event()` so unsafe dynamic values fall back to deterministic node failure codes.
+- `backend/app/graphs/query_graph.py`: in scope - graph wrapper now uses deterministic `{node_name}_exception` / `{node_name}_failed` style codes instead of raw exception or error text.
+- `backend/app/graphs/ingestion_graph.py`: in scope - graph wrapper now uses deterministic node failure codes instead of raw exception or error text.
+- `backend/tests/test_observability.py`: in scope - adds regression coverage for credential URLs, bearer/header-like values, API-key-like strings, and raw content in trace `error_code`.
+- `backend/tests/test_query_graph.py`: in scope - asserts query graph failure text is not copied into workflow trace error code.
+- `backend/tests/test_ingestion_graph.py`: in scope - asserts ingestion graph failure text is not copied into workflow trace error code.
+- `backend/app/api/routes/chat.py`: in scope from original (08A) - query workflow lifecycle remains part of the selected task.
+- `backend/app/api/routes/documents.py`: in scope from original (08A) - ingestion workflow lifecycle remains part of the selected task.
+- `backend/app/api/routes/observability.py`: in scope from original (08A) - protected list/detail route exists.
+- `backend/app/main.py`: in scope from original (08A) - observability route registration exists.
+- `backend/app/graphs/ingestion_state.py`: in scope from original (08A) - workflow trace state field exists.
+- `backend/app/graphs/query_state.py`: in scope from original (08A) - workflow trace state field exists.
+- `backend/tests/test_api_observability.py`: in scope from original (08A) - protected endpoint and lifecycle coverage exists.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest repair report appended.
+- `docs/review/review_3_review_agent.md`: in scope - prior review read and this re-review appended.
+- `docs/tasks/task_3.md`: in scope - selected (08A) checkbox updated after acceptance only.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/observability.py` - present in git/repo: yes - matches task scope: yes - notes: Repair implemented and verified.
+- file from execution report: `backend/app/graphs/ingestion_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Error-code source is deterministic.
+- file from execution report: `backend/app/graphs/query_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Error-code source is deterministic.
+- file from execution report: `backend/tests/test_observability.py` - present in git/repo: yes - matches task scope: yes - notes: Regression coverage added for prior rejection.
+- file from execution report: `backend/tests/test_ingestion_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Failure-text trace assertion added.
+- file from execution report: `backend/tests/test_query_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Failure-text trace assertion added.
+- file from execution report: `docs/reports/report_3_execute_agent.md` - present in git/repo: yes - matches task scope: yes - notes: Latest repair report is appended.
+
+## Dependency Review
+- Required dependencies: (01B), completed ingestion/query graphs, API token dependency, retrieval metrics, accepted Batches01 through 07.
+- Dependency status: satisfied for this repair review.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Repair stays inside (08A), keeps trace writes best-effort, preserves compact event shape, and replaces dynamic trace error-code derivation with deterministic safe codes.
+- Failed: None.
+- Uncertain: Live trace persistence remains user-action gated until the Phase 3 migration and Supabase configuration are available; this is allowed by the task.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `safe_error_code()` now accepts only strict safe code strings and otherwise falls back to `{node_name}_failed` or `workflow_failed`; graph wrappers pass deterministic node failure codes. The prior credential URL probe now returns `retrieve_candidates_failed`.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Deterministic node/status codes are task-aligned operational labels, not fixture-specific or answer-specific behavior.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_observability.py tests/test_api_observability.py tests/test_ingestion_graph.py tests/test_query_graph.py -v`
+- Reported result: Passed; 88 passed in 4.45s.
+- Rerun result: Passed; 88 passed in 5.07s.
+- Status: passed
+- Notes: Includes the new `test_node_error_code_rejects_secret_like_dynamic_values` regression.
+
+- Command/check: `cd backend; git diff --check`
+- Reported result: Passed with CRLF conversion warnings only.
+- Rerun result: Passed with CRLF conversion warnings only.
+- Status: passed
+- Notes: No whitespace errors.
+
+- Command/check: Prior A2 redaction probe for credential-bearing URL in trace `error_code`.
+- Reported result: Repair report says unsafe values fall back to deterministic node failure codes.
+- Rerun result: Passed; `observability.node_trace_event(..., error_code='https://example.test/path?api_key=SECRET123')` returned `error_code: 'retrieve_candidates_failed'`.
+- Status: passed
+- Notes: Prior rejection issue is fixed.
+
+## Acceptance Review
+- Task acceptance: Every workflow is closed when persistence is available; traces contain useful counts/routes but no prohibited content; trace failure is nonfatal.
+- Status: satisfied
+- Evidence: Original (08A) lifecycle/redaction/API tests still pass, the repair closes the dynamic `error_code` leak, and focused validations pass.
+
+## Progress Tracking
+- Selected task checkbox: checked in the detailed Batch08 task entry and the progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch08 remains unchecked.
+- Execution report entry: latest repair entry appended and accurate.
+- Review report entry: appended at EOF.
+- Other: (08B), Batch08, and Batch09 checkboxes were not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found in the latest repair report.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- Live trace persistence is still `BLOCKED_BY_USER_ACTION` until migration and Supabase configuration are available; this is allowed by the task and does not block unit acceptance.
+
+### Observations
+- The repair did not implement (08B) retry classification or deterministic recovery early.
+- `docs/review/review_3_review_agent.md` already had the prior rejected A2 report in the worktree; this re-review was appended after it.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- None.
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch08 - Workflow Observability and Failure Recovery",
+  "selected_task_id": "(08A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/api/routes/chat.py",
+    "backend/app/api/routes/documents.py",
+    "backend/app/api/routes/observability.py",
+    "backend/app/graphs/ingestion_graph.py",
+    "backend/app/graphs/ingestion_state.py",
+    "backend/app/graphs/query_graph.py",
+    "backend/app/graphs/query_state.py",
+    "backend/app/main.py",
+    "backend/app/services/observability.py",
+    "backend/tests/test_api_observability.py",
+    "backend/tests/test_ingestion_graph.py",
+    "backend/tests/test_observability.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/review/review_3_review_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [
+    "live trace persistence: BLOCKED_BY_USER_ACTION until Phase 3 migration and Supabase configuration are available"
+  ],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [
+    "Live trace persistence remains user-action gated, as planned."
+  ],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (08B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+REJECTED
+
+## Reviewed Scope
+- Batch: Batch08 - Workflow Observability and Failure Recovery
+- Task ID: (08B)
+- Task title: Add retry classification and deterministic recovery
+- Executor status reported: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 8: Workflow Observability and Failure Recovery` > `### Task 8.2: Add retry classification and deterministic recovery`
+- Supplemental documents: `docs/plans/Plan_3.md`, `docs/plans/Master_Plan.md`, prior accepted (08A) context in `docs/review/review_3_review_agent.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08B)
+- Reviewed task ID: (08B)
+- Correct selection: yes
+- Notes: Reviewed the latest matching `Task Execution Report - (08B)` entry only.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- recent commits reviewed: not needed
+- changed files from git: `backend/app/api/routes/chat.py`, `backend/app/api/routes/documents.py`, `backend/app/graphs/ingestion_graph.py`, `backend/app/graphs/ingestion_nodes.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_state.py`, `backend/app/main.py`, `backend/app/services/grounding.py`, `backend/app/services/keyword_search.py`, `backend/app/services/observability.py`, `backend/app/services/relations.py`, `backend/app/services/retrieval.py`, `backend/app/services/summaries.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_observability.py`, `backend/tests/test_query_graph.py`, `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`
+- untracked files: `backend/app/api/routes/observability.py`, `backend/app/core/retry.py`, `backend/tests/test_api_observability.py`, `backend/tests/test_retry.py`, `docs/agent-loop/README.md`
+
+## Files Reviewed
+- `backend/app/core/retry.py`: in scope - reusable synchronous retry helper, classification, and capped backoff implemented.
+- `backend/app/graphs/ingestion_nodes.py`: in scope - ingestion storage download, chunk persistence, summary generation, embeddings, Qdrant upsert, document updates, relation update, and stable failed `error_code` paths reviewed.
+- `backend/app/graphs/query_nodes.py`: in scope - retrieval path retry metrics, answer generation/regeneration, grounding-provider retry metrics, and deterministic fallbacks reviewed.
+- `backend/app/services/retrieval.py`: in scope - embedding, Qdrant search, Jina rerank retry/fallback reviewed.
+- `backend/app/services/keyword_search.py`: in scope - Postgres keyword RPC retry reviewed.
+- `backend/app/services/summaries.py`: in scope - summary generation and summary persistence retry reviewed.
+- `backend/app/services/relations.py`: in scope - relation embedding, Qdrant search, generation, and persistence retry reviewed.
+- `backend/app/services/grounding.py`: in scope - grounding verification retry reviewed.
+- `backend/tests/test_retry.py`: in scope - classification, delay, no-sleep, recovery, non-retryable, and exhaustion coverage reviewed.
+- `backend/tests/test_ingestion_graph.py`: in scope - embedding retry and relation-update exhaustion coverage reviewed.
+- `backend/tests/test_query_graph.py`: in scope - semantic retry attempt tracing and existing fallback coverage reviewed.
+- `backend/app/services/query_planning.py`: in scope but missing from report/files - planner model call is an external model operation and remains unwrapped.
+- `backend/app/api/routes/documents.py`: in scope but missing from (08B) report/files - reindex Qdrant delete path remains unwrapped.
+- `backend/app/services/documents.py`: in scope but missing from report/files - delete Qdrant/storage/database operations remain unwrapped.
+- `backend/app/api/routes/chat.py`, `backend/app/graphs/ingestion_graph.py`, `backend/app/graphs/query_graph.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/query_state.py`, `backend/app/main.py`, `backend/app/services/observability.py`, `backend/tests/test_observability.py`, `backend/app/api/routes/observability.py`, `backend/tests/test_api_observability.py`: in scope as accepted (08A) context or shared trace integration, not newly accepted for (08B).
+- `docs/reports/report_3_execute_agent.md`: in scope - latest execution report appended.
+- `docs/review/review_3_review_agent.md`: in scope - prior accepted context read and this review appended.
+- `docs/tasks/task_3.md`: in scope - (08B) checkbox verified unchecked and left unchanged.
+- `docs/agent-loop/README.md`: out of scope - untracked and not explained by selected task report.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/core/retry.py` - present in git/repo: yes - matches task scope: yes - notes: Untracked new retry module exists.
+- file from execution report: `backend/app/graphs/ingestion_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Shared trace attempt handling exists.
+- file from execution report: `backend/app/graphs/ingestion_nodes.py` - present in git/repo: yes - matches task scope: yes - notes: Several ingestion operations wrapped.
+- file from execution report: `backend/app/graphs/query_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Shared trace attempt handling exists.
+- file from execution report: `backend/app/graphs/query_nodes.py` - present in git/repo: yes - matches task scope: yes - notes: Several query operations wrapped.
+- file from execution report: `backend/app/services/retrieval.py` - present in git/repo: yes - matches task scope: yes - notes: Embedding/search/rerank operations wrapped.
+- file from execution report: `backend/app/services/keyword_search.py` - present in git/repo: yes - matches task scope: yes - notes: Keyword RPC wrapped.
+- file from execution report: `backend/app/services/summaries.py` - present in git/repo: yes - matches task scope: yes - notes: Summary generation/persistence wrapped.
+- file from execution report: `backend/app/services/relations.py` - present in git/repo: yes - matches task scope: yes - notes: Relation generation/search/persistence wrapped.
+- file from execution report: `backend/app/services/grounding.py` - present in git/repo: yes - matches task scope: yes - notes: Grounding provider call wrapped.
+- file from execution report: `backend/tests/test_retry.py` - present in git/repo: yes - matches task scope: yes - notes: Untracked new test file exists.
+- file from execution report: `backend/tests/test_ingestion_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Retry and relation exhaustion tests added.
+- file from execution report: `backend/tests/test_query_graph.py` - present in git/repo: yes - matches task scope: yes - notes: Semantic retry trace coverage added.
+- file from execution report: `docs/reports/report_3_execute_agent.md` - present in git/repo: yes - matches task scope: yes - notes: Latest report appended.
+
+## Dependency Review
+- Required dependencies: (08A), all external-service call sites, configured retry settings from (01A).
+- Dependency status: (08A) accepted and retry settings exist; external-service call-site coverage is incomplete.
+- Missing or invalid dependency: None blocking review; implementation missed required dependent call sites.
+
+## Architecture Alignment
+- Passed: Central retry helper exists; retry classification is bounded to timeout/connection/429/5xx; many ingestion/query provider operations use configured attempts and no-op-testable delay; relation-update exhaustion keeps otherwise valid indexing ready.
+- Failed: Planner model call and Qdrant delete operations are outside the retry helper, so deterministic retry/recovery coverage is incomplete.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: The retry module and many wrappers are real, but executable probes show required external operations still run once on transient failures.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No fixture-specific success logic found. Stable error codes and fallback labels are task-aligned operational constants.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_retry.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_observability.py -v`
+- Reported result: Passed; 99 passed in 3.58s.
+- Rerun result: Passed; 99 passed in 6.41s.
+- Status: passed
+- Notes: Required focused validation passes, but it does not cover the missing planner retry or Qdrant delete retry paths.
+
+- Command/check: `cd backend; python -m compileall backend/app backend/tests/test_retry.py`
+- Reported result: Passed.
+- Rerun result: not rerun
+- Status: accepted as reported
+- Notes: The required pytest validation and direct probes were prioritized.
+
+- Command/check: `git diff --check`
+- Reported result: Passed with CRLF conversion warnings only.
+- Rerun result: Passed with CRLF conversion warnings only.
+- Status: passed
+- Notes: No whitespace errors.
+
+- Command/check: Planner transient retry probe against `query_planning.plan_query()` with `WORKFLOW_MAX_ATTEMPTS=3` and a `TimeoutError` model client.
+- Reported result: Not reported.
+- Rerun result: Failed source expectation; planner call count was 1 and fallback was returned immediately.
+- Status: failed
+- Notes: This verifies `backend/app/services/query_planning.py:196` is not using `retry_sync`; `backend/app/services/query_planning.py:222` catches the transient failure and `backend/app/services/query_planning.py:224` falls back after one attempt.
+
+- Command/check: Qdrant delete transient retry probe against `delete_document_vectors()` with `WORKFLOW_MAX_ATTEMPTS=3` and a `TimeoutError` Qdrant client.
+- Reported result: Not reported.
+- Rerun result: Failed source expectation; Qdrant delete call count was 1 and the timeout propagated.
+- Status: failed
+- Notes: This verifies `backend/app/api/routes/documents.py:95` is not using `retry_sync`; `backend/app/services/documents.py:331` has the same unwrapped Qdrant delete pattern for document deletion.
+
+## Acceptance Review
+- Task acceptance: Retryable failures recover within bounds, non-retryable failures run once, and final outcomes exactly match the plan.
+- Status: not satisfied
+- Evidence: Required validation passes and many call sites are wrapped, but transient planner and Qdrant delete failures do not retry within configured bounds. The plan explicitly requires retry behavior for model operations and Qdrant search/upsert/delete, and fallback only after bounded retry exhaustion.
+
+## Progress Tracking
+- Selected task checkbox before review: unchecked in both detailed Batch08 task entry and progress tracker.
+- Checkbox updated by reviewer: no
+- Batch status: Batch08 remains unchecked.
+- Execution report entry: appended and selected correctly, but overstates completion.
+- Review report entry: appended at EOF.
+- Other: (08A) remains checked from prior accepted review; (09A)/(09B)/(09C) unchanged.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report claims all listed storage/model/database/vector/rerank operations were wrapped and final fallbacks exactly match the plan. Repository evidence shows planner model retry and Qdrant delete retry are missing.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- `backend/app/services/query_planning.py:196`: the planner ShopAIKey call is not wrapped in `retry_sync`. `backend/app/services/query_planning.py:222` catches a transient provider exception and `backend/app/services/query_planning.py:224` returns the fallback plan immediately. The source contract requires model/provider transient failures to retry within configured attempts before deterministic planner fallback.
+- `backend/app/api/routes/documents.py:95` and `backend/app/services/documents.py:331`: Qdrant delete operations used by reindex and document deletion are not wrapped in `retry_sync`. A transient timeout executes once and propagates, despite the plan requiring Qdrant search/upsert/delete retry coverage.
+
+### Minor
+- None
+
+### Warnings
+- `docs/agent-loop/README.md` is untracked and not explained by the (08B) execution report. It was not reviewed as selected-task implementation evidence.
+
+### Observations
+- The implemented retry helper correctly classifies timeout, connection, HTTP 429, and HTTP 5xx as retryable and leaves 4xx/contract errors single-attempt in covered tests.
+- Ingestion retry exhaustion now produces stable document `error_code` values, and relation-update exhaustion keeps indexing ready as required.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete
+
+## Repair Instructions
+- target: `backend/app/services/query_planning.py`
+- change: Wrap the planner `client.chat.completions.create(...)` call in `retry_sync` using configured settings. Retry timeout/connection/429/5xx failures up to `WORKFLOW_MAX_ATTEMPTS`; only after `RetryExhaustedError` or non-retryable/contract failures should the existing deterministic original-question hybrid/semantic fallback be returned. Preserve invalid planner JSON/schema behavior as a single normalized contract failure.
+- validation: Add a regression test proving a transient planner timeout is attempted according to configured max attempts before fallback/recovery; rerun `cd backend; python -m pytest tests/test_retry.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_observability.py -v`.
+- blocks next task: yes
+
+- target: `backend/app/api/routes/documents.py` and `backend/app/services/documents.py`
+- change: Wrap Qdrant delete calls used by reindex and document deletion in `retry_sync` with configured attempts. If these paths are intentionally outside the workflow recovery scope, update the source task/report before re-review; otherwise they must satisfy the plan's Qdrant delete retry requirement.
+- validation: Add focused tests for transient Qdrant delete recovery/no real sleep on reindex/delete paths, plus rerun the required (08B) validation.
+- blocks next task: yes
+
+---
+
+# Task Review Report - (08B) Repair Re-review
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch08 - Workflow Observability and Failure Recovery
+- Task ID: (08B)
+- Task title: Add retry classification and deterministic recovery
+- Executor status reported: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 8: Workflow Observability and Failure Recovery` > `### Task 8.2: Add retry classification and deterministic recovery`
+- Supplemental documents: prior A2 rejection in `docs/review/review_3_review_agent.md`, `docs/plans/Plan_3.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (08B)
+- Reviewed task ID: (08B) Repair
+- Correct selection: yes
+- Notes: Reviewed the latest `Task Execution Report - (08B) Repair` entry and checked only the prior rejected issues plus full (08B) acceptance preservation.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- recent commits reviewed: not needed
+- changed files from git: `backend/app/api/routes/chat.py`, `backend/app/api/routes/documents.py`, `backend/app/graphs/ingestion_graph.py`, `backend/app/graphs/ingestion_nodes.py`, `backend/app/graphs/ingestion_state.py`, `backend/app/graphs/query_graph.py`, `backend/app/graphs/query_nodes.py`, `backend/app/graphs/query_state.py`, `backend/app/main.py`, `backend/app/services/documents.py`, `backend/app/services/grounding.py`, `backend/app/services/keyword_search.py`, `backend/app/services/observability.py`, `backend/app/services/query_planning.py`, `backend/app/services/relations.py`, `backend/app/services/retrieval.py`, `backend/app/services/summaries.py`, `backend/tests/test_api_documents.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_observability.py`, `backend/tests/test_query_graph.py`, `backend/tests/test_query_planning.py`, `docs/reports/report_3_execute_agent.md`, `docs/review/review_3_review_agent.md`, `docs/tasks/task_3.md`
+- untracked files: `backend/app/api/routes/observability.py`, `backend/app/core/retry.py`, `backend/tests/test_api_observability.py`, `backend/tests/test_retry.py`, `docs/agent-loop/README.md`
+
+## Files Reviewed
+- `backend/app/services/query_planning.py`: in scope - planner provider call now uses `retry_sync("query_planner", ...)`, while JSON parsing and plan validation remain outside the retried callable.
+- `backend/app/api/routes/documents.py`: in scope - reindex Qdrant cleanup now wraps `client.delete(...)` in `retry_sync("qdrant_delete", ...)`.
+- `backend/app/services/documents.py`: in scope - document delete Qdrant cleanup now wraps `resolved_qdrant_client.delete(...)` in `retry_sync("qdrant_delete", ...)` before storage and row deletion.
+- `backend/tests/test_query_planning.py`: in scope - verifies transient planner retries and non-retryable contract fallback single-attempt behavior.
+- `backend/tests/test_api_documents.py`: in scope - verifies transient Qdrant delete retry and HTTP 400 single-attempt behavior for service delete and reindex cleanup.
+- `backend/app/core/retry.py`: in scope from original (08B) - retry helper/classification remains present.
+- `backend/app/graphs/ingestion_nodes.py`, `backend/app/graphs/query_nodes.py`, `backend/app/services/retrieval.py`, `backend/app/services/keyword_search.py`, `backend/app/services/summaries.py`, `backend/app/services/relations.py`, `backend/app/services/grounding.py`: in scope from original (08B) - prior retry wrapping and fallback behavior remains covered by required validation.
+- `backend/tests/test_retry.py`, `backend/tests/test_ingestion_graph.py`, `backend/tests/test_query_graph.py`, `backend/tests/test_observability.py`: in scope - required validation suites rerun and passing.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest repair execution report appended.
+- `docs/review/review_3_review_agent.md`: in scope - prior rejection read and this re-review appended.
+- `docs/tasks/task_3.md`: in scope - selected (08B) detailed and progress tracker checkboxes updated after acceptance only.
+- `docs/agent-loop/README.md`: out of scope - untracked and not explained by the selected repair; ignored for this selected-task acceptance.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/app/services/query_planning.py` - present in git/repo: yes - matches task scope: yes - notes: Planner retry repair implemented.
+- file from execution report: `backend/app/api/routes/documents.py` - present in git/repo: yes - matches task scope: yes - notes: Reindex cleanup Qdrant delete retry implemented.
+- file from execution report: `backend/app/services/documents.py` - present in git/repo: yes - matches task scope: yes - notes: Document delete Qdrant delete retry implemented.
+- file from execution report: `backend/tests/test_query_planning.py` - present in git/repo: yes - matches task scope: yes - notes: Planner retry/non-retryable coverage added.
+- file from execution report: `backend/tests/test_api_documents.py` - present in git/repo: yes - matches task scope: yes - notes: Qdrant delete retry/non-retryable coverage added.
+- file from execution report: `docs/reports/report_3_execute_agent.md` - present in git/repo: yes - matches task scope: yes - notes: Repair report appended.
+
+## Dependency Review
+- Required dependencies: accepted (08A), existing retry settings from (01A), prior (08B) implementation, and A2 rejection repair instructions.
+- Dependency status: satisfied.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Repair reuses the centralized retry helper, keeps planner fallback deterministic, preserves planner contract/validation failures as single-attempt behavior, and wraps Qdrant delete cleanup without changing delete/reindex lifecycle ordering.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Code-level retry wrappers exist at `backend/app/services/query_planning.py:197`, `backend/app/api/routes/documents.py:96`, and `backend/app/services/documents.py:332`; focused tests exercise transient and non-retryable cases.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Tests use fakes to drive retry classification and call counts; production logic uses the shared retry helper and configured attempts, not fixture-specific success paths.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_retry.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_observability.py -v`
+- Reported result: Passed; 99 passed in 4.23s.
+- Rerun result: Passed; 99 passed in 4.88s.
+- Status: passed
+- Notes: Required (08B) validation passes.
+
+- Command/check: `cd backend; python -m pytest tests/test_query_planning.py tests/test_api_documents.py -v`
+- Reported result: Passed; 35 passed, 4 warnings in 6.57s.
+- Rerun result: Passed; 35 passed, 4 warnings in 6.80s.
+- Status: passed
+- Notes: Warnings are third-party Supabase deprecation warnings for `timeout` and `verify`, not repair failures.
+
+- Command/check: `git diff --check`
+- Reported result: Passed with CRLF conversion warnings only.
+- Rerun result: Passed with CRLF conversion warnings only.
+- Status: passed
+- Notes: No whitespace errors.
+
+## Acceptance Review
+- Task acceptance: Retryable failures recover within bounds, non-retryable failures run once, and final outcomes exactly match the plan.
+- Status: satisfied
+- Evidence: The prior rejected planner and Qdrant delete gaps are fixed and covered by focused tests; original (08B) retry helper/call-site/fallback suites still pass.
+
+## Progress Tracking
+- Selected task checkbox before review: unchecked in both detailed Batch08 task entry and progress tracker.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch08 remains unchecked.
+- Execution report entry: latest repair entry appended and accurate.
+- Review report entry: appended at EOF.
+- Other: (08A) was already checked from prior accepted review; (09A), (09B), and (09C) remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found in the latest repair report.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- `docs/agent-loop/README.md` remains untracked and unexplained by this selected repair; it was not used as acceptance evidence.
+- Focused test rerun emits 4 third-party Supabase deprecation warnings unrelated to retry behavior.
+
+### Observations
+- The repair directly addresses both prior A2 rejection bullets.
+- Batch08 is not marked complete per instruction, even though (08A) and (08B) task checkboxes are now checked.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if explicitly handling the batch status after all task IDs are complete
+
+## Repair Instructions
+- None.

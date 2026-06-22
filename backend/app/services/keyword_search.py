@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.core.config import Settings, get_settings
 from app.core.contracts import RetrievalPath
+from app.core.retry import RetryAttempt, retry_sync
 from app.models.schemas import RetrievalCandidate, RetrievalFilters
 from app.services.supabase_client import create_supabase_client
 
@@ -183,6 +184,7 @@ def search_keyword_chunks(
     filters: RetrievalFilters | Mapping[str, Any] | None = None,
     settings: Settings | None = None,
     supabase_client: Any | None = None,
+    retry_attempts: list[RetryAttempt] | None = None,
 ) -> list[dict[str, Any]]:
     """Search chunks with Postgres full-text search and normalize candidates."""
 
@@ -209,7 +211,12 @@ def search_keyword_chunks(
 
     client = _resolve_supabase_client(supabase_client)
     try:
-        response = client.rpc(KEYWORD_SEARCH_RPC, params).execute()
+        response = retry_sync(
+            "keyword_rpc",
+            lambda: client.rpc(KEYWORD_SEARCH_RPC, params).execute(),
+            settings=resolved_settings,
+            on_attempt=retry_attempts.append if retry_attempts is not None else None,
+        )
     except Exception:
         raise KeywordSearchError() from None
 

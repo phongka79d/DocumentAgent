@@ -7,6 +7,7 @@ from uuid import UUID
 
 from app.core.config import Settings, get_settings
 from app.core.errors import safe_detail
+from app.core.retry import RetryAttempt, RetryExhaustedError, retry_sync
 from app.graphs.query_formatting import (
     build_context_prompt,
     build_source_citations,
@@ -179,6 +180,31 @@ def _path_name(path_key: str) -> str:
     return path_key.rsplit(":", 1)[-1]
 
 
+def _attempt_count(attempts: list[RetryAttempt]) -> int:
+    if not attempts:
+        return 1
+    return max(attempt.attempt for attempt in attempts)
+
+
+def _merge_retry_metrics(
+    metrics: dict[str, Any],
+    node_name: str,
+    attempts: list[RetryAttempt],
+) -> dict[str, Any]:
+    if not attempts:
+        return metrics
+    attempt_count = _attempt_count(attempts)
+    if attempt_count <= 1 and attempts[-1].error_code == "ok":
+        return metrics
+    retry_attempts = dict(metrics.get("retry_attempts") or {})
+    retry_attempts[node_name] = max(
+        int(retry_attempts.get(node_name, 1)),
+        attempt_count,
+    )
+    metrics["retry_attempts"] = retry_attempts
+    return metrics
+
+
 def _route_failure_message(strategy: RetrievalStrategy) -> str:
     if strategy is RetrievalStrategy.SEMANTIC:
         return "semantic retrieval failed"
@@ -291,7 +317,8 @@ def _run_semantic_path(
     settings: Settings,
     qdrant_client: Any | None,
     shopaikey_client: Any | None,
-) -> tuple[list[float], list[dict[str, Any]]]:
+) -> tuple[list[float], list[dict[str, Any]], list[RetryAttempt]]:
+    attempts: list[RetryAttempt] = []
     query_embedding, candidates = retrieval.retrieve_semantic_candidates(
         subquery.text,
         document_ids=document_ids,
@@ -299,10 +326,11 @@ def _run_semantic_path(
         settings=settings,
         qdrant_client=qdrant_client,
         shopaikey_client=shopaikey_client,
+        retry_attempts=attempts,
     )
     return query_embedding, [
         _with_subquery_id(candidate, subquery.id) for candidate in candidates
-    ]
+    ], attempts
 
 
 def _run_keyword_path(
@@ -312,10 +340,11 @@ def _run_keyword_path(
     filters: RetrievalFilters,
     settings: Settings,
     supabase_client: Any | None,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], list[RetryAttempt]]:
     if not settings.ENABLE_KEYWORD_SEARCH:
-        return []
-    return [
+        return [], []
+    attempts: list[RetryAttempt] = []
+    candidates = [
         _with_subquery_id(candidate, subquery.id)
         for candidate in retrieval.keyword_search.search_keyword_chunks(
             subquery.text,
@@ -323,8 +352,10 @@ def _run_keyword_path(
             filters=filters,
             settings=settings,
             supabase_client=supabase_client,
+            retry_attempts=attempts,
         )
     ]
+    return candidates, attempts
 
 
 def retrieve_candidates_node(
@@ -349,6 +380,7 @@ def retrieve_candidates_node(
     successful_paths: list[str] = []
     query_embedding: list[float] = []
     metadata_skipped_count = 0
+    retry_attempts: list[RetryAttempt] = []
 
     def _record(path_key: str, candidates: list[dict[str, Any]]) -> None:
         path_candidates[path_key] = candidates
@@ -377,7 +409,7 @@ def retrieve_candidates_node(
             path_key = f"{subquery.id}:semantic"
             attempted_paths.append(path_key)
             try:
-                embedding, candidates = _run_semantic_path(
+                embedding, candidates, attempts = _run_semantic_path(
                     subquery,
                     document_ids=document_ids,
                     filters=filters,
@@ -388,29 +420,49 @@ def retrieve_candidates_node(
                 if embedding and not query_embedding:
                     query_embedding = embedding
                 _record(path_key, candidates)
+                retry_attempts.extend(attempts)
             except Exception as exc:
                 path_errors[path_key] = safe_detail(
                     str(exc), fallback="semantic retrieval failed"
                 )
+                if isinstance(exc, RetryExhaustedError):
+                    retry_attempts.append(
+                        RetryAttempt(
+                            operation=exc.operation,
+                            attempt=exc.attempts,
+                            max_attempts=exc.attempts,
+                            retryable=True,
+                            error_code=exc.error_code,
+                        )
+                    )
 
         if run_keyword:
             path_key = f"{subquery.id}:keyword"
             attempted_paths.append(path_key)
             try:
-                _record(
-                    path_key,
-                    _run_keyword_path(
-                        subquery,
-                        document_ids=document_ids,
-                        filters=filters,
-                        settings=resolved_settings,
-                        supabase_client=supabase_client,
-                    ),
+                candidates, attempts = _run_keyword_path(
+                    subquery,
+                    document_ids=document_ids,
+                    filters=filters,
+                    settings=resolved_settings,
+                    supabase_client=supabase_client,
                 )
+                retry_attempts.extend(attempts)
+                _record(path_key, candidates)
             except Exception as exc:
                 path_errors[path_key] = safe_detail(
                     str(exc), fallback="keyword retrieval failed"
                 )
+                if isinstance(exc, RetryExhaustedError):
+                    retry_attempts.append(
+                        RetryAttempt(
+                            operation=exc.operation,
+                            attempt=exc.attempts,
+                            max_attempts=exc.attempts,
+                            retryable=True,
+                            error_code=exc.error_code,
+                        )
+                    )
 
     metrics = {
         "path_count": len(path_candidates),
@@ -426,6 +478,7 @@ def retrieve_candidates_node(
         metrics["path_errors"] = path_errors
     if path_errors and successful_paths:
         metrics["fallback_path"] = _path_name(successful_paths[0])
+    _merge_retry_metrics(metrics, "retrieve_candidates", retry_attempts)
 
     if attempted_paths and not successful_paths:
         return {
@@ -553,15 +606,20 @@ def jina_rerank_node(
         resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K,
     )
     try:
+        attempts: list[RetryAttempt] = []
         reranked_chunks = retrieval.rerank_chunks(
             question,
             retrieved_chunks,
             settings=resolved_settings,
             jina_client=jina_client,
+            retry_attempts=attempts,
         )
         metrics = dict(state.get("retrieval_metrics") or {})
         metrics["rerank_candidate_count"] = candidate_count
         metrics["final_reranked_count"] = len(reranked_chunks)
+        _merge_retry_metrics(metrics, "rerank_candidates", attempts)
+        if attempts and attempts[-1].error_code != "ok":
+            metrics["fallback_path"] = "deterministic_fused_score"
         return {
             "reranked_chunks": reranked_chunks,
             "retrieval_metrics": metrics,
@@ -671,11 +729,17 @@ def generate_answer_node(
         )
         context_chunks = assign_citation_keys(context_chunks)
         context = build_context_prompt(context_chunks)
-        response = client.chat.completions.create(
-            model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
-            messages=build_answer_messages(context=context, question=question),
-            temperature=resolved_settings.TEMPERATURE,
-            max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
+        attempts: list[RetryAttempt] = []
+        response = retry_sync(
+            "answer_generation",
+            lambda: client.chat.completions.create(
+                model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
+                messages=build_answer_messages(context=context, question=question),
+                temperature=resolved_settings.TEMPERATURE,
+                max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
+            ),
+            settings=resolved_settings,
+            on_attempt=attempts.append,
         )
         answer = extract_chat_content(response)
         if answer is None:
@@ -688,6 +752,11 @@ def generate_answer_node(
         return {
             "answer": answer,
             "sources": build_source_citations(context_chunks),
+            "retrieval_metrics": _merge_retry_metrics(
+                dict(state.get("retrieval_metrics") or {}),
+                "generate_answer",
+                attempts,
+            ),
         }
     except Exception as exc:  # pragma: no cover - defensive guard
         return {
@@ -744,15 +813,21 @@ def regenerate_answer_node(
         )
         context_chunks = assign_citation_keys(context_chunks)
         context = build_context_prompt(context_chunks)
-        response = client.chat.completions.create(
-            model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
-            messages=build_regeneration_messages(
-                context=context,
-                question=question,
-                feedback=_compact_grounding_feedback(state),
+        attempts: list[RetryAttempt] = []
+        response = retry_sync(
+            "answer_regeneration",
+            lambda: client.chat.completions.create(
+                model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
+                messages=build_regeneration_messages(
+                    context=context,
+                    question=question,
+                    feedback=_compact_grounding_feedback(state),
+                ),
+                temperature=resolved_settings.TEMPERATURE,
+                max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
             ),
-            temperature=resolved_settings.TEMPERATURE,
-            max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
+            settings=resolved_settings,
+            on_attempt=attempts.append,
         )
         answer = extract_chat_content(response)
         if answer is None:
@@ -765,6 +840,11 @@ def regenerate_answer_node(
         return {
             "answer": answer,
             "sources": build_source_citations(context_chunks),
+            "retrieval_metrics": _merge_retry_metrics(
+                dict(state.get("retrieval_metrics") or {}),
+                "regenerate_answer",
+                attempts,
+            ),
         }
     except Exception as exc:  # pragma: no cover - defensive guard
         return {
@@ -842,23 +922,46 @@ def verify_grounding_node(
         }
 
     try:
-        result = grounding.verify_answer_grounding(
-            answer,
-            evidence=evidence,
-            settings=resolved_settings,
-            shopaikey_client=shopaikey_client,
-        )
+        attempts: list[RetryAttempt] = []
+        try:
+            result = grounding.verify_answer_grounding(
+                answer,
+                evidence=evidence,
+                settings=resolved_settings,
+                shopaikey_client=shopaikey_client,
+                retry_attempts=attempts,
+            )
+        except TypeError as exc:
+            if "unexpected keyword argument" not in str(exc):
+                raise
+            result = grounding.verify_answer_grounding(
+                answer,
+                evidence=evidence,
+                settings=resolved_settings,
+                shopaikey_client=shopaikey_client,
+            )
     except grounding.GroundingProviderError:
+        metrics = _merge_retry_metrics(
+            dict(state.get("retrieval_metrics") or {}),
+            "verify_grounding",
+            locals().get("attempts", []),
+        )
         return {
             "answer_verified": False,
             "grounding_provider_failed": True,
             "verification_attempt_count": verification_attempt_count,
+            "retrieval_metrics": metrics,
         }
 
     return {
         "grounding_result": result,
         "answer_verified": result.grounded and result.score >= resolved_settings.GROUNDING_MIN_SCORE,
         "verification_attempt_count": verification_attempt_count,
+        "retrieval_metrics": _merge_retry_metrics(
+            dict(state.get("retrieval_metrics") or {}),
+            "verify_grounding",
+            attempts,
+        ),
     }
 
 

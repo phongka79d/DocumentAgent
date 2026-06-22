@@ -10,6 +10,7 @@ from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
 from app.core.contracts import DocumentStatus, QdrantPayloadKey, RelationType, SummaryType, TableName
+from app.core.retry import retry_sync
 from app.services.qdrant_client import create_qdrant_client
 from app.services.shopaikey_client import create_shopaikey_client
 from app.services.supabase_client import create_supabase_client
@@ -192,10 +193,13 @@ def _payload_value(row: Mapping[str, Any], key: str) -> Any:
 
 def _ready_document(client: Any, document_id: str) -> bool:
     rows = _response_rows(
-        client.table(DOCUMENTS_TABLE)
-        .select("id,status")
-        .eq("id", document_id)
-        .execute()
+        retry_sync(
+            "relation_persistence",
+            lambda: client.table(DOCUMENTS_TABLE)
+            .select("id,status")
+            .eq("id", document_id)
+            .execute(),
+        )
     )
     if not rows:
         return False
@@ -250,9 +254,13 @@ def select_relation_candidates(
     resolved_settings = _resolve_settings(settings)
     normalized_document_id = _normalize_uuid(document_id, "document_id")
     client = _resolve_shopaikey_client(resolved_settings, shopaikey_client)
-    embedding_response = client.embeddings.create(
-        model=resolved_settings.SHOPAIKEY_EMBEDDING_MODEL,
-        input=[_normalize_text(summary_content, "summary_content")],
+    embedding_response = retry_sync(
+        "relation_embedding",
+        lambda: client.embeddings.create(
+            model=resolved_settings.SHOPAIKEY_EMBEDDING_MODEL,
+            input=[_normalize_text(summary_content, "summary_content")],
+        ),
+        settings=resolved_settings,
     )
     query_embedding = _embedding_vector(embedding_response)
 
@@ -265,13 +273,17 @@ def select_relation_candidates(
             )
         ]
     )
-    response = qdrant.query_points(
-        collection_name=resolved_settings.QDRANT_COLLECTION,
-        query=query_embedding,
-        query_filter=query_filter,
-        limit=max(resolved_settings.RELATION_MAX_RELATED_DOCUMENTS * 5, 1),
-        with_payload=True,
-        with_vectors=False,
+    response = retry_sync(
+        "relation_qdrant_search",
+        lambda: qdrant.query_points(
+            collection_name=resolved_settings.QDRANT_COLLECTION,
+            query=query_embedding,
+            query_filter=query_filter,
+            limit=max(resolved_settings.RELATION_MAX_RELATED_DOCUMENTS * 5, 1),
+            with_payload=True,
+            with_vectors=False,
+        ),
+        settings=resolved_settings,
     )
     return _relation_candidates_from_points(
         source_document_id=normalized_document_id,
@@ -460,7 +472,10 @@ def create_relation(
     )
     client = _resolve_supabase_client(supabase_client)
     rows = _response_rows(
-        client.table(DOCUMENT_RELATIONS_TABLE).insert(payload).execute()
+        retry_sync(
+            "relation_persistence",
+            lambda: client.table(DOCUMENT_RELATIONS_TABLE).insert(payload).execute(),
+        )
     )
     return _normalize_row(rows[0]) if rows else payload
 
@@ -474,11 +489,12 @@ def list_relations(
         f"source_document_id.eq.{normalized_document_id},"
         f"target_document_id.eq.{normalized_document_id}"
     )
-    response = (
-        client.table(DOCUMENT_RELATIONS_TABLE)
+    response = retry_sync(
+        "relation_persistence",
+        lambda: client.table(DOCUMENT_RELATIONS_TABLE)
         .select("*")
         .or_(expression)
-        .execute()
+        .execute(),
     )
     return sorted(
         (_normalize_row(row) for row in _response_rows(response)),
@@ -570,16 +586,20 @@ def replace_document_relations(
         f"target_document_id.eq.{normalized_document_id}"
     )
     client = _resolve_supabase_client(supabase_client)
-    (
-        client.table(DOCUMENT_RELATIONS_TABLE)
+    retry_sync(
+        "relation_persistence",
+        lambda: client.table(DOCUMENT_RELATIONS_TABLE)
         .delete()
         .or_(expression)
-        .execute()
+        .execute(),
     )
     if not payloads:
         return []
     rows = _response_rows(
-        client.table(DOCUMENT_RELATIONS_TABLE).insert(payloads).execute()
+        retry_sync(
+            "relation_persistence",
+            lambda: client.table(DOCUMENT_RELATIONS_TABLE).insert(payloads).execute(),
+        )
     )
     normalized_rows = [_normalize_row(row) for row in rows] if rows else payloads
     return sorted(normalized_rows, key=_relation_sort_key)
@@ -627,21 +647,25 @@ def update_document_relations(
         }
 
     model_client = _resolve_shopaikey_client(resolved_settings, shopaikey_client)
-    response = model_client.chat.completions.create(
-        model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
-        messages=[
-            {"role": "system", "content": RELATION_SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": _relation_prompt(
-                    source_document_id=normalized_document_id,
-                    summary_content=summary_content,
-                    candidates=candidates,
-                ),
-            },
-        ],
-        temperature=0,
-        max_tokens=600,
+    response = retry_sync(
+        "relation_generation",
+        lambda: model_client.chat.completions.create(
+            model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
+            messages=[
+                {"role": "system", "content": RELATION_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": _relation_prompt(
+                        source_document_id=normalized_document_id,
+                        summary_content=summary_content,
+                        candidates=candidates,
+                    ),
+                },
+            ],
+            temperature=0,
+            max_tokens=600,
+        ),
+        settings=resolved_settings,
     )
     raw_relations, discarded_count = _strict_relation_json(_chat_content(response))
     accepted_records, validation_discards = _validated_relation_records(
@@ -672,4 +696,7 @@ def delete_document_relations(
         f"target_document_id.eq.{normalized_document_id}"
     )
     client = _resolve_supabase_client(supabase_client)
-    client.table(DOCUMENT_RELATIONS_TABLE).delete().or_(expression).execute()
+    retry_sync(
+        "relation_persistence",
+        lambda: client.table(DOCUMENT_RELATIONS_TABLE).delete().or_(expression).execute(),
+    )

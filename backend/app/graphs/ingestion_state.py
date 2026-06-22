@@ -33,6 +33,7 @@ class IngestionState(TypedDict, total=False):
     summary_records: list[dict[str, Any]]
     relation_update_result: dict[str, Any]
     trace_id: str
+    workflow_trace: list[dict[str, Any]]
     retry_attempts: dict[str, int]
 
     status: DocumentStatus

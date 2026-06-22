@@ -391,6 +391,7 @@ def test_ingestion_state_contains_required_fields_and_excludes_binary_fields():
         "summary_records",
         "relation_update_result",
         "trace_id",
+        "workflow_trace",
         "retry_attempts",
         "status",
         "error_message",
@@ -673,6 +674,49 @@ def test_embed_chunks_node_generates_embeddings_and_metadata(monkeypatch):
     assert result["embedding_dimension"] == 3
 
 
+def test_embed_chunks_node_retries_transient_embedding_failure(monkeypatch):
+    settings = _test_settings().model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 2,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+
+    class FlakyEmbeddingEndpoint:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def create(self, *, model: str, input: list[str]):
+            self.calls += 1
+            if self.calls == 1:
+                raise TimeoutError("temporary embedding timeout")
+            return SimpleNamespace(
+                data=[SimpleNamespace(embedding=[0.1, 0.2, 0.3])]
+            )
+
+    endpoint = FlakyEmbeddingEndpoint()
+    fake_client = SimpleNamespace(embeddings=endpoint)
+
+    _patch_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        ingestion_nodes,
+        "create_shopaikey_client",
+        lambda settings=None: fake_client,
+    )
+
+    result = ingestion_nodes.embed_chunks_node(
+        {
+            "document_id": FIXED_DOCUMENT_ID,
+            "chunks": [{"id": "chunk-1", "content": "first chunk"}],
+        }
+    )
+
+    assert endpoint.calls == 2
+    assert result["embeddings"] == [[0.1, 0.2, 0.3]]
+    assert result["retry_attempts"] == {"embed_chunks": 2}
+
+
 def test_upsert_qdrant_node_rejects_chunks_without_saved_ids(monkeypatch):
     settings = _test_settings()
     fake_qdrant_client = FakeQdrantClient()
@@ -893,6 +937,43 @@ def test_update_document_relations_node_records_warning_without_failing_indexing
     assert "relation provider unavailable" in result["relation_update_result"]["warning"]
 
 
+def test_update_document_relations_node_keeps_index_ready_after_retry_exhaustion(monkeypatch):
+    settings = _test_settings().model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 2,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+    calls = 0
+
+    def _raise(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        raise TimeoutError("relation update timed out")
+
+    _patch_settings(monkeypatch, settings)
+    monkeypatch.setattr(ingestion_nodes.relations, "update_document_relations", _raise)
+
+    result = ingestion_nodes.update_document_relations_node(
+        {
+            "document_id": FIXED_DOCUMENT_ID,
+            "summary_records": [
+                {
+                    "summary_type": "document",
+                    "content": "Document summary",
+                }
+            ],
+        }
+    )
+
+    assert calls == 2
+    assert result.get("status") != "failed"
+    assert result["relation_update_result"]["status"] == "warning"
+    assert result["relation_update_result"]["error_code"] == "relation_update_retry_exhausted"
+    assert result["retry_attempts"] == {"update_document_relations": 2}
+
+
 def test_mark_ready_node_updates_completion_metadata(monkeypatch):
     settings = _test_settings()
     fake_client = FakeSupabaseClient(documents=[_document_row(status="processing")])
@@ -1095,6 +1176,10 @@ def test_build_ingestion_graph_invokes_nodes_in_required_order(monkeypatch):
     ]
     assert result["status"] == "ready"
     assert result["qdrant_collection"] == settings.QDRANT_COLLECTION
+    assert [event["node_name"] for event in result["workflow_trace"]] == call_order
+    assert all(event["attempt"] == 1 for event in result["workflow_trace"])
+    assert all("duration_ms" in event for event in result["workflow_trace"])
+    assert "chunk zero" not in str(result["workflow_trace"])
 
 
 def test_build_ingestion_graph_routes_parse_failure_to_mark_failed(monkeypatch):
@@ -1185,3 +1270,12 @@ def test_build_ingestion_graph_routes_parse_failure_to_mark_failed(monkeypatch):
     assert mark_failed_input["error_message"] == "parse exploded"
     assert result["status"] == "failed"
     assert result["error_message"] == "parse exploded"
+    assert [event["node_name"] for event in result["workflow_trace"]] == [
+        "load_document_record",
+        "mark_processing",
+        "parse_document",
+        "mark_failed",
+    ]
+    assert result["workflow_trace"][2]["status"] == "failed"
+    assert result["workflow_trace"][2]["error_code"] == "parse_document_failed"
+    assert "parse exploded" not in str(result["workflow_trace"])

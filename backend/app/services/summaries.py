@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.core.config import Settings, get_settings
 from app.core.contracts import SummaryType, TableName
+from app.core.retry import RetryExhaustedError, retry_sync
 from app.services.shopaikey_client import create_shopaikey_client
 from app.services.supabase_client import create_supabase_client
 
@@ -148,15 +149,20 @@ def _call_summary_model(
     model: str,
     max_tokens: int,
     user_prompt: str,
+    settings: Settings,
 ) -> str:
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0,
-        max_tokens=max_tokens,
+    response = retry_sync(
+        "summary_generation",
+        lambda: client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0,
+            max_tokens=max_tokens,
+        ),
+        settings=settings,
     )
     return _chat_content(response)
 
@@ -274,7 +280,10 @@ def create_summary(
     )
     client = _resolve_supabase_client(supabase_client)
     rows = _response_rows(
-        client.table(DOCUMENT_SUMMARIES_TABLE).insert(payload).execute()
+        retry_sync(
+            "summary_persistence",
+            lambda: client.table(DOCUMENT_SUMMARIES_TABLE).insert(payload).execute(),
+        )
     )
     return _normalize_row(rows[0]) if rows else payload
 
@@ -284,11 +293,12 @@ def list_summaries(
 ) -> list[dict[str, Any]]:
     normalized_document_id = _normalize_uuid(document_id, "document_id")
     client = _resolve_supabase_client(supabase_client)
-    response = (
-        client.table(DOCUMENT_SUMMARIES_TABLE)
+    response = retry_sync(
+        "summary_persistence",
+        lambda: client.table(DOCUMENT_SUMMARIES_TABLE)
         .select("*")
         .eq("document_id", normalized_document_id)
-        .execute()
+        .execute(),
     )
     rows = [_normalize_row(row) for row in _response_rows(response)]
     return sorted(rows, key=_summary_sort_key)
@@ -314,16 +324,20 @@ def replace_document_summaries(
         for record in summary_records
     ]
     client = _resolve_supabase_client(supabase_client)
-    (
-        client.table(DOCUMENT_SUMMARIES_TABLE)
+    retry_sync(
+        "summary_persistence",
+        lambda: client.table(DOCUMENT_SUMMARIES_TABLE)
         .delete()
         .eq("document_id", normalized_document_id)
-        .execute()
+        .execute(),
     )
     if not payloads:
         return []
     rows = _response_rows(
-        client.table(DOCUMENT_SUMMARIES_TABLE).insert(payloads).execute()
+        retry_sync(
+            "summary_persistence",
+            lambda: client.table(DOCUMENT_SUMMARIES_TABLE).insert(payloads).execute(),
+        )
     )
     normalized_rows = [_normalize_row(row) for row in rows] if rows else payloads
     return sorted(normalized_rows, key=_summary_sort_key)
@@ -368,6 +382,7 @@ def generate_document_summaries(
                     heading=heading,
                     chunks=group_chunks,
                 ),
+                settings=resolved_settings,
             )
             section_records.append(
                 {
@@ -391,6 +406,7 @@ def generate_document_summaries(
             model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
             max_tokens=resolved_settings.SUMMARY_DOCUMENT_MAX_TOKENS,
             user_prompt=_document_prompt(section_records),
+            settings=resolved_settings,
         )
         summary_records = [
             {
@@ -403,6 +419,8 @@ def generate_document_summaries(
             },
             *section_records,
         ]
+    except RetryExhaustedError:
+        raise
     except Exception as exc:
         return {
             "status": "failed",
@@ -421,9 +439,10 @@ def delete_document_summaries(
 ) -> None:
     normalized_document_id = _normalize_uuid(document_id, "document_id")
     client = _resolve_supabase_client(supabase_client)
-    (
-        client.table(DOCUMENT_SUMMARIES_TABLE)
+    retry_sync(
+        "summary_persistence",
+        lambda: client.table(DOCUMENT_SUMMARIES_TABLE)
         .delete()
         .eq("document_id", normalized_document_id)
-        .execute()
+        .execute(),
     )

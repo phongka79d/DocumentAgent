@@ -404,6 +404,57 @@ def test_search_semantic_chunks_passes_metadata_filters_to_qdrant():
     ]
 
 
+def test_retrieve_candidates_node_records_retry_attempts_for_semantic_recovery():
+    settings = _test_settings().model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 2,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+
+    class FlakyQdrantClient(FakeQdrantClient):
+        def query_points(self, **kwargs):
+            self.query_calls.append(kwargs)
+            if len(self.query_calls) == 1:
+                raise TimeoutError("qdrant timed out")
+            return SimpleNamespace(
+                points=[
+                    _qdrant_point(
+                        chunk_id="chunk-a",
+                        document_id=DOC_A,
+                        chunk_index=0,
+                        file_name="alpha.pdf",
+                        score=0.9,
+                        text="alpha chunk",
+                    )
+                ]
+            )
+
+    result = query_nodes.retrieve_candidates_node(
+        {
+            "query_plan": QueryPlan(
+                is_complex=False,
+                strategy=RetrievalStrategy.SEMANTIC,
+                subqueries=[QuerySubquery(id="q1", text="pricing")],
+                inferred_filters=RetrievalFilters(),
+                needs_relations=False,
+            ),
+            "subqueries": [QuerySubquery(id="q1", text="pricing")],
+            "document_ids": [DOC_A],
+        },
+        settings=settings,
+        qdrant_client=FlakyQdrantClient(),
+        shopaikey_client=FakeShopAIKeyClient(vectors=[[0.1, 0.2, 0.3]]),
+    )
+
+    assert "error_message" not in result
+    assert result["path_candidates"]["q1:semantic"][0]["chunk_id"] == "chunk-a"
+    assert result["retrieval_metrics"]["retry_attempts"] == {
+        "retrieve_candidates": 2
+    }
+
+
 def test_get_chunks_by_document_and_indexes_uses_supabase_lookup_order():
     settings = _test_settings()
     fake_client = FakeSupabaseClient(
@@ -1317,6 +1368,7 @@ def test_query_state_contains_required_fields_and_no_extra_fields():
         "answer_verified",
         "grounding_provider_failed",
         "trace_id",
+        "workflow_trace",
         "retrieval_metrics",
         "error_message",
     }
@@ -2582,6 +2634,10 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
     ]
     assert result["answer"] == "Pricing is based on usage tiers."
     assert result["sources"][0]["chunk_id"] == "chunk-1"
+    assert [event["node_name"] for event in result["workflow_trace"]] == call_order
+    assert all(event["attempt"] == 1 for event in result["workflow_trace"])
+    assert all("duration_ms" in event for event in result["workflow_trace"])
+    assert "Pricing is based on usage tiers" not in str(result["workflow_trace"])
 
 
 def test_build_query_graph_regenerates_once_then_persists_only_verified_answer(monkeypatch):
@@ -3181,6 +3237,8 @@ def test_build_query_graph_routes_blank_question_to_validation_error(monkeypatch
     result = graph.invoke({"question": "   "})
 
     assert result["error_message"] == "question is required"
+    assert result["workflow_trace"][0]["error_code"] == "prepare_query_failed"
+    assert "question is required" not in str(result["workflow_trace"])
 
 
 def test_build_query_graph_returns_no_relevant_information_when_retrieval_is_empty(

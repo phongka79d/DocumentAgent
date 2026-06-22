@@ -7,6 +7,7 @@ from typing import Any
 
 from app.core.config import Settings, get_settings
 from app.core.contracts import RetrievalStrategy
+from app.core.retry import retry_sync
 from app.graphs.query_formatting import extract_chat_content, normalize_text
 from app.graphs.query_prompts import (
     QUERY_PLANNING_RESPONSE_FORMAT,
@@ -193,21 +194,25 @@ def plan_query(
             explicit_filters
         )
         client = _resolve_shopaikey_client(resolved_settings, shopaikey_client)
-        response = client.chat.completions.create(
-            model=resolved_settings.SHOPAIKEY_INPUT_MODEL,
-            messages=build_query_planning_messages(
-                question=normalized_question,
-                document_ids=list(document_ids or []),
-                explicit_filters=(
-                    normalized_explicit_filters.model_dump(mode="json")
-                    if normalized_explicit_filters is not None
-                    else None
+        response = retry_sync(
+            "query_planner",
+            lambda: client.chat.completions.create(
+                model=resolved_settings.SHOPAIKEY_INPUT_MODEL,
+                messages=build_query_planning_messages(
+                    question=normalized_question,
+                    document_ids=list(document_ids or []),
+                    explicit_filters=(
+                        normalized_explicit_filters.model_dump(mode="json")
+                        if normalized_explicit_filters is not None
+                        else None
+                    ),
+                    max_subqueries=resolved_settings.QUERY_MAX_SUBQUERIES,
                 ),
-                max_subqueries=resolved_settings.QUERY_MAX_SUBQUERIES,
+                temperature=resolved_settings.QUERY_PLANNER_TEMPERATURE,
+                max_tokens=resolved_settings.QUERY_PLANNER_MAX_TOKENS,
+                response_format=QUERY_PLANNING_RESPONSE_FORMAT,
             ),
-            temperature=resolved_settings.QUERY_PLANNER_TEMPERATURE,
-            max_tokens=resolved_settings.QUERY_PLANNER_MAX_TOKENS,
-            response_format=QUERY_PLANNING_RESPONSE_FORMAT,
+            settings=resolved_settings,
         )
         content = extract_chat_content(response)
         if content is None:

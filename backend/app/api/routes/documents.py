@@ -9,6 +9,7 @@ from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
 from app.core.errors import safe_http_exception
+from app.core.retry import retry_sync
 from app.graphs.ingestion_graph import build_ingestion_graph
 from app.models.schemas import (
     DocumentChunkListResponse,
@@ -20,6 +21,7 @@ from app.models.schemas import (
 )
 from app.services.chunks import list_chunks_by_document
 from app.services import documents as document_service
+from app.services import observability
 from app.services import relations as relation_service
 from app.services import summaries as summary_service
 from app.services.hashing import compute_sha256
@@ -91,9 +93,13 @@ def delete_document_vectors(
             )
         ]
     )
-    client.delete(
-        collection_name=collection_name,
-        points_selector=payload_filter,
+    retry_sync(
+        "qdrant_delete",
+        lambda: client.delete(
+            collection_name=collection_name,
+            points_selector=payload_filter,
+        ),
+        settings=settings,
     )
 
 
@@ -108,8 +114,47 @@ def delete_document_chunks(
 
 
 def _invoke_ingestion_graph(document_id: UUID, *, settings: Settings) -> dict[str, Any]:
+    started_perf = observability.perf_now()
+    run_id = None
+    if settings.ENABLE_WORKFLOW_TRACING:
+        run = observability.create_workflow_run(
+            workflow_type="ingestion",
+            entity_id=str(document_id),
+            started_at=observability.now_utc(),
+        )
+        run_id = run.get("id") if isinstance(run, Mapping) else None
     graph = build_ingestion_graph(settings=settings)
-    return graph.invoke({"document_id": str(document_id)})
+    initial_state: dict[str, Any] = {"document_id": str(document_id)}
+    if run_id is not None:
+        initial_state["trace_id"] = str(run_id)
+    try:
+        result = graph.invoke(initial_state)
+    except Exception:
+        if run_id is not None:
+            observability.update_workflow_run(
+                run_id,
+                status="failed",
+                trace=[],
+                error_code="ingestion_api_exception",
+                error_message="Document ingestion failed",
+                finished_at=observability.now_utc(),
+                duration_ms=observability.duration_ms(started_perf),
+            )
+        raise
+    if run_id is not None:
+        failed = isinstance(result, Mapping) and result.get("status") == "failed"
+        observability.update_workflow_run(
+            run_id,
+            status="failed" if failed else "completed",
+            trace=list(result.get("workflow_trace") or []) if isinstance(result, Mapping) else [],
+            error_code="ingestion_failed" if failed else None,
+            error_message="Document ingestion failed" if failed else None,
+            finished_at=observability.now_utc(),
+            duration_ms=observability.duration_ms(started_perf),
+        )
+        if isinstance(result, Mapping) and result.get("trace_id") is None:
+            result = {**dict(result), "trace_id": str(run_id)}
+    return result
 
 
 def run_document_index(document_id: UUID, *, settings: Settings) -> Any:

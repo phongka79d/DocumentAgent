@@ -9,6 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from app.core.config import Settings, get_settings
 from app.core.contracts import ChunkField, DocumentStatus, TableName
 from app.core.errors import safe_detail
+from app.core.retry import RetryAttempt, RetryExhaustedError, retry_sync
 from app.graphs import ingestion_inputs
 from app.graphs import ingestion_payloads
 from app.graphs.ingestion_state import IngestionState
@@ -66,14 +67,19 @@ def _failure_state(
     error_message: str | None,
     *,
     fallback: str = DEFAULT_INGESTION_ERROR,
+    error_code: str | None = None,
+    retry_attempts: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     message = safe_detail(error_message, fallback=fallback)
     result: dict[str, Any] = {
         "status": DocumentStatus.FAILED,
         "error_message": message,
+        "error_code": error_code or "ingestion_failed",
     }
     if document_id is not None:
         result["document_id"] = document_id
+    if retry_attempts:
+        result["retry_attempts"] = retry_attempts
     return result
 
 
@@ -88,9 +94,56 @@ def _update_document_row(
     client = supabase_client if supabase_client is not None else create_supabase_client(
         resolved_settings
     )
-    client.table(DOCUMENTS_TABLE).update(jsonable_encoder(payload)).eq(
-        "id", document_id
-    ).execute()
+    retry_sync(
+        "document_update",
+        lambda: client.table(DOCUMENTS_TABLE).update(jsonable_encoder(payload)).eq(
+            "id", document_id
+        ).execute(),
+        settings=resolved_settings,
+    )
+
+
+def _attempt_count(attempts: list[RetryAttempt]) -> int:
+    if not attempts:
+        return 1
+    return max(attempt.attempt for attempt in attempts)
+
+
+def _retry_attempts_for(
+    node_name: str,
+    attempts: list[RetryAttempt],
+) -> dict[str, int]:
+    attempt_count = _attempt_count(attempts)
+    return {node_name: attempt_count} if attempt_count > 1 else {}
+
+
+def _with_retry_attempts(
+    result: dict[str, Any],
+    node_name: str,
+    attempts: list[RetryAttempt],
+) -> dict[str, Any]:
+    retry_attempts = _retry_attempts_for(node_name, attempts)
+    if retry_attempts:
+        return {**result, "retry_attempts": retry_attempts}
+    return result
+
+
+def _retry_exhausted_failure(
+    document_id: str | None,
+    node_name: str,
+    exc: RetryExhaustedError,
+) -> dict[str, Any]:
+    operation = "".join(
+        character.lower() if character.isalnum() else "_"
+        for character in exc.operation
+    ).strip("_")
+    error_code = f"{operation or node_name}_retry_exhausted"
+    return _failure_state(
+        document_id,
+        str(exc),
+        error_code=error_code,
+        retry_attempts={node_name: exc.attempts},
+    )
 
 
 def _normalize_bytes(downloaded: Any) -> bytes:
@@ -174,7 +227,13 @@ def parse_document_node(state: IngestionState) -> dict[str, Any]:
     try:
         client = create_supabase_client(settings)
         bucket = client.storage.from_(settings.SUPABASE_STORAGE_BUCKET)
-        downloaded = bucket.download(storage_path)
+        attempts: list[RetryAttempt] = []
+        downloaded = retry_sync(
+            "storage_download",
+            lambda: bucket.download(storage_path),
+            settings=settings,
+            on_attempt=attempts.append,
+        )
         file_bytes = _normalize_bytes(downloaded)
         parser = get_parser_for_file(file_name, mime_type=mime_type)
         parsed_document = parser.parse(
@@ -184,12 +243,18 @@ def parse_document_node(state: IngestionState) -> dict[str, Any]:
         )
         pages = parsed_document.get("pages") or []
         metadata = parsed_document.get("metadata") or {}
-        return {
-            "parsed_document": parsed_document,
-            "total_pages": len(pages),
-            "parser_name": metadata.get("parser_name"),
-            "parser_version": metadata.get("parser_version"),
-        }
+        return _with_retry_attempts(
+            {
+                "parsed_document": parsed_document,
+                "total_pages": len(pages),
+                "parser_name": metadata.get("parser_name"),
+                "parser_version": metadata.get("parser_version"),
+            },
+            "parse_document",
+            attempts,
+        )
+    except RetryExhaustedError as exc:
+        return _retry_exhausted_failure(document_id, "parse_document", exc)
     except Exception as exc:
         return _failure_state(document_id, str(exc))
 
@@ -237,17 +302,26 @@ def save_chunks_node(state: IngestionState) -> dict[str, Any]:
 
     try:
         client = create_supabase_client(settings)
-        client.table(DOCUMENT_CHUNKS_TABLE).delete().eq("document_id", document_id).execute()
+        attempts: list[RetryAttempt] = []
 
-        payload_rows = [
-            ingestion_payloads.document_chunk_insert_payload(
-                document_id,
-                chunk=chunk,
-                metadata=metadata,
-            )
-            for chunk in chunks
-        ]
-        response = client.table(DOCUMENT_CHUNKS_TABLE).insert(payload_rows).execute()
+        def _replace_chunks() -> Any:
+            client.table(DOCUMENT_CHUNKS_TABLE).delete().eq("document_id", document_id).execute()
+            payload_rows = [
+                ingestion_payloads.document_chunk_insert_payload(
+                    document_id,
+                    chunk=chunk,
+                    metadata=metadata,
+                )
+                for chunk in chunks
+            ]
+            return client.table(DOCUMENT_CHUNKS_TABLE).insert(payload_rows).execute()
+
+        response = retry_sync(
+            "chunk_persistence",
+            _replace_chunks,
+            settings=settings,
+            on_attempt=attempts.append,
+        )
         rows = _resolve_rows(response)
         if len(rows) != len(chunks):
             return _failure_state(document_id, "Chunk save did not return inserted rows")
@@ -270,10 +344,16 @@ def save_chunks_node(state: IngestionState) -> dict[str, Any]:
             saved_chunk[ChunkField.DOCUMENT_ID] = document_id
             saved_chunks.append(saved_chunk)
 
-        return {
-            "chunks": saved_chunks,
-            "total_chunks": len(saved_chunks),
-        }
+        return _with_retry_attempts(
+            {
+                "chunks": saved_chunks,
+                "total_chunks": len(saved_chunks),
+            },
+            "save_chunks",
+            attempts,
+        )
+    except RetryExhaustedError as exc:
+        return _retry_exhausted_failure(document_id, "save_chunks", exc)
     except Exception as exc:  # pragma: no cover - defensive, exercised by failures
         return _failure_state(document_id, f"Chunk save failed: {exc}")
 
@@ -291,16 +371,29 @@ def summarize_document_node(state: IngestionState) -> dict[str, Any]:
     if not isinstance(chunks, list) or not chunks:
         return _failure_state(document_id, "chunks are required before summarization")
 
-    result = summaries.generate_document_summaries(
-        document_id,
-        chunks,
-        settings=settings,
-    )
+    attempts: list[RetryAttempt] = []
+    try:
+        result = retry_sync(
+            "summary_generation",
+            lambda: summaries.generate_document_summaries(
+                document_id,
+                chunks,
+                settings=settings,
+            ),
+            settings=settings,
+            on_attempt=attempts.append,
+        )
+    except RetryExhaustedError as exc:
+        return _retry_exhausted_failure(document_id, "summarize_document", exc)
     if isinstance(result, Mapping) and result.get("status") == DocumentStatus.FAILED:
         return _failure_state(document_id, str(result.get("error_message")))
     if not isinstance(result, list):
         return _failure_state(document_id, "Summary generation returned invalid state")
-    return {"summary_records": result}
+    return _with_retry_attempts(
+        {"summary_records": result},
+        "summarize_document",
+        attempts,
+    )
 
 
 def embed_chunks_node(state: IngestionState) -> dict[str, Any]:
@@ -322,9 +415,15 @@ def embed_chunks_node(state: IngestionState) -> dict[str, Any]:
 
     try:
         client = create_shopaikey_client(settings)
-        response = client.embeddings.create(
-            model=settings.SHOPAIKEY_EMBEDDING_MODEL,
-            input=chunk_texts,
+        attempts: list[RetryAttempt] = []
+        response = retry_sync(
+            "embedding_generation",
+            lambda: client.embeddings.create(
+                model=settings.SHOPAIKEY_EMBEDDING_MODEL,
+                input=chunk_texts,
+            ),
+            settings=settings,
+            on_attempt=attempts.append,
         )
         items = getattr(response, "data", response)
         embeddings: list[list[float]] = []
@@ -346,11 +445,17 @@ def embed_chunks_node(state: IngestionState) -> dict[str, Any]:
         if dimension <= 0 or any(len(vector) != dimension for vector in embeddings):
             return _failure_state(document_id, "Embedding dimension is inconsistent")
 
-        return {
-            "embeddings": embeddings,
-            "embedding_model": settings.SHOPAIKEY_EMBEDDING_MODEL,
-            "embedding_dimension": dimension,
-        }
+        return _with_retry_attempts(
+            {
+                "embeddings": embeddings,
+                "embedding_model": settings.SHOPAIKEY_EMBEDDING_MODEL,
+                "embedding_dimension": dimension,
+            },
+            "embed_chunks",
+            attempts,
+        )
+    except RetryExhaustedError as exc:
+        return _retry_exhausted_failure(document_id, "embed_chunks", exc)
     except Exception as exc:  # pragma: no cover - defensive, exercised by failure tests
         return _failure_state(document_id, f"Embedding generation failed: {exc}")
 
@@ -407,23 +512,41 @@ def upsert_qdrant_node(state: IngestionState) -> dict[str, Any]:
 
         qdrant_client = create_qdrant_client(settings)
         supabase_client = create_supabase_client(settings)
-        qdrant_client.upsert(
-            collection_name=collection_name,
-            points=points,
-            wait=True,
+        attempts: list[RetryAttempt] = []
+        retry_sync(
+            "qdrant_upsert",
+            lambda: qdrant_client.upsert(
+                collection_name=collection_name,
+                points=points,
+                wait=True,
+            ),
+            settings=settings,
+            on_attempt=attempts.append,
         )
         for chunk in updated_chunks:
             chunk_id = str(chunk[ChunkField.ID])
-            supabase_client.table(DOCUMENT_CHUNKS_TABLE).update(
-                {ChunkField.QDRANT_POINT_ID: chunk[ChunkField.QDRANT_POINT_ID]}
-            ).eq(ChunkField.ID, chunk_id).execute()
+            retry_sync(
+                "chunk_qdrant_point_persistence",
+                lambda chunk=chunk, chunk_id=chunk_id: supabase_client.table(
+                    DOCUMENT_CHUNKS_TABLE
+                ).update(
+                    {ChunkField.QDRANT_POINT_ID: chunk[ChunkField.QDRANT_POINT_ID]}
+                ).eq(ChunkField.ID, chunk_id).execute(),
+                settings=settings,
+            )
+    except RetryExhaustedError as exc:
+        return _retry_exhausted_failure(document_id, "upsert_qdrant", exc)
     except Exception as exc:  # pragma: no cover - defensive, exercised by failure tests
         return _failure_state(document_id, f"Qdrant upsert failed: {exc}")
 
-    return {
-        "chunks": updated_chunks,
-        "qdrant_collection": collection_name,
-    }
+    return _with_retry_attempts(
+        {
+            "chunks": updated_chunks,
+            "qdrant_collection": collection_name,
+        },
+        "upsert_qdrant",
+        attempts,
+    )
 
 
 def update_document_relations_node(state: IngestionState) -> dict[str, Any]:
@@ -458,12 +581,32 @@ def update_document_relations_node(state: IngestionState) -> dict[str, Any]:
         }
 
     try:
-        result = relations.update_document_relations(
-            document_id,
-            summary_records=summary_records,
+        attempts: list[RetryAttempt] = []
+        result = retry_sync(
+            "relation_update",
+            lambda: relations.update_document_relations(
+                document_id,
+                summary_records=summary_records,
+                settings=settings,
+            ),
             settings=settings,
+            on_attempt=attempts.append,
         )
-        return {"relation_update_result": result}
+        return _with_retry_attempts(
+            {"relation_update_result": result},
+            "update_document_relations",
+            attempts,
+        )
+    except RetryExhaustedError as exc:
+        return {
+            "relation_update_result": {
+                "status": "warning",
+                "warning": "Relation update failed after retry exhaustion",
+                "error_code": "relation_update_retry_exhausted",
+                "attempts": exc.attempts,
+            },
+            "retry_attempts": {"update_document_relations": exc.attempts},
+        }
     except Exception as exc:
         return {
             "relation_update_result": {
@@ -488,6 +631,7 @@ def mark_ready_node(state: IngestionState) -> dict[str, Any]:
         qdrant_collection=resolved_collection,
         now=_now_utc(),
     )
+    payload["error_code"] = None
     try:
         _update_document_row(document_id, payload, settings=settings)
         return {
@@ -513,7 +657,9 @@ def mark_failed_node(
     if document_id is None:
         return _failure_state(None, message)
 
+    error_code = safe_detail(state.get("error_code"), fallback="ingestion_failed")
     payload = ingestion_payloads.failed_document_payload(message, now=_now_utc())
+    payload["error_code"] = error_code
     try:
         _update_document_row(document_id, payload, settings=settings)
     except Exception:  # pragma: no cover - defensive, failure state still returned
@@ -521,4 +667,5 @@ def mark_failed_node(
     return {
         "status": DocumentStatus.FAILED,
         "error_message": message,
+        "error_code": error_code,
     }

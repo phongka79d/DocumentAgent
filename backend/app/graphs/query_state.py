@@ -41,6 +41,7 @@ class QueryState(TypedDict, total=False):
     answer_verified: bool
     grounding_provider_failed: bool
     trace_id: str
+    workflow_trace: list[dict[str, Any]]
     retrieval_metrics: dict[str, int | float | str | None]
 
     error_message: str | None

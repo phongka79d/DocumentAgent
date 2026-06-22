@@ -259,6 +259,12 @@ class FakeQdrantClient:
         return {"status": "ok"}
 
 
+class HttpStatusError(RuntimeError):
+    def __init__(self, status_code: int) -> None:
+        super().__init__(f"http {status_code}")
+        self.response = type("Response", (), {"status_code": status_code})()
+
+
 class FakeIngestionGraph:
     def __init__(self, result: dict[str, object] | None = None) -> None:
         self.result = result or {"status": "ready"}
@@ -460,6 +466,79 @@ def test_delete_document_and_file_deletes_qdrant_before_storage_before_row():
     assert client.tables["documents"] == []
 
 
+def test_delete_document_and_file_retries_transient_qdrant_delete_failure():
+    settings = _test_settings().model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 3,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+    row = _document_row(
+        document_id=FIXED_DOCUMENT_ID,
+        file_hash="delete-me",
+        qdrant_collection="custom_collection",
+        status="ready",
+    )
+    client = FakeSupabaseClient(documents=[row])
+
+    class FlakyQdrantClient(FakeQdrantClient):
+        def delete(self, **kwargs):
+            self.delete_calls.append(kwargs)
+            if len(self.delete_calls) < 3:
+                raise TimeoutError("qdrant delete timed out")
+            return {"status": "ok"}
+
+    qdrant_client = FlakyQdrantClient()
+
+    document_service.delete_document_and_file(
+        FIXED_DOCUMENT_ID,
+        settings=settings,
+        supabase_client=client,
+        qdrant_client=qdrant_client,
+    )
+
+    assert len(qdrant_client.delete_calls) == 3
+    assert client._bucket.remove_calls == [[row["storage_path"]]]
+    assert client.tables["documents"] == []
+
+
+def test_delete_document_and_file_non_retryable_qdrant_delete_failure_runs_once():
+    settings = _test_settings().model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 3,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+    row = _document_row(
+        document_id=FIXED_DOCUMENT_ID,
+        file_hash="delete-me",
+        qdrant_collection="custom_collection",
+        status="ready",
+    )
+    client = FakeSupabaseClient(documents=[row])
+
+    class BadRequestQdrantClient(FakeQdrantClient):
+        def delete(self, **kwargs):
+            self.delete_calls.append(kwargs)
+            raise HttpStatusError(400)
+
+    qdrant_client = BadRequestQdrantClient()
+
+    with pytest.raises(HttpStatusError):
+        document_service.delete_document_and_file(
+            FIXED_DOCUMENT_ID,
+            settings=settings,
+            supabase_client=client,
+            qdrant_client=qdrant_client,
+        )
+
+    assert len(qdrant_client.delete_calls) == 1
+    assert client._bucket.remove_calls == []
+    assert client.tables["documents"] == [row]
+
+
 def _patch_route_settings(monkeypatch, settings: Settings) -> None:
     monkeypatch.setattr(documents_route, "get_settings", lambda: settings)
 
@@ -643,6 +722,62 @@ def test_reindex_route_cleans_old_vectors_and_chunks_before_graph_invocation(mon
         ("graph", {"document_id": str(FIXED_DOCUMENT_ID)}),
     ]
     assert fake_graph.invocations == [{"document_id": str(FIXED_DOCUMENT_ID)}]
+
+
+def test_reindex_cleanup_retries_transient_qdrant_delete_failure():
+    settings = _test_settings().model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 3,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+
+    class FlakyQdrantClient(FakeQdrantClient):
+        def delete(self, **kwargs):
+            self.delete_calls.append(kwargs)
+            if len(self.delete_calls) < 3:
+                raise ConnectionError("qdrant delete connection failed")
+            return {"status": "ok"}
+
+    qdrant_client = FlakyQdrantClient()
+
+    documents_route.delete_document_vectors(
+        FIXED_DOCUMENT_ID,
+        settings=settings,
+        qdrant_collection="custom_collection",
+        qdrant_client=qdrant_client,
+    )
+
+    assert len(qdrant_client.delete_calls) == 3
+    assert qdrant_client.delete_calls[-1]["collection_name"] == "custom_collection"
+
+
+def test_reindex_cleanup_non_retryable_qdrant_delete_failure_runs_once():
+    settings = _test_settings().model_copy(
+        update={
+            "WORKFLOW_MAX_ATTEMPTS": 3,
+            "WORKFLOW_RETRY_BASE_DELAY_SECONDS": 0.0,
+            "WORKFLOW_RETRY_MAX_DELAY_SECONDS": 0.0,
+        }
+    )
+
+    class BadRequestQdrantClient(FakeQdrantClient):
+        def delete(self, **kwargs):
+            self.delete_calls.append(kwargs)
+            raise HttpStatusError(400)
+
+    qdrant_client = BadRequestQdrantClient()
+
+    with pytest.raises(HttpStatusError):
+        documents_route.delete_document_vectors(
+            FIXED_DOCUMENT_ID,
+            settings=settings,
+            qdrant_collection="custom_collection",
+            qdrant_client=qdrant_client,
+        )
+
+    assert len(qdrant_client.delete_calls) == 1
 
 
 def test_delete_route_deletes_qdrant_before_storage_before_row(monkeypatch):
