@@ -12,7 +12,9 @@ ANSWER_SYSTEM_PROMPT = (
     "- If the context does not contain enough information, say that the indexed documents do not contain enough information.\n"
     "- Do not invent facts.\n"
     "- Do not invent sources.\n"
-    "- Cite the source chunks used in the answer.\n"
+    "- Cite every factual claim with one or more prompt-local source keys using [S1] syntax.\n"
+    "- Use only source keys present in the context; do not cite document IDs, file names, headings, or invented labels.\n"
+    "- The insufficient-context response does not need a citation.\n"
     "- Keep the answer clear and practical."
 )
 ANSWER_USER_PROMPT_TEMPLATE = (
@@ -20,9 +22,40 @@ ANSWER_USER_PROMPT_TEMPLATE = (
     "{context}\n\n"
     "Question:\n"
     "{question}\n\n"
-    "Answer using only the context."
+    "Answer using only the context and cite factual claims with [S<number>] source keys."
 )
 NO_RELEVANT_INFORMATION_MESSAGE = "No relevant information found in indexed documents."
+SAFE_INSUFFICIENT_CONTEXT_MESSAGE = (
+    "The indexed documents do not contain enough verified information to answer this question."
+)
+GROUNDING_SYSTEM_PROMPT = (
+    "You are a strict grounding verifier for a document RAG answer.\n"
+    "Use only the provided cited evidence text.\n"
+    "Return JSON only. No prose.\n"
+    "The JSON must contain exactly these fields: grounded, score, unsupported_claims, missing_citations."
+)
+GROUNDING_USER_PROMPT_TEMPLATE = (
+    "Answer to verify:\n"
+    "{answer}\n\n"
+    "Cited evidence JSON:\n"
+    "{evidence_json}\n\n"
+    "Return strict JSON in this shape:\n"
+    "{{\"grounded\": true, \"score\": 0.95, \"unsupported_claims\": [], \"missing_citations\": []}}"
+)
+REGENERATION_SYSTEM_PROMPT = (
+    ANSWER_SYSTEM_PROMPT
+    + "\n- Revise the previous draft using the verifier feedback.\n"
+    + "- Remove unsupported claims instead of guessing."
+)
+REGENERATION_USER_PROMPT_TEMPLATE = (
+    "Context:\n"
+    "{context}\n\n"
+    "Question:\n"
+    "{question}\n\n"
+    "Verifier feedback:\n"
+    "{feedback}\n\n"
+    "Regenerate the answer using only the context and cite factual claims with [S<number>] source keys."
+)
 
 QUERY_PLANNING_SYSTEM_PROMPT = (
     "You plan bounded retrieval for a document RAG system.\n"
@@ -123,6 +156,43 @@ def build_answer_messages(*, context: str, question: str) -> list[Mapping[str, s
     ]
 
 
+def build_grounding_messages(
+    *,
+    answer: str,
+    evidence: Sequence[Mapping[str, Any]],
+) -> list[Mapping[str, str]]:
+    evidence_json = json.dumps(list(evidence), ensure_ascii=False)
+    return [
+        {"role": "system", "content": GROUNDING_SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": GROUNDING_USER_PROMPT_TEMPLATE.format(
+                answer=answer,
+                evidence_json=evidence_json,
+            ),
+        },
+    ]
+
+
+def build_regeneration_messages(
+    *,
+    context: str,
+    question: str,
+    feedback: str,
+) -> list[Mapping[str, str]]:
+    return [
+        {"role": "system", "content": REGENERATION_SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": REGENERATION_USER_PROMPT_TEMPLATE.format(
+                context=context,
+                question=question,
+                feedback=feedback,
+            ),
+        },
+    ]
+
+
 def build_query_planning_messages(
     *,
     question: str,
@@ -153,11 +223,18 @@ def build_query_planning_messages(
 __all__ = [
     "ANSWER_SYSTEM_PROMPT",
     "ANSWER_USER_PROMPT_TEMPLATE",
+    "GROUNDING_SYSTEM_PROMPT",
+    "GROUNDING_USER_PROMPT_TEMPLATE",
     "NO_RELEVANT_INFORMATION_MESSAGE",
+    "REGENERATION_SYSTEM_PROMPT",
+    "REGENERATION_USER_PROMPT_TEMPLATE",
+    "SAFE_INSUFFICIENT_CONTEXT_MESSAGE",
     "QUERY_PLANNING_JSON_SCHEMA",
     "QUERY_PLANNING_RESPONSE_FORMAT",
     "QUERY_PLANNING_SYSTEM_PROMPT",
     "QUERY_PLANNING_USER_PROMPT_TEMPLATE",
     "build_answer_messages",
+    "build_grounding_messages",
     "build_query_planning_messages",
+    "build_regeneration_messages",
 ]

@@ -609,7 +609,7 @@ Retrieved context alone does not prove that generated claims are cited and suppo
 
 ### Tasks
 
-- [ ] (06A): Generate and validate exact chunk-keyed citations
+- [x] (06A): Generate and validate exact chunk-keyed citations
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 6: Exact Citations and Grounding Verification` > `### Task 6.1: Generate and validate chunk-keyed citations`
   - Source Requirements:
     - Assign stable prompt-local `S1`, `S2`, and later keys after final context ordering.
@@ -634,7 +634,7 @@ Retrieved context alone does not prove that generated claims are cited and suppo
   - Blocked Condition: None.
   - Files: `backend/app/services/citation_validation.py`, `backend/app/graphs/query_prompts.py`, `backend/app/graphs/query_formatting.py`, `backend/app/graphs/query_nodes.py`, `backend/tests/test_citation_validation.py`, `backend/tests/test_query_graph.py`
 
-- [ ] (06B): Verify grounding with one bounded regeneration
+- [x] (06B): Verify grounding with one bounded regeneration
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 6: Exact Citations and Grounding Verification` > `### Task 6.2: Verify grounding and perform one bounded regeneration`
   - Source Requirements:
     - Verify the generated answer only against exact cited chunk text using the strict grounding JSON contract.
@@ -1036,7 +1036,7 @@ There are no optional tracks outside this mandatory chain.
 - [ ] Batch03 - Document Summaries and Lightweight Relations
 - [ ] Batch04 - Query Decomposition and LangGraph Retrieval Routing
 - [x] Batch05 - Candidate Stages, Reranking, and Context Budgets
-- [ ] Batch06 - Exact Citations and Grounding Verification
+- [x] Batch06 - Exact Citations and Grounding Verification
 - [ ] Batch07 - RAG Evaluation Dataset and Metrics
 - [ ] Batch08 - Workflow Observability and Failure Recovery
 - [ ] Batch09 - Documentation and End-to-End Validation
@@ -1071,8 +1071,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch06
 
-- [ ] (06A): Generate and validate exact chunk-keyed citations
-- [ ] (06B): Verify grounding with one bounded regeneration
+- [x] (06A): Generate and validate exact chunk-keyed citations
+- [x] (06B): Verify grounding with one bounded regeneration
 
 #### Batch07
 

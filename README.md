@@ -68,11 +68,18 @@ graph TD
     I --> J
     J --> K[Select Ranked, Boundary, Same-Section, then Generic Neighbor Chunks]
     K --> L[Deduplicate & Enforce Candidate and Token Budgets]
-    L --> M[Generate Grounded Answer with Citations via LLM]
-    M --> N{Save Message Enabled?}
-    N -->|Yes| O[Save Q&A Row to Supabase Messages Table]
-    N -->|No| P[Return Response to Client]
-    O --> P
+    L --> M[Generate Answer with Prompt-Local Citation Keys]
+    M --> N[Validate Citations Against Exact Context Chunks]
+    N --> O[Verify Grounding Against Cited Chunk Text]
+    O --> Q{Citation and Grounding Gates Pass?}
+    Q -->|No, first failure| R[Regenerate Once with Compact Verifier Feedback]
+    R --> N
+    Q -->|No, exhausted or provider failure| S[Return Safe Response with No Sources]
+    Q -->|Yes| T{Save Message Enabled?}
+    T -->|Yes| U[Save Verified Q&A Row to Supabase Messages Table]
+    T -->|No| P[Return Response to Client]
+    U --> P
+    S --> P
 ```
 
 ---
@@ -87,6 +94,7 @@ graph TD
 - **Metadata-Aware Hybrid Retrieval**: Chat requests can filter by document allow-list, MIME type, heading, section path, and page range; semantic Qdrant retrieval and Postgres full-text keyword retrieval run independently, recover from single-path failures, and merge candidates with deterministic reciprocal-rank fusion.
 - **Bounded Candidate Stages and Reranking**: Retrieval enforces per-path, fused, rerank-candidate, final-reranked, and context-stage caps independently. Jina receives only the configured rerank candidate window, and disabled or invalid reranking falls back deterministically by fusion score, path scores, and chunk ID.
 - **Bounded Query Planning and Routing**: The query graph normalizes and caps planned subqueries, preserves explicit document scope and filter precedence, routes semantic, keyword, hybrid, metadata, and one-hop relation strategies only through approved paths, and merges candidates while retaining subquery coverage.
+- **Exact Citations and Grounding Gate**: Generated answers use prompt-local `S1`, `S2`, and later citation keys that map back to exact context chunk IDs. Returned sources are limited to cited chunks, factual answers must pass citation validation plus grounding verification against cited chunk text, and failed verification returns a safe no-source response after at most one regeneration.
 - **Deduplication & Validation**: Deterministic SHA-256 upload hashing prevent duplicate storage and indexing of identical documents.
 - **Message History API**: Fast lookups for chat history from the `messages` table with bounded retrieval and failure isolation.
 - **Phase 3 Contract Foundation**: Typed retrieval filters, planning/candidate/grounding/citation contracts, compact LangGraph state fields, and bounded Phase 3 settings are available for later advanced RAG batches.

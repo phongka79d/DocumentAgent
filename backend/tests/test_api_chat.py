@@ -13,6 +13,9 @@ from app.main import create_app
 FIXED_DOCUMENT_ID = UUID("11111111-1111-1111-1111-111111111111")
 SECOND_DOCUMENT_ID = UUID("22222222-2222-2222-2222-222222222222")
 FIXED_CHUNK_ID = UUID("33333333-3333-3333-3333-333333333333")
+SAFE_INSUFFICIENT_CONTEXT_MESSAGE = (
+    "The indexed documents do not contain enough verified information to answer this question."
+)
 
 
 def _test_settings() -> Settings:
@@ -258,3 +261,34 @@ def test_chat_route_returns_api_error_when_query_graph_reports_failure(monkeypat
 
     assert response.status_code == 500
     assert response.json() == {"detail": "ShopAIKey chat failure"}
+
+
+def test_chat_route_returns_safe_grounding_failure_response_without_sources(monkeypatch):
+    settings = _test_settings()
+    fake_graph = FakeQueryGraph(
+        result={
+            "answer": SAFE_INSUFFICIENT_CONTEXT_MESSAGE,
+            "sources": [],
+        }
+    )
+
+    _patch_route_settings(monkeypatch, settings)
+    monkeypatch.setattr(
+        chat_route,
+        "build_query_graph",
+        lambda settings=None: fake_graph,
+    )
+
+    app = _test_app(settings)
+
+    with TestClient(app) as test_client:
+        response = test_client.post(
+            "/api/chat",
+            json={"question": "What does this document say about pricing?"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": SAFE_INSUFFICIENT_CONTEXT_MESSAGE,
+        "sources": [],
+    }

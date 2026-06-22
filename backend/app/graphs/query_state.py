@@ -38,6 +38,8 @@ class QueryState(TypedDict, total=False):
     citation_validation_result: CitationValidationResult
     grounding_result: GroundingResult
     verification_attempt_count: int
+    answer_verified: bool
+    grounding_provider_failed: bool
     trace_id: str
     retrieval_metrics: dict[str, int | float | str | None]
 

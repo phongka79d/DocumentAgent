@@ -12,7 +12,13 @@ from app.core.contracts import RetrievalPath, RetrievalStrategy
 from app.graphs import query_nodes
 from app.graphs.query_graph import build_query_graph
 from app.graphs.query_state import QueryState
-from app.models.schemas import QueryPlan, QuerySubquery, RetrievalFilters
+from app.models.schemas import (
+    CitationValidationResult,
+    GroundingResult,
+    QueryPlan,
+    QuerySubquery,
+    RetrievalFilters,
+)
 from app.services import chunks as chunk_service
 from app.services import messages as message_service
 from app.services import retrieval
@@ -1308,6 +1314,8 @@ def test_query_state_contains_required_fields_and_no_extra_fields():
         "citation_validation_result",
         "grounding_result",
         "verification_attempt_count",
+        "answer_verified",
+        "grounding_provider_failed",
         "trace_id",
         "retrieval_metrics",
         "error_message",
@@ -1779,6 +1787,7 @@ def test_generate_answer_node_builds_sources_and_uses_only_context():
         "is_neighbor_context",
         "qdrant_score",
         "rerank_score",
+        "citation_key",
     } == set(result["sources"][0])
     assert result["sources"][0]["section_path"] == ["Pricing", "Tier 1"]
     assert result["sources"][0]["content_preview"] == long_content[:240]
@@ -1798,7 +1807,200 @@ def test_generate_answer_node_builds_sources_and_uses_only_context():
     ]
     assert "Pricing is based on usage tiers." in chat_call["messages"][1]["content"]
     assert "Enterprise pricing is custom." in chat_call["messages"][1]["content"]
-    assert chat_call["messages"][1]["content"].endswith("Answer using only the context.")
+    assert "Citation key: S1" in chat_call["messages"][1]["content"]
+    assert "Chunk ID: chunk-1" in chat_call["messages"][1]["content"]
+    assert "Citation key: S2" in chat_call["messages"][1]["content"]
+    assert chat_call["messages"][1]["content"].endswith(
+        "Answer using only the context and cite factual claims with [S<number>] source keys."
+    )
+
+
+def test_validate_citations_node_filters_sources_to_cited_context_chunks():
+    settings = _test_settings()
+    result = query_nodes.validate_citations_node(
+        {
+            "answer": "Enterprise pricing is custom [S2]. Usage pricing applies [S1].",
+            "context_chunks": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "content": "Usage pricing applies.",
+                },
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-2",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 2,
+                    "content": "Enterprise pricing is custom.",
+                },
+                {
+                    "document_id": DOC_B,
+                    "chunk_id": "chunk-3",
+                    "file_name": "bravo.pdf",
+                    "chunk_index": 3,
+                    "content": "Uncited context.",
+                },
+            ],
+        },
+        settings=settings,
+    )
+
+    assert result["citation_validation_result"].valid is True
+    assert result["citation_validation_result"].cited_keys == ["S2", "S1"]
+    assert result["citation_validation_result"].cited_chunk_ids == ["chunk-2", "chunk-1"]
+    assert [source["chunk_id"] for source in result["sources"]] == ["chunk-2", "chunk-1"]
+
+
+def test_validate_citations_node_rejects_substitute_labels_without_valid_marker():
+    settings = _test_settings()
+    result = query_nodes.validate_citations_node(
+        {
+            "answer": f"Usage pricing applies according to document {DOC_A} and the Pricing heading.",
+            "context_chunks": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "heading": "Pricing",
+                    "content": "Usage pricing applies.",
+                }
+            ],
+        },
+        settings=settings,
+    )
+
+    assert result["citation_validation_result"].valid is False
+    assert result["citation_validation_result"].missing_citations is True
+    assert result["sources"] == []
+
+
+def test_verify_grounding_node_accepts_only_valid_citations_and_grounding_threshold(monkeypatch):
+    settings = _test_settings()
+    settings.GROUNDING_MIN_SCORE = 0.8
+    calls: list[dict[str, object]] = []
+
+    def _verify(answer, *, evidence, settings=None, shopaikey_client=None):
+        calls.append({"answer": answer, "evidence": evidence})
+        return GroundingResult(
+            grounded=True,
+            score=0.92,
+            unsupported_claims=[],
+            missing_citations=[],
+        )
+
+    monkeypatch.setattr(query_nodes.grounding, "verify_answer_grounding", _verify)
+
+    result = query_nodes.verify_grounding_node(
+        {
+            "answer": "Pricing is usage based [S1].",
+            "context_chunks": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "content": "Pricing is usage based.",
+                },
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-2",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 2,
+                    "content": "Uncited content.",
+                },
+            ],
+            "citation_validation_result": CitationValidationResult(
+                valid=True,
+                cited_keys=["S1"],
+                cited_chunk_ids=["chunk-1"],
+            ),
+            "sources": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "citation_key": "S1",
+                }
+            ],
+        },
+        settings=settings,
+    )
+
+    assert result["grounding_result"].grounded is True
+    assert result["answer_verified"] is True
+    assert calls == [
+        {
+            "answer": "Pricing is usage based [S1].",
+            "evidence": [
+                {
+                    "citation_key": "S1",
+                    "chunk_id": "chunk-1",
+                    "text": "Pricing is usage based.",
+                }
+            ],
+        }
+    ]
+
+
+def test_verify_grounding_node_fails_closed_on_provider_failure(monkeypatch):
+    settings = _test_settings()
+
+    def _verify(*args, **kwargs):
+        raise query_nodes.grounding.GroundingProviderError("provider down")
+
+    monkeypatch.setattr(query_nodes.grounding, "verify_answer_grounding", _verify)
+
+    result = query_nodes.verify_grounding_node(
+        {
+            "answer": "Pricing is usage based [S1].",
+            "context_chunks": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "content": "Pricing is usage based.",
+                }
+            ],
+            "citation_validation_result": CitationValidationResult(
+                valid=True,
+                cited_keys=["S1"],
+                cited_chunk_ids=["chunk-1"],
+            ),
+            "sources": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "citation_key": "S1",
+                }
+            ],
+        },
+        settings=settings,
+    )
+
+    assert result["answer_verified"] is False
+    assert result["grounding_provider_failed"] is True
+
+
+def test_finalize_answer_node_replaces_unverified_draft_with_safe_response():
+    result = query_nodes.finalize_answer_node(
+        {
+            "answer": "Unsupported draft [S1].",
+            "sources": [{"chunk_id": "chunk-1"}],
+            "answer_verified": False,
+        }
+    )
+
+    assert result == {
+        "answer": query_nodes.SAFE_INSUFFICIENT_CONTEXT_MESSAGE,
+        "sources": [],
+    }
 
 
 def test_generate_answer_node_uses_truncated_prompt_copy_without_changing_source_preview():
@@ -2053,6 +2255,51 @@ def test_save_message_optional_node_inserts_question_answer_sources_and_metadata
     assert saved_row["metadata"]["document_ids"] == [DOC_A]
     assert saved_row["metadata"]["prepared_query"] == "What does the document say about pricing?"
     assert saved_row["metadata"]["context_chunk_count"] == 1
+
+
+def test_save_message_optional_node_uses_validated_empty_sources_without_context_fallback():
+    settings = _test_settings()
+    fake_client = FakeSupabaseClient(tables={"messages": []})
+
+    result = query_nodes.save_message_optional_node(
+        {
+            "question": "What does the document say about pricing?",
+            "prepared_query": "What does the document say about pricing?",
+            "answer": "Pricing is based on usage tiers.",
+            "sources": [],
+            "save_message": True,
+            "document_ids": [DOC_A],
+            "context_chunks": [
+                {
+                    "document_id": DOC_A,
+                    "chunk_id": "chunk-1",
+                    "file_name": "alpha.pdf",
+                    "chunk_index": 1,
+                    "content": "Pricing is based on usage tiers.",
+                }
+            ],
+            "citation_validation_result": {
+                "valid": False,
+                "cited_keys": [],
+                "cited_chunk_ids": [],
+                "invalid_keys": [],
+                "missing_citations": True,
+            },
+        },
+        settings=settings,
+        supabase_client=fake_client,
+    )
+
+    assert result == {}
+    saved_row = fake_client.tables["messages"][0]
+    assert saved_row["sources"] == []
+    assert saved_row["metadata"]["citation_validation_result"] == {
+        "valid": False,
+        "cited_keys": [],
+        "cited_chunk_ids": [],
+        "invalid_keys": [],
+        "missing_citations": True,
+    }
 
 
 def test_save_message_optional_node_ignores_insert_failure():
@@ -2335,6 +2582,194 @@ def test_build_query_graph_invokes_nodes_in_required_order(monkeypatch):
     ]
     assert result["answer"] == "Pricing is based on usage tiers."
     assert result["sources"][0]["chunk_id"] == "chunk-1"
+
+
+def test_build_query_graph_regenerates_once_then_persists_only_verified_answer(monkeypatch):
+    settings = _test_settings()
+    settings.GROUNDING_MAX_REGENERATIONS = 1
+    call_order: list[str] = []
+    answers = [
+        "Unsupported draft [S1].",
+        "Pricing is based on usage tiers [S1].",
+    ]
+    saved: list[dict[str, object]] = []
+    verify_attempts = 0
+
+    def _record(node_name: str, output: dict[str, object]):
+        def _node(state, **kwargs):
+            call_order.append(node_name)
+            return output
+
+        return _node
+
+    monkeypatch.setattr(
+        query_nodes,
+        "prepare_query_node",
+        _record(
+            "prepare_query",
+            {
+                "question": "What is pricing?",
+                "prepared_query": "What is pricing?",
+                "document_ids": [DOC_A],
+                "save_message": True,
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        query_nodes,
+        "plan_query_node",
+        _record(
+            "plan_query",
+            {
+                "query_plan": QueryPlan(
+                    is_complex=False,
+                    strategy=RetrievalStrategy.SEMANTIC,
+                    subqueries=[QuerySubquery(id="q1", text="What is pricing?")],
+                    inferred_filters=RetrievalFilters(),
+                    needs_relations=False,
+                ),
+                "subqueries": [QuerySubquery(id="q1", text="What is pricing?")],
+                "route": RetrievalStrategy.SEMANTIC,
+            },
+        ),
+    )
+    monkeypatch.setattr(query_nodes, "resolve_relation_scope_node", _record("resolve_relation_scope", {"relation_document_ids": [DOC_A]}))
+    monkeypatch.setattr(query_nodes, "retrieve_candidates_node", _record("retrieve_candidates", {"path_candidates": {"q1:semantic": []}, "retrieved_chunks": []}))
+    monkeypatch.setattr(query_nodes, "fuse_candidates_node", _record("fuse_candidates", {"fused_candidates": [], "retrieved_chunks": []}))
+    monkeypatch.setattr(
+        query_nodes,
+        "rerank_candidates_node",
+        _record(
+            "rerank_candidates",
+            {
+                "reranked_chunks": [
+                    {
+                        "document_id": DOC_A,
+                        "chunk_id": "chunk-1",
+                        "file_name": "alpha.pdf",
+                        "chunk_index": 1,
+                        "content": "Pricing is based on usage tiers.",
+                    }
+                ]
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        query_nodes,
+        "expand_context_node",
+        _record(
+            "expand_context",
+            {
+                "context_chunks": [
+                    {
+                        "document_id": DOC_A,
+                        "chunk_id": "chunk-1",
+                        "file_name": "alpha.pdf",
+                        "chunk_index": 1,
+                        "content": "Pricing is based on usage tiers.",
+                    }
+                ]
+            },
+        ),
+    )
+
+    def _generate(state, **kwargs):
+        call_order.append("generate_answer")
+        return {"answer": answers.pop(0), "sources": []}
+
+    def _verify(state, **kwargs):
+        nonlocal verify_attempts
+        verify_attempts += 1
+        call_order.append("verify_grounding")
+        verified = state["answer"].startswith("Pricing")
+        return {
+            "grounding_result": GroundingResult(
+                grounded=verified,
+                score=0.95 if verified else 0.2,
+                unsupported_claims=[] if verified else ["Unsupported draft"],
+                missing_citations=[],
+            ),
+            "answer_verified": verified,
+            "verification_attempt_count": verify_attempts,
+        }
+
+    def _save(state, **kwargs):
+        call_order.append("save_message_optional")
+        saved.append({"answer": state["answer"], "sources": state["sources"]})
+        return {}
+
+    monkeypatch.setattr(query_nodes, "generate_answer_node", _generate)
+    monkeypatch.setattr(query_nodes, "regenerate_answer_node", _generate, raising=False)
+    monkeypatch.setattr(query_nodes, "verify_grounding_node", _verify)
+    monkeypatch.setattr(query_nodes, "save_message_optional_node", _save)
+
+    result = build_query_graph(settings=settings).invoke(
+        {"question": "What is pricing?", "document_ids": [DOC_A], "save_message": True}
+    )
+
+    assert call_order == [
+        "prepare_query",
+        "plan_query",
+        "resolve_relation_scope",
+        "retrieve_candidates",
+        "fuse_candidates",
+        "rerank_candidates",
+        "expand_context",
+        "generate_answer",
+        "verify_grounding",
+        "generate_answer",
+        "verify_grounding",
+        "save_message_optional",
+    ]
+    assert result["answer"] == "Pricing is based on usage tiers [S1]."
+    assert "Unsupported draft" not in result["answer"]
+    assert saved[0]["answer"] == "Pricing is based on usage tiers [S1]."
+    assert saved[0]["sources"][0]["chunk_id"] == "chunk-1"
+
+
+def test_build_query_graph_repeated_grounding_failure_returns_safe_response_without_draft(monkeypatch):
+    settings = _test_settings()
+    settings.GROUNDING_MAX_REGENERATIONS = 1
+
+    def _node(output):
+        return lambda state, **kwargs: output
+
+    monkeypatch.setattr(query_nodes, "prepare_query_node", _node({"question": "What is pricing?", "prepared_query": "What is pricing?", "document_ids": [DOC_A], "save_message": True}))
+    monkeypatch.setattr(query_nodes, "plan_query_node", _node({"query_plan": QueryPlan(is_complex=False, strategy=RetrievalStrategy.SEMANTIC, subqueries=[QuerySubquery(id="q1", text="What is pricing?")], inferred_filters=RetrievalFilters(), needs_relations=False), "subqueries": [QuerySubquery(id="q1", text="What is pricing?")], "route": RetrievalStrategy.SEMANTIC}))
+    monkeypatch.setattr(query_nodes, "resolve_relation_scope_node", _node({"relation_document_ids": [DOC_A]}))
+    monkeypatch.setattr(query_nodes, "retrieve_candidates_node", _node({"path_candidates": {}, "retrieved_chunks": []}))
+    monkeypatch.setattr(query_nodes, "fuse_candidates_node", _node({"fused_candidates": [], "retrieved_chunks": []}))
+    monkeypatch.setattr(query_nodes, "rerank_candidates_node", _node({"reranked_chunks": [{"document_id": DOC_A, "chunk_id": "chunk-1", "file_name": "alpha.pdf", "chunk_index": 1, "content": "Pricing is based on usage tiers."}]}))
+    monkeypatch.setattr(query_nodes, "expand_context_node", _node({"context_chunks": [{"document_id": DOC_A, "chunk_id": "chunk-1", "file_name": "alpha.pdf", "chunk_index": 1, "content": "Pricing is based on usage tiers."}]}))
+    monkeypatch.setattr(query_nodes, "generate_answer_node", _node({"answer": "Unsupported draft [S1].", "sources": [{"chunk_id": "chunk-1"}]}))
+    monkeypatch.setattr(query_nodes, "regenerate_answer_node", _node({"answer": "Still unsupported [S1].", "sources": [{"chunk_id": "chunk-1"}]}), raising=False)
+    verify_attempts = 0
+
+    def _verify(state, **kwargs):
+        nonlocal verify_attempts
+        verify_attempts += 1
+        return {
+            "grounding_result": GroundingResult(
+                grounded=False,
+                score=0.1,
+                unsupported_claims=["draft"],
+                missing_citations=[],
+            ),
+            "answer_verified": False,
+            "verification_attempt_count": verify_attempts,
+        }
+
+    monkeypatch.setattr(query_nodes, "verify_grounding_node", _verify)
+    monkeypatch.setattr(query_nodes, "save_message_optional_node", lambda state, **kwargs: pytest.fail("unverified answer should not be saved"))
+
+    result = build_query_graph(settings=settings).invoke(
+        {"question": "What is pricing?", "document_ids": [DOC_A], "save_message": True}
+    )
+
+    assert result["answer"] == query_nodes.SAFE_INSUFFICIENT_CONTEXT_MESSAGE
+    assert result["sources"] == []
+    assert "Unsupported draft" not in result["answer"]
+    assert "Still unsupported" not in result["answer"]
 
 
 def test_retrieve_candidates_node_routes_each_strategy_to_allowed_paths(monkeypatch):

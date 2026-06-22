@@ -79,6 +79,32 @@ def _route_or_end(next_node: str) -> Callable[[Mapping[str, Any]], str]:
     return _router
 
 
+def _route_after_grounding(settings: Settings) -> Callable[[Mapping[str, Any]], str]:
+    def _router(state: Mapping[str, Any]) -> str:
+        if state.get("error_message"):
+            return END_ROUTE
+        if state.get("answer_verified") is True:
+            return "finalize_answer"
+        if state.get("grounding_provider_failed"):
+            return "finalize_answer"
+        if "answer_verified" not in state:
+            return "finalize_answer"
+        verification_attempt_count = int(state.get("verification_attempt_count") or 0)
+        if verification_attempt_count <= settings.GROUNDING_MAX_REGENERATIONS:
+            return "regenerate_answer"
+        return "finalize_answer"
+
+    return _router
+
+
+def _route_after_finalize(state: Mapping[str, Any]) -> str:
+    if state.get("error_message"):
+        return END_ROUTE
+    if state.get("answer_verified") is False:
+        return END_ROUTE
+    return "save_message_optional"
+
+
 def build_query_graph(settings: Settings | None = None):
     resolved_settings = _resolve_settings(settings)
 
@@ -161,6 +187,14 @@ def build_query_graph(settings: Settings | None = None):
         _wrap_node(
             "verify_grounding",
             query_nodes.verify_grounding_node,
+            settings=resolved_settings,
+        ),
+    )
+    graph.add_node(
+        "regenerate_answer",
+        _wrap_node(
+            "regenerate_answer",
+            query_nodes.regenerate_answer_node,
             settings=resolved_settings,
         ),
     )
@@ -256,15 +290,24 @@ def build_query_graph(settings: Settings | None = None):
     )
     graph.add_conditional_edges(
         "verify_grounding",
-        _route_or_end("finalize_answer"),
+        _route_after_grounding(resolved_settings),
         {
             "finalize_answer": "finalize_answer",
+            "regenerate_answer": "regenerate_answer",
+            END_ROUTE: END,
+        },
+    )
+    graph.add_conditional_edges(
+        "regenerate_answer",
+        _route_or_end("validate_citations"),
+        {
+            "validate_citations": "validate_citations",
             END_ROUTE: END,
         },
     )
     graph.add_conditional_edges(
         "finalize_answer",
-        _route_or_end("save_message_optional"),
+        _route_after_finalize,
         {
             "save_message_optional": "save_message_optional",
             END_ROUTE: END,

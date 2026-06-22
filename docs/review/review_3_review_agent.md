@@ -3101,3 +3101,410 @@ ACCEPTED
   "batch_can_be_marked_complete": false
 }
 ```
+
+---
+
+# Task Review Report - (06A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Exact Citations and Grounding Verification
+- Task ID: (06A)
+- Task title: Generate and validate exact chunk-keyed citations
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_3.md > ## Batch 6: Exact Citations and Grounding Verification > ### Task 6.1: Generate and validate chunk-keyed citations
+- Supplemental documents: docs/plans/Master_Plan.md (reviewed for citation/source baseline only)
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06A)
+- Reviewed task ID: (06A)
+- Correct selection: yes
+- Notes: Latest matching report entry is the appended (06A) execution report. Prior accepted work remains uncommitted but was not re-reviewed as part of this selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/graphs/query_formatting.py, backend/app/graphs/query_nodes.py, backend/app/graphs/query_prompts.py, backend/tests/test_query_graph.py, docs/reports/report_3_execute_agent.md, docs/tasks/task_3.md
+- untracked files: backend/app/services/citation_validation.py, backend/tests/test_citation_validation.py
+
+## Files Reviewed
+- `backend/app/services/citation_validation.py`: in scope - citation-key assignment, marker extraction, validation result, and filtered source selection.
+- `backend/app/graphs/query_prompts.py`: in scope - answer prompt now requires [S<number>] citations and rejects substitute labels.
+- `backend/app/graphs/query_formatting.py`: in scope - context prompt includes citation keys and message metadata stores compact validation result.
+- `backend/app/graphs/query_nodes.py`: in scope - citation keys are applied before answer generation, validation is wired into the graph, and saved messages use validated sources.
+- `backend/tests/test_citation_validation.py`: in scope - focused citation validation coverage.
+- `backend/tests/test_query_graph.py`: in scope - graph/prompt/source-filtering/message-persistence coverage.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest execution report appended for (06A).
+- `docs/tasks/task_3.md`: in scope - reviewer updated only the accepted (06A) checkboxes.
+- `docs/plans/Plan_3.md`: in scope - cited source-of-truth section reviewed.
+- `docs/plans/Master_Plan.md`: in scope - supplemental baseline citation/source requirements reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/citation_validation.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: new deterministic service implements assignment and validation.
+- file from execution report: backend/app/graphs/query_prompts.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: citation instruction changes are limited to answer-generation prompts.
+- file from execution report: backend/app/graphs/query_formatting.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: prompt formatting and compact metadata changes are task-aligned.
+- file from execution report: backend/app/graphs/query_nodes.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: validation node now returns validated sources and compact result.
+- file from execution report: backend/tests/test_citation_validation.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: new targeted tests exist.
+- file from execution report: backend/tests/test_query_graph.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: graph-level assertions cover prompt keys, filtering, substitute labels, and saved-source parity.
+- file from execution report: docs/reports/report_3_execute_agent.md
+- present in git/repo: yes
+- matches task scope: yes
+- notes: execution report was appended.
+
+## Dependency Review
+- Required dependencies: (05B), final context ordering and source metadata, existing answer generation, optional message persistence.
+- Dependency status: satisfied; (05B) is marked complete in detailed tasks and progress tracker.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: deterministic local citation validation; prompt-local S keys assigned after final context ordering; graph keeps validate_citations before the future verify_grounding node; message metadata stores compact validation fields only.
+- Failed: none.
+- Uncertain: none for (06A). Grounding fail-closed behavior remains intentionally deferred to (06B).
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `validate_answer_citations` extracts `[S<number>]` markers, rejects unknown/malformed source-like labels, maps valid keys to exact chunk IDs, filters returned sources by first citation order, and graph tests exercise the runtime node behavior.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: citation keys are generated from context order, not fixture IDs or answers; tests use varied valid, unknown, malformed, duplicate, and no-citation cases. The safe insufficient-context phrase mirrors the existing allowed safe response behavior.
+
+## Validations Reviewed
+- Command/check: `python -m pytest tests/test_citation_validation.py tests/test_query_graph.py -v` from `backend`
+- Reported result: Passed, 57 collected and 57 passed.
+- Rerun result: Passed, 57 collected and 57 passed in 3.16s.
+- Status: passed
+- Notes: This is the exact validation required for (06A).
+- Command/check: `git diff --check`
+- Reported result: not listed in the (06A) report.
+- Rerun result: Passed with only Git line-ending conversion warnings.
+- Status: passed
+- Notes: no whitespace errors reported.
+
+## Acceptance Review
+- Task acceptance: Every returned citation maps to an exact context chunk, and uncited or invented sources never reach the response.
+- Status: satisfied
+- Evidence: validation maps `[S1]`-style keys to exact context chunks, excludes uncited chunks from returned sources, flags missing/unknown/malformed/substitute labels, stores compact validation metadata, and saved-message sources match the validated source list.
+
+## Progress Tracking
+- Selected task checkbox: checked in detailed Batch06 task list and progress-tracker Task IDs list.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked because (06B) is still incomplete.
+- Execution report entry: appended and accurate for (06A).
+- Review report entry: appended at EOF.
+- Other: (06B) was not updated.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none found.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- (06A) correctly records invalid citation state but does not replace invalid drafts; the source plan assigns fail-closed grounding/regeneration/finalization to (06B).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only (06A) is accepted and (06B) remains incomplete
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch06 - Exact Citations and Grounding Verification",
+  "selected_task_id": "(06A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/citation_validation.py",
+    "backend/app/graphs/query_prompts.py",
+    "backend/app/graphs/query_formatting.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/tests/test_citation_validation.py",
+    "backend/tests/test_query_graph.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+---
+
+# Task Review Report - (06B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch06 - Exact Citations and Grounding Verification
+- Task ID: (06B)
+- Task title: Verify grounding with one bounded regeneration
+- Task status reported by executor: complete
+- Source of Truth: docs/plans/Plan_3.md > ## Batch 6: Exact Citations and Grounding Verification > ### Task 6.2: Verify grounding and perform one bounded regeneration
+- Supplemental documents: docs/plans/Master_Plan.md was provided but not needed beyond the selected task and Plan_3 source section.
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (06B)
+- Reviewed task ID: (06B)
+- Correct selection: yes
+- Notes: Reviewed the latest matching (06B) execution report. Prior accepted uncommitted (06A) citation-validation work remains in the same dirty tree and was treated as dependency context, not re-reviewed as the selected task.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: backend/app/graphs/query_formatting.py, backend/app/graphs/query_graph.py, backend/app/graphs/query_nodes.py, backend/app/graphs/query_prompts.py, backend/app/graphs/query_state.py, backend/tests/test_api_chat.py, backend/tests/test_query_graph.py, docs/reports/report_3_execute_agent.md, docs/review/review_3_review_agent.md, docs/tasks/task_3.md
+- untracked files: backend/app/services/citation_validation.py, backend/app/services/grounding.py, backend/tests/test_citation_validation.py, backend/tests/test_grounding.py
+
+## Files Reviewed
+- `backend/app/services/grounding.py`: in scope - grounding verifier service, strict JSON parsing, cited-evidence extraction, provider failure normalization.
+- `backend/app/services/citation_validation.py`: dependency context from accepted (06A) - used to verify (06B) consumes cited keys correctly.
+- `backend/app/graphs/query_prompts.py`: in scope - grounding and regeneration prompts plus exact safe response constant.
+- `backend/app/graphs/query_nodes.py`: in scope - citation validation consumption, grounding gate, one bounded regeneration, safe finalization, and message persistence behavior.
+- `backend/app/graphs/query_graph.py`: in scope - conditional routing through validate, verify, regenerate, finalize, and save nodes.
+- `backend/app/graphs/query_state.py`: in scope - compact verification state flags added for graph routing.
+- `backend/app/graphs/query_formatting.py`: in scope - compact grounding metadata persistence; also contains prior accepted (06A) citation metadata work.
+- `backend/tests/test_grounding.py`: in scope - focused grounding service coverage.
+- `backend/tests/test_query_graph.py`: in scope - graph pass/fail/regeneration/provider-failure/save-message coverage.
+- `backend/tests/test_api_chat.py`: in scope - safe response API coverage.
+- `backend/tests/test_citation_validation.py`: dependency context from accepted (06A) and included in required validation.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest execution report appended.
+- `docs/tasks/task_3.md`: in scope - reviewer updated only (06B) checkboxes after acceptance; Batch06 checkbox remains unchecked.
+- `docs/plans/Plan_3.md`: in scope - cited source-of-truth section reviewed.
+
+## Reported Files Cross-Check
+- file from execution report: backend/app/services/grounding.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: new grounding service implements strict JSON verifier and cited text evidence.
+- file from execution report: backend/app/graphs/query_prompts.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: grounding/regeneration prompts and safe response are present.
+- file from execution report: backend/app/graphs/query_nodes.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: runtime gate, regeneration, and finalization logic are present.
+- file from execution report: backend/app/graphs/query_graph.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: graph has bounded regeneration routing and persistence bypass after failed verification.
+- file from execution report: backend/app/graphs/query_state.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: answer verification and provider-failure flags are present.
+- file from execution report: backend/app/graphs/query_formatting.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: compact grounding metadata is added; no prompts or raw verifier responses are persisted.
+- file from execution report: backend/tests/test_grounding.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: grounding service tests exist.
+- file from execution report: backend/tests/test_query_graph.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: graph verification and regeneration tests exist.
+- file from execution report: backend/tests/test_api_chat.py
+- present in git/repo: yes
+- matches task scope: yes
+- notes: safe response API test exists.
+
+## Dependency Review
+- Required dependencies: accepted (06A), existing answer generation, graph routing, optional message persistence, Batch05 final context ordering/source metadata.
+- Dependency status: satisfied; (06A) is checked and has an accepted review entry, while (05B) is already complete.
+- Missing or invalid dependency: none found.
+
+## Architecture Alignment
+- Passed: grounding verifies only exact cited chunk text; answer acceptance combines citation validity, grounded=true, and score threshold; graph allows one regeneration by default; repeated/provider verification failure finalizes to the exact safe response with empty sources; failed verification bypasses optional message persistence.
+- Failed: none.
+- Uncertain: live provider behavior remains dependent on configured model credentials, as documented by the task; unit coverage uses mocks.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: `verify_answer_grounding` calls the configured ShopAIKey-compatible client and parses strict JSON into `GroundingResult`; `verify_grounding_node` builds evidence from `CitationValidationResult.cited_keys`; graph tests exercise accepted, regenerated, repeated-failure, and provider-failure paths.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: verification uses configured settings, cited keys, and generated context data. The fixed safe response is required verbatim by the source plan. Tests use fakes/mocks for provider behavior without fixture-specific production branching.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_grounding.py tests/test_citation_validation.py tests/test_query_graph.py tests/test_api_chat.py -v`
+- Reported result: Passed, 72 passed in 4.86s.
+- Rerun result: Passed, 72 passed in 3.56s.
+- Status: passed
+- Notes: exact required (06B) validation command was rerun.
+- Command/check: `git diff --check`
+- Reported result: not listed in the (06B) execution report.
+- Rerun result: Passed with only Git line-ending conversion warnings.
+- Status: passed
+- Notes: no whitespace errors reported.
+
+## Acceptance Review
+- Task acceptance: No answer reaches `ChatResponse` or message persistence unless it passes citation and grounding gates; failed verification returns only the safe response.
+- Status: satisfied
+- Evidence: graph routing saves only verified answers, repeated grounding failure returns `The indexed documents do not contain enough verified information to answer this question.` with no sources, and the message-save node is not reached for failed verification.
+
+## Progress Tracking
+- Selected task checkbox: checked in detailed Batch06 task list and progress-tracker Task IDs list.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch06 remains unchecked per user instruction; no batch-level acceptance or A3 review was performed.
+- Execution report entry: appended for (06B).
+- Review report entry: appended at EOF.
+- Other: (06A) accepted changes remain uncommitted from the prior review and were not altered except as existing context in the dirty tree.
+
+## Report Accuracy
+- Accurate with a minor reporting omission
+- Mismatches: the (06B) execution report did not list `docs/reports/report_3_execute_agent.md` under Files Created or Modified even though the report was appended; it did list the produced execution report under artifacts. This does not affect implementation acceptance.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Provider failure is treated fail-closed and routes directly to safe finalization; this matches the task file requirement to return the exact safe response after grounding-provider failure.
+- Batch06 now has both task IDs checked, but the Batch06 checkbox remains unchecked as requested pending the orchestrator's later batch-level A3 process.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, to the next orchestrator step for Batch06 review; not a batch commit from this review.
+- Should batch be marked complete? no, user instructed not to mark Batch06 complete in this task review.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch06 - Exact Citations and Grounding Verification",
+  "selected_task_id": "(06B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/services/grounding.py",
+    "backend/app/services/citation_validation.py",
+    "backend/app/graphs/query_prompts.py",
+    "backend/app/graphs/query_nodes.py",
+    "backend/app/graphs/query_graph.py",
+    "backend/app/graphs/query_state.py",
+    "backend/app/graphs/query_formatting.py",
+    "backend/tests/test_grounding.py",
+    "backend/tests/test_citation_validation.py",
+    "backend/tests/test_query_graph.py",
+    "backend/tests/test_api_chat.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": [],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```

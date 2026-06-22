@@ -123,10 +123,12 @@ def _format_page_range(
 def _format_context_chunk(chunk: Mapping[str, Any], position: int) -> str:
     file_name = normalize_text(chunk.get("file_name")) or "unknown"
     chunk_id = normalize_text(chunk.get("chunk_id") or chunk.get("id")) or "unknown"
+    citation_key = normalize_text(chunk.get("citation_key")) or f"S{position}"
     chunk_index = _normalize_int(chunk.get("chunk_index"))
     heading = normalize_text(chunk.get("heading"))
     parts = [
         f"Source {position}",
+        f"Citation key: {citation_key}",
         f"File: {file_name}",
         f"Chunk ID: {chunk_id}",
     ]
@@ -209,13 +211,32 @@ def message_metadata(state: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(document_ids, list):
         document_ids = []
 
-    return {
+    metadata: dict[str, Any] = {
         "document_ids": list(document_ids),
         "prepared_query": normalize_text(state.get("prepared_query") or state.get("question")),
         "retrieved_chunk_count": len(state.get("retrieved_chunks") or []),
         "reranked_chunk_count": len(state.get("reranked_chunks") or []),
         "context_chunk_count": len(state.get("context_chunks") or []),
     }
+    citation_validation_result = state.get("citation_validation_result")
+    if citation_validation_result is not None:
+        if hasattr(citation_validation_result, "model_dump"):
+            metadata["citation_validation_result"] = citation_validation_result.model_dump(
+                mode="json"
+            )
+        elif isinstance(citation_validation_result, Mapping):
+            metadata["citation_validation_result"] = dict(citation_validation_result)
+    grounding_result = state.get("grounding_result")
+    if grounding_result is not None:
+        if hasattr(grounding_result, "model_dump"):
+            metadata["grounding_result"] = grounding_result.model_dump(mode="json")
+        elif isinstance(grounding_result, Mapping):
+            metadata["grounding_result"] = dict(grounding_result)
+    if "answer_verified" in state:
+        metadata["answer_verified"] = bool(state.get("answer_verified"))
+    if "verification_attempt_count" in state:
+        metadata["verification_attempt_count"] = state.get("verification_attempt_count")
+    return metadata
 
 
 def extract_chat_content(response: Any) -> str | None:

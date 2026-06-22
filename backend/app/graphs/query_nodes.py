@@ -19,7 +19,9 @@ from app.graphs.query_prompts import (
     ANSWER_SYSTEM_PROMPT,
     ANSWER_USER_PROMPT_TEMPLATE,
     NO_RELEVANT_INFORMATION_MESSAGE,
+    SAFE_INSUFFICIENT_CONTEXT_MESSAGE,
     build_answer_messages,
+    build_regeneration_messages,
 )
 from app.core.contracts import RetrievalStrategy
 from app.models.schemas import RetrievalFilters
@@ -27,6 +29,8 @@ from app.models.schemas import QueryPlan, QuerySubquery
 from app.services import messages as message_service
 from app.services import query_planning, retrieval, retrieval_context, score_fusion
 from app.services import relations as relation_service
+from app.services.citation_validation import assign_citation_keys, validate_answer_citations
+from app.services import grounding
 from app.services.shopaikey_client import create_shopaikey_client
 
 logger = logging.getLogger(__name__)
@@ -665,6 +669,7 @@ def generate_answer_node(
             if shopaikey_client is not None
             else create_shopaikey_client(resolved_settings)
         )
+        context_chunks = assign_citation_keys(context_chunks)
         context = build_context_prompt(context_chunks)
         response = client.chat.completions.create(
             model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
@@ -693,22 +698,168 @@ def generate_answer_node(
         }
 
 
+def _compact_grounding_feedback(state: Mapping[str, Any]) -> str:
+    validation = state.get("citation_validation_result")
+    result = state.get("grounding_result")
+    parts: list[str] = []
+    if validation is not None and not getattr(validation, "valid", False):
+        invalid_keys = getattr(validation, "invalid_keys", [])
+        if invalid_keys:
+            parts.append(f"Invalid citation keys: {', '.join(invalid_keys)}.")
+        if getattr(validation, "missing_citations", False):
+            parts.append("Factual claims need valid [S<number>] citations.")
+    if result is not None:
+        unsupported = getattr(result, "unsupported_claims", [])
+        missing = getattr(result, "missing_citations", [])
+        if unsupported:
+            parts.append(f"Unsupported claims: {'; '.join(unsupported[:3])}.")
+        if missing:
+            parts.append(f"Missing citations: {'; '.join(missing[:3])}.")
+    return " ".join(parts) or "Previous answer was not verified. Use only cited context."
+
+
+def regenerate_answer_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+    shopaikey_client: Any | None = None,
+) -> dict[str, Any]:
+    resolved_settings = _resolve_settings(settings)
+    question = _question_text(state)
+    if question is None:
+        return {"error_message": "prepared_query is required"}
+
+    context_chunks = resolve_context_chunks(state)
+    if not context_chunks:
+        return {
+            "answer": NO_RELEVANT_INFORMATION_MESSAGE,
+            "sources": [],
+        }
+
+    try:
+        client = (
+            shopaikey_client
+            if shopaikey_client is not None
+            else create_shopaikey_client(resolved_settings)
+        )
+        context_chunks = assign_citation_keys(context_chunks)
+        context = build_context_prompt(context_chunks)
+        response = client.chat.completions.create(
+            model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
+            messages=build_regeneration_messages(
+                context=context,
+                question=question,
+                feedback=_compact_grounding_feedback(state),
+            ),
+            temperature=resolved_settings.TEMPERATURE,
+            max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
+        )
+        answer = extract_chat_content(response)
+        if answer is None:
+            return {
+                "error_message": safe_detail(
+                    "Chat completion returned empty content",
+                    fallback=DEFAULT_QUERY_ERROR,
+                )
+            }
+        return {
+            "answer": answer,
+            "sources": build_source_citations(context_chunks),
+        }
+    except Exception as exc:  # pragma: no cover - defensive guard
+        return {
+            "error_message": safe_detail(
+                f"Failed to regenerate answer: {exc}",
+                fallback=DEFAULT_QUERY_ERROR,
+            )
+        }
+
+
 def validate_citations_node(
     state: Mapping[str, Any],
     *,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
     _resolve_settings(settings)
-    return {}
+    answer = state.get("answer")
+    context_chunks = resolve_context_chunks(state)
+    validation_output = validate_answer_citations(
+        str(answer) if answer is not None else None,
+        context_chunks,
+    )
+    return {
+        "citation_validation_result": validation_output.validation,
+        "sources": validation_output.sources,
+    }
 
 
 def verify_grounding_node(
     state: Mapping[str, Any],
     *,
     settings: Settings | None = None,
+    shopaikey_client: Any | None = None,
 ) -> dict[str, Any]:
-    _resolve_settings(settings)
-    return {}
+    resolved_settings = _resolve_settings(settings)
+    answer = normalize_text(state.get("answer"))
+    validation = state.get("citation_validation_result")
+    verification_attempt_count = int(state.get("verification_attempt_count") or 0) + 1
+
+    if answer is None:
+        return {
+            "answer_verified": False,
+            "verification_attempt_count": verification_attempt_count,
+        }
+
+    if answer == NO_RELEVANT_INFORMATION_MESSAGE or "indexed documents do not contain enough information" in answer.lower():
+        return {
+            "grounding_result": grounding.GroundingResult(
+                grounded=True,
+                score=1.0,
+                unsupported_claims=[],
+                missing_citations=[],
+            ),
+            "answer_verified": True,
+            "verification_attempt_count": verification_attempt_count,
+        }
+
+    citations_valid = bool(getattr(validation, "valid", False))
+    cited_keys = list(getattr(validation, "cited_keys", []) or [])
+    evidence = grounding.cited_evidence_from_sources(
+        context_chunks=resolve_context_chunks(state),
+        cited_keys=cited_keys,
+    )
+    if not citations_valid or not evidence:
+        result = grounding.GroundingResult(
+            grounded=False,
+            score=0.0,
+            unsupported_claims=[],
+            missing_citations=[] if cited_keys else ["valid citations"],
+        )
+        return {
+            "grounding_result": result,
+            "answer_verified": False,
+            "verification_attempt_count": verification_attempt_count,
+        }
+
+    try:
+        result = grounding.verify_answer_grounding(
+            answer,
+            evidence=evidence,
+            settings=resolved_settings,
+            shopaikey_client=shopaikey_client,
+        )
+    except grounding.GroundingProviderError:
+        return {
+            "answer_verified": False,
+            "grounding_provider_failed": True,
+            "verification_attempt_count": verification_attempt_count,
+        }
+
+    return {
+        "grounding_result": result,
+        "answer_verified": result.grounded and result.score >= resolved_settings.GROUNDING_MIN_SCORE,
+        "verification_attempt_count": verification_attempt_count,
+    }
 
 
 def finalize_answer_node(
@@ -717,6 +868,11 @@ def finalize_answer_node(
     settings: Settings | None = None,
 ) -> dict[str, Any]:
     _resolve_settings(settings)
+    if state.get("answer_verified") is False:
+        return {
+            "answer": SAFE_INSUFFICIENT_CONTEXT_MESSAGE,
+            "sources": [],
+        }
     return {}
 
 
@@ -737,7 +893,7 @@ def save_message_optional_node(
 
     try:
         sources = state.get("sources")
-        if isinstance(sources, list) and sources:
+        if isinstance(sources, list):
             normalized_sources = [
                 dict(source) for source in sources if isinstance(source, Mapping)
             ]
@@ -762,6 +918,7 @@ __all__ = [
     "ANSWER_USER_PROMPT_TEMPLATE",
     "DEFAULT_QUERY_ERROR",
     "NO_RELEVANT_INFORMATION_MESSAGE",
+    "SAFE_INSUFFICIENT_CONTEXT_MESSAGE",
     "expand_neighbor_context_node",
     "expand_context_node",
     "finalize_answer_node",
@@ -770,6 +927,7 @@ __all__ = [
     "jina_rerank_node",
     "plan_query_node",
     "prepare_query_node",
+    "regenerate_answer_node",
     "rerank_candidates_node",
     "retrieve_qdrant_node",
     "retrieve_candidates_node",

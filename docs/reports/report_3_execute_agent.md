@@ -1517,3 +1517,183 @@ complete
 - next task ID: (06A)
 - can proceed: yes
 - handoff notes: Batch05 validation is complete; the next task can start from the current dirty tree without further 05B changes.
+
+---
+
+# Task Execution Report - (06A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch06 - Exact Citations and Grounding Verification
+
+## Task
+(06A) - Generate and validate exact chunk-keyed citations
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md selected task block for (06A)
+- docs/plans/Plan_3.md > ## Batch 6: Exact Citations and Grounding Verification > ### Task 6.1: Generate and validate chunk-keyed citations
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Exact Citations and Grounding Verification
+- Task ID: (06A)
+- Task title: Generate and validate exact chunk-keyed citations
+
+## Completed Work
+- Status: complete.
+- Added a citation validation service that assigns prompt-local S1/S2 keys after final context ordering, extracts valid [S<number>] markers, rejects unknown and malformed markers, flags factual answers without valid citations, maps accepted keys to exact chunk IDs, and returns cited sources only in first-citation order.
+- Updated answer context formatting and prompts to include citation keys beside exact chunk IDs and require [S<number>] factual citations while allowing the safe insufficient-context response without citations.
+- Wired citation validation into the query graph pipeline so validated sources replace uncited context sources and compact validation results remain in query/message metadata.
+- Updated optional message persistence so explicitly validated empty sources are saved as empty instead of falling back to all context chunks.
+- Added tests for valid, unknown, malformed, absent, duplicate, insufficient-context, uncited-context filtering, substitute-label rejection, and saved-source parity behavior.
+
+## Files Created or Modified
+- backend/app/services/citation_validation.py
+- backend/app/graphs/query_prompts.py
+- backend/app/graphs/query_formatting.py
+- backend/app/graphs/query_nodes.py
+- backend/tests/test_citation_validation.py
+- backend/tests/test_query_graph.py
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- python -m pytest tests/test_citation_validation.py tests/test_query_graph.py -v: Passed
+- evidence or reason: 57 tests collected and 57 passed in the fresh required validation run from backend.
+
+## Acceptance Check
+- Task acceptance condition: Every returned citation maps to an exact context chunk, and uncited or invented sources never reach the response.
+- Status: satisfied
+- Evidence: Citation validation maps S keys to exact chunk IDs, filters returned sources to cited chunks only, rejects unknown/malformed/substitute labels, flags missing citations, and the required query graph tests pass.
+
+## Artifacts Produced
+- Citation validation service and exact source-selection pipeline.
+- Targeted unit and graph tests for citation-key validation behavior.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; checkbox and batch updates are reserved for A2 after an ACCEPTED review.
+
+## Key Implementation Decisions
+- Keep citation validation local and deterministic, without model calls or grounding verification, to stay inside 06A scope.
+- Preserve generated answer text during 06A and record invalid citation state plus empty/filtered sources; the future 06B grounding gate remains responsible for fail-closed regeneration/safe finalization.
+- Store only compact CitationValidationResult fields in message metadata, not prompts or raw validation text.
+
+## Risks or Open Issues
+- Invalid uncited answers are marked invalid and have no returned sources in 06A, but final fail-closed answer replacement is intentionally left for (06B).
+
+## Minor Issues Fixed During Execution
+- Prevented saved-message source fallback from reintroducing uncited context when citation validation produced an explicit empty sources list.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (05B) is marked complete in docs/tasks/task_3.md.
+- No user action required.
+- No 06B grounding verification or regeneration behavior was implemented.
+
+## Notes for Next Task
+- next task ID: (06B)
+- can proceed: yes
+- handoff notes: 06B can consume citation_validation_result and validated sources from query state to implement the grounding gate and bounded regeneration.
+
+---
+
+# Task Execution Report - (06B)
+
+## Source Task File
+`docs/tasks/task_3.md`
+
+## Report File
+`docs/reports/report_3_execute_agent.md`
+
+## Batch
+Batch06 - Exact Citations and Grounding Verification
+
+## Task
+(06B) - Verify grounding with one bounded regeneration
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` selected task block for (06B)
+- `docs/plans/Plan_3.md` > `## Batch 6: Exact Citations and Grounding Verification` > `### Task 6.2: Verify grounding and perform one bounded regeneration`
+
+## Supplemental Documents Used
+- None
+
+## Selected Scope
+- Batch: Batch06 - Exact Citations and Grounding Verification
+- Task ID: (06B)
+- Task title: Verify grounding with one bounded regeneration
+
+## Completed Work
+- Complete.
+- Added strict grounding verification against exact cited chunk text only.
+- Added fail-closed answer acceptance combining citation validity, `grounded=true`, and `GROUNDING_MIN_SCORE`.
+- Added bounded one-regeneration graph routing using compact verifier feedback and original context.
+- Added final safe response behavior after repeated verification failure or grounding-provider failure.
+- Prevented failed verification responses from entering message persistence and ensured safe responses return no sources.
+
+## Files Created or Modified
+- `backend/app/services/grounding.py`
+- `backend/app/graphs/query_prompts.py`
+- `backend/app/graphs/query_nodes.py`
+- `backend/app/graphs/query_graph.py`
+- `backend/app/graphs/query_state.py`
+- `backend/app/graphs/query_formatting.py`
+- `backend/tests/test_grounding.py`
+- `backend/tests/test_query_graph.py`
+- `backend/tests/test_api_chat.py`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_grounding.py tests/test_citation_validation.py tests/test_query_graph.py tests/test_api_chat.py -v`: Passed
+- Evidence: `72 passed in 4.86s`
+
+## Acceptance Check
+- Task acceptance condition: No answer reaches `ChatResponse` or message persistence unless it passes citation and grounding gates; failed verification returns only the safe response.
+- Status: satisfied
+- Evidence: Required validation passed; graph tests cover pass, one regeneration, repeated failure, provider failure, safe finalization, and skipped message persistence for failed verification.
+
+## Artifacts Produced
+- Grounding verification service and prompts.
+- Bounded regeneration graph node/transition.
+- Fail-closed finalization behavior.
+- Unit/API regression tests for grounding and graph/API behavior.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status are left for A2 after accepted review.
+
+## Key Implementation Decisions
+- Use the existing ShopAIKey chat client for grounding verification with strict JSON parsed into `GroundingResult`.
+- Build verifier evidence from `CitationValidationResult.cited_keys` and the exact generation context chunk text.
+- Treat provider failure as verification failure and skip regeneration on provider failure.
+- Route failed verification to safe finalization and then end, bypassing optional message persistence.
+
+## Risks or Open Issues
+- Live grounding acceptance still depends on configured model credentials; unit coverage uses mocked provider responses as required.
+
+## Minor Issues Fixed During Execution
+- Added compact grounding metadata fields to message metadata so persisted verified messages can carry verification status without prompts.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependency (06A) was already accepted per user-provided current state notes.
+- No task checkbox was updated and no commit was created.
+
+## Notes for Next Task
+- next task ID: Batch06 review / next orchestrator step
+- can proceed: yes
+- handoff notes: A2 should review the 06B fail-closed grounding gate, especially the bounded regeneration route and message persistence bypass for failed verification.
