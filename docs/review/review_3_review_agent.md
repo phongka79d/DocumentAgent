@@ -187,6 +187,7 @@ ACCEPTED
 }
 ```
 
+
 ---
 
 # Task Review Report - (01B)
@@ -3505,6 +3506,381 @@ ACCEPTED
   "major_issues": [],
   "warnings": [],
   "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (07A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch07 - RAG Evaluation Dataset and Metrics
+- Task ID: (07A)
+- Task title: Add a versioned text-only evaluation corpus and dataset contract
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > Batch 7 > Task 7.1
+- Supplemental documents: `docs/plans/Master_Plan.md` (Phase 3 text-only scope cross-check)
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (07A)
+- Reviewed task ID: (07A)
+- Correct selection: yes
+- Notes: (07A) is the physical final execution report entry; no (07B) work was reviewed.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: `docs/reports/report_3_execute_agent.md`; this review additionally changes `docs/tasks/task_3.md` and this report.
+- untracked files: the eight reported (07A) implementation/test artifacts.
+
+## Files Reviewed
+- `backend/app/evaluation/__init__.py`: in scope - package marker without eager imports.
+- `backend/app/evaluation/dataset.py`: in scope - strict nine-field model, JSONL loader, fixture validation, and CLI.
+- `backend/evaluation/fixtures/leave_policy.md`: in scope - original text-only fixture.
+- `backend/evaluation/fixtures/pricing_policy.md`: in scope - original text-only fixture.
+- `backend/evaluation/fixtures/security_policy.md`: in scope - original text-only fixture.
+- `backend/evaluation/datasets/phase3_v1.jsonl`: in scope - twelve deterministic cases covering all required scenarios.
+- `backend/scripts/seed_evaluation_corpus.py`: in scope - production upload/index seeding, duplicate reuse, ready polling, and safe errors.
+- `backend/tests/test_evaluation_metrics.py`: in scope - deterministic dataset and seeding tests.
+- `docs/reports/report_3_execute_agent.md`: in scope - appended (07A) execution report.
+- `docs/tasks/task_3.md`: in scope for A2 progress updates only.
+
+## Reported Files Cross-Check
+- file from execution report: all eight implementation/test artifacts and the execution report
+- present in git/repo: yes
+- matches task scope: yes
+- notes: no unreported implementation or (07B) artifact is present.
+
+## Dependency Review
+- Required dependencies: accepted Batch06 workflow, existing upload/index lifecycle, and external configuration for live seeding only.
+- Dependency status: satisfied for local dataset/unit acceptance.
+- Missing or invalid dependency: none; live credentials remain the explicitly permitted `BLOCKED_BY_USER_ACTION` condition.
+
+## Architecture Alignment
+- Passed: text-only artifacts; production `RetrievalFilters`; production upload, index, and document-read services; duplicate-ready reuse; ready polling; redacted CLI failures.
+- Failed: none.
+- Uncertain: live provider behavior was not exercised because its user-action gate remains active.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: strict Pydantic parsing checks actual UTF-8 fixtures, and the seed path invokes production services with mocked external behavior only in tests.
+
+## Hardcoding Review
+- Hardcoding found: no prohibited hardcoding
+- Evidence: fixture mappings, MIME type, and expected dataset content are intentional versioned reference data; runtime logic does not branch on case IDs, answers, or dataset order.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_evaluation_metrics.py -v`
+- Reported result: 9 passed
+- Rerun result: 9 passed in 1.88s
+- Status: passed
+- Notes: focused contract and seed-path coverage passed.
+- Command/check: `cd backend; python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl`
+- Reported result: 12 cases validated
+- Rerun result: `Dataset validation passed: 12 cases`
+- Status: passed
+- Notes: checked-in dataset and fixtures validate together.
+- Command/check: `git diff --check`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: only line-ending warnings; no whitespace errors.
+- Command/check: live corpus seeding
+- Reported result: `BLOCKED_BY_USER_ACTION`
+- Rerun result: not run
+- Status: permitted blocked validation
+- Notes: explicitly deferred until the user configures and authorizes external providers.
+
+## Acceptance Review
+- Task acceptance: valid twelve-case deterministic corpus and safe production-service seeding path.
+- Status: satisfied
+- Evidence: repository inspection, scenario coverage, fixture evidence checks, 9/9 tests, and successful dataset CLI.
+
+## Progress Tracking
+- Selected task checkbox: checked in detailed and matching progress entries.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch07 remains unchecked because (07B) is unchecked.
+- Execution report entry: appended at EOF.
+- Review report entry: appended at EOF.
+- Other: no sibling, future task, or batch checkbox changed.
+
+## Report Accuracy
+- Accurate
+- Mismatches: none.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live seeding remains intentionally gated on user-provided external configuration.
+- The general validator accepts a nonempty corpus, while the checked-in artifact and focused test enforce this task's twelve-case minimum.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes, (07B) may proceed.
+- Should batch be marked complete? no; (07B) remains incomplete.
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch07 - RAG Evaluation Dataset and Metrics",
+  "selected_task_id": "(07A)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/evaluation/__init__.py",
+    "backend/app/evaluation/dataset.py",
+    "backend/evaluation/fixtures/leave_policy.md",
+    "backend/evaluation/fixtures/pricing_policy.md",
+    "backend/evaluation/fixtures/security_policy.md",
+    "backend/evaluation/datasets/phase3_v1.jsonl",
+    "backend/scripts/seed_evaluation_corpus.py",
+    "backend/tests/test_evaluation_metrics.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": ["live corpus seeding: BLOCKED_BY_USER_ACTION"],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": true,
+  "batch_can_be_marked_complete": false
+}
+```
+
+---
+
+# Task Review Report - (07B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch07 - RAG Evaluation Dataset and Metrics
+- Task ID: (07B)
+- Task title: Implement retrieval, citation, grounding, and answer metrics
+- Task status reported by executor: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 7: RAG Evaluation Dataset and Metrics` > `### Task 7.2: Implement retrieval, grounding, citation, and answer metrics`
+- Supplemental documents: `docs/plans/Master_Plan.md` (relevant evaluation objectives cross-checked)
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (07B)
+- Reviewed task ID: (07B)
+- Correct selection: yes
+- Notes: The latest matching execution entry is the final report entry and covers only (07B).
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- changed files from git: accepted uncommitted (07A) artifacts; (07B) files listed below; execution/review reports; task tracker
+- untracked files: `backend/.gitignore`, `backend/app/evaluation/`, `backend/evaluation/`, `backend/scripts/`, `backend/tests/test_evaluation_metrics.py`; the (07A) subset was treated as accepted dependency context only
+
+## Files Reviewed
+- `backend/app/evaluation/metrics.py`: in scope - exact metrics, empty handling, aggregation, defaults, and gates
+- `backend/app/evaluation/runner.py`: in scope - production query-graph execution, state capture, safe case failures, and timestamped JSON output
+- `backend/scripts/run_rag_evaluation.py`: in scope - CLI options, defaults, reporting, and exit codes
+- `backend/.gitignore`: in scope - generated evaluation reports are ignored
+- `backend/tests/test_evaluation_metrics.py`: in scope - shared (07A)/(07B) suite; reviewed the appended metric, runner, report, and CLI coverage
+- `docs/reports/report_3_execute_agent.md`: in scope - latest (07B) execution report appended
+- `docs/tasks/task_3.md`: in scope - only the two (07B) checkbox entries updated by this reviewer; prior (07A) changes are accepted dependency state
+- `docs/review/review_3_review_agent.md`: in scope - this review appended at EOF
+- `backend/app/evaluation/dataset.py`, `backend/evaluation/datasets/phase3_v1.jsonl`, `backend/evaluation/fixtures/*.md`, `backend/scripts/seed_evaluation_corpus.py`: dependency context only - accepted (07A) artifacts, not attributed to (07B)
+
+## Reported Files Cross-Check
+- file from execution report: all five (07B) implementation/test files plus execution report
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Every reported file exists and no (07B) implementation outside the selected scope was found.
+
+## Dependency Review
+- Required dependencies: accepted (07A), accepted Batch06 production query/citation/grounding workflow, compact query outputs
+- Dependency status: satisfied; (07A), (06A), and (06B) are checked complete and their required artifacts exist
+- Missing or invalid dependency: none
+
+## Architecture Alignment
+- Passed: Runner builds and invokes the production `build_query_graph`; it supplies case question, exact seeded document IDs, filters, and `save_message=False`; it captures real pre-rerank, post-rerank, context, answer, sources, citation validation, grounding, route, latency, and safe workflow error fields.
+- Failed: none
+- Uncertain: live provider behavior is deferred by the plan to external acceptance after authorized seeding/configuration.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Metric functions calculate from runtime case outcomes; the runner invokes the production graph; report writes and CLI threshold evaluation are executable; no fixed success path or evaluation-only retriever exists.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: Only source-required default gates and default `k=5` are constants; runtime logic does not special-case case IDs, fixture strings, document IDs, or expected answers.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest tests/test_evaluation_metrics.py -v`
+- Reported result: 18 passed
+- Rerun result: 18 passed in 3.60s
+- Status: passed
+- Notes: Covers hand calculations, fewer-than-k and empty inputs, expected-no-result rates, citation/context checks, grounding/answer terms, production graph invocation, timestamped report serialization, exact gates, help, and nonzero gate failure.
+- Command/check: `cd backend; python scripts/run_rag_evaluation.py --help`
+- Reported result: exit 0 with all options
+- Rerun result: exit 0; dataset, output, k, and all five threshold options/defaults shown
+- Status: passed
+- Notes: Completed without live network access.
+- Command/check: `cd backend; python -m compileall -q app/evaluation scripts/run_rag_evaluation.py tests/test_evaluation_metrics.py`
+- Reported result: passed
+- Rerun result: passed
+- Status: passed
+- Notes: none
+- Command/check: `cd backend; git check-ignore -v evaluation/results/example.json`
+- Reported result: ignored by `backend/.gitignore`
+- Rerun result: ignored by `/evaluation/results/`
+- Status: passed
+- Notes: generated reports remain untracked by default.
+- Command/check: `git diff --check`
+- Reported result: passed with line-ending notices only
+- Rerun result: passed with the same non-error line-ending notices
+- Status: passed
+- Notes: none
+- Command/check: live external evaluation
+- Reported result: BLOCKED_BY_USER_ACTION
+- Rerun result: not run, as required credentials/providers and seeded corpus are not confirmed
+- Status: deferred by source plan
+- Notes: This does not block unit/CLI acceptance; external evaluation is explicitly deferred to (09C).
+
+## Acceptance Review
+- Task acceptance: Unit metrics match hand calculations, reports capture production workflow results, and threshold violations fail the CLI.
+- Status: satisfied
+- Evidence: Exact metric definitions and zero-safe denominators were inspected; required tests passed 18/18; runner uses the production query graph and required state fields; default gates are `0.80`, `1.00`, `0.90`, `0.10`, and `0.00`; gate failures return exit 1.
+
+## Progress Tracking
+- Selected task checkbox: checked in both the detailed Batch07 task entry and Progress Tracker task-ID entry
+- Checkbox updated by reviewer: yes
+- Batch status: Batch07 remains unchecked; A3/orchestrator owns batch completion after scope audit
+- Execution report entry: appended at EOF and accurately reports (07B)
+- Review report entry: appended at EOF
+- Other: no sibling, future-task, global-checklist, or batch checkbox updated
+
+## Report Accuracy
+- Accurate
+- Mismatches: none
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- Live external evaluation remains `BLOCKED_BY_USER_ACTION` until the corpus is seeded and providers are configured; the source plan explicitly defers that run to (09C).
+- Aggregate retrieval metrics use micro totals, while the individual helpers preserve the exact per-case formulas and actual fewer-than-k precision denominator.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? no; Batch07 scope audit and batch commit/approval gate must run before Batch08
+- Should batch be marked complete? no; both task IDs are now accepted, but A3/orchestrator owns the batch audit and completion decision
+
+## Repair Instructions
+- None
+
+## JSON Summary
+
+```json
+{
+  "review_outcome": "ACCEPTED",
+  "source_task_file": "docs/tasks/task_3.md",
+  "execution_report_reviewed": "docs/reports/report_3_execute_agent.md",
+  "review_report_file": "docs/review/review_3_review_agent.md",
+  "selected_batch": "Batch07 - RAG Evaluation Dataset and Metrics",
+  "selected_task_id": "(07B)",
+  "latest_report_entry_found": true,
+  "task_selection_correct": true,
+  "git_diff_reviewed": true,
+  "changed_files_reviewed": [
+    "backend/app/evaluation/metrics.py",
+    "backend/app/evaluation/runner.py",
+    "backend/scripts/run_rag_evaluation.py",
+    "backend/.gitignore",
+    "backend/tests/test_evaluation_metrics.py",
+    "docs/reports/report_3_execute_agent.md",
+    "docs/tasks/task_3.md",
+    "docs/review/review_3_review_agent.md"
+  ],
+  "reported_files_cross_checked": true,
+  "dependencies_satisfied": true,
+  "architecture_aligned": true,
+  "hardcoding_found": false,
+  "fake_implementation_found": false,
+  "validations_failed": [],
+  "validations_blocked": ["live external evaluation: BLOCKED_BY_USER_ACTION; deferred to (09C)"],
+  "acceptance_satisfied": true,
+  "progress_tracking_accurate": true,
+  "checkbox_updated_by_reviewer": true,
+  "execution_report_accurate": true,
+  "blocking_issues": [],
+  "major_issues": [],
+  "warnings": [],
+  "next_task_can_proceed": false,
   "batch_can_be_marked_complete": false
 }
 ```

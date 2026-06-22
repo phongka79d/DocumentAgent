@@ -1697,3 +1697,198 @@ complete
 - next task ID: Batch06 review / next orchestrator step
 - can proceed: yes
 - handoff notes: A2 should review the 06B fail-closed grounding gate, especially the bounded regeneration route and message persistence bypass for failed verification.
+
+---
+
+# Task Execution Report - (07A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch07 - RAG Evaluation Dataset and Metrics
+
+## Task
+(07A) - Add a versioned text-only evaluation corpus and dataset contract
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `Mandatory Batch07` > `(07A)`
+- `docs/plans/Plan_3.md` > `Batch 7: RAG Evaluation Dataset and Metrics` > `Task 7.1`
+
+## Supplemental Documents Used
+- None; the selected task and cited Plan_3 section were sufficient.
+
+## Selected Scope
+- Batch: Batch07 - RAG Evaluation Dataset and Metrics
+- Task ID: (07A)
+- Task title: Add a versioned text-only evaluation corpus and dataset contract
+
+## Completed Work
+- Completed the local dataset/unit scope for (07A).
+- Added the exact nine-field Pydantic dataset row contract and JSONL loader/CLI validation.
+- Added three original UTF-8 Markdown policy fixtures with uniquely attributable evidence phrases.
+- Added twelve deterministic cases covering semantic paraphrase, exact keyword lookup, MIME/heading/section/page filters, decomposition, comparison, relations, citation selection, insufficient context, and conflicting evidence.
+- Added validation for JSON syntax, exact row fields, row consistency, unique case IDs, known fixture titles, positive/no-result evidence rules, and fixture evidence location/uniqueness.
+- Added a live seed CLI that uses the existing document upload and production index services, reuses ready duplicates, waits for ready status, checks required configuration, and emits only safe title-to-ID mappings or redacted failures.
+- Added deterministic unit tests with all external service behavior mocked.
+
+## Files Created or Modified
+- `backend/app/evaluation/__init__.py`
+- `backend/app/evaluation/dataset.py`
+- `backend/evaluation/fixtures/leave_policy.md`
+- `backend/evaluation/fixtures/pricing_policy.md`
+- `backend/evaluation/fixtures/security_policy.md`
+- `backend/evaluation/datasets/phase3_v1.jsonl`
+- `backend/scripts/seed_evaluation_corpus.py`
+- `backend/tests/test_evaluation_metrics.py`
+- `docs/reports/report_3_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_evaluation_metrics.py -v`: Passed; 9 tests passed.
+- `cd backend; python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl`: Passed; 12 cases validated.
+- `cd backend; python -m compileall -q app/evaluation scripts/seed_evaluation_corpus.py tests/test_evaluation_metrics.py`: Passed.
+- `cd backend; git diff --check`: Passed.
+- Live corpus seeding: Blocked by user action; external Supabase, Qdrant, ShopAIKey, and Jina resources/credentials were not exercised in this task run.
+
+## Acceptance Check
+- Task acceptance condition: The dataset validates, contains at least twelve unique deterministic cases, and seeding uses production application services safely.
+- Status: satisfied for the dataset/unit implementation; live seeding remains `BLOCKED_BY_USER_ACTION` as explicitly allowed by the task.
+- Evidence: The required test command passed 9 tests, the required module CLI validated 12 unique cases, and seed tests verified upload/index/wait and duplicate-reuse behavior without network access.
+
+## Artifacts Produced
+- Versioned `phase3_v1.jsonl` evaluation dataset.
+- Three deterministic Markdown policy fixtures.
+- Dataset validator and module CLI.
+- Safe production-service seed CLI.
+- Targeted unit test suite.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status are left for A2 after accepted review.
+
+## Key Implementation Decisions
+- Reused the existing `RetrievalFilters` contract so evaluation filters match production query validation.
+- Required every expected evidence phrase to occur exactly once across the fixtures and within a case-referenced title.
+- Modeled the Markdown page-filter case as an expected no-result because text-only Markdown ingestion has no page metadata.
+- Used `register_uploaded_document`, `run_document_index`, and `get_document` rather than an evaluation-only ingestion path.
+- Suppressed raw live exceptions at the seed CLI boundary and reported only missing configuration field names or a generic safe failure.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: Live seeding still requires authorized Supabase, Qdrant, ShopAIKey, and Jina resources and credentials in local `.env`; no secret values were read into reports or printed.
+
+## Minor Issues Fixed During Execution
+- Removed eager package imports that caused a `runpy` warning when invoking the validator with `python -m`.
+
+## Workflow Integrity Check
+- No missing or conflicting source-of-truth fields identified.
+- Batch06 task dependencies are checked complete in the task file.
+- No sibling task, task checkbox, batch status, or commit was created or modified.
+
+## Notes for Next Task
+- next task ID: (07B)
+- can proceed: yes, after A2 accepts (07A)
+- handoff notes: (07B) can build metric formulas and runner contracts on `EvaluationCase`; live evaluation remains separately user-action gated.
+
+---
+
+# Task Execution Report - (07B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch07 - RAG Evaluation Dataset and Metrics
+
+## Task
+(07B) - Implement retrieval, citation, grounding, and answer metrics
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `Mandatory Batch07` > `(07B)`
+- `docs/plans/Plan_3.md` > `Batch 7: RAG Evaluation Dataset and Metrics` > `Task 7.2`
+
+## Supplemental Documents Used
+- None; the selected task and cited Plan_3 section were sufficient.
+
+## Selected Scope
+- Batch: Batch07 - RAG Evaluation Dataset and Metrics
+- Task ID: (07B)
+- Task title: Implement retrieval, citation, grounding, and answer metrics
+
+## Completed Work
+- Completed the local metric, runner, reporting, CLI, gate, ignore-rule, and unit-test scope for (07B).
+- Implemented recall-at-k, precision-at-k with actual fewer-than-k denominators, rerank lift, no-result rate, unexpected no-result rate, citation validity rate, grounding pass rate, answer term coverage, and forbidden term rate.
+- Defined zero-safe behavior for empty cases and absent term denominators and prevented overlapping duplicate result chunks from inflating recall above its expected evidence denominator.
+- Added an evaluation runner that invokes the production `build_query_graph` workflow and captures pre-rerank results, post-rerank results, generation context, answer, sources, citation validation, grounding, route, latency, and safe workflow errors.
+- Added timestamped JSON reporting under `backend/evaluation/results/` and ignored generated result reports.
+- Added CLI dataset, output, k, and five threshold options with the exact documented defaults and a nonzero exit when any gate fails.
+- Kept CLI help network-free by lazily importing the production graph only when an evaluation actually runs.
+
+## Files Created or Modified
+- `backend/app/evaluation/metrics.py`
+- `backend/app/evaluation/runner.py`
+- `backend/scripts/run_rag_evaluation.py`
+- `backend/.gitignore`
+- `backend/tests/test_evaluation_metrics.py`
+- `docs/reports/report_3_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest tests/test_evaluation_metrics.py -v`: Passed; 18 tests passed.
+- `cd backend; python scripts/run_rag_evaluation.py --help`: Passed; exit 0 and all dataset/output/k/threshold options documented without live network access.
+- `cd backend; python -m compileall -q app/evaluation scripts/run_rag_evaluation.py tests/test_evaluation_metrics.py`: Passed.
+- `cd backend; git check-ignore -v evaluation/results/example.json`: Passed; `backend/.gitignore` ignores generated evaluation results.
+- `cd backend; git diff --check`: Passed; only pre-existing line-ending notices were emitted for orchestrator-owned documentation files.
+- Live external evaluation: Blocked by user action; seeded corpus and configured external providers were not available or exercised.
+
+## Acceptance Check
+- Task acceptance condition: Unit metrics match hand calculations, reports capture production workflow results, and threshold violations fail the CLI.
+- Status: satisfied for local implementation and validation; live external acceptance remains `BLOCKED_BY_USER_ACTION` as explicitly allowed by the task.
+- Evidence: All 18 targeted tests passed, including hand calculations, empty/fewer-than-k and expected-no-result cases, production graph invocation, report serialization, exact defaults, and nonzero threshold-failure behavior; CLI help exited zero without live access.
+
+## Artifacts Produced
+- Exact evaluation metrics library and threshold evaluator.
+- Production-query evaluation runner and timestamped JSON report contract.
+- CI-friendly evaluation CLI with configurable gates.
+- Generated-report ignore rule.
+- Expanded hand-calculated unit and CLI coverage.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: orchestrated run; checkbox and batch status are left for A2 after accepted review.
+
+## Key Implementation Decisions
+- Count each expected evidence item at most once so overlapping retrieval chunks cannot inflate recall; precision still uses the actual returned result denominator below k.
+- Use micro totals for aggregate retrieval recall/precision and direct plan denominators for all rate metrics.
+- Treat an answered case as citation-valid only when runtime citation validation passes and every cited chunk ID is present in generation context.
+- Treat `answer_verified` as the production runtime grounding-gate result.
+- Resolve seeded document titles once, then pass their IDs, filters, and question into the same production query graph used by chat.
+- Record workflow invocation failures as safe per-case failures so reports remain auditable and gates fail rather than bypassing production retrieval.
+
+## Risks or Open Issues
+- `BLOCKED_BY_USER_ACTION`: The live evaluation command still requires the evaluation corpus to be seeded and Supabase, Qdrant, ShopAIKey, and Jina resources/credentials to be configured.
+
+## Minor Issues Fixed During Execution
+- Made the production graph import lazy so `--help` avoids loading LangGraph and remains a clean local-only path.
+
+## Workflow Integrity Check
+- No missing or conflicting source-of-truth fields identified.
+- Dependency (07A) was accepted and Batch06 query/grounding work is checked complete in the task file.
+- No sibling task, task checkbox, batch status, or commit was created or modified.
+
+## Notes for Next Task
+- next task ID: Batch07 A2 review and batch-scope audit
+- can proceed: yes
+- handoff notes: Review exact formula denominators, production graph invocation, report fields, and threshold exit behavior; do not run the external evaluation until user setup is confirmed.

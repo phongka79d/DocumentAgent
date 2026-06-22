@@ -702,7 +702,7 @@ Phase 3 retrieval and grounding quality must be measurable with reproducible cas
 
 ### Tasks
 
-- [ ] (07A): Add a versioned text-only evaluation corpus and dataset contract
+- [x] (07A): Add a versioned text-only evaluation corpus and dataset contract
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 7: RAG Evaluation Dataset and Metrics` > `### Task 7.1: Add a versioned text-only evaluation corpus and dataset contract`
   - Source Requirements:
     - Define the exact JSONL row fields and validate row consistency and fixture references.
@@ -727,7 +727,7 @@ Phase 3 retrieval and grounding quality must be measurable with reproducible cas
   - Blocked Condition: None for dataset/unit implementation; `BLOCKED_BY_USER_ACTION` for live seeding until required external services and credentials are configured.
   - Files: `backend/app/evaluation/__init__.py`, `backend/app/evaluation/dataset.py`, `backend/evaluation/fixtures/leave_policy.md`, `backend/evaluation/fixtures/pricing_policy.md`, `backend/evaluation/fixtures/security_policy.md`, `backend/evaluation/datasets/phase3_v1.jsonl`, `backend/scripts/seed_evaluation_corpus.py`, `backend/tests/test_evaluation_metrics.py`
 
-- [ ] (07B): Implement retrieval, citation, grounding, and answer metrics
+- [x] (07B): Implement retrieval, citation, grounding, and answer metrics
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 7: RAG Evaluation Dataset and Metrics` > `### Task 7.2: Implement retrieval, grounding, citation, and answer metrics`
   - Source Requirements:
     - Implement every exact metric formula from the plan, including empty/fewer-than-k handling.
@@ -1037,7 +1037,7 @@ There are no optional tracks outside this mandatory chain.
 - [ ] Batch04 - Query Decomposition and LangGraph Retrieval Routing
 - [x] Batch05 - Candidate Stages, Reranking, and Context Budgets
 - [x] Batch06 - Exact Citations and Grounding Verification
-- [ ] Batch07 - RAG Evaluation Dataset and Metrics
+- [x] Batch07 - RAG Evaluation Dataset and Metrics
 - [ ] Batch08 - Workflow Observability and Failure Recovery
 - [ ] Batch09 - Documentation and End-to-End Validation
 
@@ -1076,8 +1076,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch07
 
-- [ ] (07A): Add a versioned text-only evaluation corpus and dataset contract
-- [ ] (07B): Implement retrieval, citation, grounding, and answer metrics
+- [x] (07A): Add a versioned text-only evaluation corpus and dataset contract
+- [x] (07B): Implement retrieval, citation, grounding, and answer metrics
 
 #### Batch08
 

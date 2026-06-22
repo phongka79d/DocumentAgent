@@ -95,6 +95,7 @@ graph TD
 - **Bounded Candidate Stages and Reranking**: Retrieval enforces per-path, fused, rerank-candidate, final-reranked, and context-stage caps independently. Jina receives only the configured rerank candidate window, and disabled or invalid reranking falls back deterministically by fusion score, path scores, and chunk ID.
 - **Bounded Query Planning and Routing**: The query graph normalizes and caps planned subqueries, preserves explicit document scope and filter precedence, routes semantic, keyword, hybrid, metadata, and one-hop relation strategies only through approved paths, and merges candidates while retaining subquery coverage.
 - **Exact Citations and Grounding Gate**: Generated answers use prompt-local `S1`, `S2`, and later citation keys that map back to exact context chunk IDs. Returned sources are limited to cited chunks, factual answers must pass citation validation plus grounding verification against cited chunk text, and failed verification returns a safe no-source response after at most one regeneration.
+- **RAG Evaluation Harness**: A versioned text-only evaluation corpus, deterministic fixture validator, production-query evaluation runner, timestamped JSON reports, and CLI quality gates measure retrieval recall/precision, rerank lift, no-result rates, citation validity, grounding pass rate, and answer term quality.
 - **Deduplication & Validation**: Deterministic SHA-256 upload hashing prevent duplicate storage and indexing of identical documents.
 - **Message History API**: Fast lookups for chat history from the `messages` table with bounded retrieval and failure isolation.
 - **Phase 3 Contract Foundation**: Typed retrieval filters, planning/candidate/grounding/citation contracts, compact LangGraph state fields, and bounded Phase 3 settings are available for later advanced RAG batches.
@@ -201,12 +202,14 @@ RagDocument/
 │   │   ├── api/             # API Router definitions (/health, /documents, /chat, /messages)
 │   │   ├── chunking/        # Heading scoring and smart-section chunkers
 │   │   ├── core/            # Configuration setting loader (Pydantic Settings)
+│   │   ├── evaluation/      # Versioned RAG evaluation dataset, metrics, and runner
 │   │   ├── graphs/          # LangGraph ingestion and query workflow graphs
 │   │   ├── models/          # SQLAlchemy or Pydantic models
 │   │   ├── parsing/         # Extensible document parsers (PDF, DOCX, TXT, MD, HTML)
 │   │   ├── services/        # Lazy-initialization factories for DB & third-party services
 │   │   └── main.py          # FastAPI application entry point
 │   ├── tests/               # pytest test cases covering graphs, chunkers, and APIs
+│   ├── evaluation/          # Text-only evaluation fixtures, datasets, and ignored result reports
 │   ├── pyproject.toml
 │   └── README.md            # Backend environment and local activation guides
 ├── docs/
@@ -342,6 +345,9 @@ Execute pytest across the suite:
 cd backend
 python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
 python -m pytest tests/test_contracts.py tests/test_keyword_search.py tests/test_score_fusion.py tests/test_retrieval_context.py tests/test_query_planning.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py -v
+python -m pytest tests/test_evaluation_metrics.py -v
+python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl
+python scripts/run_rag_evaluation.py --help
 ```
 
 ### 2. Run Frontend Build Check
