@@ -13,7 +13,10 @@ from app.core.retry import RetryAttempt, retry_sync
 from app.models.schemas import RetrievalFilters
 from app.core.contracts import RetrievalPath
 from app.services import keyword_search, score_fusion
-from app.services.qdrant_client import create_qdrant_client
+from app.services.qdrant_client import (
+    create_qdrant_client,
+    ensure_qdrant_filter_indexes,
+)
 from app.services.jina_client import create_jina_client
 from app.services.retrieval_context import (
     NEIGHBOR_CONTEXT_MODE,
@@ -314,6 +317,22 @@ def search_semantic_chunks(
 ) -> list[dict[str, Any]]:
     resolved_settings = _resolve_settings(settings)
     client = _resolve_qdrant_client(qdrant_client)
+
+    # Ensure Qdrant payload indexes for active metadata filters before querying
+    if filters is not None:
+        normalized = _normalize_filters(filters)
+        if any(value not in (None, [], "") for value in normalized.values()):
+            try:
+                ensure_qdrant_filter_indexes(
+                    client,
+                    collection_name=resolved_settings.QDRANT_COLLECTION,
+                    filters=normalized,
+                )
+            except Exception as exc:
+                raise RetrievalError(
+                    f"Failed to ensure Qdrant filter indexes: {exc}"
+                ) from exc
+
     query_filter = build_qdrant_filter(document_ids, filters)
     response = retry_sync(
         "qdrant_search",
@@ -485,6 +504,7 @@ def retrieve_hybrid_chunks(
     keyword_candidates: list[dict[str, Any]] = []
     semantic_error: Exception | None = None
     keyword_error: Exception | None = None
+    fused_candidates: list[dict[str, Any]] | None = None
 
     try:
         query_embedding, semantic_candidates = _semantic_search_path(
@@ -525,11 +545,26 @@ def retrieve_hybrid_chunks(
         retrieved_chunks = semantic_candidates[: resolved_settings.RETRIEVAL_FUSION_TOP_K]
         fallback_path = RetrievalPath.SEMANTIC.value
     else:
-        retrieved_chunks = score_fusion.fuse_candidates(
+        fused_candidates = score_fusion.fuse_candidates(
             [semantic_candidates, keyword_candidates],
             settings=resolved_settings,
         )
+        path_candidates_for_pool = {
+            f"query:{RetrievalPath.SEMANTIC.value}": semantic_candidates,
+            f"query:{RetrievalPath.KEYWORD.value}": keyword_candidates,
+        }
+        retrieved_chunks = score_fusion.select_rerank_candidates(
+            path_candidates_for_pool,
+            fused_candidates=fused_candidates,
+            settings=resolved_settings,
+        )
         fallback_path = None
+
+    fused_for_metrics = (
+        fused_candidates
+        if fused_candidates is not None
+        else retrieved_chunks
+    )
 
     return {
         "question": normalized_question,
@@ -539,12 +574,13 @@ def retrieve_hybrid_chunks(
             RetrievalPath.SEMANTIC.value: semantic_candidates,
             RetrievalPath.KEYWORD.value: keyword_candidates,
         },
-        "fused_candidates": retrieved_chunks,
+        "fused_candidates": fused_for_metrics,
         "retrieved_chunks": retrieved_chunks,
         "retrieval_metrics": {
             "semantic_candidate_count": len(semantic_candidates),
             "keyword_candidate_count": len(keyword_candidates),
-            "fused_candidate_count": len(retrieved_chunks),
+            "fused_candidate_count": len(fused_for_metrics),
+            "rerank_candidate_count": len(retrieved_chunks),
             "fallback_path": fallback_path,
         },
         **({"filters": normalized_filters} if normalized_filters is not None else {}),

@@ -53,7 +53,10 @@ class Settings(BaseSettings):
     RETRIEVAL_KEYWORD_TOP_K: int = Field(default=40, ge=1, le=1000)
     RETRIEVAL_FUSION_TOP_K: int = Field(default=40, ge=1, le=1000)
     RETRIEVAL_RRF_CONSTANT: int = Field(default=60, ge=1, le=10_000)
-    RETRIEVAL_RERANK_CANDIDATE_TOP_K: int = Field(default=20, ge=1, le=1000)
+    RETRIEVAL_RERANK_SEMANTIC_PER_PATH_TOP_K: int = Field(default=5, ge=1, le=1000)
+    RETRIEVAL_RERANK_KEYWORD_PER_PATH_TOP_K: int = Field(default=2, ge=1, le=1000)
+    RETRIEVAL_RERANK_FUSED_TOP_K: int = Field(default=10, ge=1, le=1000)
+    RETRIEVAL_RERANK_CANDIDATE_TOP_K: int = Field(default=40, ge=1, le=1000)
     RETRIEVAL_CONTEXT_MAX_TOKENS: int = Field(default=4000, ge=1, le=1_000_000)
 
     QUERY_MAX_SUBQUERIES: int = Field(default=4, ge=1, le=20)
@@ -69,6 +72,8 @@ class Settings(BaseSettings):
     WORKFLOW_MAX_ATTEMPTS: int = Field(default=3, ge=1, le=10)
     WORKFLOW_RETRY_BASE_DELAY_SECONDS: float = Field(default=0.25, ge=0.0, le=300.0)
     WORKFLOW_RETRY_MAX_DELAY_SECONDS: float = Field(default=2.0, ge=0.0, le=300.0)
+
+    ENSURE_QDRANT_PAYLOAD_INDEXES_ON_STARTUP: bool = True
 
     CHUNKING_STRATEGY: str = "smart_section"
     HEADER_SCORE_THRESHOLD: int = 4

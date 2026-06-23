@@ -29,6 +29,7 @@ def _test_settings() -> Settings:
         SUPABASE_STORAGE_BUCKET="documents",
         QDRANT_COLLECTION="document_chunks_v1",
         ENABLE_WORKFLOW_TRACING=False,
+        ENSURE_QDRANT_PAYLOAD_INDEXES_ON_STARTUP=False,
     )
 
 

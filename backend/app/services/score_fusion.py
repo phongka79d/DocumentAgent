@@ -193,3 +193,101 @@ def fuse_candidates(
         cleaned.pop("_best_rank", None)
         results.append(cleaned)
     return results
+
+
+def _path_suffix(path_key: str) -> str:
+    return path_key.split(":", 1)[-1] if ":" in path_key else path_key
+
+
+def _is_semantic_path(path_key: str) -> bool:
+    return _path_suffix(path_key) == RetrievalPath.SEMANTIC.value
+
+
+def _is_keyword_path(path_key: str) -> bool:
+    return _path_suffix(path_key) == RetrievalPath.KEYWORD.value
+
+
+def _fused_by_chunk_id(
+    fused_candidates: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    mapping: dict[str, dict[str, Any]] = {}
+    for candidate in fused_candidates:
+        chunk_id = _normalize_text(
+            candidate.get("chunk_id") or candidate.get("id")
+        )
+        if chunk_id is not None:
+            mapping[chunk_id] = dict(candidate)
+    return mapping
+
+
+def select_rerank_candidates(
+    path_candidates: Mapping[str, Sequence[Mapping[str, Any]]],
+    fused_candidates: Sequence[Mapping[str, Any]],
+    *,
+    settings: Settings | None = None,
+) -> list[dict[str, Any]]:
+    """Build a diverse rerank candidate pool from path-specific and fused candidates.
+
+    The pool is constructed from three sources:
+    1. Top fused candidates in RRF order (configurable via RETRIEVAL_RERANK_FUSED_TOP_K)
+    2. Top semantic candidates from each semantic path (configurable via RETRIEVAL_RERANK_SEMANTIC_PER_PATH_TOP_K)
+    3. Top keyword candidates from each keyword path (configurable via RETRIEVAL_RERANK_KEYWORD_PER_PATH_TOP_K)
+
+    Deduplication is by chunk ID. When a candidate is present in both a path and the fused
+    representation, the fused representation (with merged metadata) is preferred. The total
+    pool is capped at RETRIEVAL_RERANK_CANDIDATE_TOP_K.
+    """
+    resolved_settings = _resolve_settings(settings)
+
+    # Build fused representation lookup
+    fused_map = _fused_by_chunk_id(fused_candidates)
+
+    ordered: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    # 1. Take top fused candidates in RRF order
+    for candidate in fused_candidates[
+        : resolved_settings.RETRIEVAL_RERANK_FUSED_TOP_K
+    ]:
+        chunk_id = _normalize_text(
+            candidate.get("chunk_id") or candidate.get("id")
+        )
+        if chunk_id is not None and chunk_id not in seen:
+            ordered.append(dict(candidate))
+            seen.add(chunk_id)
+
+    # 2. Take top semantic candidates from each semantic path
+    for path_key, candidates in path_candidates.items():
+        if not _is_semantic_path(path_key) or not candidates:
+            continue
+        for candidate in candidates[: resolved_settings.RETRIEVAL_RERANK_SEMANTIC_PER_PATH_TOP_K]:
+            chunk_id = _normalize_text(
+                candidate.get("chunk_id") or candidate.get("id")
+            )
+            if chunk_id is None or chunk_id in seen:
+                continue
+            # Prefer fused representation when available
+            if chunk_id in fused_map:
+                ordered.append(dict(fused_map[chunk_id]))
+            else:
+                ordered.append(dict(candidate))
+            seen.add(chunk_id)
+
+    # 3. Take top keyword candidates from each keyword path
+    for path_key, candidates in path_candidates.items():
+        if not _is_keyword_path(path_key) or not candidates:
+            continue
+        for candidate in candidates[: resolved_settings.RETRIEVAL_RERANK_KEYWORD_PER_PATH_TOP_K]:
+            chunk_id = _normalize_text(
+                candidate.get("chunk_id") or candidate.get("id")
+            )
+            if chunk_id is None or chunk_id in seen:
+                continue
+            if chunk_id in fused_map:
+                ordered.append(dict(fused_map[chunk_id]))
+            else:
+                ordered.append(dict(candidate))
+            seen.add(chunk_id)
+
+    # 4. Cap at the total provider-cap setting
+    return ordered[: resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K]

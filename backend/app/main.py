@@ -1,4 +1,6 @@
+from contextlib import asynccontextmanager
 from importlib import import_module, util
+from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,10 +32,35 @@ def _include_optional_router(app: FastAPI, module_name: str) -> None:
         app.include_router(router, prefix="/api")
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """FastAPI lifespan that provisions Qdrant payload indexes on startup."""
+    settings: Settings = getattr(app.state, "settings", get_settings())
+    if settings.ENSURE_QDRANT_PAYLOAD_INDEXES_ON_STARTUP:
+        try:
+            from app.services.qdrant_client import (
+                create_qdrant_client,
+                ensure_qdrant_payload_indexes,
+            )
+
+            client = create_qdrant_client(settings)
+            ensure_qdrant_payload_indexes(
+                client,
+                collection_name=settings.QDRANT_COLLECTION,
+            )
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Non-blocking Qdrant payload index provisioning failed: %s", exc
+            )
+    yield
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = get_settings() if settings is None else settings
 
-    app = FastAPI(title="RagDocument API")
+    app = FastAPI(title="RagDocument API", lifespan=_lifespan)
     app.state.settings = settings
     app.dependency_overrides[get_settings] = lambda: settings
     app.add_middleware(

@@ -3268,3 +3268,73 @@ def test_build_query_graph_returns_no_relevant_information_when_retrieval_is_emp
         (settings.SHOPAIKEY_EMBEDDING_MODEL, ["What does the document say about pricing?"])
     ]
     assert fake_qdrant_client.query_calls[0]["limit"] == settings.RETRIEVAL_SEMANTIC_TOP_K
+
+
+def test_fuse_candidates_node_preserves_strong_semantic_candidate_below_fused_cutoff():
+    """A strong answer-bearing semantic candidate with a low fused rank
+    survives in the diverse pool via select_rerank_candidates."""
+    settings = _test_settings().model_copy(
+        update={
+            "RETRIEVAL_RERANK_SEMANTIC_PER_PATH_TOP_K": 5,
+            "RETRIEVAL_RERANK_KEYWORD_PER_PATH_TOP_K": 2,
+            "RETRIEVAL_RERANK_FUSED_TOP_K": 1,
+            "RETRIEVAL_RERANK_CANDIDATE_TOP_K": 20,
+            "RETRIEVAL_FUSION_TOP_K": 1,
+        }
+    )
+
+    strong_answer = _qdrant_point(
+        chunk_id="strong-answer",
+        document_id=DOC_A,
+        chunk_index=0,
+        file_name="alpha.pdf",
+        score=0.95,
+        text="The answer-bearing passage about pricing details.",
+    )
+    high_fused = _qdrant_point(
+        chunk_id="high-fused",
+        document_id=DOC_A,
+        chunk_index=1,
+        file_name="alpha.pdf",
+        score=0.85,
+        text="A moderately relevant passage.",
+    )
+
+    qdrant_client = FakeQdrantClient(points=[high_fused, strong_answer])
+
+    retrieval_result = query_nodes.retrieve_candidates_node(
+        {
+            "query_plan": QueryPlan(
+                is_complex=False,
+                strategy=RetrievalStrategy.SEMANTIC,
+                subqueries=[QuerySubquery(id="q1", text="pricing")],
+                inferred_filters=RetrievalFilters(),
+                needs_relations=False,
+            ),
+            "subqueries": [QuerySubquery(id="q1", text="pricing")],
+            "document_ids": [DOC_A],
+        },
+        settings=settings,
+        qdrant_client=qdrant_client,
+        shopaikey_client=FakeShopAIKeyClient(vectors=[[0.1, 0.2, 0.3]]),
+    )
+
+    assert "error_message" not in retrieval_result
+
+    # Run fuse_candidates_node which now uses select_rerank_candidates
+    fuse_result = query_nodes.fuse_candidates_node(
+        retrieval_result,
+        settings=settings,
+    )
+
+    diverse_pool = fuse_result["retrieved_chunks"]
+    pool_ids = [c["chunk_id"] for c in diverse_pool]
+
+    # The strong answer-bearing candidate must survive even though it was
+    # below the fused-only cutoff of 1
+    assert "strong-answer" in pool_ids, (
+        f"strong-answer should be in the diverse pool but was not: {pool_ids}"
+    )
+    assert "high-fused" in pool_ids
+    assert len(pool_ids) == len(set(pool_ids)), "Duplicate chunk IDs in pool"
+    assert len(diverse_pool) <= settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K

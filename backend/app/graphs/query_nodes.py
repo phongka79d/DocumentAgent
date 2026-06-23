@@ -521,9 +521,22 @@ def fuse_candidates_node(
     metrics = dict(state.get("retrieval_metrics") or {})
     metrics["fused_candidate_count"] = len(fused_candidates)
     metrics["retrieved_candidate_count"] = len(retrieved_chunks)
+
+    # Build diverse rerank candidate pool from path candidates and fused candidates
+    path_candidates = state.get("path_candidates") or {}
+    if isinstance(path_candidates, Mapping) and path_candidates:
+        diverse_pool = score_fusion.select_rerank_candidates(
+            path_candidates,
+            fused_candidates=fused_candidates,
+            settings=resolved_settings,
+        )
+    else:
+        diverse_pool = retrieved_chunks
+
+    metrics["rerank_candidate_count"] = len(diverse_pool)
     return {
         "fused_candidates": fused_candidates,
-        "retrieved_chunks": retrieved_chunks,
+        "retrieved_chunks": diverse_pool,
         "retrieval_metrics": metrics,
     }
 

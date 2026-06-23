@@ -253,3 +253,79 @@ def test_retrieve_hybrid_chunks_uses_semantic_only_when_keyword_disabled(monkeyp
     assert result["path_candidates"]["keyword"] == []
     assert result["retrieval_metrics"]["fallback_path"] == "semantic"
     assert keyword_called is False
+
+
+def test_select_rerank_candidates_preserves_strong_semantic_candidate_below_fused_cutoff():
+    """A strong answer-bearing semantic candidate below the fused-only cutoff
+    survives in the diverse pool and retains fused metadata."""
+    settings = _settings(
+        RETRIEVAL_FUSION_TOP_K=1,
+        RETRIEVAL_RERANK_SEMANTIC_PER_PATH_TOP_K=5,
+        RETRIEVAL_RERANK_KEYWORD_PER_PATH_TOP_K=2,
+        RETRIEVAL_RERANK_FUSED_TOP_K=1,
+        RETRIEVAL_RERANK_CANDIDATE_TOP_K=20,
+    )
+
+    # One strong semantic candidate that would rank below fused-only cutoff of 1
+    strong_semantic = _candidate(
+        "strong-answer",
+        semantic_rank=1,
+        semantic_score=0.9,
+        qdrant_score=0.9,
+        retrieval_paths=["semantic"],
+        subquery_ids=["sq1"],
+    )
+    high_fused = _candidate(
+        "high-fused",
+        semantic_rank=1,
+        semantic_score=0.85,
+        qdrant_score=0.85,
+        retrieval_paths=["semantic"],
+        subquery_ids=["sq1"],
+    )
+    low_fused = _candidate(
+        "low-fused-unrelated",
+        semantic_rank=10,
+        semantic_score=0.3,
+        qdrant_score=0.3,
+        retrieval_paths=["semantic"],
+        subquery_ids=["sq1"],
+    )
+
+    fused = score_fusion.fuse_candidates(
+        [
+            [high_fused, strong_semantic, low_fused],
+        ],
+        settings=settings,
+    )
+
+    # With fused_top_k=1, only high_fused would be in fused candidates
+    assert len(fused) == 1
+    assert fused[0]["chunk_id"] == "high-fused"
+
+    path_candidates = {
+        "sq1:semantic": [high_fused, strong_semantic, low_fused],
+    }
+
+    pool = score_fusion.select_rerank_candidates(
+        path_candidates=path_candidates,
+        fused_candidates=fused,
+        settings=settings,
+    )
+
+    pool_ids = [c["chunk_id"] for c in pool]
+
+    # The strong answer-bearing candidate must survive
+    assert "strong-answer" in pool_ids, (
+        f"strong-answer missing from pool: {pool_ids}"
+    )
+    # High-fused candidate must still be present
+    assert "high-fused" in pool_ids
+    # Deduplication: no duplicate chunk IDs
+    assert len(pool_ids) == len(set(pool_ids))
+    # Fused metadata retained on high-fused
+    for c in pool:
+        if c["chunk_id"] == "high-fused":
+            assert c["fusion_score"] is not None
+    # Total pool size respects the provider cap
+    assert len(pool) <= settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K
