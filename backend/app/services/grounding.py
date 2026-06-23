@@ -61,11 +61,32 @@ def cited_evidence_from_sources(
 def _parse_grounding_result(content: str | None) -> GroundingResult:
     if content is None:
         raise GroundingProviderError("Grounding verifier returned empty content")
+    payload = _extract_json_object(content)
+    if payload is None:
+        raise GroundingProviderError("Grounding verifier returned invalid JSON")
     try:
-        payload = json.loads(content)
         return GroundingResult.model_validate(payload)
-    except (json.JSONDecodeError, ValidationError, TypeError) as exc:
+    except (ValidationError, TypeError) as exc:
         raise GroundingProviderError("Grounding verifier returned invalid JSON") from exc
+
+
+def _extract_json_object(content: str) -> Any:
+    text = content.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    decoder = json.JSONDecoder()
+    for index, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(text[index:])
+        except json.JSONDecodeError:
+            continue
+        return payload
+    return None
 
 
 def verify_answer_grounding(
@@ -90,6 +111,7 @@ def verify_answer_grounding(
                 messages=build_grounding_messages(answer=answer, evidence=evidence),
                 temperature=0,
                 max_tokens=resolved_settings.QUERY_PLANNER_MAX_TOKENS,
+                response_format={"type": "json_object"},
             ),
             settings=resolved_settings,
             on_attempt=retry_attempts.append if retry_attempts is not None else None,

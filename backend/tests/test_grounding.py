@@ -98,6 +98,65 @@ def test_verify_answer_grounding_parses_valid_strict_json():
     assert result.missing_citations == []
 
 
+def test_verify_answer_grounding_parses_markdown_fenced_json():
+    fake_client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(
+                create=lambda **kwargs: SimpleNamespace(
+                    choices=[
+                        SimpleNamespace(
+                            message=SimpleNamespace(
+                                content='```json\n{"grounded": true, "score": 0.95, "unsupported_claims": [], "missing_citations": []}\n```'
+                            )
+                        )
+                    ]
+                )
+            )
+        )
+    )
+
+    result = verify_answer_grounding(
+        "Pricing is usage based [S1].",
+        evidence=[{"citation_key": "S1", "chunk_id": "chunk-a", "text": "Pricing is usage based."}],
+        settings=_settings(),
+        shopaikey_client=fake_client,
+    )
+
+    assert result.grounded is True
+    assert result.score == 0.95
+    assert result.unsupported_claims == []
+    assert result.missing_citations == []
+
+
+def test_verify_answer_grounding_requests_json_response_format():
+    captured_kwargs: dict[str, object] = {}
+
+    def _create(**kwargs):
+        captured_kwargs.update(kwargs)
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content='{"grounded": true, "score": 0.95, "unsupported_claims": [], "missing_citations": []}'
+                    )
+                )
+            ]
+        )
+
+    fake_client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=_create))
+    )
+
+    verify_answer_grounding(
+        "Pricing is usage based [S1].",
+        evidence=[{"citation_key": "S1", "chunk_id": "chunk-a", "text": "Pricing is usage based."}],
+        settings=_settings(),
+        shopaikey_client=fake_client,
+    )
+
+    assert captured_kwargs["response_format"] == {"type": "json_object"}
+
+
 def test_verify_answer_grounding_provider_failure_is_explicit_verification_failure():
     fake_client = SimpleNamespace(
         chat=SimpleNamespace(
