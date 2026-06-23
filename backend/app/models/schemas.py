@@ -267,7 +267,6 @@ class ChatRequest(APIModel):
     question: str = Field(min_length=1)
     document_ids: list[UUID] = Field(default_factory=list)
     save_message: bool = False
-    filters: RetrievalFilters | None = None
 
 
 class ChatResponse(APIModel):

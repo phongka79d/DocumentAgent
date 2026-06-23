@@ -5,9 +5,6 @@ import type {
   DocumentResponse,
   SourceCitation,
 } from "../api/types";
-import RetrievalFiltersPanel, {
-  type RetrievalFilterState,
-} from "./RetrievalFiltersPanel";
 import SourceList from "./SourceList";
 
 interface ChatPanelProps {
@@ -24,10 +21,7 @@ interface ChatPanelProps {
   sourceError: string | null;
   hasPreviousChunk: boolean;
   hasNextChunk: boolean;
-  retrievalFilters: RetrievalFilterState;
-  filterValidationMessage: string | null;
   onQuestionChange: (value: string) => void;
-  onRetrievalFiltersChange: (filters: RetrievalFilterState) => void;
   onToggleDocument: (documentId: string) => void;
   onSubmit: () => Promise<void>;
   onSelectSource: (source: SourceCitation) => void;
@@ -42,14 +36,11 @@ export default function ChatPanel({
   error,
   isSubmitting,
   onQuestionChange,
-  onRetrievalFiltersChange,
   onSelectSource,
   onSubmit,
   question,
   activeQuestion,
   response,
-  retrievalFilters,
-  filterValidationMessage,
   selectedSource,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -60,7 +51,7 @@ export default function ChatPanel({
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (isSubmitting || !question.trim() || filterValidationMessage) {
+    if (isSubmitting || !question.trim()) {
       return;
     }
     void onSubmit();
@@ -69,7 +60,7 @@ export default function ChatPanel({
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      if (!isSubmitting && question.trim() && !filterValidationMessage) {
+      if (!isSubmitting && question.trim()) {
         void onSubmit();
       }
     }
@@ -151,11 +142,6 @@ export default function ChatPanel({
 
       {/* Input bar area */}
       <form onSubmit={handleSubmit} className="chat-input-bar-container">
-        <RetrievalFiltersPanel
-          filters={retrievalFilters}
-          validationMessage={filterValidationMessage}
-          onChange={onRetrievalFiltersChange}
-        />
         <div className="chat-input-bar">
           <textarea
             className="chat-input-textarea"

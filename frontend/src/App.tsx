@@ -6,17 +6,12 @@ import type {
   DocumentChunk,
   DocumentResponse,
   MessageHistoryItem,
-  RetrievalFilters,
   SourceCitation,
 } from "./api/types";
 import ChatPanel from "./components/ChatPanel";
 import DocumentList from "./components/DocumentList";
 import MessageHistoryPanel from "./components/MessageHistoryPanel";
 import ChunkViewerPanel from "./components/ChunkViewerPanel";
-import {
-  EMPTY_RETRIEVAL_FILTERS,
-  type RetrievalFilterState,
-} from "./components/RetrievalFiltersPanel";
 
 type DocumentAction = "index" | "reindex" | "delete";
 type ChunkLoadStatus = "idle" | "loading" | "ready" | "error";
@@ -54,73 +49,6 @@ function getErrorMessage(error: unknown, fallback: string): string {
   }
 
   return fallback;
-}
-
-function splitFilterText(value: string): string[] {
-  return value
-    .split(",")
-    .map((part) => part.trim())
-    .filter((part, index, parts) => part.length > 0 && parts.indexOf(part) === index);
-}
-
-function parsePageFilter(value: string): number | undefined {
-  const trimmedValue = value.trim();
-  if (!trimmedValue) {
-    return undefined;
-  }
-
-  const pageNumber = Number(trimmedValue);
-  if (!Number.isInteger(pageNumber) || pageNumber < 0) {
-    return Number.NaN;
-  }
-
-  return pageNumber;
-}
-
-function getRetrievalFilterValidationMessage(
-  filters: RetrievalFilterState,
-): string | null {
-  const pageStart = parsePageFilter(filters.pageStart);
-  const pageEnd = parsePageFilter(filters.pageEnd);
-
-  if (Number.isNaN(pageStart) || Number.isNaN(pageEnd)) {
-    return "Page filters must be whole numbers 0 or greater.";
-  }
-
-  if (pageStart !== undefined && pageEnd !== undefined && pageStart > pageEnd) {
-    return "Start page must be less than or equal to end page.";
-  }
-
-  return null;
-}
-
-function buildRetrievalFilters(
-  filters: RetrievalFilterState,
-): RetrievalFilters | undefined {
-  const requestFilters: RetrievalFilters = {};
-  const mimeTypes = splitFilterText(filters.mimeTypes);
-  const sectionPath = splitFilterText(filters.sectionPath);
-  const heading = filters.heading.trim();
-  const pageStart = parsePageFilter(filters.pageStart);
-  const pageEnd = parsePageFilter(filters.pageEnd);
-
-  if (mimeTypes.length > 0) {
-    requestFilters.mime_types = mimeTypes;
-  }
-  if (heading) {
-    requestFilters.heading = heading;
-  }
-  if (sectionPath.length > 0) {
-    requestFilters.section_path = sectionPath;
-  }
-  if (pageStart !== undefined && !Number.isNaN(pageStart)) {
-    requestFilters.page_start = pageStart;
-  }
-  if (pageEnd !== undefined && !Number.isNaN(pageEnd)) {
-    requestFilters.page_end = pageEnd;
-  }
-
-  return Object.keys(requestFilters).length > 0 ? requestFilters : undefined;
 }
 
 export default function App() {
@@ -171,8 +99,6 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeQuestion, setActiveQuestion] = useState("");
-  const [retrievalFilters, setRetrievalFilters] =
-    useState<RetrievalFilterState>(EMPTY_RETRIEVAL_FILTERS);
 
   const readyDocuments = useMemo(
     () => documents.filter((document) => document.status === "ready"),
@@ -193,10 +119,6 @@ export default function App() {
     );
   }, [readyDocuments, selectedDocumentIds]);
 
-  const retrievalFilterValidationMessage = useMemo(
-    () => getRetrievalFilterValidationMessage(retrievalFilters),
-    [retrievalFilters],
-  );
 
   const selectedSourceLoadState = selectedSource
     ? documentChunkState[selectedSource.document_id] ?? INITIAL_CHUNK_LOAD_STATE
@@ -520,10 +442,6 @@ export default function App() {
         request.document_ids = selectedReadyDocumentIds;
       }
 
-      const filters = buildRetrievalFilters(retrievalFilters);
-      if (filters) {
-        request.filters = filters;
-      }
 
       const response = await apiClient.sendChatMessage(request);
       setSelectedMessageId(null);
@@ -777,7 +695,6 @@ export default function App() {
               isSubmitting={isSendingChat}
               isSourceLoading={selectedSourceLoadState.status === "loading"}
               onQuestionChange={handleQuestionChange}
-              onRetrievalFiltersChange={setRetrievalFilters}
               onSelectSource={handleSelectSource}
               onSubmit={handleChatSubmit}
               onToggleDocument={handleToggleSelectedDocument}
@@ -785,8 +702,6 @@ export default function App() {
               onViewPreviousChunk={handleViewPreviousChunk}
               question={question}
               activeQuestion={activeQuestion}
-              retrievalFilters={retrievalFilters}
-              filterValidationMessage={retrievalFilterValidationMessage}
               readyDocuments={readyDocuments}
               response={chatResponse}
               selectedChunk={selectedChunk}

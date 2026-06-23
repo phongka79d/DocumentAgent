@@ -205,7 +205,6 @@ def test_old_chat_request_payload_remains_valid():
 
     assert request.document_ids == []
     assert request.save_message is False
-    assert request.filters is None
 
 
 def test_phase3_internal_models_validate_required_metadata():

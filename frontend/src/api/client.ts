@@ -239,33 +239,6 @@ function serializeChatRequest(requestBody: ChatRequest): ChatRequest {
     request.document_ids = documentIds;
   }
 
-  const filters = requestBody.filters;
-  if (filters) {
-    const serializedFilters: NonNullable<ChatRequest["filters"]> = {};
-    const mimeTypes = uniqueTrimmedStrings(filters.mime_types);
-    const sectionPath = uniqueTrimmedStrings(filters.section_path);
-    const heading = filters.heading?.trim();
-
-    if (mimeTypes.length > 0) {
-      serializedFilters.mime_types = mimeTypes;
-    }
-    if (heading) {
-      serializedFilters.heading = heading;
-    }
-    if (sectionPath.length > 0) {
-      serializedFilters.section_path = sectionPath;
-    }
-    if (filters.page_start !== undefined) {
-      serializedFilters.page_start = filters.page_start;
-    }
-    if (filters.page_end !== undefined) {
-      serializedFilters.page_end = filters.page_end;
-    }
-
-    if (Object.keys(serializedFilters).length > 0) {
-      request.filters = serializedFilters;
-    }
-  }
 
   return request;
 }

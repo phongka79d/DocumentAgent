@@ -123,57 +123,6 @@ def test_chat_route_preserves_optional_document_ids_and_save_message(monkeypatch
     ]
 
 
-def test_chat_route_preserves_explicit_metadata_filters(monkeypatch):
-    settings = _test_settings()
-    fake_graph = FakeQueryGraph(
-        result={
-            "answer": "The document states pricing is usage-based.",
-            "sources": [],
-        }
-    )
-
-    _patch_route_settings(monkeypatch, settings)
-    monkeypatch.setattr(
-        chat_route,
-        "build_query_graph",
-        lambda settings=None: fake_graph,
-    )
-
-    app = _test_app(settings)
-
-    with TestClient(app) as test_client:
-        response = test_client.post(
-            "/api/chat",
-            json={
-                "question": "What does this document say about pricing?",
-                "document_ids": [str(FIXED_DOCUMENT_ID)],
-                "save_message": True,
-                "filters": {
-                    "mime_types": ["application/pdf", ""],
-                    "heading": " Pricing ",
-                    "section_path": ["Plans", "Enterprise"],
-                    "page_start": 2,
-                    "page_end": 5,
-                },
-            },
-        )
-
-    assert response.status_code == 200
-    assert fake_graph.invocations == [
-        {
-            "question": "What does this document say about pricing?",
-            "document_ids": [str(FIXED_DOCUMENT_ID)],
-            "save_message": True,
-            "filters": {
-                "mime_types": ["application/pdf"],
-                "heading": "Pricing",
-                "section_path": ["Plans", "Enterprise"],
-                "page_start": 2,
-                "page_end": 5,
-            },
-        }
-    ]
-
 
 def test_chat_route_returns_answer_and_sources_from_query_graph(monkeypatch):
     settings = _test_settings()
