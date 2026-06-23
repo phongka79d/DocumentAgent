@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     SHOPAIKEY_API_KEY: str = "your-key"
     SHOPAIKEY_BASE_URL: str = "https://api.shopaikey.com/v1"
     SHOPAIKEY_CHAT_MODEL: str = "gpt-4o-mini"
-    SHOPAIKEY_INPUT_MODEL: str = "gpt-5-nano"
+    SHOPAIKEY_INPUT_MODEL: str = "gpt-4o-mini"
     SHOPAIKEY_EMBEDDING_MODEL: str = "text-embedding-3-small"
 
     QDRANT_URL: str = "https://your-cluster-url.cloud.qdrant.io"

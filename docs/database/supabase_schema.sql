@@ -161,7 +161,16 @@ language sql
 stable
 as $$
   with keyword_query as (
-    select websearch_to_tsquery('simple', query_text) as tsquery
+    select
+      websearch_to_tsquery('simple', query_text) as tsquery,
+      phraseto_tsquery('simple', query_text) as phrase_tsquery,
+      phraseto_tsquery('simple', replace(query_text, '-', ' ')) as hyphen_phrase_tsquery,
+      to_tsquery('simple',
+        btrim(regexp_replace(
+          regexp_replace(replace(query_text, '-', ' '), '[^a-zA-Z0-9 ]', '', 'g'),
+          ' +', ' | ', 'g'
+        ), ' |')
+      ) as or_tsquery
   )
   select
     dc.id as chunk_id,
@@ -175,15 +184,29 @@ as $$
     dc.page_end,
     dc.chunk_type,
     dc.token_count,
-    ts_rank_cd(
-      to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content),
-      keyword_query.tsquery
+    greatest(
+      ts_rank_cd(
+        to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content),
+        keyword_query.tsquery
+      ),
+      ts_rank_cd(
+        to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content),
+        keyword_query.or_tsquery
+      )
     ) as keyword_score
   from document_chunks dc
   join documents on documents.id = dc.document_id
   cross join keyword_query
-  where to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content)
-    @@ keyword_query.tsquery
+  where (
+    to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content)
+      @@ keyword_query.tsquery
+    or to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content)
+      @@ keyword_query.phrase_tsquery
+    or to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content)
+      @@ keyword_query.hyphen_phrase_tsquery
+    or to_tsvector('simple', coalesce(dc.heading, '') || ' ' || dc.content)
+      @@ keyword_query.or_tsquery
+  )
     and (document_ids is null or dc.document_id = any(document_ids))
     and (mime_types is null or documents.mime_type = any(mime_types))
     and (

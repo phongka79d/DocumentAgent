@@ -9,10 +9,7 @@ from app.core.config import Settings, get_settings
 from app.core.contracts import RetrievalStrategy
 from app.core.retry import retry_sync
 from app.graphs.query_formatting import extract_chat_content, normalize_text
-from app.graphs.query_prompts import (
-    QUERY_PLANNING_RESPONSE_FORMAT,
-    build_query_planning_messages,
-)
+from app.graphs.query_prompts import build_query_planning_messages
 from app.models.schemas import QueryPlan, QuerySubquery, RetrievalFilters
 from app.services.shopaikey_client import create_shopaikey_client
 
@@ -226,7 +223,6 @@ def plan_query(
                 ),
                 temperature=resolved_settings.QUERY_PLANNER_TEMPERATURE,
                 max_tokens=resolved_settings.QUERY_PLANNER_MAX_TOKENS,
-                response_format=QUERY_PLANNING_RESPONSE_FORMAT,
             ),
             settings=resolved_settings,
         )

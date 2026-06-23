@@ -117,7 +117,7 @@ def _chat_response(payload: object) -> object:
     )
 
 
-def test_plan_query_normalizes_complex_plan_and_uses_strict_json_request():
+def test_plan_query_normalizes_complex_plan_and_uses_prompt_based_json():
     settings = _settings()
     client = FakeShopAIKeyClient(
         _chat_response(
@@ -169,8 +169,7 @@ def test_plan_query_normalizes_complex_plan_and_uses_strict_json_request():
     assert chat_call["model"] == settings.SHOPAIKEY_INPUT_MODEL
     assert chat_call["temperature"] == settings.QUERY_PLANNER_TEMPERATURE
     assert chat_call["max_tokens"] == settings.QUERY_PLANNER_MAX_TOKENS
-    assert chat_call["kwargs"]["response_format"]["type"] == "json_schema"
-    assert chat_call["kwargs"]["response_format"]["json_schema"]["strict"] is True
+    assert "response_format" not in chat_call["kwargs"]
     system_prompt = chat_call["messages"][0]["content"]
     assert "For compound questions" in system_prompt
     assert "For exact identifiers or codes" in system_prompt

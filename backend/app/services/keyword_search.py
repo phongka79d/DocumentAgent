@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 from uuid import UUID
@@ -12,6 +13,8 @@ from app.services.supabase_client import create_supabase_client
 
 
 KEYWORD_SEARCH_RPC = "search_document_chunks_keyword"
+
+logger = logging.getLogger(__name__)
 
 
 class KeywordSearchValidationError(ValueError):
@@ -217,7 +220,8 @@ def search_keyword_chunks(
             settings=resolved_settings,
             on_attempt=retry_attempts.append if retry_attempts is not None else None,
         )
-    except Exception:
+    except Exception as exc:
+        logger.warning("Keyword retrieval RPC failed: %s", type(exc).__name__)
         raise KeywordSearchError() from None
 
     sorted_rows = sorted(_response_rows(response), key=_candidate_sort_key)[

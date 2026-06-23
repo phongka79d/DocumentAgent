@@ -450,6 +450,7 @@ def retrieve_candidates_node(
                 retry_attempts.extend(attempts)
                 _record(path_key, candidates)
             except Exception as exc:
+                logger.warning("Keyword retrieval path failed for %s: %s", path_key, exc)
                 path_errors[path_key] = safe_detail(
                     str(exc), fallback="keyword retrieval failed"
                 )

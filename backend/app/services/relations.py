@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -9,7 +10,14 @@ from uuid import UUID
 from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
-from app.core.contracts import DocumentStatus, QdrantPayloadKey, RelationType, SummaryType, TableName
+from app.core.contracts import (
+    SOURCE_PREVIEW_CHARS,
+    DocumentStatus,
+    QdrantPayloadKey,
+    RelationType,
+    SummaryType,
+    TableName,
+)
 from app.core.retry import retry_sync
 from app.services.qdrant_client import create_qdrant_client
 from app.services.shopaikey_client import create_shopaikey_client
@@ -22,11 +30,14 @@ RELATION_SYSTEM_PROMPT = (
     "candidate evidence. Return strict JSON only with a top-level relations array."
 )
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class RelationCandidate:
     document_id: str
     evidence_chunk_ids: list[str] = field(default_factory=list)
+    evidence_texts: list[str] = field(default_factory=list)
 
 
 def _resolve_supabase_client(supabase_client: Any | None = None) -> Any:
@@ -231,6 +242,12 @@ def _relation_candidates_from_points(
         )
         if chunk_id not in candidate.evidence_chunk_ids:
             candidate.evidence_chunk_ids.append(chunk_id)
+            chunk_text = _normalize_optional_text(
+                _payload_value(point, QdrantPayloadKey.TEXT)
+                or _payload_value(point, QdrantPayloadKey.CONTENT)
+            )
+            if chunk_text is not None:
+                candidate.evidence_texts.append(chunk_text[:SOURCE_PREVIEW_CHARS])
 
     ready_candidates: list[RelationCandidate] = []
     for candidate in grouped.values():
@@ -299,20 +316,28 @@ def _relation_prompt(
     summary_content: str,
     candidates: Iterable[RelationCandidate],
 ) -> str:
-    candidate_lines = [
-        (
+    candidate_lines = []
+    for candidate in candidates:
+        evidence_parts = []
+        for chunk_id, text in zip(
+            candidate.evidence_chunk_ids, candidate.evidence_texts, strict=False
+        ):
+            if text:
+                evidence_parts.append(f"chunk {chunk_id}: {text}")
+            else:
+                evidence_parts.append(f"chunk {chunk_id}")
+        candidate_lines.append(
             f"- document_id: {candidate.document_id}\n"
-            f"  evidence_chunk_ids: {candidate.evidence_chunk_ids}"
+            f"  evidence:\n"
+            + "\n".join(f"    {part}" for part in evidence_parts)
         )
-        for candidate in candidates
-    ]
     allowed_types = [relation_type.value for relation_type in RelationType]
     return (
         "Create zero or more bounded document relations for the source document.\n"
         f"Source document id: {source_document_id}\n"
         f"Source document summary:\n{summary_content}\n\n"
         f"Allowed relation types: {allowed_types}\n"
-        "Allowed target documents and evidence chunks:\n"
+        "Allowed target documents and their evidence chunks:\n"
         + "\n".join(candidate_lines)
         + "\n\nReturn JSON exactly like: "
         '{"relations":[{"target_document_id":"uuid","relation_type":"supports",'
@@ -320,15 +345,33 @@ def _relation_prompt(
     )
 
 
-def _strict_relation_json(content: str) -> tuple[list[Mapping[str, Any]], int]:
+def _extract_json_object(content: str) -> Any:
     try:
-        payload = json.loads(content)
+        return json.loads(content)
     except json.JSONDecodeError:
+        decoder = json.JSONDecoder()
+        for index, character in enumerate(content):
+            if character != "{":
+                continue
+            try:
+                payload, _ = decoder.raw_decode(content[index:])
+            except json.JSONDecodeError:
+                continue
+            return payload
+        return None
+
+
+def _strict_relation_json(content: str) -> tuple[list[Mapping[str, Any]], int]:
+    payload = _extract_json_object(content)
+    if payload is None:
+        logger.warning("Relation model response was not valid JSON; discarded")
         return [], 1
     if not isinstance(payload, Mapping):
+        logger.warning("Relation model response was not a JSON object; discarded")
         return [], 1
     relations = payload.get("relations")
     if not isinstance(relations, list):
+        logger.warning("Relation model response missing relations array; discarded")
         return [], 1
     return [item for item in relations if isinstance(item, Mapping)], sum(
         1 for item in relations if not isinstance(item, Mapping)
@@ -679,6 +722,14 @@ def update_document_relations(
         accepted_records,
         supabase_client=client,
     )
+    if not saved_relations:
+        logger.warning(
+            "Relation generation accepted 0 relations for document %s "
+            "(candidates: %d, discarded: %d)",
+            normalized_document_id,
+            len(candidates),
+            discarded_count + validation_discards,
+        )
     return {
         "status": "updated",
         "candidate_document_count": len(candidates),

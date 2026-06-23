@@ -107,15 +107,18 @@ class FakeQdrantClient:
         return SimpleNamespace(points=self.points)
 
 
-def _point(*, document_id, chunk_id, score):
+def _point(*, document_id, chunk_id, score, text=None):
+    payload = {
+        "document_id": str(document_id),
+        "chunk_id": str(chunk_id),
+        "file_name": f"{document_id}.pdf",
+    }
+    if text is not None:
+        payload["text"] = text
     return SimpleNamespace(
         id=str(chunk_id),
         score=score,
-        payload={
-            "document_id": str(document_id),
-            "chunk_id": str(chunk_id),
-            "file_name": f"{document_id}.pdf",
-        },
+        payload=payload,
     )
 
 
@@ -279,8 +282,8 @@ def test_update_document_relations_bounds_ready_candidates_and_validates_model_j
     qdrant_client = FakeQdrantClient(
         [
             _point(document_id=LOW_ID, chunk_id=UUID("55555555-5555-5555-5555-555555555555"), score=0.99),
-            _point(document_id=HIGH_ID, chunk_id=CHUNK_ID, score=0.9),
-            _point(document_id=HIGH_ID, chunk_id=SECOND_CHUNK_ID, score=0.8),
+            _point(document_id=HIGH_ID, chunk_id=CHUNK_ID, score=0.9, text="Security policy access review evidence."),
+            _point(document_id=HIGH_ID, chunk_id=SECOND_CHUNK_ID, score=0.8, text="Security policy incident response evidence."),
             _point(document_id=THIRD_ID, chunk_id=UUID("66666666-6666-6666-6666-666666666666"), score=0.7),
         ]
     )
@@ -340,6 +343,42 @@ def test_update_document_relations_discards_invalid_json_without_failing_indexin
     assert result["status"] == "updated"
     assert result["accepted_relation_count"] == 0
     assert result["discarded_relation_count"] == 1
+
+
+def test_update_document_relations_extracts_json_from_markdown_wrapped_response():
+    model_payload = {
+        "relations": [
+            {
+                "target_document_id": str(HIGH_ID),
+                "relation_type": "supports",
+                "description": "Summaries support the same finding.",
+                "evidence_chunk_ids": [str(CHUNK_ID)],
+                "confidence": 0.8,
+            },
+        ]
+    }
+    wrapped_content = f"```json\n{json.dumps(model_payload)}\n```"
+    shopaikey_client = FakeShopAIKeyClient(wrapped_content)
+    qdrant_client = FakeQdrantClient(
+        [_point(document_id=HIGH_ID, chunk_id=CHUNK_ID, score=0.9)]
+    )
+    supabase_client = FakeClient(
+        [{"id": str(HIGH_ID), "status": "ready"}],
+        [],
+    )
+
+    result = relations.update_document_relations(
+        LOW_ID,
+        summary_records=[{"summary_type": "document", "content": "Source summary"}],
+        settings=_settings(),
+        shopaikey_client=shopaikey_client,
+        qdrant_client=qdrant_client,
+        supabase_client=supabase_client,
+    )
+
+    assert result["status"] == "updated"
+    assert result["accepted_relation_count"] == 1
+    assert result["discarded_relation_count"] == 0
 
 
 def test_resolve_related_document_scope_is_one_hop_bounded_and_respects_allow_list():

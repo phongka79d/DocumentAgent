@@ -86,63 +86,6 @@ QUERY_PLANNING_USER_PROMPT_TEMPLATE = (
     "}}\n"
     "Use at most {max_subqueries} subqueries. Keep subqueries focused and bounded."
 )
-QUERY_PLANNING_JSON_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": [
-        "is_complex",
-        "strategy",
-        "subqueries",
-        "inferred_filters",
-        "needs_relations",
-    ],
-    "properties": {
-        "is_complex": {"type": "boolean"},
-        "strategy": {
-            "type": "string",
-            "enum": ["semantic", "keyword", "hybrid", "metadata", "relation"],
-        },
-        "subqueries": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["id", "text"],
-                "properties": {
-                    "id": {"type": "string", "minLength": 1},
-                    "text": {"type": "string"},
-                },
-            },
-        },
-        "inferred_filters": {
-            "type": "object",
-            "additionalProperties": False,
-            "required": [
-                "mime_types",
-                "heading",
-                "section_path",
-                "page_start",
-                "page_end",
-            ],
-            "properties": {
-                "mime_types": {"type": "array", "items": {"type": "string"}},
-                "heading": {"type": ["string", "null"]},
-                "section_path": {"type": "array", "items": {"type": "string"}},
-                "page_start": {"type": ["integer", "null"], "minimum": 0},
-                "page_end": {"type": ["integer", "null"], "minimum": 0},
-            },
-        },
-        "needs_relations": {"type": "boolean"},
-    },
-}
-QUERY_PLANNING_RESPONSE_FORMAT = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "query_plan",
-        "strict": True,
-        "schema": QUERY_PLANNING_JSON_SCHEMA,
-    },
-}
 
 
 def build_answer_messages(*, context: str, question: str) -> list[Mapping[str, str]]:
@@ -231,8 +174,6 @@ __all__ = [
     "REGENERATION_SYSTEM_PROMPT",
     "REGENERATION_USER_PROMPT_TEMPLATE",
     "SAFE_INSUFFICIENT_CONTEXT_MESSAGE",
-    "QUERY_PLANNING_JSON_SCHEMA",
-    "QUERY_PLANNING_RESPONSE_FORMAT",
     "QUERY_PLANNING_SYSTEM_PROMPT",
     "QUERY_PLANNING_USER_PROMPT_TEMPLATE",
     "build_answer_messages",
