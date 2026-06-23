@@ -424,7 +424,7 @@ export default function App() {
 
   const handleChatSubmit = useCallback(async () => {
     const trimmedQuestion = question.trim();
-    if (!trimmedQuestion || isSendingChat || retrievalFilterValidationMessage) {
+    if (!trimmedQuestion || isSendingChat) {
       return;
     }
 
@@ -455,8 +455,6 @@ export default function App() {
   }, [
     isSendingChat,
     question,
-    retrievalFilterValidationMessage,
-    retrievalFilters,
     selectedReadyDocumentIds,
   ]);
 

@@ -156,7 +156,7 @@ export default function ChatPanel({
           <button
             className="chat-send-button"
             type="submit"
-            disabled={isSubmitting || !question.trim() || Boolean(filterValidationMessage)}
+            disabled={isSubmitting || !question.trim()}
             aria-label="Send question"
           >
             {isSubmitting ? (
