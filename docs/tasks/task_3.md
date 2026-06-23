@@ -887,7 +887,7 @@ The milestone is incomplete until migration/reindex operations, settings, safety
 
 ### Tasks
 
-- [ ] (09A): Update Phase 3 setup, migration, architecture, and operations documentation
+- [x] (09A): Update Phase 3 setup, migration, architecture, and operations documentation
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 9: Documentation and End-to-End Validation` > `### Task 9.1: Update setup, migration, architecture, and operations documentation`
   - Source Requirements:
     - Document the complete Phase 3 query and trace architecture.
@@ -912,7 +912,7 @@ The milestone is incomplete until migration/reindex operations, settings, safety
   - Blocked Condition: None.
   - Files: `README.md`, `backend/README.md`
 
-- [ ] (09B): Run full automated verification
+- [x] (09B): Run full automated verification
   - Source of Truth: `docs/plans/Plan_3.md` > `## Batch 9: Documentation and End-to-End Validation` > `### Task 9.2: Run full automated verification`
   - Source Requirements:
     - Run the complete backend pytest suite with no network required by unit tests.
@@ -1086,8 +1086,8 @@ There are no optional tracks outside this mandatory chain.
 
 #### Batch09
 
-- [ ] (09A): Update Phase 3 setup, migration, architecture, and operations documentation
-- [ ] (09B): Run full automated verification
+- [x] (09A): Update Phase 3 setup, migration, architecture, and operations documentation
+- [x] (09B): Run full automated verification
 - [ ] (09C): Run manual Phase 3 smoke and evaluation acceptance
 
 ## Completion Reporting Rules for Future Execution Agents

@@ -202,6 +202,8 @@ def test_sql_artifacts_define_keyword_index_and_rpc_contract():
         "using gin (to_tsvector('simple', coalesce(heading, '') || ' ' || content))",
         "search_document_chunks_keyword",
         "websearch_to_tsquery('simple', query_text)",
+        "phraseto_tsquery('simple', query_text)",
+        "replace(query_text, '-', ' ')",
         "ts_rank_cd(",
         "join documents",
         "documents.mime_type",

@@ -23,6 +23,7 @@ def _test_settings() -> Settings:
         _env_file=None,
         SUPABASE_STORAGE_BUCKET="documents",
         QDRANT_COLLECTION="document_chunks_v1",
+        ENABLE_WORKFLOW_TRACING=False,
     )
 
 

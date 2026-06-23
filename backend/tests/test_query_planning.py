@@ -171,6 +171,9 @@ def test_plan_query_normalizes_complex_plan_and_uses_strict_json_request():
     assert chat_call["max_tokens"] == settings.QUERY_PLANNER_MAX_TOKENS
     assert chat_call["kwargs"]["response_format"]["type"] == "json_schema"
     assert chat_call["kwargs"]["response_format"]["json_schema"]["strict"] is True
+    system_prompt = chat_call["messages"][0]["content"]
+    assert "For compound questions" in system_prompt
+    assert "For exact identifiers or codes" in system_prompt
     user_prompt = chat_call["messages"][1]["content"]
     assert f'"document_ids": ["{DOC_A}", "{DOC_B}"]' in user_prompt
     assert "Compare pricing and limits" in user_prompt
@@ -332,6 +335,57 @@ def test_plan_query_falls_back_to_one_hybrid_subquery_for_planner_failures(respo
         "page_end": None,
     }
     assert plan.needs_relations is False
+
+
+def test_plan_query_accepts_model_json_wrapped_in_text():
+    settings = _settings(enable_keyword_search=True, max_subqueries=3)
+    client = FakeShopAIKeyClient(
+        _chat_response(
+            '```json\n'
+            '{"is_complex":true,"strategy":"hybrid",'
+            '"subqueries":[{"id":"model-a","text":"leave carryover"},'
+            '{"id":"model-b","text":"pricing cancellation"}],'
+            '"inferred_filters":{"mime_types":[],"heading":null,'
+            '"section_path":[],"page_start":null,"page_end":null},'
+            '"needs_relations":false}'
+            "\n```"
+        )
+    )
+
+    plan = query_planning.plan_query(
+        "Compare leave carryover and pricing cancellation.",
+        [],
+        None,
+        settings=settings,
+        shopaikey_client=client,
+    )
+
+    assert plan.strategy is RetrievalStrategy.HYBRID
+    assert plan.is_complex is True
+    assert [(item.id, item.text) for item in plan.subqueries] == [
+        ("model-a", "leave carryover"),
+        ("model-b", "pricing cancellation"),
+    ]
+    assert plan.needs_relations is False
+
+
+def test_plan_query_empty_model_response_falls_back_without_local_decomposition():
+    settings = _settings(enable_keyword_search=True, max_subqueries=3)
+    client = FakeShopAIKeyClient(_chat_response(""))
+
+    plan = query_planning.plan_query(
+        "Compare leave carryover and pricing cancellation.",
+        [],
+        None,
+        settings=settings,
+        shopaikey_client=client,
+    )
+
+    assert plan.strategy is RetrievalStrategy.HYBRID
+    assert plan.is_complex is False
+    assert [(item.id, item.text) for item in plan.subqueries] == [
+        ("q1", "Compare leave carryover and pricing cancellation.")
+    ]
 
 
 def test_plan_query_retries_transient_planner_failures_before_using_response():

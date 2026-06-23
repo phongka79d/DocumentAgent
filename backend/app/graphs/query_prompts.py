@@ -63,7 +63,9 @@ QUERY_PLANNING_SYSTEM_PROMPT = (
     "Use only these strategies: semantic, keyword, hybrid, metadata, relation.\n"
     "Do not add, remove, rewrite, infer, or widen document_ids.\n"
     "Only infer filters from the user's question when they are clear.\n"
-    "Explicit filters are fixed constraints and override inferred filters."
+    "Explicit filters are fixed constraints and override inferred filters.\n"
+    "For compound questions, create separate focused subqueries for each part.\n"
+    "For exact identifiers or codes, include the identifier exactly in a focused subquery."
 )
 QUERY_PLANNING_USER_PROMPT_TEMPLATE = (
     "Plan a retrieval query using this input JSON:\n"

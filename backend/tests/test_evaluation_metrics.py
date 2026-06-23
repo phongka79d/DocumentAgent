@@ -135,10 +135,11 @@ def test_dataset_rejects_no_result_case_with_evidence(tmp_path: Path):
         load_dataset(path)
 
 
-def test_seed_fixture_reuses_ready_duplicate_without_indexing(monkeypatch, tmp_path: Path):
+def test_seed_fixture_reindexes_ready_duplicate_to_refresh_phase3_artifacts(monkeypatch, tmp_path: Path):
     fixture = tmp_path / "leave_policy.md"
     fixture.write_text("fixture", encoding="utf-8")
     ready = _document()
+    calls: list[str] = []
     monkeypatch.setattr(
         seed_script.document_service,
         "register_uploaded_document",
@@ -148,8 +149,13 @@ def test_seed_fixture_reuses_ready_duplicate_without_indexing(monkeypatch, tmp_p
     )
     monkeypatch.setattr(
         seed_script,
-        "run_document_index",
-        lambda *args, **kwargs: pytest.fail("ready duplicate must not be reindexed"),
+        "run_document_reindex",
+        lambda *args, **kwargs: calls.append("reindex"),
+    )
+    monkeypatch.setattr(
+        seed_script,
+        "wait_until_ready",
+        lambda *args, **kwargs: calls.append("wait") or ready,
     )
 
     result = seed_script.seed_fixture(
@@ -161,6 +167,7 @@ def test_seed_fixture_reuses_ready_duplicate_without_indexing(monkeypatch, tmp_p
     )
 
     assert result is ready
+    assert calls == ["reindex", "wait"]
 
 
 def test_seed_fixture_uses_upload_index_services_and_waits(monkeypatch, tmp_path: Path):

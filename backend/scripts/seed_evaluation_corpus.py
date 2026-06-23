@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Callable
 
-from app.api.routes.documents import run_document_index
+from app.api.routes.documents import run_document_index, run_document_reindex
 from app.core.config import Settings, get_settings
 from app.core.contracts import DocumentStatus
 from app.evaluation.dataset import DEFAULT_FIXTURE_DIRECTORY, FIXTURE_FILES
@@ -86,9 +86,11 @@ def seed_fixture(
         settings=settings,
     )
     document = upload.document
-    if document.status == DocumentStatus.READY:
+    if upload.duplicate:
+        run_document_reindex(document.id, settings=settings)
+    elif document.status == DocumentStatus.READY:
         return document
-    if document.status != DocumentStatus.PROCESSING:
+    elif document.status != DocumentStatus.PROCESSING:
         run_document_index(document.id, settings=settings)
     return wait_until_ready(
         str(document.id),

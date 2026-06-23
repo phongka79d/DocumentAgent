@@ -56,6 +56,22 @@ def _fallback_plan(question: str, settings: Settings) -> QueryPlan:
     )
 
 
+def _json_payload_from_content(content: str) -> Any:
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        decoder = json.JSONDecoder()
+        for index, character in enumerate(content):
+            if character != "{":
+                continue
+            try:
+                payload, _ = decoder.raw_decode(content[index:])
+            except json.JSONDecodeError:
+                continue
+            return payload
+        raise
+
+
 def _explicit_filter_keys(explicit_filters: Any) -> set[str]:
     if explicit_filters is None:
         return set()
@@ -218,7 +234,7 @@ def plan_query(
         if content is None:
             raise ValueError("planner response was empty")
         return _plan_from_payload(
-            json.loads(content),
+            _json_payload_from_content(content),
             question=normalized_question,
             settings=resolved_settings,
             explicit_filters=normalized_explicit_filters,

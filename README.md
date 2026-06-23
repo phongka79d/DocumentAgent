@@ -337,6 +337,121 @@ Ensure `FRONTEND_ORIGIN` in your backend `.env` matches the frontend deployment 
 
 ---
 
+## Phase 3 Upgrade and Operations
+
+Phase 3 is a schema and index upgrade. Fresh projects and existing projects use different safe paths:
+
+| Scenario | Required path |
+| :--- | :--- |
+| Fresh Supabase project | Run [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql), then create the private Storage bucket and Qdrant collection. |
+| Existing Phase 2 project | Back up the Supabase database, verify the target project, then apply [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) through an authorized SQL editor or migration path. |
+
+The migration adds `documents.error_code`, `document_summaries`, `document_relations`, `workflow_runs`, the language-neutral keyword-search GIN index, and the `search_document_chunks_keyword` RPC. Do not run live migration or reindex operations against a project until the owner has confirmed the target resources and backup.
+
+Existing documents must be reindexed after Phase 3 SQL is applied. Reindexing rebuilds chunks/vectors and populates Qdrant MIME payloads, extracted-text-only summaries, bounded relations, and Phase 3 metadata:
+
+```http
+POST /api/documents/{document_id}/reindex
+```
+
+Operational inspection endpoints:
+
+| Method | Endpoint | Purpose |
+| :--- | :--- | :--- |
+| `GET` | `/api/documents/{document_id}/summaries` | Inspect stored section and document summaries. |
+| `GET` | `/api/documents/{document_id}/relations` | Inspect bounded canonical document relations. |
+| `GET` | `/api/observability/runs?workflow_type=&status=&limit=50` | List compact workflow traces; `limit` is clamped to `1..100`. |
+| `GET` | `/api/observability/runs/{run_id}` | Inspect one workflow trace; unknown IDs return `404`. |
+
+The observability endpoints require `X-Admin-API-Token` when `ADMIN_API_TOKEN` is configured. Keep `ADMIN_API_TOKEN` empty only for local/private use.
+
+### Phase 3 Query Architecture
+
+```mermaid
+flowchart TD
+    A[Chat request] --> B[Create redacted workflow run]
+    B --> C[Validate question, selected document allow-list, and filters]
+    C --> D[Bounded planner, max QUERY_MAX_SUBQUERIES]
+    D --> E[One-hop relation scope, never widens explicit document_ids]
+    E --> F[Semantic Qdrant retrieval]
+    E --> G[Keyword Postgres retrieval]
+    F --> H[Normalize candidate contract]
+    G --> H
+    H --> I[Deduplicate by chunk_id]
+    I --> J[RRF fusion, constant RETRIEVAL_RRF_CONSTANT]
+    J --> K[Rerank candidate window]
+    K --> L[Jina rerank or deterministic fused fallback]
+    L --> M[Context budget: ranked, boundary, same-section, generic neighbors]
+    M --> N[Generate answer with S1/S2 citation keys]
+    N --> O[Exact citation validation]
+    O --> P[Grounding verification]
+    P --> Q{Verified?}
+    Q -->|yes| R[Return answer, cited sources, trace_id]
+    Q -->|first failure| S[Regenerate once]
+    S --> O
+    Q -->|exhausted| T[Safe insufficient-context response, no sources]
+    R --> U[Close workflow run]
+    T --> U
+```
+
+Trace persistence stores node names, status, attempts, timing, providers, counts, routes, fallbacks, safe error codes, retrieval totals, citation validity, grounding score, and total latency. It must not persist raw chunk text, parsed text, prompts, full model responses, full generated answers, authorization headers, API keys, or credential-bearing URLs.
+
+### Phase 3 Settings
+
+| Setting | Default | Description |
+| :--- | :--- | :--- |
+| `ENABLE_KEYWORD_SEARCH` | `true` | Enables Postgres keyword retrieval for hybrid search. |
+| `RETRIEVAL_KEYWORD_TOP_K` | `40` | Keyword candidates requested from SQL. |
+| `RETRIEVAL_FUSION_TOP_K` | `40` | Fused candidates kept after RRF. |
+| `RETRIEVAL_RRF_CONSTANT` | `60` | Reciprocal-rank fusion constant. |
+| `RETRIEVAL_RERANK_CANDIDATE_TOP_K` | `20` | Candidates sent to Jina. |
+| `RETRIEVAL_CONTEXT_MAX_TOKENS` | `4000` | Token budget for generation context. |
+| `QUERY_MAX_SUBQUERIES` | `4` | Maximum planner subqueries. |
+| `QUERY_PLANNER_TEMPERATURE` | `0.0` | Planner model temperature. |
+| `QUERY_PLANNER_MAX_TOKENS` | `500` | Planner output cap. |
+| `ENABLE_SUMMARIES` | `true` | Generates section and document summaries during indexing. |
+| `SUMMARY_SECTION_MAX_TOKENS` | `200` | Section-summary model cap. |
+| `SUMMARY_DOCUMENT_MAX_TOKENS` | `400` | Document-summary model cap. |
+| `ENABLE_RELATION_RETRIEVAL` | `true` | Enables relation generation and relation-aware query scope. |
+| `RELATION_MAX_RELATED_DOCUMENTS` | `5` | Maximum one-hop related documents. |
+| `GROUNDING_MIN_SCORE` | `0.80` | Minimum verifier score for factual answers. |
+| `GROUNDING_MAX_REGENERATIONS` | `1` | Bounded answer regeneration count. |
+| `WORKFLOW_MAX_ATTEMPTS` | `3` | Attempts for retryable external operations. |
+| `WORKFLOW_RETRY_BASE_DELAY_SECONDS` | `0.25` | Initial retry backoff. |
+| `WORKFLOW_RETRY_MAX_DELAY_SECONDS` | `2.0` | Maximum retry backoff. |
+| `ENABLE_WORKFLOW_TRACING` | `true` | Enables compact trace persistence. |
+
+Retries are intentionally narrow: timeouts, connection failures, HTTP 429, and HTTP 5xx are retryable. Validation errors, unsupported files, missing documents, contract errors, and non-retryable 4xx failures run once. Final recovery is deterministic: planner failure becomes one original-question hybrid/semantic query; semantic or keyword failure uses the surviving path; relation failure falls back to scoped hybrid retrieval; Jina failure uses fused order; grounding failure regenerates once, then returns the safe insufficient-context answer; message and trace persistence failures only log warnings.
+
+### Evaluation
+
+Validate the text-only dataset locally:
+
+```powershell
+cd backend
+python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl
+```
+
+After live services are configured and evaluation fixtures have been authorized for upload/indexing:
+
+```powershell
+cd backend
+python scripts/seed_evaluation_corpus.py
+python scripts/run_rag_evaluation.py --dataset evaluation/datasets/phase3_v1.jsonl
+```
+
+Default gates are `recall_at_5 >= 0.80`, `citation_validity_rate = 1.00`, `grounding_pass_rate >= 0.90`, `unexpected_no_result_rate <= 0.10`, and `forbidden_term_rate = 0.00`. The runner writes timestamped JSON reports under `backend/evaluation/results/`.
+
+### Security and Limits
+
+RagDocument remains a personal single-user application. It does not include login, signup, OAuth, Supabase Auth, users, organizations, roles, tenants, or access-control tables. For public deployment, protect the backend with `ADMIN_API_TOKEN`, Cloudflare Access, Tailscale, or a private VPN.
+
+Only extractable text is supported. OCR, scanned-document processing, screenshots, image-only documents, image/chart captioning, audio/video extraction, and PPTX parsing remain out of scope. Empty extracted text fails with `NO_EXTRACTABLE_TEXT`.
+
+Never put Supabase service keys, ShopAIKey keys, Qdrant keys, Jina keys, admin tokens, signed URLs, or credential-bearing logs in frontend code, committed files, reports, or chat.
+
+---
+
 ## Testing & Verification
 
 Verify API functionality and parsing algorithms.

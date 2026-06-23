@@ -2274,3 +2274,375 @@ complete
 - next task ID: A2 review for repaired (08B), then (09A) only after ACCEPTED review
 - can proceed: yes
 - handoff notes: Re-review planner retry wrapping in `query_planning.py`, Qdrant delete retry wrapping in route/service document cleanup, and added focused tests in `test_query_planning.py` and `test_api_documents.py`.
+
+---
+
+# Task Execution Report - (09A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch09 - Documentation and End-to-End Validation
+
+## Task
+(09A) - Update Phase 3 setup, migration, architecture, and operations documentation
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch09 - Documentation and End-to-End Validation > (09A)
+- docs/plans/Plan_3.md > ## Batch 9: Documentation and End-to-End Validation > ### Task 9.1: Update setup, migration, architecture, and operations documentation
+
+## Supplemental Documents Used
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch09 - Documentation and End-to-End Validation
+- Task ID: (09A)
+- Task title: Update Phase 3 setup, migration, architecture, and operations documentation
+
+## Completed Work
+- Status: complete.
+- Updated root documentation with Phase 3 upgrade and operations guidance, query architecture diagram, trace redaction rules, settings/defaults, inspection endpoints, evaluation commands/gates, retry/fallback behavior, and preserved security/format limitations.
+- Updated backend documentation with existing-project migration versus fresh schema setup, reindex requirements, complete Phase 3 settings/default table and env block, query/trace architecture, admin-token endpoint behavior, operations sequence, evaluation commands, retry/fallback behavior, and extractable-text-only/single-user warnings.
+- Did not implement (09B), (09C), runtime code, tests, task checkbox updates, or commits.
+
+## Files Created or Modified
+- README.md
+- backend/README.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- Manual review against selected task requirements and Plan_3 Task 9.1: Passed
+- `rg "QUERY_MAX_SUBQUERIES|RETRIEVAL_RRF_CONSTANT|GROUNDING_MAX_REGENERATIONS|phase3_migration|reindex|/observability/runs|/summaries|/relations|recall_at_5|NO_EXTRACTABLE_TEXT|single-user|OCR|X-Admin-API-Token" README.md backend/README.md -n`: Passed; required coverage terms are present in both root/backend documentation where applicable.
+- `git diff -- README.md backend/README.md`: Passed; reviewed changed documentation scope.
+- `git diff --check -- README.md backend/README.md`: Passed; only line-ending normalization warnings were reported.
+
+## Acceptance Check
+- Task acceptance condition: Documentation matches implemented Phase 3 behavior and provides complete safe upgrade, reindex, inspection, and evaluation instructions.
+- Status: satisfied
+- Evidence: README.md and backend/README.md now document the complete Phase 3 query/trace architecture, every Phase 3 setting/default, fresh and existing database setup paths, backup/authorization cautions, required reindexing, summary/relation/observability endpoints, evaluation seed/run/report/gate behavior, bounded retry/fallback behavior, trace redaction, text-only limitations, secret handling, and single-user warnings.
+
+## Artifacts Produced
+- Updated README.md
+- Updated backend/README.md
+- Appended execution report in docs/reports/report_3_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated run; A2 performs checkbox updates only after ACCEPTED review.
+
+## Key Implementation Decisions
+- Kept the root README focused on maintainer-level setup and operations while placing backend-specific runbook details in backend/README.md.
+- Documented live migration and evaluation as authorized operations only, with explicit backup, target confirmation, and secret-handling cautions.
+- Treated reindexing as mandatory for existing documents to acquire MIME payloads, summaries, relations, and Phase 3 metadata.
+
+## Risks or Open Issues
+- Full automated verification and live smoke/evaluation remain intentionally out of scope for (09A) and belong to (09B) and (09C).
+- The repository already contains unrelated prior report/task progress history; it was not reverted or modified.
+
+## Minor Issues Fixed During Execution
+- None outside documentation required for (09A).
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified for (09A).
+- Batch08 task IDs are checked in docs/tasks/task_3.md; this run did not alter dependency checkboxes or batch status.
+- Scope stayed limited to README.md, backend/README.md, and the required execution report.
+
+## Notes for Next Task
+- next task ID: (09B)
+- can proceed: yes, after A2 reviews and accepts (09A)
+- handoff notes: (09B) should run the full backend pytest suite, frontend build, and dataset validation exactly as listed in docs/tasks/task_3.md; do not treat this documentation-only validation as a substitute for (09B).
+
+---
+
+# Task Execution Report - (09A) Repair
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch09 - Documentation and End-to-End Validation
+
+## Task
+(09A) - Update Phase 3 setup, migration, architecture, and operations documentation
+
+## Status
+complete
+
+## Source of Truth Used
+- docs/tasks/task_3.md > Batch09 - Documentation and End-to-End Validation > (09A)
+- A2 review outcome: REJECTED_WITH_WARNINGS repair instruction for `backend/README.md` > `## Phase 3 API endpoints`
+
+## Supplemental Documents Used
+- docs/plans/Plan_3.md
+- docs/plans/Master_Plan.md
+
+## Selected Scope
+- Batch: Batch09 - Documentation and End-to-End Validation
+- Task ID: (09A)
+- Task title: Update Phase 3 setup, migration, architecture, and operations documentation
+- Repair target: `backend/README.md` Phase 3 API endpoint security wording only
+
+## Completed Work
+- Status: complete.
+- Inspected `backend/app/api/routes/documents.py` and confirmed the documents router has no route-level `require_admin_token` dependency for `/documents/{document_id}/summaries` or `/documents/{document_id}/relations`.
+- Inspected `backend/app/api/routes/observability.py` and confirmed the observability router uses `dependencies=[Depends(require_admin_token)]` for `/observability/runs` endpoints.
+- Updated only `backend/README.md` endpoint-security wording so summary and relation endpoints are documented as unprotected by route-level admin-token dependency, while observability endpoints remain documented as requiring `X-Admin-API-Token`.
+- Did not implement endpoint protection, code changes, sibling tasks, task checkbox updates, or commits.
+
+## Files Created or Modified
+- backend/README.md
+- docs/reports/report_3_execute_agent.md
+
+## Tests or Validations Run
+- Inspected `backend/app/api/routes/documents.py`: Passed; summary/relation routes are in the documents router with no route-level admin dependency.
+- Inspected `backend/app/api/routes/observability.py`: Passed; observability router includes `dependencies=[Depends(require_admin_token)]`.
+- `rg "Phase 3 API endpoints|summaries|relations|observability|X-Admin-API-Token|ADMIN_API_TOKEN|require_admin_token|dependencies=\[Depends\(require_admin_token\)\]|no route-level admin-token" backend/README.md backend/app/api/routes/documents.py backend/app/api/routes/observability.py -n`: Passed; docs and implementation evidence align.
+- `git diff --check -- README.md backend/README.md`: Passed; only line-ending normalization warnings were reported.
+
+## Acceptance Check
+- Task acceptance condition: A2 repair instruction satisfied by correcting docs to match implemented endpoint security behavior.
+- Status: satisfied
+- Evidence: `backend/README.md` now states `/documents/{document_id}/summaries` and `/documents/{document_id}/relations` follow the documents router exposure with no current route-level admin-token dependency, and `/observability/runs` endpoints require `X-Admin-API-Token`.
+
+## Artifacts Produced
+- Updated backend/README.md
+- Appended repair execution report in docs/reports/report_3_execute_agent.md
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: Orchestrated repair run; A2 performs checkbox updates only after ACCEPTED review.
+
+## Key Implementation Decisions
+- Chose documentation repair only, per A2 instruction and hard rules, instead of adding endpoint protection in code.
+- Kept the correction scoped to backend README endpoint-security wording.
+
+## Risks or Open Issues
+- Summary and relation inspection endpoints remain unprotected in the current implementation; this report documents current behavior and does not authorize or implement a code change.
+- Full automated verification and live smoke/evaluation remain out of scope for (09A) and belong to (09B) and (09C).
+
+## Minor Issues Fixed During Execution
+- Corrected inaccurate backend README wording that previously implied summary/relation endpoints were protected when `ADMIN_API_TOKEN` is set.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified for this repair.
+- Scope stayed inside the same task ID `(09A)` and the A2-listed issue.
+- No task checkbox, batch status, code behavior, sibling task, or commit was changed.
+
+## Notes for Next Task
+- next task ID: (09B)
+- can proceed: yes, after A2 reviews and accepts the repaired (09A)
+- handoff notes: A2 should re-check `backend/README.md` Phase 3 API endpoint wording against `documents.py` and `observability.py`; (09B) remains blocked until (09A) is accepted.
+
+---
+
+# Task Execution Report - (09B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch09 - Documentation and End-to-End Validation
+
+## Task
+(09B) - Run full automated verification
+
+## Status
+complete
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `## Mandatory Batch09 - Documentation and End-to-End Validation` > `(09B): Run full automated verification`
+- `docs/plans/Plan_3.md` > `## Batch 9: Documentation and End-to-End Validation` > `### Task 9.2: Run full automated verification`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_3.md`
+- `docs/plans/Master_Plan.md` was provided but not needed beyond task context.
+
+## Selected Scope
+- Batch: Batch09 - Documentation and End-to-End Validation
+- Task ID: (09B)
+- Task title: Run full automated verification
+
+## Completed Work
+- Status: complete.
+- Ran the complete backend pytest suite from `backend`.
+- Confirmed unit tests do not require network access based on successful local command behavior and inspection evidence showing fake clients, monkeypatching, `respx`, and explicit service-client tests such as `test_service_client_modules_import_without_creating_clients`, `test_supabase_client_factory_reads_settings_without_network_calls`, `test_qdrant_client_factory_reads_settings_without_network_calls`, `test_shopaikey_client_factory_reads_settings_without_network_calls`, and `test_jina_client_factory_reads_settings_without_network_calls`.
+- Ran the frontend TypeScript/Vite production build from `frontend`.
+- Validated `backend/evaluation/datasets/phase3_v1.jsonl` through the evaluation dataset module CLI.
+- No in-scope failures were found and no code fixes were required.
+
+## Files Created or Modified
+- `docs/reports/report_3_execute_agent.md`
+
+## Tests or Validations Run
+- `cd backend; python -m pytest -v`: Passed; exit code 0; evidence: `321 passed, 16 warnings in 22.29s`.
+- Network independence check for unit tests: Passed; evidence: pytest completed locally without live service setup, tests use fake clients/monkeypatches/`respx`, and configuration tests explicitly assert client factories read settings without network calls.
+- `cd frontend; npm run build`: Passed; exit code 0; evidence: Vite built successfully, `38 modules transformed`, output assets emitted under `dist/`, `built in 567ms`.
+- `cd backend; python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl`: Passed; exit code 0; evidence: `Dataset validation passed: 12 cases`.
+
+## Acceptance Check
+- Task acceptance condition: Backend tests, frontend build, and dataset validation all exit successfully.
+- Status: satisfied.
+- Evidence: All three required validation commands exited with code 0; no fixes were required.
+
+## Artifacts Produced
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed not to update task checkboxes and to leave checkbox updates to A2 after an `ACCEPTED` review.
+
+## Key Implementation Decisions
+- Treated `(09A)` as dependency-satisfied based on the checked task entry and user instruction to preserve accepted uncommitted `(09A)` changes.
+- Kept scope to automated verification only; did not run `(09C)`, start servers, apply migrations, reindex documents, seed live data, or contact real external services.
+
+## Risks or Open Issues
+- None for `(09B)` automated verification.
+- `(09C)` live smoke/evaluation remains intentionally not run and still depends on user-authorized external resources and live actions.
+
+## Minor Issues Fixed During Execution
+- None.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields identified.
+- Dependencies were satisfied for `(09B)` based on the task file and user-provided acceptance context for `(09A)`.
+- Scope stayed inside `(09B)`; no task checkbox, batch status, commit, migration, live smoke, reindex, seed, or external-service action was performed.
+
+## Notes for Next Task
+- next task ID: (09C)
+- can proceed: yes, after A2 reviews and accepts `(09B)`.
+- handoff notes: Automated verification passed. `(09C)` must remain gated on configured external services, explicit user authorization for migration/reindexing/seeding, and safe test documents.
+
+---
+
+# Task Execution Report - (09C)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Report File
+docs/reports/report_3_execute_agent.md
+
+## Batch
+Batch09 - Documentation and End-to-End Validation
+
+## Task
+(09C) - Run manual Phase 3 smoke and evaluation acceptance
+
+## Status
+failed
+
+## Source of Truth Used
+- `docs/tasks/task_3.md` > `## Mandatory Batch09 - Documentation and End-to-End Validation` > `(09C): Run manual Phase 3 smoke and evaluation acceptance`
+- `docs/plans/Plan_3.md` > `## Batch 9: Documentation and End-to-End Validation` > `### Task 9.3: Run manual Phase 3 smoke and evaluation tests`
+
+## Supplemental Documents Used
+- `docs/plans/Plan_3.md`
+- `docs/plans/Master_Plan.md` was provided but not needed beyond the selected task contract.
+
+## Selected Scope
+- Batch: Batch09 - Documentation and End-to-End Validation
+- Task ID: (09C)
+- Task title: Run manual Phase 3 smoke and evaluation acceptance
+
+## Completed Work
+- Status: failed because every required manual flow did not pass, despite successful live setup, reindexing, seeding, and default evaluation gates.
+- Treated the Phase 3 migration as user-confirmed applied and did not reapply it. Safe schema evidence was obtained through successful Phase 3 summary, relation, and observability endpoint calls.
+- Confirmed required live configuration and all Phase 3 feature flags without printing values or secrets.
+- Started backend on `127.0.0.1:8000` and frontend on `127.0.0.1:5173`; both reported ready. Both were stopped after the orchestrator timeout.
+- Reindexed all five documents that existed before evaluation seeding. Every document returned to `ready`; chunk counts were 2, 2, 2, 2, and 117.
+- Seeded the three deterministic evaluation fixtures and recorded only safe title-to-ID mappings.
+- Ran the production evaluation command. It exited 0, wrote a timestamped JSON report, and passed all default gates.
+- Exercised live API chat, endpoint, trace, fallback, and failure-path checks. No source changes were made.
+
+## Files Created or Modified
+- `docs/reports/report_3_execute_agent.md`
+- `backend/evaluation/results/rag-evaluation-20260623T020554.794098Z.json` (generated ignored evaluation artifact)
+
+## Tests or Validations Run
+- Safe configuration presence check: Passed; Supabase URL/key, Qdrant URL/key, ShopAIKey key, Jina key, and admin token were configured; rerank, keyword, summaries, relation retrieval, and workflow tracing flags were enabled. No values were printed.
+- Migration/schema verification: Passed with limited safe evidence; migration was not reapplied, and live summary, relation, and observability endpoints successfully accessed Phase 3-backed services.
+- Reindex all pre-existing documents: Passed; 5/5 returned `ready` after reindex.
+- Backend start on port 8000: Passed.
+- Frontend start on `127.0.0.1:5173`: Passed.
+- In-app browser UI smoke: Blocked; browser control could not initialize because required `sandboxPolicy` environment metadata was absent. No alternate browser surface was used.
+- `python scripts/seed_evaluation_corpus.py`: Passed; exit code 0.
+- Safe seed mappings: `Leave Policy` -> `7e607f85-548d-43d5-87d3-382331974df6`; `Pricing Policy` -> `7f83fdac-ef45-4fb3-8c16-8c30d65e324d`; `Security Policy` -> `41d0e4f8-887e-4b22-aee8-87d1c683c1fc`.
+- `python scripts/run_rag_evaluation.py --dataset evaluation/datasets/phase3_v1.jsonl`: Passed; exit code 0; report `backend/evaluation/results/rag-evaluation-20260623T020554.794098Z.json`.
+- Default gates: Passed; recall@5 `1.0` >= `0.8`, citation validity `1.0` >= `1.0`, grounding pass `0.9166666666666666` >= `0.9`, unexpected no-result `0.0` <= `0.1`, forbidden-term rate `0.0` <= `0.0`; threshold failures were empty.
+- Exact-term keyword contribution: Failed; the exact `EMBER-17` evaluation and live API checks returned expected answer/citation evidence, but source retrieval paths contained only `semantic`, not `keyword`.
+- Semantic paraphrase: Passed; the leave carryover paraphrase retrieved expected evidence through the semantic path and produced grounded, valid citations.
+- MIME filter: Passed; the returned source was Markdown.
+- Heading filter: Passed; returned source headings satisfied `Cancellation`.
+- Section filter: Passed; returned source section paths satisfied `Incident Response`.
+- Page filter: Passed for expected no-result behavior; page 9 returned no sources.
+- Bounded decomposition: Failed; planner responses were repeatedly empty, deterministic fallback was used, and complex cases remained one `q1` subquery instead of covering both parts through decomposition.
+- Cross-document comparison: Passed; pricing/security and retention-conflict cases returned expected terms, two selected-document sources, exact citations, and grounding.
+- Relation scope/retrieval: Failed; all three seeded relation endpoints returned zero relations, and the relation-aware evaluation case returned zero sources with grounding failure.
+- Jina fallback: Passed; a forced non-secret invalid Jina credential produced a `401`, the answer remained correct, and the persisted rerank event recorded `fallback=deterministic_fused_score`, input/output count 4, attempt 1.
+- Context budgets: Passed for observed evaluation cases; pre-rerank candidates were capped at 40, post-rerank at 5, and context at 8, matching configured caps. Token-budget internals were not exposed in the report, but persisted traces included safe context token/count totals.
+- Citation exactness: Passed for grounded result cases; returned source IDs equaled cited IDs and were subsets of exact context IDs. The relation case safely returned no sources after grounding failure.
+- Forced grounding rejection/regeneration/safe response: Unverified; safe no-source responses were observed for failed/insufficient grounding, but one forced rejection followed by exactly one regeneration and repeated-failure safe response was not completed.
+- Summary endpoint: Passed; seeded documents returned 4, 5, and 5 summaries with document and section types.
+- Relation endpoint: Passed as an endpoint availability/schema check, but failed functional relation acceptance because all returned zero relations.
+- Observability endpoint: Passed with admin token supplied locally and never printed.
+- Trace redaction: Passed; ingestion and query traces contained node names, statuses, attempts, timing/counts, routes/fallbacks, and no fixture source markers, prompts, questions, answers, keys, credentials, or secrets. `context_tokens` was treated as an allowed aggregate count.
+- Retry recovery/attempt tracing: Unverified. A temporary local provider pass-through emitted one synthetic embedding HTTP 503 and backend logs showed the chat request completed HTTP 200, but the persisted trace attempt count was not inspected before interruption. An earlier synthetic planner 503 recovered through planner fallback and retained max attempt 1, so it did not satisfy retry-attempt tracing acceptance.
+
+## Acceptance Check
+- Task acceptance condition: Every manual flow passes, trace redaction is confirmed, and all default evaluation gates pass.
+- Status: not satisfied.
+- Evidence: Trace redaction and all default evaluation gates passed. Exact-term keyword contribution, bounded decomposition, and functional relation retrieval failed. Forced grounding regeneration and retry-attempt tracing were unverified. Browser UI smoke was blocked by the browser-control environment.
+
+## Artifacts Produced
+- `backend/evaluation/results/rag-evaluation-20260623T020554.794098Z.json`
+- Safe seeded title-to-ID mappings recorded above.
+- Appended execution report in `docs/reports/report_3_execute_agent.md`.
+
+## Progress Update
+- task checkbox updated: no
+- batch status updated: no
+- reason: User explicitly instructed that A2 owns checkbox updates after `ACCEPTED`; this run also failed acceptance.
+
+## Key Implementation Decisions
+- Did not reapply `docs/database/phase3_migration.sql` because the user explicitly confirmed successful migration and supplied no evidence requiring reapplication.
+- Used only presence/non-placeholder checks for configuration and never printed secret values.
+- Reindexed the complete pre-seed document list, then seeded evaluation fixtures separately.
+- Classified live results from direct commands, API responses, persisted traces, and the generated evaluation report; did not infer live success from unit tests.
+- Stopped new live actions immediately when the orchestrator timeout instruction arrived and conservatively marked interrupted evidence unverified.
+
+## Risks or Open Issues
+- The configured planner provider repeatedly returned empty planner responses, preventing live decomposition and relation-aware routing.
+- Keyword retrieval did not contribute to the exact-term case even though keyword search was enabled and the route was reported as hybrid.
+- Evaluation gates can pass while named manual flows fail; the current default gates do not enforce retrieval-path contribution, multi-subquery decomposition, or relation retrieval success.
+- Seeded documents had no persisted relations, so one-hop relation acceptance is not met.
+- Forced grounding regeneration and persisted retry-attempt tracing still require focused live reruns after the provider/planner issues are resolved.
+- In-app browser verification requires the browser-control environment metadata issue to be corrected.
+
+## Minor Issues Fixed During Execution
+- None; no source changes were authorized or required for this validation-only task.
+
+## Workflow Integrity Check
+- No missing source-of-truth fields or unresolved source conflicts were identified.
+- Dependencies and user actions were satisfied by checked `(09B)` and the user's explicit migration/resource/reindex/seed authorization.
+- Scope remained limited to `(09C)`; no checkboxes were changed and no commit was created.
+
+## Notes for Next Task
+- next task ID: None; `(09C)` must be rerun after failures are diagnosed.
+- can proceed: no
+- handoff notes: Diagnose live keyword-path omission, empty planner responses, and missing seeded relations first. Then rerun forced grounding regeneration, retry attempt tracing, browser UI smoke, and the full manual checklist. Keep the already passing evaluation report as evidence only for default gates, not for manual acceptance.

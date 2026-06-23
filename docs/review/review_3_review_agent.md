@@ -4614,3 +4614,474 @@ ACCEPTED
 
 ## Repair Instructions
 - None.
+---
+
+# Task Review Report - (09A)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+REJECTED_WITH_WARNINGS
+
+## Reviewed Scope
+- Batch: Batch09 - Documentation and End-to-End Validation
+- Task ID: (09A)
+- Task title: Update Phase 3 setup, migration, architecture, and operations documentation
+- Executor status reported: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 9: Documentation and End-to-End Validation` > `### Task 9.1: Update setup, migration, architecture, and operations documentation`
+- Supplemental documents: `docs/plans/Master_Plan.md` listed in the execution report; not needed beyond cross-checking scope because `docs/tasks/task_3.md` and `docs/plans/Plan_3.md` were sufficient.
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (09A)
+- Reviewed task ID: (09A)
+- Correct selection: yes
+- Notes: The latest matching execution report entry is for Batch09 (09A). No review was performed for (09B), (09C), or Batch09 completion.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- recent commits reviewed: not needed
+- changed files from git:
+  - `README.md`
+  - `backend/README.md`
+  - `docs/reports/report_3_execute_agent.md`
+- untracked files: none reported by `git status --short`
+
+## Files Reviewed
+- `docs/tasks/task_3.md`: in scope - selected (09A) task, dependencies, acceptance, and progress tracker checked.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest (09A) execution report reviewed.
+- `docs/plans/Plan_3.md`: in scope - Task 9.1 and Phase 3 settings/default source sections reviewed.
+- `README.md`: in scope - root Phase 3 setup, architecture, settings, migration, endpoint, evaluation, retry, redaction, and security documentation reviewed.
+- `backend/README.md`: in scope - backend Phase 3 runbook, settings, endpoints, operations, evaluation, retry, and security documentation reviewed.
+- `backend/app/core/config.py`: in scope - used to verify documented Phase 3 setting names and defaults.
+- `backend/app/api/routes/documents.py`: in scope - used to verify summary and relation endpoint behavior.
+- `backend/app/api/routes/observability.py`: in scope - used to verify observability endpoint protection and limit behavior.
+- `backend/app/core/security.py`: in scope - used to verify `X-Admin-API-Token` behavior.
+
+## Reported Files Cross-Check
+- file from execution report: `README.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Documentation change is in scope, but root README uses absolute `file:///C:/...` markdown links that are less portable; not treated as blocking for this review.
+
+- file from execution report: `backend/README.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Documentation change is in scope, but two endpoint protection statements are inaccurate.
+
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report append is expected for A1.
+
+## Dependency Review
+- Required dependencies: Accepted Batches01 through 08 and final implemented behavior.
+- Dependency status: Sufficient for documentation review. Task checkboxes for (08A) and (08B) are checked in `docs/tasks/task_3.md`; the review distinguished this task from prior accepted Batch08 work and did not assess Batch08 completion.
+- Missing or invalid dependency: None blocking this review.
+
+## Architecture Alignment
+- Passed: Documentation covers query planning, relation scope, semantic/keyword retrieval, RRF, reranking, context budgeting, citation validation, grounding verification, trace persistence, retries/fallbacks, migration/reindex operations, evaluation commands/gates, and text-only/single-user limits.
+- Failed: `backend/README.md` states `GET /api/documents/{document_id}/summaries` and `GET /api/documents/{document_id}/relations` are protected when `ADMIN_API_TOKEN` is set, but `backend/app/api/routes/documents.py` does not attach `require_admin_token` to those routes. Only observability routes are protected by `dependencies=[Depends(require_admin_token)]`.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: partial
+- Stub or fake logic found: no
+- Evidence: The task is documentation-only. The changed documentation is real and broad, but one security-related endpoint behavior claim does not match implemented route dependencies.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production logic changed. Documentation contains absolute local `file:///C:/Users/ACER/...` links in README additions; this is a portability warning, not runtime hardcoding.
+
+## Validations Reviewed
+- Command/check: Manual review against selected task requirements and Plan_3 Task 9.1
+- Reported result: Passed
+- Rerun result: Partial
+- Status: warning
+- Notes: Most requirements are covered, but backend endpoint security documentation is inaccurate.
+
+- Command/check: `rg "QUERY_MAX_SUBQUERIES|RETRIEVAL_RRF_CONSTANT|GROUNDING_MAX_REGENERATIONS|phase3_migration|reindex|/observability/runs|/summaries|/relations|recall_at_5|NO_EXTRACTABLE_TEXT|single-user|OCR|X-Admin-API-Token" README.md backend/README.md -n`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Coverage terms are present in the documentation.
+
+- Command/check: `git diff -- README.md backend/README.md`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: Reviewed documentation-only diff for the reported files.
+
+- Command/check: `git diff --check -- README.md backend/README.md`
+- Reported result: Passed with line-ending warnings only
+- Rerun result: Passed with line-ending warnings only
+- Status: passed
+- Notes: No whitespace errors were reported; Git warned that LF will be replaced by CRLF.
+
+## Acceptance Review
+- Task acceptance: Documentation matches implemented Phase 3 behavior and provides complete safe upgrade, reindex, inspection, and evaluation instructions.
+- Status: partially satisfied
+- Evidence: Documentation covers the required upgrade and operations material, but `backend/README.md` endpoint protection notes do not match actual implementation for summary and relation routes.
+
+## Progress Tracking
+- Selected task checkbox before review: unchecked in both the detailed (09A) task entry and Progress Tracker task ID entry.
+- Checkbox updated by reviewer: no
+- Batch status: Batch09 remains unchecked.
+- Execution report entry: latest (09A) report is appended and mostly accurate, but its acceptance claim misses the endpoint-security documentation mismatch.
+- Review report entry: appended at EOF.
+- Other: (09B) and (09C) remain unchecked and were not reviewed.
+
+## Report Accuracy
+- partial
+- Mismatches: The execution report claims the documentation matches implemented Phase 3 behavior and endpoint/admin-token behavior. `backend/README.md` inaccurately says summary and relation endpoints are protected when `ADMIN_API_TOKEN` is set; the document routes are not wired with `require_admin_token`.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- `backend/README.md` lines 189-190 document `GET /api/documents/{document_id}/summaries` and `GET /api/documents/{document_id}/relations` as protected when `ADMIN_API_TOKEN` is set, but `backend/app/api/routes/documents.py` has no `require_admin_token` dependency on those routes. This violates (09A)'s requirement that documentation match implemented behavior.
+
+### Warnings
+- `README.md` additions include absolute `file:///C:/Users/ACER/...` links. They work locally but are not portable repository-relative documentation links.
+- Full automated verification and live smoke/evaluation were correctly left out of (09A) and remain for (09B) and (09C).
+
+### Observations
+- The changed files are scoped to (09A) documentation and the required execution report append.
+- The root README correctly limits the admin-token statement to observability endpoints; the mismatch is in `backend/README.md`.
+
+## Decision
+- Accept selected task? no
+- Repair required? yes
+- Can next task proceed? no
+- Should batch be marked complete? no, only if all task IDs are complete and accepted
+
+## Repair Instructions
+- target: `backend/README.md` > `## Phase 3 API endpoints` table and following admin-token sentence
+- change: Correct the documented security behavior to match implementation. Either state that summary and relation endpoints are document inspection endpoints without admin-token protection, while observability endpoints require `X-Admin-API-Token` when `ADMIN_API_TOKEN` is configured, or implement endpoint protection in a separately authorized code task if that is the intended architecture. For this (09A) documentation task, update the docs to match current implementation.
+- validation: Re-run `rg "Protected when `ADMIN_API_TOKEN` is set|Requires `X-Admin-API-Token`|/documents/\{document_id\}/summaries|/documents/\{document_id\}/relations|/observability/runs" backend/README.md -n`, inspect `backend/app/api/routes/documents.py` and `backend/app/api/routes/observability.py`, and re-run `git diff --check -- README.md backend/README.md`.
+- blocks next task: yes
+---
+
+# Task Review Report - (09A) Repair Re-review
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch09 - Documentation and End-to-End Validation
+- Task ID: (09A)
+- Task title: Update Phase 3 setup, migration, architecture, and operations documentation
+- Executor status reported: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 9: Documentation and End-to-End Validation` > `### Task 9.1: Update setup, migration, architecture, and operations documentation`
+- Supplemental documents: prior A2 review in `docs/review/review_3_review_agent.md`, `docs/plans/Plan_3.md`
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (09A)
+- Reviewed task ID: (09A) Repair
+- Correct selection: yes
+- Notes: Reviewed the latest `Task Execution Report - (09A) Repair` entry and checked only the A2-listed endpoint-security documentation issue plus preservation of original (09A) documentation scope.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- recent commits reviewed: not needed
+- changed files from git:
+  - `README.md`
+  - `backend/README.md`
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/review/review_3_review_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: none reported by `git status --short`
+
+## Files Reviewed
+- `docs/reports/report_3_execute_agent.md`: in scope - latest (09A) repair report appended and reviewed.
+- `docs/review/review_3_review_agent.md`: in scope - prior A2 REJECTED_WITH_WARNINGS report read for the repair target.
+- `docs/tasks/task_3.md`: in scope - selected (09A) task entry and progress tracker checked; only those two checkboxes updated after acceptance.
+- `docs/plans/Plan_3.md`: in scope - Task 9.1 requirements checked as needed.
+- `README.md`: in scope - original (09A) root documentation change preserved; no new repair changes required.
+- `backend/README.md`: in scope - repaired endpoint-security wording reviewed against implementation.
+- `backend/app/api/routes/documents.py`: in scope - verified summary and relation routes have no route-level admin-token dependency.
+- `backend/app/api/routes/observability.py`: in scope - verified observability router has `dependencies=[Depends(require_admin_token)]`.
+
+## Reported Files Cross-Check
+- file from execution report: `backend/README.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair target is limited to Phase 3 API endpoint security wording and matches the prior A2 instruction.
+
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Repair report append is expected for A1.
+
+## Dependency Review
+- Required dependencies: Accepted Batches01 through 08, original (09A) documentation work, and A2 repair instruction.
+- Dependency status: satisfied for this documentation re-review. Batch08 task IDs are checked; Batch09 remains unchecked as required.
+- Missing or invalid dependency: None found.
+
+## Architecture Alignment
+- Passed: Backend README now documents the current route behavior accurately: summaries and relations follow the documents router with no route-level admin-token dependency, while observability routes require `X-Admin-API-Token` when `ADMIN_API_TOKEN` is configured. Original (09A) documentation scope remains intact: setup/migration, reindex, architecture, settings, endpoints, evaluation, retries, redaction, text-only limits, and single-user warnings.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: Documentation-only repair aligns with concrete route definitions in `documents.py` and `observability.py`; no production code behavior was changed or claimed.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No implementation code changed. Existing README absolute `file:///C:/...` links remain a portability warning from the original review, not a blocker for this repair.
+
+## Validations Reviewed
+- Command/check: Inspect `backend/app/api/routes/documents.py`
+- Reported result: Passed; summary/relation routes are in the documents router with no route-level admin dependency.
+- Rerun result: Passed.
+- Status: passed
+- Notes: No `require_admin_token` dependency is attached to the documents router or the summary/relation route decorators.
+
+- Command/check: Inspect `backend/app/api/routes/observability.py`
+- Reported result: Passed; observability router includes `dependencies=[Depends(require_admin_token)]`.
+- Rerun result: Passed.
+- Status: passed
+- Notes: Observability endpoint security wording matches implementation.
+
+- Command/check: `rg "Phase 3 API endpoints|summaries|relations|observability|X-Admin-API-Token|ADMIN_API_TOKEN|require_admin_token|dependencies=\[Depends\(require_admin_token\)\]|no route-level admin-token" backend/README.md backend/app/api/routes/documents.py backend/app/api/routes/observability.py -n`
+- Reported result: Passed
+- Rerun result: Passed
+- Status: passed
+- Notes: The repaired docs and route evidence align.
+
+- Command/check: `git diff --check -- README.md backend/README.md`
+- Reported result: Passed with line-ending warnings only
+- Rerun result: Passed with line-ending warnings only
+- Status: passed
+- Notes: No whitespace errors were reported; Git warned that LF will be replaced by CRLF.
+
+- Command/check: `git diff -- docs/tasks/task_3.md`
+- Reported result: not reported by A1
+- Rerun result: Passed inspection
+- Status: passed
+- Notes: Diff shows only the selected (09A) detailed checkbox and Progress Tracker task ID checkbox changed to `[x]`.
+
+## Acceptance Review
+- Task acceptance: Documentation matches implemented Phase 3 behavior and provides complete safe upgrade, reindex, inspection, and evaluation instructions.
+- Status: satisfied
+- Evidence: The prior endpoint-security documentation mismatch is repaired; original documentation coverage remains present and scoped to (09A).
+
+## Progress Tracking
+- Selected task checkbox before review: unchecked in both the detailed (09A) task entry and Progress Tracker task ID entry.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch09 remains unchecked.
+- Execution report entry: latest (09A) repair report appended and accurate.
+- Review report entry: appended at EOF.
+- Other: (09B), (09C), Batch09, and global checklist checkboxes remain unchecked.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found in the latest (09A) repair report.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- `README.md` still contains absolute local `file:///C:/Users/ACER/...` links from the original documentation change. This remains a portability warning and does not block acceptance of the requested repair.
+- Summary and relation endpoints remain unprotected by route-level admin-token dependency; this is now documented accurately and was not changed in code.
+
+### Observations
+- Repair stayed inside `backend/README.md` endpoint wording plus the required execution report append.
+- Full automated verification and live smoke/evaluation remain out of scope for (09A) and belong to (09B) and (09C).
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete and accepted
+
+## Repair Instructions
+- None.
+
+---
+
+# Task Review Report - (09B)
+
+## Source Task File
+docs/tasks/task_3.md
+
+## Execution Report Reviewed
+docs/reports/report_3_execute_agent.md
+
+## Review Report File
+docs/review/review_3_review_agent.md
+
+## Final Outcome
+ACCEPTED
+
+## Reviewed Scope
+- Batch: Batch09 - Documentation and End-to-End Validation
+- Task ID: (09B)
+- Task title: Run full automated verification
+- Executor status reported: complete
+- Source of Truth: `docs/plans/Plan_3.md` > `## Batch 9: Documentation and End-to-End Validation` > `### Task 9.2: Run full automated verification`
+- Supplemental documents: `docs/plans/Plan_3.md`; `docs/plans/Master_Plan.md` was provided but not needed beyond context.
+
+## Latest Report Selection
+- Latest report entry found: yes
+- Requested task ID, if any: (09B)
+- Reviewed task ID: (09B)
+- Correct selection: yes
+- Notes: Reviewed only the latest matching `Task Execution Report - (09B)` entry. Prior accepted uncommitted `(09A)` documentation/review/task changes were treated as previous scope. No review was performed for `(09C)` or Batch09 completion.
+
+## Git Diff Evidence
+- git status reviewed: yes
+- git diff reviewed: yes
+- recent commits reviewed: not needed
+- changed files from git:
+  - `README.md`
+  - `backend/README.md`
+  - `docs/reports/report_3_execute_agent.md`
+  - `docs/review/review_3_review_agent.md`
+  - `docs/tasks/task_3.md`
+- untracked files: none reported by `git status --short`
+
+## Files Reviewed
+- `docs/tasks/task_3.md`: in scope - selected `(09B)` task, dependency, acceptance, validation commands, and progress tracker checked; only `(09B)` checkboxes updated after acceptance.
+- `docs/reports/report_3_execute_agent.md`: in scope - latest `(09B)` execution report reviewed.
+- `docs/review/review_3_review_agent.md`: in scope - prior `(09A)` review entries distinguished from this selected task; this report appended at EOF.
+- `docs/plans/Plan_3.md`: in scope - Task 9.2 source requirements and expected validation results checked.
+- `README.md`: prior accepted `(09A)` scope - present in worktree but not part of `(09B)` implementation.
+- `backend/README.md`: prior accepted `(09A)` scope - present in worktree but not part of `(09B)` implementation.
+- `backend/tests/`: in scope for validation evidence - inspected by test run and targeted search for fake clients, monkeypatching, `respx`, and no-network client factory tests.
+- `backend/evaluation/datasets/phase3_v1.jsonl`: in scope for dataset validation through the module CLI.
+- `frontend/`: in scope for production build validation.
+
+## Reported Files Cross-Check
+- file from execution report: `docs/reports/report_3_execute_agent.md`
+- present in git/repo: yes
+- matches task scope: yes
+- notes: Execution report append is expected for A1. No implementation files are claimed for `(09B)`.
+
+## Dependency Review
+- Required dependencies: `(09A)` and all code/test tasks through `(08B)`.
+- Dependency status: satisfied for automated verification review. `(09A)` is checked in the detailed task entry and Progress Tracker from prior accepted A2 work; Batches01 through 08 task IDs are checked.
+- Missing or invalid dependency: None found for `(09B)`.
+
+## Architecture Alignment
+- Passed: `(09B)` made no architecture or implementation changes. It ran repository-level regression verification before live mutation or external smoke testing, matching Plan_3 Task 9.2.
+- Failed: None.
+- Uncertain: None.
+
+## Implementation Reality
+- Real implementation: yes
+- Stub or fake logic found: no
+- Evidence: This is a validation-only task. The required commands were rerun by A2 and all passed. The executor did not claim source-code changes or fake live-service results.
+
+## Hardcoding Review
+- Hardcoding found: no
+- Evidence: No production code changed for `(09B)`. Dataset validation used the checked-in dataset contract through the module CLI rather than hardcoded success values.
+
+## Validations Reviewed
+- Command/check: `cd backend; python -m pytest -v`
+- Reported result: Passed; `321 passed, 16 warnings in 22.29s`.
+- Rerun result: Passed; `321 passed, 16 warnings in 16.46s`.
+- Status: passed
+- Notes: The suite ran locally from `backend`. Pytest loaded `respx`, and tests include fakes/monkeypatching plus explicit client-factory no-network checks.
+
+- Command/check: Network independence check for unit tests
+- Reported result: Passed; executor cited local pytest success, fake clients, monkeypatching, `respx`, and client-factory tests.
+- Rerun result: Passed by inspection and test-suite evidence.
+- Status: passed
+- Notes: Search evidence found extensive fake clients/monkeypatching and explicit tests such as `test_service_client_modules_import_without_creating_clients`, `test_supabase_client_factory_reads_settings_without_network_calls`, `test_qdrant_client_factory_reads_settings_without_network_calls`, `test_shopaikey_client_factory_reads_settings_without_network_calls`, and `test_jina_client_factory_reads_settings_without_network_calls`.
+
+- Command/check: `cd frontend; npm run build`
+- Reported result: Passed; Vite built successfully with `38 modules transformed`, output emitted under `dist/`, `built in 567ms`.
+- Rerun result: Passed; Vite built successfully with `38 modules transformed`, output emitted under `dist/`, `built in 534ms`.
+- Status: passed
+- Notes: No new tracked files appeared after the build.
+
+- Command/check: `cd backend; python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl`
+- Reported result: Passed; `Dataset validation passed: 12 cases`.
+- Rerun result: Passed; `Dataset validation passed: 12 cases`.
+- Status: passed
+- Notes: This validates the Phase 3 evaluation dataset through the required module CLI.
+
+- Command/check: `git diff -- docs/tasks/task_3.md`
+- Reported result: not reported by A1
+- Rerun result: Passed inspection after A2 update.
+- Status: passed
+- Notes: Diff shows `(09A)` prior accepted checkbox changes and exactly two new `(09B)` checkbox changes; `(09C)`, Batch09, and global checklist entries remain unchecked.
+
+## Acceptance Review
+- Task acceptance: Backend tests, frontend build, and dataset validation all exit successfully.
+- Status: satisfied
+- Evidence: All three required `(09B)` commands passed on A2 rerun with exit code 0. Executor status `complete` is supported by repository evidence and validation output.
+
+## Progress Tracking
+- Selected task checkbox before review: unchecked in both the detailed `(09B)` task entry and Progress Tracker task ID entry.
+- Checkbox updated by reviewer: yes
+- Batch status: Batch09 remains unchecked.
+- Execution report entry: latest `(09B)` report is appended and accurate.
+- Review report entry: appended at EOF.
+- Other: `(09C)`, Batch09, and global checklist checkboxes remain unchecked. Prior `(09A)` accepted checkbox changes were preserved.
+
+## Report Accuracy
+- Accurate
+- Mismatches: None found in the latest `(09B)` execution report.
+
+## Issues
+
+### Blocking
+- None
+
+### Major
+- None
+
+### Minor
+- None
+
+### Warnings
+- None
+
+### Observations
+- `(09B)` is validation-only; no source, test, config, migration, reindex, seed, live smoke, or external-service action was performed.
+- `(09C)` remains gated on configured external services and explicit user authorization.
+
+## Decision
+- Accept selected task? yes
+- Repair required? no
+- Can next task proceed? yes
+- Should batch be marked complete? no, only if all task IDs are complete and accepted
+
+## Repair Instructions
+- None.
