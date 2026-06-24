@@ -1,4 +1,4 @@
-﻿# Backend Local Run
+# Backend Local Run
 
 RagDocument backend runs from `backend/` and expects Python 3.12.
 
@@ -32,16 +32,37 @@ If you use the exact frontend host above (`127.0.0.1`), set `FRONTEND_ORIGIN=htt
 
 ## Required external setup for live E2E
 
-- For a fresh project, run `docs/database/supabase_schema.sql` in Supabase.
-- For an existing Phase 2 project, back up the Supabase database first, confirm you are using the intended project, then run `docs/database/phase3_migration.sql` with an authorized service role or SQL editor session. Do not paste service keys into chat, reports, frontend code, or committed files.
+- For a fresh project, run [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql) in Supabase.
+- For an existing Phase 2 project, back up the Supabase database first, confirm you are using the intended project, then run [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) with an authorized service role or SQL editor session. Do not paste service keys into chat, reports, frontend code, or committed files.
 - Create a Supabase Storage bucket named `documents`.
 - Create Qdrant collection `document_chunks_v1` with the embedding dimension returned by the configured ShopAIKey embedding model.
-- Set the backend environment variables from Master Plan section 22 in `backend/.env` or your shell.
+- Set the backend environment variables in `backend/.env` or your shell.
 - Keep `ADMIN_API_TOKEN` empty for local-only use, or set it to a long random value and send it as `X-Admin-API-Token` on protected requests.
 
 After applying Phase 3 SQL, reindex existing documents with `POST /api/documents/{document_id}/reindex`. Existing vectors and chunks do not have the new MIME payloads, summaries, relations, and Phase 3 metadata until reindexing completes.
 
 Live end-to-end validation stays blocked until the schema, bucket, collection, reindex scope, and real API keys are in place.
+
+## Modular Architecture & Refactored Services
+
+To support scalability and preserve monkeypatch compatibility in tests, backend services and orchestration steps have been decoupled into focused sub-modules:
+
+1. **Decoupled LangGraph Steps**:
+   - **Query Steps**: Chunks of query execution logic are split under [backend/app/graphs/query_steps/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/query_steps/) including:
+     - [prepare.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/query_steps/prepare.py): Normalization of filters and input parameters.
+     - [planning.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/query_steps/planning.py): Query planning and routing.
+     - [retrieval.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/query_steps/retrieval.py): Chunk candidates extraction.
+     - [answering.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/query_steps/answering.py): Model invocation and synthesis.
+     - [verification.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/query_steps/verification.py): Grounding and citation checks.
+     - [persistence.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/query_steps/persistence.py): Graph state storage logic.
+   - **Ingestion Steps**: Modular nodes under [backend/app/graphs/ingestion_steps/](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/graphs/ingestion_steps/) manage document processing phases (e.g., parsing, chunking, summarization, relations, and Qdrant indexing).
+
+2. **Decoupled Retrieval Internals**:
+   - **Facade Compatibility Layer**: The main entrypoint [backend/app/services/retrieval.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/services/retrieval.py) acts as a facade, resolving clients dynamically to preserve monkeypatches used by E2E test suites, then forwarding execution to internal helper modules:
+     - [retrieval_normalization.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/services/retrieval_normalization.py): Normalizes Qdrant points, UUIDs, text values, and JSON structures.
+     - [retrieval_filters.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/services/retrieval_filters.py): Builds native Qdrant payloads, page range bounds, and MIME filters.
+     - [semantic_retrieval.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/services/semantic_retrieval.py): Orchestrates embedding generation and semantic similarity searches.
+     - [reranking.py](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/app/services/reranking.py): Manages Jina reranker client post-processing and diverse selection.
 
 ## Phase 2 behavior
 
@@ -57,7 +78,7 @@ The backend now supports the Phase 2 settings and parser behavior documented in 
 
 ## Backend environment variables
 
-Copy `.env.example` to `.env`, then replace the service placeholders with your own values. `.env.example` is the single active reference for backend environment variables; this README intentionally does not duplicate those values.
+Copy [backend/.env.example](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/.env.example) to `.env`, then replace the service placeholders with your own values. [backend/.env.example](file:///C:/Users/ACER/OtherProjects/DocumentAgent/backend/.env.example) is the single active reference for backend environment variables; this README intentionally does not duplicate those values.
 
 ## Phase 3 query and trace architecture
 
@@ -105,14 +126,14 @@ When `ADMIN_API_TOKEN` is empty, the application is suitable only for local/priv
 Existing-project upgrade:
 
 1. Back up the Supabase project and confirm the target project.
-2. Apply `docs/database/phase3_migration.sql` once through an authorized SQL path.
+2. Apply [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) once through an authorized SQL path.
 3. Confirm the `documents.error_code` column, `document_summaries`, `document_relations`, `workflow_runs`, keyword index, and `search_document_chunks_keyword` RPC exist.
 4. Reindex existing documents with `POST /api/documents/{document_id}/reindex` so Qdrant MIME payloads, summaries, relations, and metadata are rebuilt.
 5. Inspect `/api/documents/{document_id}/summaries`, `/api/documents/{document_id}/relations`, and `/api/observability/runs`.
 
 Fresh setup:
 
-1. Run `docs/database/supabase_schema.sql`.
+1. Run [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql).
 2. Create the private Supabase Storage bucket and Qdrant collection.
 3. Configure backend secrets in `backend/.env`.
 4. Upload documents, then index or reindex through the API/UI.
@@ -143,4 +164,3 @@ Default evaluation gates are `recall_at_5 >= 0.80`, `citation_validity_rate = 1.
 RagDocument remains a personal single-user system. It does not implement login, signup, OAuth, Supabase Auth, users, organizations, roles, tenants, or access-control tables. Keep it local/private or protect a deployment with `ADMIN_API_TOKEN`, Cloudflare Access, Tailscale, or a private VPN.
 
 Only extractable text is supported. OCR, scanned PDFs, screenshots, image-only documents, image/chart captioning, audio/video extraction, and PPTX parsing are out of scope. Empty extracted text fails with `NO_EXTRACTABLE_TEXT`.
-

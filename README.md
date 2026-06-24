@@ -195,7 +195,7 @@ Phase 3 SQL also defines a language-neutral Postgres full-text GIN index over ch
 
 ---
 
-## Directory Structure
+### Directory Structure
 
 ```
 RagDocument/
@@ -206,9 +206,21 @@ RagDocument/
 │   │   ├── core/            # Configuration setting loader (Pydantic Settings)
 │   │   ├── evaluation/      # Versioned RAG evaluation dataset, metrics, and runner
 │   │   ├── graphs/          # LangGraph ingestion and query workflow graphs
+│   │   │   ├── query_steps/     # Decoupled query pipeline step implementations
+│   │   │   ├── ingestion_steps/ # Decoupled ingestion pipeline step implementations
+│   │   │   ├── query_nodes.py   # Compatibility facade wrapper for query nodes
+│   │   │   └── ingestion_nodes.py # Compatibility facade wrapper for ingestion nodes
 │   │   ├── models/          # SQLAlchemy or Pydantic models
 │   │   ├── parsing/         # Extensible document parsers (PDF, DOCX, TXT, MD, HTML)
-│   │   ├── services/        # Lazy-initialization factories for DB & third-party services
+│   │   ├── rag/             # Shared RAG prompts and formatting utilities
+│   │   │   ├── prompts.py       # Decoupled query planning and generation prompts
+│   │   │   └── formatting.py    # Decoupled citation rendering and metadata formatting
+│   │   ├── services/        # Decoupled backend service utilities and facades
+│   │   │   ├── retrieval.py              # Main retrieval facade preserving public APIs
+│   │   │   ├── retrieval_normalization.py # Retrieval response and metadata normalization
+│   │   │   ├── retrieval_filters.py       # Qdrant metadata and page filter helpers
+│   │   │   ├── semantic_retrieval.py      # Qdrant semantic search operations
+│   │   │   └── reranking.py               # Jina reranking integration
 │   │   └── main.py          # FastAPI application entry point
 │   ├── tests/               # pytest test cases covering graphs, chunkers, and APIs
 │   ├── evaluation/          # Text-only evaluation fixtures, datasets, and ignored result reports
