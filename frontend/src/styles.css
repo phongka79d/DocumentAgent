@@ -577,6 +577,76 @@ dl {
   transform: translateY(-1px);
 }
 
+.retrieval-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.retrieval-metrics.compact {
+  gap: 4px;
+}
+
+.metric-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  max-width: 100%;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.metric-badge .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.metric-badge-label {
+  color: var(--muted);
+}
+
+.metric-badge-value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-badge-score {
+  position: relative;
+}
+
+.metric-badge-path {
+  color: var(--on-secondary-container);
+  background: var(--accent-soft);
+}
+
+.metric-badge-context {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.metric-score-bar {
+  width: 42px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--panel-high);
+}
+
+.metric-score-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+}
+
 /* Chat Input Bar */
 .chat-input-bar-container {
   padding: 0 24px 24px;
