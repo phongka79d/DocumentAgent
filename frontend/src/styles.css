@@ -942,6 +942,10 @@ dl {
   gap: 4px;
 }
 
+.preview-metadata-card-wide {
+  grid-column: 1 / -1;
+}
+
 .preview-metadata-label {
   font-size: 10px;
   color: var(--muted);

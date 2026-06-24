@@ -1,4 +1,11 @@
 import type { DocumentChunk, SourceCitation } from "../api/types";
+import {
+  formatPageRange,
+  formatRawScore,
+  formatRetrievalPaths,
+  formatSectionPath,
+} from "../utils/citations";
+import RetrievalMetrics from "./RetrievalMetrics";
 
 interface ChunkViewerPanelProps {
   selectedSource: SourceCitation | null;
@@ -9,28 +16,6 @@ interface ChunkViewerPanelProps {
   hasNextChunk: boolean;
   onViewPreviousChunk: () => void;
   onViewNextChunk: () => void;
-}
-
-function formatPageRange(
-  pageStart: number | null | undefined,
-  pageEnd: number | null | undefined,
-): string | null {
-  if (pageStart === null || pageStart === undefined) {
-    return null;
-  }
-
-  if (pageEnd === null || pageEnd === undefined || pageEnd === pageStart) {
-    return `Page ${pageStart}`;
-  }
-
-  return `Pages ${pageStart}-${pageEnd}`;
-}
-
-function formatScore(score: number | null): string {
-  if (score === null) {
-    return "N/A";
-  }
-  return `${(score * 100).toFixed(0)}%`;
 }
 
 export default function ChunkViewerPanel({
@@ -85,18 +70,18 @@ export default function ChunkViewerPanel({
     );
   }
 
-  const scoreVal = selectedSource.rerank_score ?? selectedSource.qdrant_score;
-  const relevanceStr = formatScore(scoreVal);
-
-  const pageRange =
-    formatPageRange(selectedChunk.page_start, selectedChunk.page_end) ??
-    formatPageRange(selectedSource.page_start, selectedSource.page_end) ??
-    "N/A";
-  const heading = selectedChunk.heading ?? selectedSource.heading ?? "N/A";
-  const sectionPath =
-    selectedChunk.section_path && selectedChunk.section_path.length > 0
-      ? selectedChunk.section_path.join(" / ")
-      : "N/A";
+  const primaryScore =
+    selectedSource.rerank_score ?? selectedSource.fusion_score ?? selectedSource.qdrant_score;
+  const relevanceStr = formatRawScore(primaryScore);
+  const pageRange = formatPageRange(
+    selectedChunk.page_start ?? selectedSource.page_start,
+    selectedChunk.page_end ?? selectedSource.page_end,
+  );
+  const heading = selectedChunk.heading ?? selectedSource.heading ?? "No heading";
+  const sectionPath = formatSectionPath(
+    selectedChunk.section_path?.length ? selectedChunk.section_path : selectedSource.section_path,
+  );
+  const retrievalPaths = formatRetrievalPaths(selectedSource.retrieval_paths);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: "24px" }}>
@@ -106,6 +91,7 @@ export default function ChunkViewerPanel({
           <span className="preview-fragment-tag">Fragment {selectedChunk.chunk_index}</span>
           <span className="preview-fragment-relevance">Relevance: {relevanceStr}</span>
         </div>
+        <RetrievalMetrics source={selectedSource} />
         <div className="preview-fragment-text">
           {selectedChunk.content}
         </div>
@@ -155,23 +141,34 @@ export default function ChunkViewerPanel({
           <div className="preview-metadata-card">
             <span className="preview-metadata-label">Qdrant Score</span>
             <span className="preview-metadata-value">
-              {selectedSource.qdrant_score !== null ? selectedSource.qdrant_score.toFixed(4) : "N/A"}
+              {formatRawScore(selectedSource.qdrant_score)}
+            </span>
+          </div>
+
+          <div className="preview-metadata-card">
+            <span className="preview-metadata-label">Rerank Score</span>
+            <span className="preview-metadata-value">
+              {formatRawScore(selectedSource.rerank_score)}
+            </span>
+          </div>
+
+          <div className="preview-metadata-card">
+            <span className="preview-metadata-label">Fusion Score</span>
+            <span className="preview-metadata-value">
+              {formatRawScore(selectedSource.fusion_score)}
+            </span>
+          </div>
+
+          <div className="preview-metadata-card preview-metadata-card-wide">
+            <span className="preview-metadata-label">Retrieval Path</span>
+            <span className="preview-metadata-value" title={retrievalPaths}>
+              {retrievalPaths}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Action Footer */}
-      <div className="preview-full-doc-container">
-        <button 
-          className="btn-outline" 
-          disabled 
-          title="Full document viewer requires premium document integration."
-        >
-          <span className="material-symbols-outlined">open_in_new</span>
-          Open Full Document
-        </button>
-      </div>
+
     </div>
   );
 }
