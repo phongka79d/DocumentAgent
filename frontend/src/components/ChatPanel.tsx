@@ -31,7 +31,7 @@ interface ChatPanelProps {
 }
 
 const MOCK_CHAT_ANSWER =
-  "Hello! I've indexed your latest Q3 Financial Reports and Market Analysis documents. How can I assist your research today?";
+  "Hello, please upload or select document to begin ask me";
 
 export default function ChatPanel({
   error,
@@ -45,10 +45,19 @@ export default function ChatPanel({
   selectedSource,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [response, isSubmitting]);
+
+  // Auto-resize textarea height as content grows
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [question]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -150,12 +159,12 @@ export default function ChatPanel({
       <form onSubmit={handleSubmit} className="chat-input-bar-container">
         <div className="chat-input-bar">
           <textarea
+            ref={textareaRef}
             className="chat-input-textarea"
             value={question}
             onChange={(e) => onQuestionChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask a question about your indexed documents... (Enter to send, Shift+Enter for new line)"
-            rows={1}
             disabled={isSubmitting}
             aria-label="Ask a question"
           />

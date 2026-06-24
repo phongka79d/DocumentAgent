@@ -205,39 +205,6 @@ export default function App() {
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
-            <div className="topbar-search-container">
-              <span className="material-symbols-outlined search-icon">search</span>
-              <input
-                className="search-input"
-                type="text"
-                placeholder="Search across documents..."
-                value={docs.searchTerm}
-                onChange={(e) => docs.setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="topbar-actions">
-            <div className="topbar-api-chip" title={apiBaseUrl}>
-              <span className="api-dot" aria-hidden="true" />
-              <span>{apiBaseUrl}</span>
-            </div>
-            <button className="topbar-action-button" aria-label="Notifications">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <button
-              className="topbar-action-button"
-              onClick={() => ui.setActiveView("documents")}
-              aria-label="Settings"
-            >
-              <span className="material-symbols-outlined">settings</span>
-            </button>
-            <div className="topbar-avatar">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcCw0_qGkLU5bX1wJiMYH1_xOr5JPaOLk2JIEEioy-ac2VmNMbCm5eZ1Na2iOw7gTfFe2rfZZAOic56GQaQEiINDiQWysoSWrlhWwSNa-xPFHiWWBls9I0WIAZ4tB8wkZrc4ZGWLgKfKidT45E-X4VVTszd532gAtF0KopoJNWn2nycKs_Kn9FR2ERxzRDLBhDDbnaF2vjlzAXGo0bdXi8amQI_AIbKZ6y4uu8T8vWuo4IVmwOfsWejoYlj2n9uOKFN9EN4-4UZqcC"
-                alt="User headshot avatar"
-              />
-            </div>
           </div>
         </header>
 
