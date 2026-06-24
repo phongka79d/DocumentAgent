@@ -8,8 +8,8 @@ from pydantic import ValidationError
 
 from app.core.config import Settings, get_settings
 from app.core.retry import RetryAttempt, retry_sync
-from app.graphs.query_formatting import extract_chat_content, normalize_text
-from app.graphs.query_prompts import build_grounding_messages
+from app.rag.formatting import extract_chat_content, normalize_text
+from app.rag.prompts import build_grounding_messages
 from app.models.schemas import GroundingResult
 from app.services.citation_validation import assign_citation_keys
 from app.services.shopaikey_client import create_shopaikey_client

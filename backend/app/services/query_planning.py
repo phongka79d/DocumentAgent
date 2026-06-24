@@ -8,8 +8,8 @@ from typing import Any
 from app.core.config import Settings, get_settings
 from app.core.contracts import RetrievalStrategy
 from app.core.retry import retry_sync
-from app.graphs.query_formatting import extract_chat_content, normalize_text
-from app.graphs.query_prompts import build_query_planning_messages
+from app.rag.formatting import extract_chat_content, normalize_text
+from app.rag.prompts import build_query_planning_messages
 from app.models.schemas import QueryPlan, QuerySubquery, RetrievalFilters
 from app.services.shopaikey_client import create_shopaikey_client
 

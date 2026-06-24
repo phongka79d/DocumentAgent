@@ -69,7 +69,7 @@ def validate_answer_citations(
     answer: str | None,
     context_chunks: Sequence[Mapping[str, Any]],
 ) -> CitationValidationOutput:
-    from app.graphs.query_formatting import build_source_citations
+    from app.rag.formatting import build_source_citations
 
     text = _normalize_text(answer)
     context = _context_by_key(context_chunks)
