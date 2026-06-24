@@ -6,6 +6,7 @@ import type {
   SourceCitation,
 } from "../api/types";
 import SourceList from "./SourceList";
+import CitationText from "./CitationText";
 
 interface ChatPanelProps {
   question: string;
@@ -117,8 +118,13 @@ export default function ChatPanel({
                   </div>
                 ) : (
                   <>
-                    <div className="chat-bubble-content">
-                      {response.answer}
+                    <div className="chat-bubble-content chat-bubble-content-ai-response">
+                      <CitationText
+                        answer={response.answer}
+                        sources={response.sources ?? []}
+                        selectedSourceChunkId={selectedSource?.chunk_id ?? null}
+                        onSelectSource={onSelectSource}
+                      />
                     </div>
 
                     {response.sources && response.sources.length > 0 && (

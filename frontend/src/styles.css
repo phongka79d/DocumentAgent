@@ -554,27 +554,92 @@ dl {
   color: var(--muted);
 }
 
-/* Inline Citation Pill */
+/* Inline Citation Pill & Popover */
+.citation-text {
+  white-space: pre-wrap;
+}
+
+.citation-pill-wrap {
+  position: relative;
+  display: inline-flex;
+  vertical-align: baseline;
+}
+
 .citation-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 6px;
+  min-height: 22px;
+  margin: 0 3px;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--panel-border));
+  border-radius: 999px;
   background: var(--accent-soft);
   color: var(--on-secondary-container);
-  border: 1px solid rgba(198, 198, 205, 0.2);
-  border-radius: 4px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
-  vertical-align: middle;
-  margin: 0 4px;
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 
-.citation-pill:hover {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+.citation-pill:hover,
+.citation-pill:focus-visible,
+.citation-pill.selected {
+  border-color: var(--accent);
   transform: translateY(-1px);
+}
+
+.citation-pill.selected {
+  background: var(--accent);
+  color: var(--on-primary);
+}
+
+.citation-popover {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 120;
+  display: none;
+  width: min(320px, 80vw);
+  transform: translateX(-50%);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  padding: 12px;
+  white-space: normal;
+}
+
+.citation-pill-wrap:hover .citation-popover,
+.citation-pill:focus-visible + .citation-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.citation-popover-title {
+  font-size: 12px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.citation-popover-meta {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.citation-popover-preview {
+  color: var(--text);
+  display: -webkit-box;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
 .retrieval-metrics {
