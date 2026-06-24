@@ -1279,3 +1279,22 @@ def test_build_ingestion_graph_routes_parse_failure_to_mark_failed(monkeypatch):
     assert result["workflow_trace"][2]["status"] == "failed"
     assert result["workflow_trace"][2]["error_code"] == "parse_document_failed"
     assert "parse exploded" not in str(result["workflow_trace"])
+
+
+def test_ingestion_nodes_public_surface_remains_available():
+    public_names = {
+        "load_document_record_node",
+        "mark_processing_node",
+        "parse_document_node",
+        "chunk_document_node",
+        "save_chunks_node",
+        "summarize_document_node",
+        "embed_chunks_node",
+        "upsert_qdrant_node",
+        "update_document_relations_node",
+        "mark_ready_node",
+        "mark_failed_node",
+    }
+
+    for name in public_names:
+        assert callable(getattr(ingestion_nodes, name))

@@ -365,3 +365,17 @@ def test_select_rerank_candidates_improves_group_coverage_without_growing_legacy
     assert selected[0]["chunk_id"] == fused[0]["chunk_id"]
     assert {item["chunk_id"] for item in selected} == {"near-a", "far-b", "far-c"}
     assert len({item["evidence_group_id"] for item in selected}) == 3
+
+
+def test_retrieval_public_surface_remains_available():
+    public_names = {
+        "embed_question",
+        "search_semantic_chunks",
+        "retrieve_semantic_candidates",
+        "retrieve_hybrid_chunks",
+        "rerank_chunks",
+        "retrieve_context_chunks",
+    }
+
+    for name in public_names:
+        assert callable(getattr(retrieval, name))

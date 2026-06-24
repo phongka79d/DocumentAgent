@@ -3462,3 +3462,27 @@ def test_expand_neighbor_context_node_fills_uncovered_scored_anchors_before_neig
     # No neighbor chunks added because context was filled by scored anchors
     neighbor_count = sum(1 for c in result["context_chunks"] if c.get("is_neighbor_context"))
     assert neighbor_count == 0
+
+
+def test_query_nodes_public_surface_remains_available():
+    public_names = {
+        "prepare_query_node",
+        "plan_query_node",
+        "resolve_relation_scope_node",
+        "retrieve_candidates_node",
+        "fuse_candidates_node",
+        "rerank_candidates_node",
+        "expand_context_node",
+        "generate_answer_node",
+        "regenerate_answer_node",
+        "validate_citations_node",
+        "verify_grounding_node",
+        "finalize_answer_node",
+        "save_message_optional_node",
+        "retrieve_qdrant_node",
+        "jina_rerank_node",
+        "expand_neighbor_context_node",
+    }
+
+    for name in public_names:
+        assert callable(getattr(query_nodes, name))
