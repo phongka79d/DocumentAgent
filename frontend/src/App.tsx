@@ -286,6 +286,7 @@ export default function App() {
                 onReindex={(id) => docs.handleDocumentAction(id, "reindex")}
                 pendingAction={docs.pendingAction?.kind ?? null}
                 pendingDocumentId={docs.pendingAction?.documentId ?? null}
+                apiBaseUrl={apiBaseUrl}
               />
             </div>
           ) : (

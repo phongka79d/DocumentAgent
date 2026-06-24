@@ -19,6 +19,7 @@ interface DocumentListProps {
   onReindex: (documentId: string) => Promise<void>;
   onDelete: (documentId: string) => Promise<void>;
   onRefresh: () => Promise<void>;
+  apiBaseUrl: string;
 }
 
 function formatTimestamp(value: string | null): string {
@@ -79,6 +80,7 @@ export default function DocumentList({
   onReindex,
   pendingAction,
   pendingDocumentId,
+  apiBaseUrl,
 }: DocumentListProps) {
   const hasDocuments = documents.length > 0;
   const showEmptyState = !hasDocuments && !error && !isLoading;
@@ -192,6 +194,16 @@ export default function DocumentList({
 
             {/* Action Buttons */}
             <div className="document-card-actions">
+              <a
+                className="document-action-btn"
+                href={`${apiBaseUrl}/api/documents/${document.id}/file`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none" }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>open_in_new</span>
+                <span>Open</span>
+              </a>
               {!isReady && !isProcessing && (
                 <button
                   className="document-action-btn"
