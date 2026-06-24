@@ -1,484 +1,66 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { DEFAULT_API_BASE_URL, apiClient } from "./api/client";
-import type {
-  ChatRequest,
-  ChatResponse,
-  DocumentChunk,
-  DocumentResponse,
-  MessageHistoryItem,
-  SourceCitation,
-} from "./api/types";
+import { useCallback, useEffect, useRef } from "react";
+import { DEFAULT_API_BASE_URL } from "./api/client";
+import type { MessageHistoryItem } from "./api/types";
+import { useChat } from "./hooks/useChat";
+import { useChunks } from "./hooks/useChunks";
+import { useDocuments } from "./hooks/useDocuments";
+import { useMessageHistory } from "./hooks/useMessageHistory";
+import { useUiState } from "./hooks/useUiState";
 import ChatPanel from "./components/ChatPanel";
 import DocumentList from "./components/DocumentList";
 import MessageHistoryPanel from "./components/MessageHistoryPanel";
 import ChunkViewerPanel from "./components/ChunkViewerPanel";
 
-type DocumentAction = "index" | "reindex" | "delete";
-type ChunkLoadStatus = "idle" | "loading" | "ready" | "error";
-
-interface ChunkLoadState {
-  status: ChunkLoadStatus;
-  error: string | null;
-}
-
-const INITIAL_CHUNK_LOAD_STATE: ChunkLoadState = {
-  status: "idle",
-  error: null,
-};
-
-const MESSAGE_HISTORY_LIMIT = 25;
-
-const MOCK_CHAT_RESPONSE = {
-  answer:
-    "Hello! i'm DocuRAG, how can i help you today?",
-  sources: [],
-} satisfies ChatResponse;
-
 function resolveApiBaseUrl(rawValue: string | undefined): string {
   const value = rawValue?.trim();
-  if (!value) {
-    return DEFAULT_API_BASE_URL;
-  }
-
+  if (!value) return DEFAULT_API_BASE_URL;
   return value.replace(/\/+$/, "");
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallback;
 }
 
 export default function App() {
   const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
   const apiBaseUrl = resolveApiBaseUrl(rawApiBaseUrl);
-  const [documents, setDocuments] = useState<DocumentResponse[]>([]);
-  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
-  const [question, setQuestion] = useState("");
-  const [chatResponse, setChatResponse] =
-    useState<ChatResponse>(MOCK_CHAT_RESPONSE);
-  const [selectedSource, setSelectedSource] = useState<SourceCitation | null>(
-    null,
-  );
-  const [selectedChunkIndex, setSelectedChunkIndex] = useState<number | null>(
-    null,
-  );
-  const [documentChunkCache, setDocumentChunkCache] = useState<
-    Record<string, DocumentChunk[]>
-  >({});
-  const [documentChunkState, setDocumentChunkState] = useState<
-    Record<string, ChunkLoadState>
-  >({});
-  const [isSendingChat, setIsSendingChat] = useState(false);
-  const [chatError, setChatError] = useState<string | null>(null);
-  const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
-  const [isRefreshingDocuments, setIsRefreshingDocuments] = useState(false);
-  const [messageHistory, setMessageHistory] = useState<MessageHistoryItem[]>([]);
-  const [messageHistoryError, setMessageHistoryError] = useState<string | null>(
-    null,
-  );
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
-    null,
-  );
-  const [isLoadingMessageHistory, setIsLoadingMessageHistory] = useState(false);
-  const [hasLoadedMessageHistory, setHasLoadedMessageHistory] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadResult, setUploadResult] = useState<string | null>(null);
-  const [documentError, setDocumentError] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<{
-    documentId: string;
-    kind: DocumentAction;
-  } | null>(null);
-
-  // New UI states
-  const [activeView, setActiveView] = useState<"chat" | "documents" | "history">("chat");
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [activeQuestion, setActiveQuestion] = useState("");
 
-  const readyDocuments = useMemo(
-    () => documents.filter((document) => document.status === "ready"),
-    [documents],
-  );
+  const docs = useDocuments();
+  const chunks = useChunks();
+  const chat = useChat();
+  const history = useMessageHistory();
+  const ui = useUiState();
 
-  const selectedReadyDocumentIds = useMemo(() => {
-    if (selectedDocumentIds.length === 0 || readyDocuments.length === 0) {
-      return [];
-    }
-
-    const readyDocumentIdSet = new Set(
-      readyDocuments.map((document) => document.id),
-    );
-
-    return selectedDocumentIds.filter((documentId) =>
-      readyDocumentIdSet.has(documentId),
-    );
-  }, [readyDocuments, selectedDocumentIds]);
-
-
-  const selectedSourceLoadState = selectedSource
-    ? documentChunkState[selectedSource.document_id] ?? INITIAL_CHUNK_LOAD_STATE
-    : INITIAL_CHUNK_LOAD_STATE;
-
-  const selectedDocumentChunks = useMemo(() => {
-    if (!selectedSource) {
-      return null;
-    }
-
-    return documentChunkCache[selectedSource.document_id] ?? null;
-  }, [documentChunkCache, selectedSource]);
-
-  const selectedChunk = useMemo(() => {
-    if (!selectedDocumentChunks || selectedChunkIndex === null) {
-      return null;
-    }
-
-    return (
-      selectedDocumentChunks.find(
-        (chunk) => chunk.chunk_index === selectedChunkIndex,
-      ) ?? null
-    );
-  }, [selectedChunkIndex, selectedDocumentChunks]);
-
-  const previousChunk = useMemo(() => {
-    if (!selectedChunk || !selectedDocumentChunks) {
-      return null;
-    }
-
-    return (
-      selectedDocumentChunks.find(
-        (chunk) => chunk.chunk_index === selectedChunk.chunk_index - 1,
-      ) ?? null
-    );
-  }, [selectedChunk, selectedDocumentChunks]);
-
-  const nextChunk = useMemo(() => {
-    if (!selectedChunk || !selectedDocumentChunks) {
-      return null;
-    }
-
-    return (
-      selectedDocumentChunks.find(
-        (chunk) => chunk.chunk_index === selectedChunk.chunk_index + 1,
-      ) ?? null
-    );
-  }, [selectedChunk, selectedDocumentChunks]);
-
+  // Message history: load after documents finish loading
   useEffect(() => {
-    if (selectedDocumentIds.length === 0) {
-      return;
-    }
+    if (docs.isLoading || history.hasLoaded) return;
+    void history.load();
+  }, [docs.isLoading, history.hasLoaded, history.load]);
 
-    const readyDocumentIdSet = new Set(
-      readyDocuments.map((document) => document.id),
-    );
-    const nextSelectedDocumentIds = selectedDocumentIds.filter((documentId) =>
-      readyDocumentIdSet.has(documentId),
-    );
-
-    if (nextSelectedDocumentIds.length !== selectedDocumentIds.length) {
-      setSelectedDocumentIds(nextSelectedDocumentIds);
-    }
-  }, [readyDocuments, selectedDocumentIds]);
-
+  // Clear chunk selection when chat response changes
   useEffect(() => {
-    setSelectedSource(null);
-    setSelectedChunkIndex(null);
-  }, [chatResponse]);
-
-  const loadDocuments = useCallback(
-    async (options: { background?: boolean } = {}) => {
-      const { background = false } = options;
-
-      if (background) {
-        setIsRefreshingDocuments(true);
-      } else {
-        setIsLoadingDocuments(true);
-      }
-
-      setDocumentError(null);
-
-      try {
-        const response = await apiClient.listDocuments();
-        setDocuments(Array.isArray(response.documents) ? response.documents : []);
-      } catch (error) {
-        setDocumentError(getErrorMessage(error, "Unable to load documents."));
-      } finally {
-        if (background) {
-          setIsRefreshingDocuments(false);
-        } else {
-          setIsLoadingDocuments(false);
-        }
-      }
-    },
-    [],
-  );
-
-  const loadDocumentChunks = useCallback(async (documentId: string) => {
-    setDocumentChunkState((current) => ({
-      ...current,
-      [documentId]: {
-        status: "loading",
-        error: null,
-      },
-    }));
-
-    try {
-      const response = await apiClient.getDocumentChunks(documentId);
-      setDocumentChunkCache((current) => ({
-        ...current,
-        [documentId]: Array.isArray(response.chunks) ? response.chunks : [],
-      }));
-      setDocumentChunkState((current) => ({
-        ...current,
-        [documentId]: {
-          status: "ready",
-          error: null,
-        },
-      }));
-    } catch (error) {
-      setDocumentChunkState((current) => ({
-        ...current,
-        [documentId]: {
-          status: "error",
-          error: getErrorMessage(error, "Unable to load source."),
-        },
-      }));
-    }
-  }, []);
-
-  const loadMessageHistory = useCallback(async () => {
-    setIsLoadingMessageHistory(true);
-    setMessageHistoryError(null);
-
-    try {
-      const response = await apiClient.listMessages(MESSAGE_HISTORY_LIMIT);
-      const nextMessages = Array.isArray(response.messages)
-        ? response.messages
-        : [];
-
-      setMessageHistory(nextMessages);
-      setSelectedMessageId((current) =>
-        nextMessages.some((message) => message.id === current) ? current : null,
-      );
-    } catch (error) {
-      setMessageHistoryError(
-        getErrorMessage(error, "Unable to load message history."),
-      );
-    } finally {
-      setHasLoadedMessageHistory(true);
-      setIsLoadingMessageHistory(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadDocuments();
-  }, [loadDocuments]);
-
-  useEffect(() => {
-    if (isLoadingDocuments || hasLoadedMessageHistory) {
-      return;
-    }
-
-    void loadMessageHistory();
-  }, [hasLoadedMessageHistory, isLoadingDocuments, loadMessageHistory]);
-
-  useEffect(() => {
-    if (!selectedSource) {
-      return;
-    }
-
-    const documentId = selectedSource.document_id;
-    const chunkState = documentChunkState[documentId] ?? INITIAL_CHUNK_LOAD_STATE;
-
-    if (chunkState.status !== "idle") {
-      return;
-    }
-
-    void loadDocumentChunks(documentId);
-  }, [documentChunkState, loadDocumentChunks, selectedSource]);
-
-  const handleUpload = useCallback(
-    async (file: File) => {
-      if (isUploading || pendingAction) {
-        return;
-      }
-
-      setIsUploading(true);
-      setUploadError(null);
-      setUploadResult(null);
-
-      try {
-        const response = await apiClient.uploadDocument(file);
-        setUploadResult(response.duplicate ? "Duplicate upload" : "Uploaded");
-        await loadDocuments({ background: true });
-      } catch (error) {
-        setUploadError(getErrorMessage(error, "Unable to upload document."));
-      } finally {
-        setIsUploading(false);
-      }
-    },
-    [isUploading, loadDocuments, pendingAction],
-  );
-
-  const handleDocumentAction = useCallback(
-    async (documentId: string, kind: DocumentAction) => {
-      if (isUploading || pendingAction) {
-        return;
-      }
-
-      setPendingAction({ documentId, kind });
-      setDocumentError(null);
-
-      try {
-        if (kind === "index") {
-          await apiClient.indexDocument(documentId);
-        } else if (kind === "reindex") {
-          await apiClient.reindexDocument(documentId);
-        } else {
-          await apiClient.deleteDocument(documentId);
-          setDocuments((current) =>
-            current.filter((document) => document.id !== documentId),
-          );
-          setDocumentChunkCache((current) => {
-            const nextCache = { ...current };
-            delete nextCache[documentId];
-            return nextCache;
-          });
-          setDocumentChunkState((current) => {
-            const nextState = { ...current };
-            delete nextState[documentId];
-            return nextState;
-          });
-          setSelectedSource((current) =>
-            current?.document_id === documentId ? null : current,
-          );
-          setSelectedChunkIndex((current) =>
-            selectedSource?.document_id === documentId ? null : current,
-          );
-        }
-
-        await loadDocuments({ background: true });
-      } catch (error) {
-        setDocumentError(
-          getErrorMessage(
-            error,
-            `Unable to ${kind === "reindex" ? "re-index" : kind} document.`,
-          ),
-        );
-      } finally {
-        setPendingAction(null);
-      }
-    },
-    [isUploading, loadDocuments, pendingAction, selectedSource],
-  );
-
-  const handleQuestionChange = useCallback((value: string) => {
-    setQuestion(value);
-    setChatError(null);
-  }, []);
-
-  const handleToggleSelectedDocument = useCallback((documentId: string) => {
-    setSelectedDocumentIds((current) =>
-      current.includes(documentId)
-        ? current.filter((currentDocumentId) => currentDocumentId !== documentId)
-        : [...current, documentId],
-    );
-  }, []);
-
-  const handleSelectSource = useCallback((source: SourceCitation) => {
-    setSelectedSource({ ...source });
-    setSelectedChunkIndex(source.chunk_index);
-    setDocumentChunkState((current) => {
-      const existingState = current[source.document_id];
-      if (!existingState || existingState.status !== "error") {
-        return current;
-      }
-
-      return {
-        ...current,
-        [source.document_id]: INITIAL_CHUNK_LOAD_STATE,
-      };
-    });
-  }, []);
-
-  const handleViewPreviousChunk = useCallback(() => {
-    if (!previousChunk) {
-      return;
-    }
-
-    setSelectedChunkIndex(previousChunk.chunk_index);
-  }, [previousChunk]);
-
-  const handleViewNextChunk = useCallback(() => {
-    if (!nextChunk) {
-      return;
-    }
-
-    setSelectedChunkIndex(nextChunk.chunk_index);
-  }, [nextChunk]);
-
-  const handleChatSubmit = useCallback(async () => {
-    const trimmedQuestion = question.trim();
-    if (!trimmedQuestion || isSendingChat) {
-      return;
-    }
-
-    setIsSendingChat(true);
-    setChatError(null);
-    setActiveQuestion(trimmedQuestion);
-
-    try {
-      const request: ChatRequest = {
-        question: trimmedQuestion,
-        save_message: true,
-      };
-
-      if (selectedReadyDocumentIds.length > 0) {
-        request.document_ids = selectedReadyDocumentIds;
-      }
-
-
-      const response = await apiClient.sendChatMessage(request);
-      setSelectedMessageId(null);
-      setChatResponse(response);
-      setQuestion("");
-    } catch (error) {
-      setChatError(getErrorMessage(error, "Unable to send question."));
-    } finally {
-      setIsSendingChat(false);
-    }
-  }, [
-    isSendingChat,
-    question,
-    selectedReadyDocumentIds,
-  ]);
-
-  const refreshDocuments = useCallback(async () => {
-    await loadDocuments({ background: true });
-  }, [loadDocuments]);
-
-  const handleRefreshMessageHistory = useCallback(async () => {
-    await loadMessageHistory();
-  }, [loadMessageHistory]);
+    chunks.clearSelection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.response]);
 
   const handleSelectMessageHistoryItem = useCallback(
     (message: MessageHistoryItem) => {
-      setSelectedMessageId(message.id);
-      setChatError(null);
-      setActiveQuestion(message.question);
-      setChatResponse({
-        answer: message.answer,
-        sources: Array.isArray(message.sources) ? message.sources : [],
-      });
-      setActiveView("chat"); // Switch back to chat to view the selected answer
+      history.selectMessage(message);
+      chat.displayResponse(
+        {
+          answer: message.answer,
+          sources: Array.isArray(message.sources) ? message.sources : [],
+        },
+        message.question,
+      );
+      ui.setActiveView("chat");
     },
-    [],
+    [history, chat, ui],
   );
+
+  const handleNewChat = useCallback(() => {
+    chat.reset();
+    chunks.clearSelection();
+    ui.setActiveView("chat");
+    ui.closeSidebar();
+  }, [chat, chunks, ui]);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -487,78 +69,55 @@ export default function App() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      void handleUpload(file);
+      void docs.uploadDocument(file);
     }
   };
 
-  const handleNewChat = () => {
-    setQuestion("");
-    setActiveQuestion("");
-    setChatResponse(MOCK_CHAT_RESPONSE);
-    setSelectedSource(null);
-    setSelectedChunkIndex(null);
-    setActiveView("chat");
-    setIsMobileSidebarOpen(false);
-  };
-
-  // Client-side filtering of documents based on Search Term
-  const filteredDocuments = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return documents;
-    return documents.filter((doc) =>
-      doc.file_name.toLowerCase().includes(term)
-    );
-  }, [documents, searchTerm]);
-
-  const isDocumentActionBusy = isUploading || pendingAction !== null;
-
   return (
     <div className="app-layout">
-      {/* Sidebar Overlay for mobile screen */}
       <div
-        className={`app-sidebar-overlay ${isMobileSidebarOpen ? "open" : ""}`}
-        onClick={() => setIsMobileSidebarOpen(false)}
+        className={`app-sidebar-overlay ${ui.isMobileSidebarOpen ? "open" : ""}`}
+        onClick={ui.closeSidebar}
       />
 
-      {/* Sidebar Panel */}
-      <aside className={`app-sidebar ${isMobileSidebarOpen ? "open" : ""}`}>
+      <aside className={`app-sidebar ${ui.isMobileSidebarOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <h1>RagDocument</h1>
           <p className="sidebar-subtitle">AI Research Assistant</p>
         </div>
 
-        {/* Upload hidden input and styled button */}
         <input
           ref={fileInputRef}
           type="file"
           accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
           style={{ display: "none" }}
           onChange={handleFileChange}
-          disabled={isUploading}
+          disabled={docs.isUploading}
         />
         <button
           className="btn-primary mb-8"
           onClick={handleUploadClick}
-          disabled={isUploading}
+          disabled={docs.isUploading}
         >
           <span className="material-symbols-outlined">add</span>
           Upload Document
         </button>
 
-        {/* Sidebar upload feedback */}
-        {isUploading || uploadError || uploadResult ? (
+        {docs.isUploading || docs.uploadError || docs.uploadResult ? (
           <div className="sidebar-upload-status">
             <div className="sidebar-upload-text">
-              {isUploading ? "Uploading file..." : uploadResult || "Upload ready"}
+              {docs.isUploading ? "Uploading file..." : docs.uploadResult || "Upload ready"}
             </div>
-            <div className={`sidebar-upload-feedback ${isUploading ? "loading" : uploadError ? "error" : "success"}`}>
-              {isUploading ? (
+            <div
+              className={`sidebar-upload-feedback ${docs.isUploading ? "loading" : docs.uploadError ? "error" : "success"}`}
+            >
+              {docs.isUploading ? (
                 <>
                   <span className="spinner" aria-hidden="true" />
                   <span>Sending to Server</span>
                 </>
-              ) : uploadError ? (
-                uploadError
+              ) : docs.uploadError ? (
+                docs.uploadError
               ) : (
                 "File processed!"
               )}
@@ -566,35 +125,32 @@ export default function App() {
           </div>
         ) : null}
 
-        {/* Sidebar Navigation Options */}
         <nav className="sidebar-menu">
           <button
-            className={`menu-item ${activeView === "chat" ? "active" : ""}`}
+            className={`menu-item ${ui.activeView === "chat" ? "active" : ""}`}
             onClick={() => {
-              setActiveView("chat");
-              setIsMobileSidebarOpen(false);
+              ui.setActiveView("chat");
+              ui.closeSidebar();
             }}
           >
             <span className="material-symbols-outlined">chat</span>
             Active Chat
           </button>
-
           <button
-            className={`menu-item ${activeView === "documents" ? "active" : ""}`}
+            className={`menu-item ${ui.activeView === "documents" ? "active" : ""}`}
             onClick={() => {
-              setActiveView("documents");
-              setIsMobileSidebarOpen(false);
+              ui.setActiveView("documents");
+              ui.closeSidebar();
             }}
           >
             <span className="material-symbols-outlined">description</span>
             All Documents
           </button>
-
           <button
-            className={`menu-item ${activeView === "history" ? "active" : ""}`}
+            className={`menu-item ${ui.activeView === "history" ? "active" : ""}`}
             onClick={() => {
-              setActiveView("history");
-              setIsMobileSidebarOpen(false);
+              ui.setActiveView("history");
+              ui.closeSidebar();
             }}
           >
             <span className="material-symbols-outlined">history</span>
@@ -602,19 +158,18 @@ export default function App() {
           </button>
         </nav>
 
-        {/* Chat Document Selection checkboxes in Sidebar */}
-        {activeView === "chat" && readyDocuments.length > 0 ? (
+        {ui.activeView === "chat" && docs.readyDocuments.length > 0 ? (
           <div className="sidebar-sources-section">
             <span className="sidebar-sources-label">Chat Over Documents</span>
-            {readyDocuments.map((doc) => {
-              const isChecked = selectedDocumentIds.includes(doc.id);
+            {docs.readyDocuments.map((doc) => {
+              const isChecked = docs.selectedDocumentIds.includes(doc.id);
               return (
                 <label key={doc.id} className="sidebar-source-item">
                   <input
                     type="checkbox"
                     checked={isChecked}
-                    onChange={() => handleToggleSelectedDocument(doc.id)}
-                    disabled={isSendingChat}
+                    onChange={() => docs.toggleSelectedDocument(doc.id)}
+                    disabled={chat.isSubmitting}
                   />
                   <span className="sidebar-source-name" title={doc.file_name}>
                     {doc.file_name}
@@ -625,7 +180,6 @@ export default function App() {
           </div>
         ) : null}
 
-        {/* Static sidebar items matching layout style */}
         <div className="menu-footer">
           <button className="menu-item" onClick={handleNewChat}>
             <span className="material-symbols-outlined">restart_alt</span>
@@ -634,14 +188,12 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Canvas Area */}
       <main className="main-area">
-        {/* Topbar/Header */}
         <header className="app-topbar">
           <div className="flex items-center gap-4 flex-1">
             <button
               className="mobile-sidebar-toggle"
-              onClick={() => setIsMobileSidebarOpen(true)}
+              onClick={ui.openSidebar}
               aria-label="Open sidebar menu"
             >
               <span className="material-symbols-outlined">menu</span>
@@ -652,8 +204,8 @@ export default function App() {
                 className="search-input"
                 type="text"
                 placeholder="Search across documents..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={docs.searchTerm}
+                onChange={(e) => docs.setSearchTerm(e.target.value)}
               />
             </div>
           </div>
@@ -663,19 +215,16 @@ export default function App() {
               <span className="api-dot" aria-hidden="true" />
               <span>{apiBaseUrl}</span>
             </div>
-
             <button className="topbar-action-button" aria-label="Notifications">
               <span className="material-symbols-outlined">notifications</span>
             </button>
-
             <button
               className="topbar-action-button"
-              onClick={() => setActiveView("documents")}
+              onClick={() => ui.setActiveView("documents")}
               aria-label="Settings"
             >
               <span className="material-symbols-outlined">settings</span>
             </button>
-
             <div className="topbar-avatar">
               <img
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcCw0_qGkLU5bX1wJiMYH1_xOr5JPaOLk2JIEEioy-ac2VmNMbCm5eZ1Na2iOw7gTfFe2rfZZAOic56GQaQEiINDiQWysoSWrlhWwSNa-xPFHiWWBls9I0WIAZ4tB8wkZrc4ZGWLgKfKidT45E-X4VVTszd532gAtF0KopoJNWn2nycKs_Kn9FR2ERxzRDLBhDDbnaF2vjlzAXGo0bdXi8amQI_AIbKZ6y4uu8T8vWuo4IVmwOfsWejoYlj2n9uOKFN9EN4-4UZqcC"
@@ -685,64 +234,58 @@ export default function App() {
           </div>
         </header>
 
-        {/* Central Component Switcher */}
         <div className="content-canvas">
-          {activeView === "chat" ? (
+          {ui.activeView === "chat" ? (
             <ChatPanel
-              error={chatError}
-              isSubmitting={isSendingChat}
-              isSourceLoading={selectedSourceLoadState.status === "loading"}
-              onQuestionChange={handleQuestionChange}
-              onSelectSource={handleSelectSource}
-              onSubmit={handleChatSubmit}
-              onToggleDocument={handleToggleSelectedDocument}
-              onViewNextChunk={handleViewNextChunk}
-              onViewPreviousChunk={handleViewPreviousChunk}
-              question={question}
-              activeQuestion={activeQuestion}
-              readyDocuments={readyDocuments}
-              response={chatResponse}
-              selectedChunk={selectedChunk}
-              selectedDocumentIds={selectedReadyDocumentIds}
-              selectedSource={selectedSource}
-              sourceError={
-                selectedSourceLoadState.status === "error"
-                  ? selectedSourceLoadState.error
-                  : null
-              }
-              hasNextChunk={nextChunk !== null}
-              hasPreviousChunk={previousChunk !== null}
+              error={chat.error}
+              isSubmitting={chat.isSubmitting}
+              isSourceLoading={chunks.isLoading}
+              onQuestionChange={chat.setQuestion}
+              onSelectSource={chunks.selectSource}
+              onSubmit={() => chat.submit(docs.selectedReadyDocumentIds)}
+              onToggleDocument={docs.toggleSelectedDocument}
+              onViewNextChunk={chunks.viewNextChunk}
+              onViewPreviousChunk={chunks.viewPreviousChunk}
+              question={chat.question}
+              activeQuestion={chat.activeQuestion}
+              readyDocuments={docs.readyDocuments}
+              response={chat.response}
+              selectedChunk={chunks.selectedChunk}
+              selectedDocumentIds={docs.selectedReadyDocumentIds}
+              selectedSource={chunks.selectedSource}
+              sourceError={chunks.error}
+              hasNextChunk={chunks.hasNextChunk}
+              hasPreviousChunk={chunks.hasPreviousChunk}
             />
-          ) : activeView === "documents" ? (
+          ) : ui.activeView === "documents" ? (
             <div>
               <div className="documents-view-header">
                 <h2>Document Management</h2>
                 <button
                   className="refresh-button"
-                  onClick={refreshDocuments}
-                  disabled={isLoadingDocuments || isRefreshingDocuments || isDocumentActionBusy}
+                  onClick={docs.refreshDocuments}
+                  disabled={docs.isLoading || docs.isRefreshing || docs.isBusy}
                 >
-                  {isRefreshingDocuments ? (
+                  {docs.isRefreshing ? (
                     <span className="spinner" aria-hidden="true" />
                   ) : (
                     <span className="material-symbols-outlined">refresh</span>
                   )}
-                  <span>{isRefreshingDocuments ? "Refreshing" : "Refresh List"}</span>
+                  <span>{docs.isRefreshing ? "Refreshing" : "Refresh List"}</span>
                 </button>
               </div>
-
               <DocumentList
-                documents={filteredDocuments}
-                error={documentError}
-                isBusy={isDocumentActionBusy}
-                isLoading={isLoadingDocuments}
-                isRefreshing={isRefreshingDocuments}
-                onDelete={(documentId) => handleDocumentAction(documentId, "delete")}
-                onIndex={(documentId) => handleDocumentAction(documentId, "index")}
-                onRefresh={refreshDocuments}
-                onReindex={(documentId) => handleDocumentAction(documentId, "reindex")}
-                pendingAction={pendingAction?.kind ?? null}
-                pendingDocumentId={pendingAction?.documentId ?? null}
+                documents={docs.filteredDocuments}
+                error={docs.error}
+                isBusy={docs.isBusy}
+                isLoading={docs.isLoading}
+                isRefreshing={docs.isRefreshing}
+                onDelete={(id) => docs.handleDocumentAction(id, "delete")}
+                onIndex={(id) => docs.handleDocumentAction(id, "index")}
+                onRefresh={docs.refreshDocuments}
+                onReindex={(id) => docs.handleDocumentAction(id, "reindex")}
+                pendingAction={docs.pendingAction?.kind ?? null}
+                pendingDocumentId={docs.pendingAction?.documentId ?? null}
               />
             </div>
           ) : (
@@ -751,10 +294,10 @@ export default function App() {
                 <h2>Recent Research History</h2>
                 <button
                   className="refresh-button"
-                  onClick={handleRefreshMessageHistory}
-                  disabled={isLoadingMessageHistory}
+                  onClick={history.refresh}
+                  disabled={history.isLoading}
                 >
-                  {isLoadingMessageHistory && hasLoadedMessageHistory ? (
+                  {history.isLoading && history.hasLoaded ? (
                     <span className="spinner" aria-hidden="true" />
                   ) : (
                     <span className="material-symbols-outlined">refresh</span>
@@ -762,51 +305,44 @@ export default function App() {
                   <span>Refresh History</span>
                 </button>
               </div>
-
               <MessageHistoryPanel
-                error={messageHistoryError}
-                hasLoaded={hasLoadedMessageHistory}
-                isLoading={isLoadingMessageHistory}
-                messages={messageHistory}
-                onRefresh={handleRefreshMessageHistory}
+                error={history.error}
+                hasLoaded={history.hasLoaded}
+                isLoading={history.isLoading}
+                messages={history.messages}
+                onRefresh={history.refresh}
                 onSelectMessage={handleSelectMessageHistoryItem}
-                selectedMessageId={selectedMessageId}
+                selectedMessageId={history.selectedMessageId}
               />
             </div>
           )}
         </div>
       </main>
 
-      {/* Right Sidebar: Document Preview (Collapsible) */}
-      <aside className={`app-preview-panel ${selectedSource ? "open" : ""}`}>
+      <aside className={`app-preview-panel ${chunks.selectedSource ? "open" : ""}`}>
         <div className="preview-panel-header">
           <div className="preview-panel-header-title">
             <span className="material-symbols-outlined">description</span>
-            <h2>{selectedSource?.file_name ?? "Document Preview"}</h2>
+            <h2>{chunks.selectedSource?.file_name ?? "Document Preview"}</h2>
           </div>
           <button
             className="preview-close-button"
-            onClick={() => setSelectedSource(null)}
+            onClick={chunks.clearSelection}
             aria-label="Close preview panel"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-
         <div className="preview-panel-content">
           <ChunkViewerPanel
-            selectedSource={selectedSource}
-            selectedChunk={selectedChunk}
-            isLoading={selectedSourceLoadState.status === "loading"}
-            error={
-              selectedSourceLoadState.status === "error"
-                ? selectedSourceLoadState.error
-                : null
-            }
-            hasPreviousChunk={previousChunk !== null}
-            hasNextChunk={nextChunk !== null}
-            onViewPreviousChunk={handleViewPreviousChunk}
-            onViewNextChunk={handleViewNextChunk}
+            selectedSource={chunks.selectedSource}
+            selectedChunk={chunks.selectedChunk}
+            isLoading={chunks.isLoading}
+            error={chunks.error}
+            hasPreviousChunk={chunks.hasPreviousChunk}
+            hasNextChunk={chunks.hasNextChunk}
+            onViewPreviousChunk={chunks.viewPreviousChunk}
+            onViewNextChunk={chunks.viewNextChunk}
           />
         </div>
       </aside>

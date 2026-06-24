@@ -109,3 +109,5 @@ export interface MessageListResponse {
 export interface UploadDocumentOptions {
   title?: string;
 }
+
+export type DocumentAction = "index" | "reindex" | "delete";
