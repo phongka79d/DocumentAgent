@@ -642,24 +642,24 @@ def rerank_chunks(
     settings: Settings | None = None,
     jina_client: Any | None = None,
     retry_attempts: list[RetryAttempt] | None = None,
-) -> list[dict[str, Any]]:
+) -> dict[str, Any]:
     resolved_settings = _resolve_settings(settings)
     normalized_question = _normalize_text(question)
     if normalized_question is None:
         raise RetrievalError("question is required")
 
     if not chunks:
-        return []
+        return {"reranked_chunks": [], "rerank_scored_chunks": []}
 
     candidate_chunks = [
         dict(chunk)
         for chunk in chunks[: resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K]
     ]
-    fallback_chunks = _sort_chunks_by_rerank_fallback(candidate_chunks)[
+    fallback = _sort_chunks_by_rerank_fallback(candidate_chunks)[
         : resolved_settings.RETRIEVAL_FINAL_TOP_K
     ]
     if not resolved_settings.ENABLE_RERANK:
-        return fallback_chunks
+        return {"reranked_chunks": fallback, "rerank_scored_chunks": fallback}
 
     client = _resolve_jina_client(jina_client)
     transport = getattr(client, "http_client", client)
@@ -676,7 +676,7 @@ def rerank_chunks(
                     "model": model,
                     "query": normalized_question,
                     "documents": documents,
-                    "top_n": min(resolved_settings.RETRIEVAL_FINAL_TOP_K, len(documents)),
+                    "top_n": len(documents),
                     "return_documents": False,
                 },
             )
@@ -693,12 +693,12 @@ def rerank_chunks(
         rankings = _extract_jina_rankings(payload)
     except Exception as exc:  # pragma: no cover - fallback exercised in tests
         logger.warning("Jina rerank failed, falling back to deterministic order: %s", exc)
-        return fallback_chunks
+        return {"reranked_chunks": fallback, "rerank_scored_chunks": fallback}
 
     if not rankings:
-        return fallback_chunks
+        return {"reranked_chunks": fallback, "rerank_scored_chunks": fallback}
 
-    ranked_chunks: list[dict[str, Any]] = []
+    scored_chunks: list[dict[str, Any]] = []
     seen_indexes: set[int] = set()
     for ranking in rankings:
         index = ranking["index"]
@@ -706,18 +706,26 @@ def rerank_chunks(
             logger.warning(
                 "Jina rerank returned invalid indexes, falling back to deterministic order"
             )
-            return fallback_chunks
+            return {"reranked_chunks": fallback, "rerank_scored_chunks": fallback}
         seen_indexes.add(index)
         chunk = dict(candidate_chunks[index])
         chunk["rerank_score"] = ranking["score"]
-        ranked_chunks.append(chunk)
-        if len(ranked_chunks) >= resolved_settings.RETRIEVAL_FINAL_TOP_K:
-            break
+        scored_chunks.append(chunk)
 
-    if not ranked_chunks:
-        return fallback_chunks
+    if not scored_chunks:
+        return {"reranked_chunks": fallback, "rerank_scored_chunks": fallback}
 
-    return ranked_chunks
+    from app.services import retrieval_diversity
+
+    grouped = retrieval_diversity.assign_evidence_groups(
+        scored_chunks,
+        settings=resolved_settings,
+    )
+    diverse = retrieval_diversity.select_group_diverse(
+        grouped,
+        limit=resolved_settings.RETRIEVAL_FINAL_TOP_K,
+    )
+    return {"reranked_chunks": diverse, "rerank_scored_chunks": scored_chunks}
 
 
 def expand_neighbor_context(
@@ -774,12 +782,13 @@ def retrieve_context_chunks(
         settings=resolved_settings,
         qdrant_client=qdrant_client,
     )
-    reranked_chunks = rerank_chunks(
+    rerank_result = rerank_chunks(
         normalized_question,
         retrieved_chunks,
         settings=resolved_settings,
         jina_client=jina_client,
     )
+    reranked_chunks = rerank_result["reranked_chunks"]
     context_chunks = expand_neighbor_context(
         reranked_chunks,
         settings=resolved_settings,

@@ -418,7 +418,7 @@ git commit -m "fix: preserve evidence diversity in rerank pool"
 - Modify: `backend/app/graphs/query_state.py:25-27`
 - Modify: `backend/tests/test_query_graph.py:1090-1250`
 
-- [ ] **Step 1: Write the failing reranker test**
+- [x] **Step 1: Write the failing reranker test**
 
 Change the reranker test fixture to return scores for all three submitted documents,
 with the two highest scores in one evidence group:
@@ -492,7 +492,7 @@ def test_jina_rerank_scores_unchanged_input_and_selects_distinct_groups():
     assert len(result["rerank_scored_chunks"]) == 3
 ```
 
-- [ ] **Step 2: Run test and verify RED**
+- [x] **Step 2: Run test and verify RED**
 
 Run:
 
@@ -503,7 +503,7 @@ python -m pytest tests/test_query_graph.py::test_jina_rerank_scores_unchanged_in
 Expected: FAIL because current code requests `top_n=2` and returns no
 `rerank_scored_chunks`.
 
-- [ ] **Step 3: Add a structured rerank result**
+- [x] **Step 3: Add a structured rerank result**
 
 In `backend/app/services/retrieval.py`, add:
 
@@ -554,7 +554,7 @@ def rerank_chunks(...existing signature...) -> list[dict[str, Any]]:
 On provider failure, return the existing deterministic fallback as both
 `reranked_chunks` and `rerank_scored_chunks`; do not issue another provider request.
 
-- [ ] **Step 4: Carry scored chunks through the graph**
+- [x] **Step 4: Carry scored chunks through the graph**
 
 Add to `QueryState`:
 
@@ -568,7 +568,7 @@ Update `jina_rerank_node` to call `rerank_chunks_result`, return both lists, and
 metrics["rerank_scored_count"] = len(rerank_result["rerank_scored_chunks"])
 ```
 
-- [ ] **Step 5: Run reranker and fallback tests**
+- [x] **Step 5: Run reranker and fallback tests**
 
 Run:
 
@@ -579,7 +579,7 @@ python -m pytest tests/test_query_graph.py -k "rerank or jina or fusion" -q
 Expected: all selected tests pass. Confirm every request's `documents` list is
 unchanged and only `top_n` response cardinality changes.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 ```powershell
 git add backend/app/services/retrieval.py backend/app/graphs/query_nodes.py backend/app/graphs/query_state.py backend/tests/test_query_graph.py

@@ -621,13 +621,15 @@ def jina_rerank_node(
     )
     try:
         attempts: list[RetryAttempt] = []
-        reranked_chunks = retrieval.rerank_chunks(
+        rerank_result = retrieval.rerank_chunks(
             question,
             retrieved_chunks,
             settings=resolved_settings,
             jina_client=jina_client,
             retry_attempts=attempts,
         )
+        reranked_chunks = rerank_result["reranked_chunks"]
+        rerank_scored_chunks = rerank_result.get("rerank_scored_chunks", reranked_chunks)
         metrics = dict(state.get("retrieval_metrics") or {})
         metrics["rerank_candidate_count"] = candidate_count
         metrics["final_reranked_count"] = len(reranked_chunks)
@@ -636,6 +638,7 @@ def jina_rerank_node(
             metrics["fallback_path"] = "deterministic_fused_score"
         return {
             "reranked_chunks": reranked_chunks,
+            "rerank_scored_chunks": rerank_scored_chunks,
             "retrieval_metrics": metrics,
         }
     except retrieval.RetrievalError as exc:

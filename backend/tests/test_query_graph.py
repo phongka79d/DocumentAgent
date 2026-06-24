@@ -568,7 +568,7 @@ def test_rerank_chunks_falls_back_to_qdrant_score_sort_when_jina_fails():
         jina_client=jina_client,
     )
 
-    assert [chunk["chunk_id"] for chunk in results] == [
+    assert [chunk["chunk_id"] for chunk in results["reranked_chunks"]] == [
         "chunk-b",
         "chunk-e",
         "chunk-c",
@@ -1145,7 +1145,7 @@ def test_jina_rerank_node_limits_jina_documents_to_candidate_top_k_and_requests_
         "chunk 1",
         "chunk 2",
     ]
-    assert fake_jina_client.http_client.post_calls[0]["json"]["top_n"] == 2
+    assert fake_jina_client.http_client.post_calls[0]["json"]["top_n"] == 3
     assert result["retrieval_metrics"] == {
         "rerank_candidate_count": 3,
         "final_reranked_count": 2,
@@ -1331,7 +1331,7 @@ def test_rerank_chunks_falls_back_to_fusion_qdrant_keyword_chunk_id_sort_when_ji
         jina_client=jina_client,
     )
 
-    assert [chunk["chunk_id"] for chunk in results] == [
+    assert [chunk["chunk_id"] for chunk in results["reranked_chunks"]] == [
         "chunk-b",
         "chunk-a",
         "chunk-c",
@@ -3339,3 +3339,68 @@ def test_fuse_candidates_node_preserves_strong_semantic_candidate_below_fused_cu
     assert len(pool_ids) == len(set(pool_ids)), "Duplicate chunk IDs in pool"
     assert fuse_result["retrieval_metrics"]["rerank_candidate_count"] == len(diverse_pool)
     assert len(diverse_pool) <= settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K
+
+
+def test_jina_rerank_node_scores_unchanged_input_and_selects_distinct_groups():
+    settings = _test_settings().model_copy(
+        update={
+            "RETRIEVAL_RERANK_CANDIDATE_TOP_K": 3,
+            "RETRIEVAL_FINAL_TOP_K": 2,
+        }
+    )
+    retrieved = [
+        {
+            "chunk_id": "near-a",
+            "document_id": DOC_A,
+            "chunk_index": 10,
+            "content": "near a",
+            "evidence_group_id": "group-near",
+        },
+        {
+            "chunk_id": "near-b",
+            "document_id": DOC_A,
+            "chunk_index": 11,
+            "content": "near b",
+            "evidence_group_id": "group-near",
+        },
+        {
+            "chunk_id": "far",
+            "document_id": DOC_A,
+            "chunk_index": 40,
+            "content": "far",
+            "evidence_group_id": "group-far",
+        },
+    ]
+    fake_jina = SimpleNamespace(
+        http_client=FakeHttpClient(
+            response=FakeHttpResponse(
+                {
+                    "results": [
+                        {"index": 0, "relevance_score": 0.99},
+                        {"index": 1, "relevance_score": 0.98},
+                        {"index": 2, "relevance_score": 0.80},
+                    ]
+                }
+            )
+        ),
+        model=settings.JINA_RERANK_MODEL,
+    )
+
+    result = query_nodes.jina_rerank_node(
+        {
+            "prepared_query": "question",
+            "retrieved_chunks": retrieved,
+            "retrieval_metrics": {},
+        },
+        settings=settings,
+        jina_client=fake_jina,
+    )
+
+    request = fake_jina.http_client.post_calls[0]["json"]
+    assert request["documents"] == ["near a", "near b", "far"]
+    assert request["top_n"] == 3
+    assert [item["chunk_id"] for item in result["reranked_chunks"]] == [
+        "near-a",
+        "far",
+    ]
+    assert len(result["rerank_scored_chunks"]) == 3
