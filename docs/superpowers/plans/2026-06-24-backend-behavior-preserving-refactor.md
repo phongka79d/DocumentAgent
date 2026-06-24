@@ -85,7 +85,7 @@
 - Modify: `README.md`
 - Modify: `backend/README.md`
 
-- [ ] **Step 1: Run baseline backend tests**
+- [x] **Step 1: Run baseline backend tests**
 
 Run from `backend/`:
 
@@ -99,7 +99,7 @@ Expected:
 340 passed
 ```
 
-- [ ] **Step 2: Add the canonical env example file**
+- [x] **Step 2: Add the canonical env example file**
 
 Create `backend/.env.example` with this exact content:
 
@@ -176,7 +176,7 @@ TEMPERATURE=0.2
 MAX_OUTPUT_TOKENS=1200
 ```
 
-- [ ] **Step 3: Add env contract tests**
+- [x] **Step 3: Add env contract tests**
 
 In `backend/tests/test_config.py`, add these helpers after `ALL_SETTINGS_FIELDS`:
 
@@ -233,7 +233,7 @@ def test_service_placeholder_values_live_only_in_env_example():
     assert settings.JINA_API_KEY == ""
 ```
 
-- [ ] **Step 4: Run env contract tests and confirm they fail before implementation**
+- [x] **Step 4: Run env contract tests and confirm they fail before implementation**
 
 Run from `backend/`:
 
@@ -247,7 +247,7 @@ Expected before implementation:
 FAILED
 ```
 
-- [ ] **Step 5: Update settings service-placeholder defaults**
+- [x] **Step 5: Update settings service-placeholder defaults**
 
 In `backend/app/core/config.py`, change only external service credential defaults to empty strings:
 
@@ -275,7 +275,7 @@ And update `JINA_API_KEY`:
     JINA_API_KEY: str = ""
 ```
 
-- [ ] **Step 6: Update existing default assertions**
+- [x] **Step 6: Update existing default assertions**
 
 In `backend/tests/test_config.py`, update existing assertions in `test_settings_load_defaults_from_master_plan`:
 
@@ -290,7 +290,7 @@ In `backend/tests/test_config.py`, update existing assertions in `test_settings_
     assert settings.JINA_API_KEY == ""
 ```
 
-- [ ] **Step 7: Remove inline env blocks from active docs**
+- [x] **Step 7: Remove inline env blocks from active docs**
 
 In `README.md`, replace the backend env block with:
 
@@ -304,7 +304,7 @@ In `backend/README.md`, replace the backend env block and variable tables with:
 Copy `.env.example` to `.env`, then replace the service placeholders with your own values. `.env.example` is the single active reference for backend environment variables; this README intentionally does not duplicate those values.
 ```
 
-- [ ] **Step 8: Run config tests**
+- [x] **Step 8: Run config tests**
 
 Run from `backend/`:
 
@@ -318,7 +318,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 9: Run full backend tests**
+- [x] **Step 9: Run full backend tests**
 
 Run from `backend/`:
 
@@ -332,7 +332,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 10: Commit task**
+- [x] **Step 10: Commit task**
 
 Run from repository root:
 
@@ -350,7 +350,7 @@ git commit -m "refactor: centralize backend env example"
 - Modify: `backend/tests/test_ingestion_graph.py`
 - Modify: `backend/tests/test_score_fusion.py`
 
-- [ ] **Step 1: Add query node public surface test**
+- [x] **Step 1: Add query node public surface test**
 
 In `backend/tests/test_query_graph.py`, add:
 
@@ -379,7 +379,7 @@ def test_query_nodes_public_surface_remains_available():
         assert callable(getattr(query_nodes, name))
 ```
 
-- [ ] **Step 2: Add ingestion node public surface test**
+- [x] **Step 2: Add ingestion node public surface test**
 
 In `backend/tests/test_ingestion_graph.py`, add:
 
@@ -403,7 +403,7 @@ def test_ingestion_nodes_public_surface_remains_available():
         assert callable(getattr(ingestion_nodes, name))
 ```
 
-- [ ] **Step 3: Add retrieval public surface test**
+- [x] **Step 3: Add retrieval public surface test**
 
 In `backend/tests/test_score_fusion.py`, add:
 
@@ -422,7 +422,7 @@ def test_retrieval_public_surface_remains_available():
         assert callable(getattr(retrieval, name))
 ```
 
-- [ ] **Step 4: Run characterization tests**
+- [x] **Step 4: Run characterization tests**
 
 Run from `backend/`:
 
@@ -436,7 +436,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 5: Run full backend tests**
+- [x] **Step 5: Run full backend tests**
 
 Run from `backend/`:
 
@@ -450,7 +450,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 6: Commit task**
+- [x] **Step 6: Commit task**
 
 Run from repository root:
 
@@ -473,15 +473,15 @@ git commit -m "test: lock backend refactor compatibility surfaces"
 - Modify: `backend/app/services/grounding.py`
 - Modify: `backend/app/services/citation_validation.py`
 
-- [ ] **Step 1: Copy prompt implementation into `app.rag.prompts`**
+- [x] **Step 1: Copy prompt implementation into `app.rag.prompts`**
 
 Copy the complete current contents of `backend/app/graphs/query_prompts.py` into `backend/app/rag/prompts.py`, changing no function bodies, constants, or `__all__`.
 
-- [ ] **Step 2: Copy formatting implementation into `app.rag.formatting`**
+- [x] **Step 2: Copy formatting implementation into `app.rag.formatting`**
 
 Copy the complete current contents of `backend/app/graphs/query_formatting.py` into `backend/app/rag/formatting.py`, changing no function bodies, constants, or `__all__`.
 
-- [ ] **Step 3: Replace old prompt module with compatibility re-export**
+- [x] **Step 3: Replace old prompt module with compatibility re-export**
 
 Replace `backend/app/graphs/query_prompts.py` with:
 
@@ -492,7 +492,7 @@ from app.rag.prompts import *  # noqa: F401,F403
 from app.rag.prompts import __all__
 ```
 
-- [ ] **Step 4: Replace old formatting module with compatibility re-export**
+- [x] **Step 4: Replace old formatting module with compatibility re-export**
 
 Replace `backend/app/graphs/query_formatting.py` with:
 
@@ -503,7 +503,7 @@ from app.rag.formatting import *  # noqa: F401,F403
 from app.rag.formatting import __all__
 ```
 
-- [ ] **Step 5: Update service imports**
+- [x] **Step 5: Update service imports**
 
 In these files, replace imports from `app.graphs.query_prompts` or `app.graphs.query_formatting` with imports from `app.rag.prompts` or `app.rag.formatting`:
 
@@ -525,7 +525,7 @@ Example replacement inside `citation_validation.py`:
 from app.rag.formatting import build_source_citations
 ```
 
-- [ ] **Step 6: Run prompt and formatting tests**
+- [x] **Step 6: Run prompt and formatting tests**
 
 Run from `backend/`:
 
@@ -539,7 +539,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 7: Run full backend tests**
+- [x] **Step 7: Run full backend tests**
 
 Run from `backend/`:
 
@@ -553,7 +553,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 8: Commit task**
+- [x] **Step 8: Commit task**
 
 Run from repository root:
 
@@ -578,7 +578,7 @@ git commit -m "refactor: move rag prompts and formatting"
 - Modify: `backend/app/graphs/query_nodes.py`
 - Test: `backend/tests/test_query_graph.py`
 
-- [ ] **Step 1: Add query step dependency object**
+- [x] **Step 1: Add query step dependency object**
 
 Create `backend/app/graphs/query_steps/dependencies.py`:
 
@@ -604,7 +604,7 @@ class QueryStepDependencies:
     create_shopaikey_client: Callable[..., Any]
 ```
 
-- [ ] **Step 2: Move preparation helpers and node**
+- [x] **Step 2: Move preparation helpers and node**
 
 Move these symbols from `backend/app/graphs/query_nodes.py` to `backend/app/graphs/query_steps/prepare.py`:
 
@@ -617,7 +617,7 @@ prepare_query_node
 
 Keep function bodies unchanged. If a helper name differs in the current file, move the exact current helper that serves the same preparation responsibility and keep its name.
 
-- [ ] **Step 3: Add facade wrapper for preparation**
+- [x] **Step 3: Add facade wrapper for preparation**
 
 In `backend/app/graphs/query_nodes.py`, import the moved implementation and expose the same public function:
 
@@ -629,7 +629,7 @@ def prepare_query_node(state: QueryState, *, settings: Settings | None = None) -
     return _prepare_steps.prepare_query_node(state, settings=settings)
 ```
 
-- [ ] **Step 4: Run query tests after preparation move**
+- [x] **Step 4: Run query tests after preparation move**
 
 Run from `backend/`:
 
@@ -643,7 +643,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 5: Move planning node implementation**
+- [x] **Step 5: Move planning node implementation**
 
 Move these symbols to `backend/app/graphs/query_steps/planning.py`:
 
@@ -676,7 +676,7 @@ def resolve_relation_scope_node(
 
 Inside the moved code, replace direct module references such as `relations` with `deps.relations`.
 
-- [ ] **Step 6: Add facade dependency factory and planning wrappers**
+- [x] **Step 6: Add facade dependency factory and planning wrappers**
 
 In `backend/app/graphs/query_nodes.py`, add:
 
@@ -722,7 +722,7 @@ def resolve_relation_scope_node(
     )
 ```
 
-- [ ] **Step 7: Run query tests after planning move**
+- [x] **Step 7: Run query tests after planning move**
 
 Run from `backend/`:
 
@@ -736,7 +736,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 8: Move retrieval-phase query nodes**
+- [x] **Step 8: Move retrieval-phase query nodes**
 
 Move these symbols to `backend/app/graphs/query_steps/retrieval.py`:
 
@@ -752,7 +752,7 @@ expand_neighbor_context_node
 
 Use `deps.retrieval` for calls that previously used the facade module variable `retrieval`.
 
-- [ ] **Step 9: Add retrieval wrappers in the facade**
+- [x] **Step 9: Add retrieval wrappers in the facade**
 
 In `backend/app/graphs/query_nodes.py`, expose wrappers with the existing public names:
 
@@ -780,7 +780,7 @@ jina_rerank_node
 expand_neighbor_context_node
 ```
 
-- [ ] **Step 10: Run query retrieval tests**
+- [x] **Step 10: Run query retrieval tests**
 
 Run from `backend/`:
 
@@ -794,7 +794,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 11: Move answer-generation nodes**
+- [x] **Step 11: Move answer-generation nodes**
 
 Move these symbols to `backend/app/graphs/query_steps/answering.py`:
 
@@ -812,7 +812,7 @@ answer = deps.extract_chat_content(response)
 sources = deps.build_source_citations(context_chunks)
 ```
 
-- [ ] **Step 12: Add answer wrappers in the facade**
+- [x] **Step 12: Add answer wrappers in the facade**
 
 In `backend/app/graphs/query_nodes.py`, expose:
 
@@ -841,7 +841,7 @@ def regenerate_answer_node(
     )
 ```
 
-- [ ] **Step 13: Move verification nodes**
+- [x] **Step 13: Move verification nodes**
 
 Move these symbols to `backend/app/graphs/query_steps/verification.py`:
 
@@ -853,13 +853,13 @@ finalize_answer_node
 
 Use `deps.citation_validation` and `deps.grounding` in moved code.
 
-- [ ] **Step 14: Move persistence node**
+- [x] **Step 14: Move persistence node**
 
 Move `save_message_optional_node` to `backend/app/graphs/query_steps/persistence.py`.
 
 Use `deps.message_service` and `deps.message_metadata` in moved code.
 
-- [ ] **Step 15: Add verification and persistence wrappers**
+- [x] **Step 15: Add verification and persistence wrappers**
 
 In `backend/app/graphs/query_nodes.py`, expose wrappers for:
 
@@ -872,11 +872,11 @@ save_message_optional_node
 
 Each wrapper must pass `_query_step_dependencies()` into the moved implementation.
 
-- [ ] **Step 16: Preserve facade exports**
+- [x] **Step 16: Preserve facade exports**
 
 At the bottom of `backend/app/graphs/query_nodes.py`, keep all existing `__all__` names. If `__all__` does not exist, add one containing every public node and compatibility alias currently imported by tests.
 
-- [ ] **Step 17: Run query tests**
+- [x] **Step 17: Run query tests**
 
 Run from `backend/`:
 
@@ -890,7 +890,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 18: Run full backend tests**
+- [x] **Step 18: Run full backend tests**
 
 Run from `backend/`:
 
@@ -904,7 +904,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 19: Commit task**
+- [x] **Step 19: Commit task**
 
 Run from repository root:
 
