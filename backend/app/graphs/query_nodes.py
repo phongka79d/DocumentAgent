@@ -1,14 +1,22 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any
-from uuid import UUID
 
-from app.core.config import Settings, get_settings
+from app.core.config import Settings
 from app.core.errors import safe_detail
-from app.core.retry import RetryAttempt, RetryExhaustedError, retry_sync
-from app.graphs.query_formatting import (
+from app.core.retry import RetryAttempt, retry_sync
+from app.graphs.query_steps import (
+    prepare as _prepare_steps,
+    planning as _planning_steps,
+    retrieval as _retrieval_steps,
+    answering as _answering_steps,
+    verification as _verification_steps,
+    persistence as _persistence_steps,
+)
+from app.graphs.query_steps.dependencies import QueryStepDependencies
+from app.rag.formatting import (
     build_context_prompt,
     build_source_citations,
     extract_chat_content,
@@ -16,7 +24,7 @@ from app.graphs.query_formatting import (
     normalize_text,
     resolve_context_chunks,
 )
-from app.graphs.query_prompts import (
+from app.rag.prompts import (
     ANSWER_SYSTEM_PROMPT,
     ANSWER_USER_PROMPT_TEMPLATE,
     NO_RELEVANT_INFORMATION_MESSAGE,
@@ -44,32 +52,17 @@ _build_source_citations = build_source_citations
 
 
 def _resolve_settings(settings: Settings | None = None) -> Settings:
+    from app.core.config import get_settings
+
     return settings if settings is not None else get_settings()
 
 
 def _normalize_document_ids(
-    document_ids: Sequence[UUID | str] | UUID | str | bytes | None,
+    document_ids: Any,
 ) -> list[str]:
-    if document_ids is None:
-        return []
+    from app.graphs.query_steps.prepare import _normalize_document_ids as _norm
 
-    if isinstance(document_ids, (str, bytes)):
-        text = normalize_text(document_ids)
-        return [text] if text is not None else []
-
-    normalized: list[str] = []
-    seen: set[str] = set()
-    for value in document_ids:
-        text = normalize_text(value)
-        if text is None or text in seen:
-            continue
-        normalized.append(text)
-        seen.add(text)
-    return normalized
-
-
-def _question_text(state: Mapping[str, Any]) -> str | None:
-    return normalize_text(state.get("prepared_query") or state.get("question"))
+    return _norm(document_ids)
 
 
 def _normalize_filters(filters: Any) -> dict[str, Any]:
@@ -93,6 +86,10 @@ def _query_plan(state: Mapping[str, Any]) -> QueryPlan | None:
     if isinstance(raw_plan, QueryPlan):
         return raw_plan
     return QueryPlan.model_validate(raw_plan)
+
+
+def _question_text(state: Mapping[str, Any]) -> str | None:
+    return normalize_text(state.get("prepared_query") or state.get("question"))
 
 
 def _subqueries_from_plan(plan: QueryPlan) -> list[QuerySubquery]:
@@ -218,27 +215,31 @@ def _route_failure_message(strategy: RetrievalStrategy) -> str:
     return "hybrid retrieval failed"
 
 
+def _query_step_dependencies() -> QueryStepDependencies:
+    return QueryStepDependencies(
+        retrieval=retrieval,
+        retrieval_context=retrieval_context,
+        query_planning=query_planning,
+        relations=relation_service,
+        grounding=grounding,
+        citation_validation=citation_validation,
+        message_service=message_service,
+        build_context_prompt=build_context_prompt,
+        build_source_citations=build_source_citations,
+        extract_chat_content=extract_chat_content,
+        message_metadata=message_metadata,
+        create_shopaikey_client=create_shopaikey_client,
+    )
+
+
+# --- Preparation ---
+
+
 def prepare_query_node(state: Mapping[str, Any], *, settings: Settings | None = None) -> dict[str, Any]:
-    _resolve_settings(settings)
+    return _prepare_steps.prepare_query_node(state, settings=settings)
 
-    question = normalize_text(state.get("question"))
-    if question is None:
-        return {"error_message": "question is required"}
 
-    document_ids = _normalize_document_ids(state.get("document_ids"))
-    save_message = bool(state.get("save_message", False))
-    result = {
-        "question": question,
-        "prepared_query": question,
-        "document_ids": document_ids,
-        "save_message": save_message,
-    }
-    if "filters" in state:
-        try:
-            result["filters"] = _normalize_filters(state.get("filters") or {})
-        except Exception:
-            return {"error_message": "invalid retrieval filters"}
-    return result
+# --- Planning ---
 
 
 def plan_query_node(
@@ -247,29 +248,11 @@ def plan_query_node(
     settings: Settings | None = None,
     shopaikey_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    prepared_query = _question_text(state)
-    if prepared_query is None:
-        return {"error_message": "prepared_query is required"}
-
-    try:
-        filters = _filters_model(state.get("filters") or {})
-    except Exception:
-        return {"error_message": "invalid retrieval filters"}
-
-    plan = query_planning.plan_query(
-        prepared_query,
-        _normalize_document_ids(state.get("document_ids")),
-        filters,
-        settings=resolved_settings,
-        shopaikey_client=shopaikey_client,
+    return _planning_steps.plan_query_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
     )
-    return {
-        "query_plan": plan,
-        "subqueries": _subqueries_from_plan(plan),
-        "route": plan.strategy,
-        "filters": plan.inferred_filters.model_dump(mode="json", exclude_none=True),
-    }
 
 
 def resolve_relation_scope_node(
@@ -278,85 +261,14 @@ def resolve_relation_scope_node(
     settings: Settings | None = None,
     supabase_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    plan = _query_plan(state)
-    if plan is None:
-        return {"error_message": "query_plan is required"}
-
-    document_ids = _normalize_document_ids(state.get("document_ids"))
-    if plan.strategy is not RetrievalStrategy.RELATION and not plan.needs_relations:
-        return {"relation_document_ids": document_ids}
-
-    try:
-        scoped_document_ids = relation_service.resolve_related_document_scope(
-            document_ids,
-            settings=resolved_settings,
-            supabase_client=supabase_client,
-        )
-    except Exception as exc:
-        logger.warning("Relation scope resolution failed; using original scope: %s", exc)
-        scoped_document_ids = document_ids
-        metrics = dict(state.get("retrieval_metrics") or {})
-        metrics["relation_scope_fallback"] = "original_scope"
-        return {
-            "document_ids": scoped_document_ids,
-            "relation_document_ids": scoped_document_ids,
-            "retrieval_metrics": metrics,
-        }
-
-    return {
-        "document_ids": scoped_document_ids,
-        "relation_document_ids": scoped_document_ids,
-    }
-
-
-def _run_semantic_path(
-    subquery: QuerySubquery,
-    *,
-    document_ids: list[str],
-    filters: RetrievalFilters,
-    settings: Settings,
-    qdrant_client: Any | None,
-    shopaikey_client: Any | None,
-) -> tuple[list[float], list[dict[str, Any]], list[RetryAttempt]]:
-    attempts: list[RetryAttempt] = []
-    query_embedding, candidates = retrieval.retrieve_semantic_candidates(
-        subquery.text,
-        document_ids=document_ids,
-        filters=filters,
+    return _planning_steps.resolve_relation_scope_node(
+        state,
         settings=settings,
-        qdrant_client=qdrant_client,
-        shopaikey_client=shopaikey_client,
-        retry_attempts=attempts,
+        deps=_query_step_dependencies(),
     )
-    return query_embedding, [
-        _with_subquery_id(candidate, subquery.id) for candidate in candidates
-    ], attempts
 
 
-def _run_keyword_path(
-    subquery: QuerySubquery,
-    *,
-    document_ids: list[str],
-    filters: RetrievalFilters,
-    settings: Settings,
-    supabase_client: Any | None,
-) -> tuple[list[dict[str, Any]], list[RetryAttempt]]:
-    if not settings.ENABLE_KEYWORD_SEARCH:
-        return [], []
-    attempts: list[RetryAttempt] = []
-    candidates = [
-        _with_subquery_id(candidate, subquery.id)
-        for candidate in retrieval.keyword_search.search_keyword_chunks(
-            subquery.text,
-            document_ids=document_ids,
-            filters=filters,
-            settings=settings,
-            supabase_client=supabase_client,
-            retry_attempts=attempts,
-        )
-    ]
-    return candidates, attempts
+# --- Retrieval ---
 
 
 def retrieve_candidates_node(
@@ -367,134 +279,14 @@ def retrieve_candidates_node(
     shopaikey_client: Any | None = None,
     supabase_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    plan = _query_plan(state)
-    if plan is None:
-        return {"error_message": "query_plan is required"}
-
-    filters = _filters_model(plan.inferred_filters)
-    document_ids = _normalize_document_ids(state.get("document_ids"))
-    subqueries = _subqueries_from_plan(plan)
-    path_candidates: dict[str, list[dict[str, Any]]] = {}
-    path_errors: dict[str, str] = {}
-    attempted_paths: list[str] = []
-    successful_paths: list[str] = []
-    query_embedding: list[float] = []
-    metadata_skipped_count = 0
-    retry_attempts: list[RetryAttempt] = []
-
-    def _record(path_key: str, candidates: list[dict[str, Any]]) -> None:
-        path_candidates[path_key] = candidates
-        successful_paths.append(path_key)
-
-    for subquery in subqueries:
-        strategy = plan.strategy
-        if strategy is RetrievalStrategy.METADATA and not _has_active_filter(filters):
-            metadata_skipped_count += 1
-            continue
-
-        run_semantic = strategy in {
-            RetrievalStrategy.SEMANTIC,
-            RetrievalStrategy.HYBRID,
-            RetrievalStrategy.METADATA,
-            RetrievalStrategy.RELATION,
-        }
-        run_keyword = strategy in {
-            RetrievalStrategy.KEYWORD,
-            RetrievalStrategy.HYBRID,
-            RetrievalStrategy.METADATA,
-            RetrievalStrategy.RELATION,
-        }
-
-        if run_semantic:
-            path_key = f"{subquery.id}:semantic"
-            attempted_paths.append(path_key)
-            try:
-                embedding, candidates, attempts = _run_semantic_path(
-                    subquery,
-                    document_ids=document_ids,
-                    filters=filters,
-                    settings=resolved_settings,
-                    qdrant_client=qdrant_client,
-                    shopaikey_client=shopaikey_client,
-                )
-                if embedding and not query_embedding:
-                    query_embedding = embedding
-                _record(path_key, candidates)
-                retry_attempts.extend(attempts)
-            except Exception as exc:
-                path_errors[path_key] = safe_detail(
-                    str(exc), fallback="semantic retrieval failed"
-                )
-                if isinstance(exc, RetryExhaustedError):
-                    retry_attempts.append(
-                        RetryAttempt(
-                            operation=exc.operation,
-                            attempt=exc.attempts,
-                            max_attempts=exc.attempts,
-                            retryable=True,
-                            error_code=exc.error_code,
-                        )
-                    )
-
-        if run_keyword:
-            path_key = f"{subquery.id}:keyword"
-            attempted_paths.append(path_key)
-            try:
-                candidates, attempts = _run_keyword_path(
-                    subquery,
-                    document_ids=document_ids,
-                    filters=filters,
-                    settings=resolved_settings,
-                    supabase_client=supabase_client,
-                )
-                retry_attempts.extend(attempts)
-                _record(path_key, candidates)
-            except Exception as exc:
-                logger.warning("Keyword retrieval path failed for %s: %s", path_key, exc)
-                path_errors[path_key] = safe_detail(
-                    str(exc), fallback="keyword retrieval failed"
-                )
-                if isinstance(exc, RetryExhaustedError):
-                    retry_attempts.append(
-                        RetryAttempt(
-                            operation=exc.operation,
-                            attempt=exc.attempts,
-                            max_attempts=exc.attempts,
-                            retryable=True,
-                            error_code=exc.error_code,
-                        )
-                    )
-
-    metrics = {
-        "path_count": len(path_candidates),
-        "candidate_count": sum(len(candidates) for candidates in path_candidates.values()),
-        "path_error_count": len(path_errors),
-        "metadata_skipped_count": metadata_skipped_count,
-        "attempted_paths": attempted_paths,
-        "successful_paths": successful_paths,
-        "attempted_path_count": len(attempted_paths),
-        "successful_path_count": len(successful_paths),
-    }
-    if path_errors:
-        metrics["path_errors"] = path_errors
-    if path_errors and successful_paths:
-        metrics["fallback_path"] = _path_name(successful_paths[0])
-    _merge_retry_metrics(metrics, "retrieve_candidates", retry_attempts)
-
-    if attempted_paths and not successful_paths:
-        return {
-            "error_message": _route_failure_message(plan.strategy),
-            "query_embedding": query_embedding,
-            "path_candidates": path_candidates,
-            "retrieval_metrics": metrics,
-        }
-
-    return {
-        "query_embedding": query_embedding,
-        "path_candidates": path_candidates,
-        "retrieval_metrics": metrics,
-    }
+    return _retrieval_steps.retrieve_candidates_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        qdrant_client=qdrant_client,
+        shopaikey_client=shopaikey_client,
+        supabase_client=supabase_client,
+    )
 
 
 def fuse_candidates_node(
@@ -502,44 +294,11 @@ def fuse_candidates_node(
     *,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    path_candidates = state.get("path_candidates") or {}
-    if not isinstance(path_candidates, Mapping):
-        return {"error_message": "path_candidates must be a mapping"}
-
-    groups = _candidate_groups(path_candidates)
-    uncapped_settings = resolved_settings.model_copy(
-        update={"RETRIEVAL_FUSION_TOP_K": 1000}
+    return _retrieval_steps.fuse_candidates_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
     )
-    fused_candidates = score_fusion.fuse_candidates(groups, settings=uncapped_settings)
-    plan = _query_plan(state)
-    retrieved_chunks = _select_with_subquery_coverage(
-        fused_candidates,
-        subquery_ids=_subquery_ids(plan),
-        limit=resolved_settings.RETRIEVAL_FUSION_TOP_K,
-    )
-
-    metrics = dict(state.get("retrieval_metrics") or {})
-    metrics["fused_candidate_count"] = len(fused_candidates)
-    metrics["retrieved_candidate_count"] = len(retrieved_chunks)
-
-    # Build diverse rerank candidate pool from path candidates and fused candidates
-    path_candidates = state.get("path_candidates") or {}
-    if isinstance(path_candidates, Mapping) and path_candidates:
-        diverse_pool = score_fusion.select_rerank_candidates(
-            path_candidates,
-            fused_candidates=fused_candidates,
-            settings=resolved_settings,
-        )
-    else:
-        diverse_pool = retrieved_chunks
-
-    metrics["rerank_candidate_count"] = len(diverse_pool)
-    return {
-        "fused_candidates": fused_candidates,
-        "retrieved_chunks": diverse_pool,
-        "retrieval_metrics": metrics,
-    }
 
 
 def retrieve_qdrant_node(
@@ -550,55 +309,14 @@ def retrieve_qdrant_node(
     shopaikey_client: Any | None = None,
     supabase_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    prepared_query = _question_text(state)
-    if prepared_query is None:
-        return {"error_message": "prepared_query is required"}
-
-    document_ids = _normalize_document_ids(state.get("document_ids"))
-    filters: dict[str, Any] | None = None
-    if "filters" in state:
-        try:
-            filters = _normalize_filters(state.get("filters") or {})
-        except Exception:
-            return {"error_message": "invalid retrieval filters"}
-    try:
-        retrieval_result = retrieval.retrieve_hybrid_chunks(
-            prepared_query,
-            document_ids=document_ids,
-            filters=filters,
-            settings=resolved_settings,
-            qdrant_client=qdrant_client,
-            shopaikey_client=shopaikey_client,
-            supabase_client=supabase_client,
-        )
-        result = {
-            "prepared_query": prepared_query,
-            "document_ids": document_ids,
-            "query_embedding": retrieval_result.get("query_embedding", []),
-            "retrieval_hints": retrieval_result.get("retrieval_hints", {}),
-            "path_candidates": retrieval_result.get("path_candidates", {}),
-            "fused_candidates": retrieval_result.get("fused_candidates", []),
-            "retrieved_chunks": retrieval_result.get("retrieved_chunks", []),
-            "retrieval_metrics": retrieval_result.get("retrieval_metrics", {}),
-        }
-        if filters is not None:
-            result["filters"] = filters
-        return result
-    except retrieval.RetrievalError as exc:
-        return {
-            "error_message": safe_detail(
-                str(exc),
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
-    except Exception as exc:  # pragma: no cover - defensive guard
-        return {
-            "error_message": safe_detail(
-                f"Failed to retrieve chunks: {exc}",
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
+    return _retrieval_steps.retrieve_qdrant_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        qdrant_client=qdrant_client,
+        shopaikey_client=shopaikey_client,
+        supabase_client=supabase_client,
+    )
 
 
 def jina_rerank_node(
@@ -607,55 +325,12 @@ def jina_rerank_node(
     settings: Settings | None = None,
     jina_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    question = _question_text(state)
-    if question is None:
-        return {"error_message": "prepared_query is required"}
-
-    retrieved_chunks = state.get("retrieved_chunks")
-    if not isinstance(retrieved_chunks, list) or not retrieved_chunks:
-        return {"reranked_chunks": []}
-
-    candidate_count = min(
-        len(retrieved_chunks),
-        resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K,
+    return _retrieval_steps.jina_rerank_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        jina_client=jina_client,
     )
-    try:
-        attempts: list[RetryAttempt] = []
-        rerank_result = retrieval.rerank_chunks(
-            question,
-            retrieved_chunks,
-            settings=resolved_settings,
-            jina_client=jina_client,
-            retry_attempts=attempts,
-        )
-        reranked_chunks = rerank_result["reranked_chunks"]
-        rerank_scored_chunks = rerank_result.get("rerank_scored_chunks", reranked_chunks)
-        metrics = dict(state.get("retrieval_metrics") or {})
-        metrics["rerank_candidate_count"] = candidate_count
-        metrics["final_reranked_count"] = len(reranked_chunks)
-        _merge_retry_metrics(metrics, "rerank_candidates", attempts)
-        if attempts and attempts[-1].error_code != "ok":
-            metrics["fallback_path"] = "deterministic_fused_score"
-        return {
-            "reranked_chunks": reranked_chunks,
-            "rerank_scored_chunks": rerank_scored_chunks,
-            "retrieval_metrics": metrics,
-        }
-    except retrieval.RetrievalError as exc:
-        return {
-            "error_message": safe_detail(
-                str(exc),
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
-    except Exception as exc:  # pragma: no cover - defensive guard
-        return {
-            "error_message": safe_detail(
-                f"Failed to rerank chunks: {exc}",
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
 
 
 def rerank_candidates_node(
@@ -673,40 +348,12 @@ def expand_neighbor_context_node(
     settings: Settings | None = None,
     supabase_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    metrics = dict(state.get("retrieval_metrics") or {})
-    reranked_chunks = state.get("reranked_chunks")
-    if not isinstance(reranked_chunks, list) or not reranked_chunks:
-        return {"context_chunks": [], "retrieval_metrics": metrics}
-
-    try:
-        context_result = retrieval_context.expand_neighbor_context_result(
-            reranked_chunks,
-            settings=resolved_settings,
-            supabase_client=supabase_client,
-            retrieval_hints=state.get("retrieval_hints"),
-            document_ids=_normalize_document_ids(state.get("document_ids")),
-            rerank_scored_chunks=state.get("rerank_scored_chunks"),
-        )
-        metrics.update(context_result.get("retrieval_metrics") or {})
-        return {
-            "context_chunks": context_result.get("context_chunks", []),
-            "retrieval_metrics": metrics,
-        }
-    except retrieval.RetrievalError as exc:
-        return {
-            "error_message": safe_detail(
-                str(exc),
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
-    except Exception as exc:  # pragma: no cover - defensive guard
-        return {
-            "error_message": safe_detail(
-                f"Failed to expand context: {exc}",
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
+    return _retrieval_steps.expand_neighbor_context_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        supabase_client=supabase_client,
+    )
 
 
 def expand_context_node(
@@ -722,68 +369,38 @@ def expand_context_node(
     )
 
 
+# --- Answering ---
+
+
 def generate_answer_node(
     state: Mapping[str, Any],
     *,
     settings: Settings | None = None,
     shopaikey_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    question = _question_text(state)
-    if question is None:
-        return {"error_message": "prepared_query is required"}
+    return _answering_steps.generate_answer_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        shopaikey_client=shopaikey_client,
+    )
 
-    context_chunks = resolve_context_chunks(state)
-    if not context_chunks:
-        return {
-            "answer": NO_RELEVANT_INFORMATION_MESSAGE,
-            "sources": [],
-        }
 
-    try:
-        client = (
-            shopaikey_client
-            if shopaikey_client is not None
-            else create_shopaikey_client(resolved_settings)
-        )
-        context_chunks = assign_citation_keys(context_chunks)
-        context = build_context_prompt(context_chunks)
-        attempts: list[RetryAttempt] = []
-        response = retry_sync(
-            "answer_generation",
-            lambda: client.chat.completions.create(
-                model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
-                messages=build_answer_messages(context=context, question=question),
-                temperature=resolved_settings.TEMPERATURE,
-                max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
-            ),
-            settings=resolved_settings,
-            on_attempt=attempts.append,
-        )
-        answer = extract_chat_content(response)
-        if answer is None:
-            return {
-                "error_message": safe_detail(
-                    "Chat completion returned empty content",
-                    fallback=DEFAULT_QUERY_ERROR,
-                )
-            }
-        return {
-            "answer": answer,
-            "sources": build_source_citations(context_chunks),
-            "retrieval_metrics": _merge_retry_metrics(
-                dict(state.get("retrieval_metrics") or {}),
-                "generate_answer",
-                attempts,
-            ),
-        }
-    except Exception as exc:  # pragma: no cover - defensive guard
-        return {
-            "error_message": safe_detail(
-                f"Failed to generate answer: {exc}",
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
+def regenerate_answer_node(
+    state: Mapping[str, Any],
+    *,
+    settings: Settings | None = None,
+    shopaikey_client: Any | None = None,
+) -> dict[str, Any]:
+    return _answering_steps.regenerate_answer_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        shopaikey_client=shopaikey_client,
+    )
+
+
+# --- Verification ---
 
 
 def _compact_grounding_feedback(state: Mapping[str, Any]) -> str:
@@ -806,98 +423,16 @@ def _compact_grounding_feedback(state: Mapping[str, Any]) -> str:
     return " ".join(parts) or "Previous answer was not verified. Use only cited context."
 
 
-def regenerate_answer_node(
-    state: Mapping[str, Any],
-    *,
-    settings: Settings | None = None,
-    shopaikey_client: Any | None = None,
-) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    question = _question_text(state)
-    if question is None:
-        return {"error_message": "prepared_query is required"}
-
-    context_chunks = resolve_context_chunks(state)
-    if not context_chunks:
-        return {
-            "answer": NO_RELEVANT_INFORMATION_MESSAGE,
-            "sources": [],
-        }
-
-    try:
-        client = (
-            shopaikey_client
-            if shopaikey_client is not None
-            else create_shopaikey_client(resolved_settings)
-        )
-        context_chunks = assign_citation_keys(context_chunks)
-        context = build_context_prompt(context_chunks)
-        attempts: list[RetryAttempt] = []
-        response = retry_sync(
-            "answer_regeneration",
-            lambda: client.chat.completions.create(
-                model=resolved_settings.SHOPAIKEY_CHAT_MODEL,
-                messages=build_regeneration_messages(
-                    context=context,
-                    question=question,
-                    feedback=_compact_grounding_feedback(state),
-                ),
-                temperature=resolved_settings.TEMPERATURE,
-                max_tokens=resolved_settings.MAX_OUTPUT_TOKENS,
-            ),
-            settings=resolved_settings,
-            on_attempt=attempts.append,
-        )
-        answer = extract_chat_content(response)
-        if answer is None:
-            return {
-                "error_message": safe_detail(
-                    "Chat completion returned empty content",
-                    fallback=DEFAULT_QUERY_ERROR,
-                )
-            }
-        return {
-            "answer": answer,
-            "sources": build_source_citations(context_chunks),
-            "retrieval_metrics": _merge_retry_metrics(
-                dict(state.get("retrieval_metrics") or {}),
-                "regenerate_answer",
-                attempts,
-            ),
-        }
-    except Exception as exc:  # pragma: no cover - defensive guard
-        return {
-            "error_message": safe_detail(
-                f"Failed to regenerate answer: {exc}",
-                fallback=DEFAULT_QUERY_ERROR,
-            )
-        }
-
-
 def validate_citations_node(
     state: Mapping[str, Any],
     *,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    _resolve_settings(settings)
-    answer = state.get("answer")
-    context_chunks = resolve_context_chunks(state)
-    validation_output = validate_answer_citations(
-        str(answer) if answer is not None else None,
-        context_chunks,
+    return _verification_steps.validate_citations_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
     )
-    metrics = dict(state.get("retrieval_metrics") or {})
-    metrics.update(
-        citation_validation.evidence_group_coverage(
-            context_chunks=context_chunks,
-            cited_keys=validation_output.validation.cited_keys,
-        )
-    )
-    return {
-        "citation_validation_result": validation_output.validation,
-        "sources": validation_output.sources,
-        "retrieval_metrics": metrics,
-    }
 
 
 def verify_grounding_node(
@@ -906,90 +441,12 @@ def verify_grounding_node(
     settings: Settings | None = None,
     shopaikey_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    answer = normalize_text(state.get("answer"))
-    validation = state.get("citation_validation_result")
-    verification_attempt_count = int(state.get("verification_attempt_count") or 0) + 1
-
-    if answer is None:
-        return {
-            "answer_verified": False,
-            "verification_attempt_count": verification_attempt_count,
-        }
-
-    if answer == NO_RELEVANT_INFORMATION_MESSAGE or "indexed documents do not contain enough information" in answer.lower():
-        return {
-            "grounding_result": grounding.GroundingResult(
-                grounded=True,
-                score=1.0,
-                unsupported_claims=[],
-                missing_citations=[],
-            ),
-            "answer_verified": True,
-            "verification_attempt_count": verification_attempt_count,
-        }
-
-    citations_valid = bool(getattr(validation, "valid", False))
-    cited_keys = list(getattr(validation, "cited_keys", []) or [])
-    evidence = grounding.cited_evidence_from_sources(
-        context_chunks=resolve_context_chunks(state),
-        cited_keys=cited_keys,
+    return _verification_steps.verify_grounding_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        shopaikey_client=shopaikey_client,
     )
-    if not citations_valid or not evidence:
-        result = grounding.GroundingResult(
-            grounded=False,
-            score=0.0,
-            unsupported_claims=[],
-            missing_citations=[] if cited_keys else ["valid citations"],
-        )
-        return {
-            "grounding_result": result,
-            "answer_verified": False,
-            "verification_attempt_count": verification_attempt_count,
-        }
-
-    try:
-        attempts: list[RetryAttempt] = []
-        try:
-            result = grounding.verify_answer_grounding(
-                answer,
-                evidence=evidence,
-                settings=resolved_settings,
-                shopaikey_client=shopaikey_client,
-                retry_attempts=attempts,
-            )
-        except TypeError as exc:
-            if "unexpected keyword argument" not in str(exc):
-                raise
-            result = grounding.verify_answer_grounding(
-                answer,
-                evidence=evidence,
-                settings=resolved_settings,
-                shopaikey_client=shopaikey_client,
-            )
-    except grounding.GroundingProviderError:
-        metrics = _merge_retry_metrics(
-            dict(state.get("retrieval_metrics") or {}),
-            "verify_grounding",
-            locals().get("attempts", []),
-        )
-        return {
-            "answer_verified": False,
-            "grounding_provider_failed": True,
-            "verification_attempt_count": verification_attempt_count,
-            "retrieval_metrics": metrics,
-        }
-
-    return {
-        "grounding_result": result,
-        "answer_verified": result.grounded and result.score >= resolved_settings.GROUNDING_MIN_SCORE,
-        "verification_attempt_count": verification_attempt_count,
-        "retrieval_metrics": _merge_retry_metrics(
-            dict(state.get("retrieval_metrics") or {}),
-            "verify_grounding",
-            attempts,
-        ),
-    }
 
 
 def finalize_answer_node(
@@ -997,13 +454,14 @@ def finalize_answer_node(
     *,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    _resolve_settings(settings)
-    if state.get("answer_verified") is False:
-        return {
-            "answer": SAFE_INSUFFICIENT_CONTEXT_MESSAGE,
-            "sources": [],
-        }
-    return {}
+    return _verification_steps.finalize_answer_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+    )
+
+
+# --- Persistence ---
 
 
 def save_message_optional_node(
@@ -1012,35 +470,12 @@ def save_message_optional_node(
     settings: Settings | None = None,
     supabase_client: Any | None = None,
 ) -> dict[str, Any]:
-    resolved_settings = _resolve_settings(settings)
-    if not state.get("save_message"):
-        return {}
-
-    question = _question_text(state)
-    answer = normalize_text(state.get("answer"))
-    if question is None or answer is None:
-        return {}
-
-    try:
-        sources = state.get("sources")
-        if isinstance(sources, list):
-            normalized_sources = [
-                dict(source) for source in sources if isinstance(source, Mapping)
-            ]
-        else:
-            normalized_sources = build_source_citations(resolve_context_chunks(state))
-
-        message_service.create_message(
-            question=question,
-            answer=answer,
-            sources=normalized_sources,
-            metadata=message_metadata(state),
-            settings=resolved_settings,
-            supabase_client=supabase_client,
-        )
-    except Exception as exc:  # pragma: no cover - message save must not fail chat
-        logger.warning("Message save failed: %s", exc)
-    return {}
+    return _persistence_steps.save_message_optional_node(
+        state,
+        settings=settings,
+        deps=_query_step_dependencies(),
+        supabase_client=supabase_client,
+    )
 
 
 __all__ = [
