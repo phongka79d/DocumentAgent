@@ -8,6 +8,10 @@ import sys
 import time
 import urllib.request
 
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"))
+
 BACKEND = "http://localhost:8000"
 ALICE_ID = "9bbc4055-4532-47fa-8ba7-c84272cd3c4c"
 

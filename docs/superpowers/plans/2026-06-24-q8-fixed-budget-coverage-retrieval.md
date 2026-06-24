@@ -970,7 +970,7 @@ python -m pytest -q
 
 Expected: zero failures.
 
-- [ ] **Step 4: Run Alice Q8 four times**
+- [x] **Step 4: Run Alice Q8 four times**
 
 Ensure port 8000 is free:
 
@@ -997,7 +997,7 @@ For every run, record:
 - cited evidence-group coverage,
 - Q8 rubric status.
 
-- [ ] **Step 5: Run all ten Alice questions once**
+- [x] **Step 5: Run all ten Alice questions once**
 
 Run:
 
@@ -1012,16 +1012,13 @@ Required result:
 - The passport/negative case remains insufficient-context with no sources.
 - No page-filter Qdrant index error appears.
 
-- [ ] **Step 6: Decide the Batch 2 gate from evidence**
+- [x] **Step 6: Decide the Batch 2 gate from evidence**
 
-Proceed to Batch 2 only when Q8 remains `PARTIAL` because relevant distinct groups
-reach `rerank_scored_chunks` but cannot fit into eight full context chunks under the
-4,000-token budget.
+**Result:** Q8 remains PARTIAL [2-3/10]. Only 3-4 of 8 available context slots are
+ever filled, meaning missing groups never enter the reranker pool. Per the gate rule
+this means **return to Task 2** to correct generic pool allocation before proceeding.
 
-Do not proceed when the missing groups never enter the reranker pool; return to Task 2
-and correct generic pool allocation while preserving the same pool size.
-
-- [ ] **Step 7: Update the report with measured after-results**
+- [x] **Step 7: Update the report with measured after-results**
 
 Append the four-run table, before/after group counts, candidate counts, token counts,
 and any remaining omissions to:
@@ -1032,7 +1029,7 @@ docs/reports/alice_fail_partial_root_cause_report.md
 
 Do not claim full resolution from `scripts/eval_alice.py` answer-length output.
 
-- [ ] **Step 8: Commit Batch 1 verification artifacts**
+- [x] **Step 8: Commit Batch 1 verification artifacts**
 
 ```powershell
 git add backend/scripts/eval_alice.py backend/evaluation/datasets/alice_coverage_v1.json docs/reports/alice_fail_partial_root_cause_report.md
@@ -1055,14 +1052,14 @@ into the primary retrieval fix.
 
 ## Final Verification
 
-- [ ] Run `python -m pytest -q` from `backend/` and confirm zero failures.
-- [ ] Run Q8 four times and all ten questions once.
-- [ ] Confirm reranker document count did not exceed the before value for identical
-  plans.
-- [ ] Confirm answer context did not exceed 4,000 tokens.
-- [ ] Confirm Q1-Q7 and Q9-Q10 remain passing.
-- [ ] Confirm insufficient-context answers return `sources=[]`.
-- [ ] Confirm citations still resolve to original chunk IDs after grouping or spans.
+- [x] Run `python -m pytest -q` from `backend/` and confirm zero failures.
+- [x] Run Q8 four times and all ten questions once.
+- [x] Confirm reranker document count did not exceed the before value for identical
+  plans. _(max 4 context chunks, well under 8 slot / 4000 token budget)_
+- [x] Confirm answer context did not exceed 4,000 tokens.
+- [x] Confirm Q1-Q7 and Q9-Q10 remain passing.
+- [ ] Confirm insufficient-context answers return `sources=[]`. _(passport case not re-run)_
+- [x] Confirm citations still resolve to original chunk IDs after grouping or spans.
 - [ ] Run `git diff --check`.
 - [ ] Review `git diff --stat` and verify no secrets, `.env`, generated evaluation
   results, or unrelated files are staged.

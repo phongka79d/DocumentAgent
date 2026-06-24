@@ -470,3 +470,50 @@ The strongest solution is a fixed-budget coverage-aware selector, all-candidate 
 return, anchor-before-neighbor context assembly, and bounded evidence spans. This
 improves exhaustive questions without larger model inputs and without any Alice- or
 test-specific production logic.
+
+---
+
+## Batch 1 After-Results (2026-06-24)
+
+### Four Q8 runs
+
+| Run | Context chunks | Primary anchors | Neighbors | Evidence groups matched | Rubric status |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 3 | 2 | 1 | twinkle_bat, beautiful_soup | PARTIAL [2/10] |
+| 2 | 3 | 2 | 1 | twinkle_bat, beautiful_soup | PARTIAL [2/10] |
+| 3 | 3 | 2 | 1 | twinkle_bat, beautiful_soup | PARTIAL [2/10] |
+| 4 | 3 | 2 | 1 | twinkle_bat, beautiful_soup | PARTIAL [2/10] |
+| Full suite | 4 | 3 | 1 | father_william, twinkle_bat, beautiful_soup | PARTIAL [3/10] |
+
+All runs produced at most 3-4 context chunks, well below the 8-item budget.
+Context token count never approached the 4,000 token ceiling.
+
+### All-ten-questions run
+
+| Question | Status | Sources | Notes |
+| ---: | ---: | ---: | ---: |
+| Q1-Q7 | UNSCORED | 1-4 | All answered with grounded sources. |
+| Q8 | PARTIAL [3/10] | 4 | 3 evidence groups matched (father_william, twinkle_bat, beautiful_soup). |
+| Q9 | UNSCORED | 3 | Grounded answer. |
+| Q10 | UNSCORED | 3 | Grounded answer. |
+
+No page-filter Qdrant index errors. No server failures. The passport/negative-case
+test was not re-run (no --passport question in the eval fixture).
+
+### Gate decision
+
+Q8 remains **PARTIAL** at 2-3/10 evidence groups. The context budget allows 8 items
+but only 3-4 chunks are ever filled. Since the missing 7-8 evidence groups are not
+reaching the answer at all rather than being crowded out of a full context, the
+evidence indicates these groups **never enter the reranker pool** in sufficient
+quantity.
+
+Per the plan's gate:
+> Do not proceed when the missing groups never enter the reranker pool; return to
+> Task 2 and correct generic pool allocation while preserving the same pool size.
+
+**Decision: Return to Task 2** — the evidence-group-aware pool allocation needs
+correction to surface more distinct groups before the reranker stage. The coverage
+anchor-filling (Tasks 3-4) and metrics (Task 5) are working correctly for whatever
+groups reach the scored chunks, but too few groups survive the pre-reranker pool
+construction.
