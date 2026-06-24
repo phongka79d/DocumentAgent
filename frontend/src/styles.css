@@ -499,28 +499,41 @@ dl {
 
 /* Citation Card style */
 .citation-card {
-  background: var(--panel);
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  width: min(100%, 360px);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: 280px;
-  width: 100%;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 12px;
   text-align: left;
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 
-.citation-card:hover {
+.citation-card:hover,
+.citation-card:focus-visible {
   background: var(--panel-soft);
-  border-color: rgba(29, 78, 216, 0.2);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--panel-border));
+  transform: translateY(-1px);
 }
 
 .citation-card.selected {
   background: var(--accent-soft);
-  border-color: rgba(29, 78, 216, 0.4);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--panel-border));
+}
+
+.citation-card-label {
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-primary);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 7px;
 }
 
 .citation-card-icon {
@@ -537,21 +550,28 @@ dl {
 }
 
 .citation-card-details {
-  overflow: hidden;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .citation-card-name {
-  font-size: 12px;
-  font-weight: 600;
   color: var(--text);
-  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .citation-card-meta {
-  font-size: 10px;
   color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Inline Citation Pill & Popover */
