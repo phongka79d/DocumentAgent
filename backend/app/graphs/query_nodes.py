@@ -32,6 +32,7 @@ from app.services import query_planning, retrieval, retrieval_context, score_fus
 from app.services import relations as relation_service
 from app.services.citation_validation import assign_citation_keys, validate_answer_citations
 from app.services import grounding
+from app.services import citation_validation
 from app.services.shopaikey_client import create_shopaikey_client
 
 logger = logging.getLogger(__name__)

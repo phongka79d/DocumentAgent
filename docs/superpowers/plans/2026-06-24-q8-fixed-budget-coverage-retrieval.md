@@ -860,7 +860,7 @@ git commit -m "feat: report cited evidence group coverage"
 - Create: `backend/evaluation/datasets/alice_coverage_v1.json`
 - Modify: `docs/reports/alice_fail_partial_root_cause_report.md`
 
-- [ ] **Step 1: Add evaluation-only rubric data**
+- [x] **Step 1: Add evaluation-only rubric data**
 
 Create `backend/evaluation/datasets/alice_coverage_v1.json` with the Q8 evaluation
 policy below. Alice-specific terms remain evaluation data and do not enter
@@ -890,7 +890,7 @@ This policy explicitly describes the expected evidence items for LLM semantic ev
 product owner chooses a narrower literary definition, change only this dataset before
 the first post-change evaluation and record that decision in the report.
 
-- [ ] **Step 2: Replace answer-length scoring**
+- [x] **Step 2: Replace answer-length scoring**
 
 Refactor `scripts/eval_alice.py` so scoring reads the rubric file and returns:
 
@@ -959,7 +959,7 @@ def evaluate_coverage_with_llm(answer: str, required_groups: list[dict], api_cli
         return []
 ```
 
-- [ ] **Step 3: Run the full automated test suite**
+- [x] **Step 3: Run the full automated test suite**
 
 Run:
 

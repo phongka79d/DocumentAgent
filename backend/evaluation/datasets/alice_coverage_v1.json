@@ -1,0 +1,17 @@
+{
+  "8": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "crocodile", "description": "The poem 'How doth the little crocodile' recited by Alice"},
+      {"id": "mouse_tale", "description": "The Mouse's long and sad tale"},
+      {"id": "father_william", "description": "The poem 'You Are Old, Father William' recited by Alice"},
+      {"id": "duchess_lullaby", "description": "The lullaby 'Speak roughly to your little boy' sung by the Duchess"},
+      {"id": "twinkle_bat", "description": "The song/poem 'Twinkle, twinkle, little bat' sung by the Hatter"},
+      {"id": "lobster_quadrille", "description": "The Lobster Quadrille song performed by the Mock Turtle"},
+      {"id": "sluggard_variant", "description": "The altered poem 'Tis the Voice of the Sluggard' recited by Alice"},
+      {"id": "beautiful_soup", "description": "The song 'Beautiful Soup' sung by the Mock Turtle"},
+      {"id": "queen_tarts", "description": "The tart accusation rhyme/poem read by the White Rabbit"},
+      {"id": "trial_verse", "description": "The trial verse/poem 'They told me you had been to her' read by the White Rabbit"}
+    ]
+  }
+}
