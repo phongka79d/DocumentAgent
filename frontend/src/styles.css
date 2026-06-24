@@ -22,7 +22,69 @@
   
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.05),
     0 10px 24px rgba(15, 23, 42, 0.04);
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(148, 163, 184, 0.28);
+  --glass-shadow: 0 16px 48px rgba(15, 23, 42, 0.12);
+  --motion-fast: 160ms ease;
+  --motion-medium: 260ms ease;
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0f1419;
+    --panel: #151b22;
+    --panel-border: #2d3742;
+    --panel-soft: #1c242d;
+    --panel-high: #26313c;
+    --text: #eef2f6;
+    --muted: #aab4c0;
+    --accent: #d7e2ff;
+    --on-primary: #101418;
+    --accent-soft: #23314a;
+    --on-secondary-container: #d7e2ff;
+    --success: #5eead4;
+    --success-soft: rgba(20, 184, 166, 0.16);
+    --warning: #facc15;
+    --warning-soft: rgba(250, 204, 21, 0.14);
+    --danger: #fca5a5;
+    --danger-soft: rgba(248, 113, 113, 0.14);
+    --glass-bg: rgba(21, 27, 34, 0.78);
+    --glass-border: rgba(148, 163, 184, 0.2);
+    --glass-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+  }
+}
+
+.app-topbar,
+.app-sidebar,
+.app-preview-panel,
+.chat-bubble-row.ai .chat-bubble-content,
+.chat-input-bar,
+.document-card,
+.history-card,
+.citation-card,
+.preview-fragment-card,
+.preview-metadata-card {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(18px);
+}
+
+@supports not (backdrop-filter: blur(18px)) {
+  .app-topbar,
+  .app-sidebar,
+  .app-preview-panel,
+  .chat-bubble-row.ai .chat-bubble-content,
+  .chat-input-bar,
+  .document-card,
+  .history-card,
+  .citation-card,
+  .preview-fragment-card,
+  .preview-metadata-card {
+    background: var(--panel);
+  }
 }
 
 * {
@@ -1527,6 +1589,36 @@ dl {
   color: var(--muted);
   font-size: 12px;
   padding: 12px;
+}
+
+@keyframes response-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-bubble-row.ai .chat-bubble-body {
+  animation: response-enter var(--motion-medium);
+}
+
+.app-preview-panel {
+  transition: width var(--motion-medium), transform var(--motion-medium), border-color var(--motion-medium);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
 }
 
 /* Responsive media queries */
