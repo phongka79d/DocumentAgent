@@ -109,6 +109,7 @@ class RetrievalCandidate(APIModel):
     fusion_score: float | None = None
     retrieval_paths: list[RetrievalPath] = Field(default_factory=list)
     subquery_ids: list[str] = Field(default_factory=list)
+    evidence_group_id: str | None = None
 
 
 class GroundingResult(APIModel):

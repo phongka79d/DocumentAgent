@@ -56,7 +56,7 @@
 - Create: `backend/tests/test_retrieval_diversity.py`
 - Modify: `backend/app/models/schemas.py:91-112`
 
-- [ ] **Step 1: Write failing grouping tests**
+- [x] **Step 1: Write failing grouping tests**
 
 Create `backend/tests/test_retrieval_diversity.py` with these behaviors:
 
@@ -124,7 +124,7 @@ def test_select_group_diverse_fills_by_original_rank_after_group_coverage():
     assert [item["chunk_id"] for item in selected] == ["a", "c", "b"]
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run:
 
@@ -135,7 +135,7 @@ python -m pytest tests/test_retrieval_diversity.py -q
 
 Expected: collection fails because `app.services.retrieval_diversity` does not exist.
 
-- [ ] **Step 3: Implement grouping and stable selection**
+- [x] **Step 3: Implement grouping and stable selection**
 
 Create `backend/app/services/retrieval_diversity.py` with:
 
@@ -259,7 +259,7 @@ Add this optional field to `RetrievalCandidate` in `backend/app/models/schemas.p
 evidence_group_id: str | None = None
 ```
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run:
 
@@ -269,7 +269,7 @@ python -m pytest tests/test_retrieval_diversity.py tests/test_contracts.py tests
 
 Expected: all selected tests pass.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```powershell
 git add backend/app/services/retrieval_diversity.py backend/app/models/schemas.py backend/tests/test_retrieval_diversity.py
