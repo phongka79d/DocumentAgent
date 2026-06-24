@@ -31,7 +31,7 @@ function CitationPill({
   onSelectSource,
   matchIndex,
 }: CitationPillProps) {
-  const [align, setAlign] = useState<"left" | "right" | "center">("center");
+  const [style, setStyle] = useState<React.CSSProperties>({});
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   const pageRange = formatPageRange(source.page_start, source.page_end);
@@ -44,25 +44,28 @@ function CitationPill({
     const rect = buttonRef.current.getBoundingClientRect();
     const center = rect.left + rect.width / 2;
     const popoverHalfWidth = 160;
+    const popoverWidth = 320;
+    const padding = 16;
 
-    // Sidebar is ~260px wide, so we want the popover left edge to be >= 280px to avoid clipping on the left.
-    if (center - popoverHalfWidth < 280) {
-      setAlign("left");
-    } else if (center + popoverHalfWidth > window.innerWidth - 40) {
-      setAlign("right");
-    } else {
-      setAlign("center");
-    }
-  };
+    // Find the boundary container to avoid clipping
+    const container =
+      buttonRef.current.closest(".chat-messages-container") ||
+      buttonRef.current.closest(".main-area");
 
-  const getPopoverStyle = () => {
-    if (align === "left") {
-      return { left: "0", transform: "none" };
-    }
-    if (align === "right") {
-      return { right: "0", left: "auto", transform: "none" };
-    }
-    return {};
+    const containerLeft = container ? container.getBoundingClientRect().left : 0;
+    const containerRight = container ? container.getBoundingClientRect().right : window.innerWidth;
+
+    const desiredLeft = center - popoverHalfWidth;
+    const minAllowedLeft = containerLeft + padding;
+    const maxAllowedLeft = containerRight - popoverWidth - padding;
+
+    const targetLeft = Math.max(minAllowedLeft, Math.min(maxAllowedLeft, desiredLeft));
+    const relativeLeft = targetLeft - rect.left;
+
+    setStyle({
+      left: `${relativeLeft}px`,
+      transform: "none",
+    });
   };
 
   return (
@@ -80,7 +83,7 @@ function CitationPill({
       >
         [{label}]
       </button>
-      <span className="citation-popover" role="tooltip" style={getPopoverStyle()}>
+      <span className="citation-popover" role="tooltip" style={style}>
         <span className="citation-popover-title">{source.file_name}</span>
         <span className="citation-popover-meta">
           {pageRange} - Chunk {source.chunk_index}
