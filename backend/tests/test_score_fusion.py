@@ -329,3 +329,39 @@ def test_select_rerank_candidates_preserves_strong_semantic_candidate_below_fuse
             assert c["fusion_score"] is not None
     # Total pool size respects the provider cap
     assert len(pool) <= settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K
+
+
+def test_select_rerank_candidates_improves_group_coverage_without_growing_legacy_pool():
+    settings = _settings(
+        RETRIEVAL_RERANK_FUSED_TOP_K=3,
+        RETRIEVAL_RERANK_SEMANTIC_PER_PATH_TOP_K=2,
+        RETRIEVAL_RERANK_KEYWORD_PER_PATH_TOP_K=1,
+        RETRIEVAL_RERANK_CANDIDATE_TOP_K=10,
+        RETRIEVAL_CONTEXT_WINDOW=1,
+    )
+    near_a = _candidate("near-a", chunk_index=10, content="shared overlap alpha beta gamma")
+    near_b = _candidate("near-b", chunk_index=11, content="shared overlap alpha beta gamma continuation")
+    far_b = _candidate("far-b", chunk_index=30, content="independent second evidence")
+    far_c = _candidate("far-c", chunk_index=60, content="independent third evidence")
+    for rank, candidate in enumerate([near_a, near_b, far_b, far_c], start=1):
+        candidate.update(
+            semantic_rank=rank,
+            semantic_score=1.0 / rank,
+            retrieval_paths=[RetrievalPath.SEMANTIC],
+            subquery_ids=["q1"],
+        )
+
+    fused = score_fusion.fuse_candidates(
+        [[near_a, near_b, far_b, far_c]],
+        settings=settings.model_copy(update={"RETRIEVAL_FUSION_TOP_K": 10}),
+    )
+    selected = score_fusion.select_rerank_candidates(
+        {"q1:semantic": [near_a, near_b, far_b, far_c]},
+        fused_candidates=fused,
+        settings=settings,
+    )
+
+    assert len(selected) == 3
+    assert selected[0]["chunk_id"] == fused[0]["chunk_id"]
+    assert {item["chunk_id"] for item in selected} == {"near-a", "far-b", "far-c"}
+    assert len({item["evidence_group_id"] for item in selected}) == 3

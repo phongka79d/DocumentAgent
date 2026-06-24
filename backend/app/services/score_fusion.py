@@ -289,5 +289,25 @@ def select_rerank_candidates(
                 ordered.append(dict(candidate))
             seen.add(chunk_id)
 
-    # 4. Cap at the total provider-cap setting
-    return ordered[: resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K]
+    # 4. Keep the current pool to calculate the no-growth budget
+    legacy_pool = ordered[: resolved_settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K]
+    pool_budget = len(legacy_pool)
+
+    # 5. Build a deduplicated universe: legacy pool first, then all fused
+    universe: list[dict[str, Any]] = []
+    universe_seen: set[str] = set()
+    for candidate in [*legacy_pool, *fused_candidates]:
+        chunk_id = _normalize_text(candidate.get("chunk_id") or candidate.get("id"))
+        if chunk_id is None or chunk_id in universe_seen:
+            continue
+        universe.append(dict(candidate))
+        universe_seen.add(chunk_id)
+
+    # 6. Assign evidence groups and select diverse candidates
+    from app.services import retrieval_diversity
+
+    grouped = retrieval_diversity.assign_evidence_groups(
+        universe,
+        settings=resolved_settings,
+    )
+    return retrieval_diversity.select_group_diverse(grouped, limit=pool_budget)

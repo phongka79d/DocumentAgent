@@ -3337,4 +3337,5 @@ def test_fuse_candidates_node_preserves_strong_semantic_candidate_below_fused_cu
     )
     assert "high-fused" in pool_ids
     assert len(pool_ids) == len(set(pool_ids)), "Duplicate chunk IDs in pool"
+    assert fuse_result["retrieval_metrics"]["rerank_candidate_count"] == len(diverse_pool)
     assert len(diverse_pool) <= settings.RETRIEVAL_RERANK_CANDIDATE_TOP_K

@@ -283,7 +283,7 @@ git commit -m "feat: add generic evidence grouping"
 - Modify: `backend/app/services/score_fusion.py:223-293`
 - Modify: `backend/tests/test_score_fusion.py:258-331`
 
-- [ ] **Step 1: Write a failing fixed-cardinality regression test**
+- [x] **Step 1: Write a failing fixed-cardinality regression test**
 
 Append to `backend/tests/test_score_fusion.py`:
 
@@ -324,7 +324,7 @@ def test_select_rerank_candidates_improves_group_coverage_without_growing_legacy
     assert len({item["evidence_group_id"] for item in selected}) == 3
 ```
 
-- [ ] **Step 2: Run test and verify RED**
+- [x] **Step 2: Run test and verify RED**
 
 Run:
 
@@ -334,7 +334,7 @@ python -m pytest tests/test_score_fusion.py::test_select_rerank_candidates_impro
 
 Expected: FAIL because current selection returns candidates by fused/path order and does not assign evidence groups.
 
-- [ ] **Step 3: Modify pool construction without changing its size**
+- [x] **Step 3: Modify pool construction without changing its size**
 
 In `select_rerank_candidates`:
 
@@ -373,7 +373,7 @@ grouped = retrieval_diversity.assign_evidence_groups(
 return retrieval_diversity.select_group_diverse(grouped, limit=pool_budget)
 ```
 
-- [ ] **Step 4: Run pool tests**
+- [x] **Step 4: Run pool tests**
 
 Run:
 
@@ -383,7 +383,7 @@ python -m pytest tests/test_score_fusion.py tests/test_query_graph.py::test_fuse
 
 Expected: score-fusion tests pass, and the existing strong-semantic/jar regression remains green.
 
-- [ ] **Step 5: Add a pool-size metric assertion**
+- [x] **Step 5: Add a pool-size metric assertion**
 
 Extend the query-graph fusion test to assert:
 
@@ -402,7 +402,7 @@ python -m pytest tests/test_score_fusion.py tests/test_query_graph.py -q
 
 Expected: all tests pass.
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 ```powershell
 git add backend/app/services/score_fusion.py backend/tests/test_score_fusion.py backend/tests/test_query_graph.py
