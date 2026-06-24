@@ -885,9 +885,17 @@ def validate_citations_node(
         str(answer) if answer is not None else None,
         context_chunks,
     )
+    metrics = dict(state.get("retrieval_metrics") or {})
+    metrics.update(
+        citation_validation.evidence_group_coverage(
+            context_chunks=context_chunks,
+            cited_keys=validation_output.validation.cited_keys,
+        )
+    )
     return {
         "citation_validation_result": validation_output.validation,
         "sources": validation_output.sources,
+        "retrieval_metrics": metrics,
     }
 
 

@@ -121,8 +121,42 @@ def validate_answer_citations(
     )
 
 
+def evidence_group_coverage(
+    *,
+    context_chunks: Sequence[Mapping[str, Any]],
+    cited_keys: Sequence[str],
+) -> dict[str, int | float]:
+    keyed_context = assign_citation_keys(context_chunks)
+    key_to_group: dict[str, str] = {}
+    for chunk in keyed_context:
+        key = str(chunk.get("citation_key", ""))
+        group = str(
+            chunk.get("evidence_group_id")
+            or chunk.get("chunk_id")
+            or chunk.get("id")
+            or key
+        )
+        key_to_group[key] = group
+
+    selected_groups = set(key_to_group.values())
+    cited_groups = {
+        key_to_group[key]
+        for key in cited_keys
+        if key in key_to_group
+    }
+    selected_count = len(selected_groups)
+    return {
+        "selected_evidence_group_count": selected_count,
+        "cited_evidence_group_count": len(cited_groups),
+        "evidence_group_coverage_rate": (
+            len(cited_groups) / selected_count if selected_count else 0.0
+        ),
+    }
+
+
 __all__ = [
     "CitationValidationOutput",
     "assign_citation_keys",
+    "evidence_group_coverage",
     "validate_answer_citations",
 ]

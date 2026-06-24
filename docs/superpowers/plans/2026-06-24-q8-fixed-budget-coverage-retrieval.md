@@ -757,7 +757,7 @@ git commit -m "fix: prioritize uncovered evidence before neighbors"
 - Modify: `backend/app/graphs/query_nodes.py:879-887`
 - Modify: `backend/tests/test_citation_validation.py`
 
-- [ ] **Step 1: Write a failing metric test**
+- [x] **Step 1: Write a failing metric test**
 
 Add:
 
@@ -781,7 +781,7 @@ def test_cited_evidence_group_coverage_counts_distinct_groups():
     }
 ```
 
-- [ ] **Step 2: Run test and verify RED**
+- [x] **Step 2: Run test and verify RED**
 
 Run:
 
@@ -791,7 +791,7 @@ python -m pytest tests/test_citation_validation.py::test_cited_evidence_group_co
 
 Expected: FAIL because the helper does not exist.
 
-- [ ] **Step 3: Implement the pure local metric**
+- [x] **Step 3: Implement the pure local metric**
 
 Add `evidence_group_coverage(context_chunks, cited_keys)` to
 `citation_validation.py`:
@@ -831,7 +831,7 @@ In `validate_citations_node`, merge the returned values into `retrieval_metrics`
 Do not change grounding acceptance, regeneration, or final source behavior in this
 task.
 
-- [ ] **Step 4: Run citation and insufficient-context tests**
+- [x] **Step 4: Run citation and insufficient-context tests**
 
 Run:
 
@@ -841,7 +841,7 @@ python -m pytest tests/test_citation_validation.py tests/test_grounding.py tests
 
 Expected: all tests pass, including insufficient-context responses with `sources=[]`.
 
-- [ ] **Step 5: Commit Task 5**
+- [x] **Step 5: Commit Task 5**
 
 ```powershell
 git add backend/app/services/citation_validation.py backend/app/graphs/query_nodes.py backend/tests/test_citation_validation.py

@@ -110,3 +110,24 @@ def test_safe_insufficient_context_answer_needs_no_citation():
     assert result.validation.valid is True
     assert result.validation.missing_citations is False
     assert result.sources == []
+
+
+def test_cited_evidence_group_coverage_counts_distinct_groups():
+    from app.services import citation_validation
+
+    context = [
+        {"chunk_id": "a", "citation_key": "S1", "evidence_group_id": "g1"},
+        {"chunk_id": "b", "citation_key": "S2", "evidence_group_id": "g1"},
+        {"chunk_id": "c", "citation_key": "S3", "evidence_group_id": "g2"},
+    ]
+
+    metrics = citation_validation.evidence_group_coverage(
+        context_chunks=context,
+        cited_keys=["S1", "S2"],
+    )
+
+    assert metrics == {
+        "selected_evidence_group_count": 2,
+        "cited_evidence_group_count": 1,
+        "evidence_group_coverage_rate": 0.5,
+    }
