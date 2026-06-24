@@ -5,6 +5,8 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
+import io
 from qdrant_client.http import models as qdrant_models
 
 from app.core.config import Settings, get_settings
@@ -191,6 +193,32 @@ def list_documents() -> DocumentListResponse:
 def get_document(document_id: UUID) -> DocumentResponse:
     settings = _resolve_settings()
     return _get_document_or_404(document_id, settings=settings)
+
+
+@router.get("/{document_id}/file")
+def get_document_file(document_id: UUID) -> StreamingResponse:
+    settings = _resolve_settings()
+    document = _get_document_or_404(document_id, settings=settings)
+    
+    # Download file from Supabase storage
+    client = create_supabase_client(settings)
+    bucket = client.storage.from_(settings.SUPABASE_STORAGE_BUCKET)
+    try:
+        file_bytes = bucket.download(document.storage_path)
+    except Exception as exc:
+        raise safe_http_exception(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"Failed to download file from storage: {exc}",
+        )
+    
+    # Return file as a streaming response
+    return StreamingResponse(
+        io.BytesIO(file_bytes),
+        media_type=document.mime_type or "application/octet-stream",
+        headers={
+            "Content-Disposition": f'inline; filename="{document.file_name}"'
+        }
+    )
 
 
 @router.post("/upload", response_model=UploadDocumentResponse)
