@@ -74,6 +74,24 @@ ALL_SETTINGS_FIELDS = {
     "MAX_OUTPUT_TOKENS",
 }
 
+ENV_EXAMPLE_PATH = Path(__file__).resolve().parents[1] / ".env.example"
+ACTIVE_DOC_PATHS = [
+    Path(__file__).resolve().parents[2] / "README.md",
+    Path(__file__).resolve().parents[1] / "README.md",
+]
+
+
+def _env_example_values() -> dict[str, str]:
+    values: dict[str, str] = {}
+    for raw_line in ENV_EXAMPLE_PATH.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, separator, value = line.partition("=")
+        assert separator == "=", f"Invalid env example line: {raw_line}"
+        values[key] = value
+    return values
+
 
 def _project_dependencies() -> set[str]:
     pyproject_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
@@ -124,10 +142,17 @@ def test_settings_load_defaults_from_master_plan(monkeypatch):
     assert settings.APP_ENV == "development"
     assert settings.FRONTEND_ORIGIN == "http://localhost:5173"
     assert settings.ADMIN_API_TOKEN == ""
+    assert settings.SUPABASE_URL == ""
+    assert settings.SUPABASE_SERVICE_ROLE_KEY == ""
     assert settings.SUPABASE_STORAGE_BUCKET == "documents"
+    assert settings.SHOPAIKEY_API_KEY == ""
     assert settings.SHOPAIKEY_BASE_URL == "https://api.shopaikey.com/v1"
-    assert settings.SHOPAIKEY_INPUT_MODEL == "gpt-4o-mini"
+    assert settings.SHOPAIKEY_CHAT_MODEL == "gpt-5-mini"
+    assert settings.SHOPAIKEY_INPUT_MODEL == "gpt-5-mini"
+    assert settings.QDRANT_URL == ""
+    assert settings.QDRANT_API_KEY == ""
     assert settings.QDRANT_COLLECTION == "document_chunks_v1"
+    assert settings.JINA_API_KEY == ""
     assert settings.ENABLE_RERANK is True
     assert settings.RETRIEVAL_SEMANTIC_TOP_K == 40
     assert settings.RETRIEVAL_FINAL_TOP_K == 5
@@ -171,6 +196,36 @@ def test_settings_load_defaults_from_master_plan(monkeypatch):
     assert settings.MAX_UPLOAD_BYTES == 25000000
     assert settings.TEMPERATURE == 0.2
     assert settings.MAX_OUTPUT_TOKENS == 1200
+
+
+def test_env_example_lists_every_settings_field():
+    values = _env_example_values()
+
+    assert set(values) == ALL_SETTINGS_FIELDS
+
+
+def test_active_docs_do_not_duplicate_backend_env_values():
+    assignment_names = tuple(sorted(ALL_SETTINGS_FIELDS))
+    for path in ACTIVE_DOC_PATHS:
+        text = path.read_text(encoding="utf-8")
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            assert not any(
+                stripped.startswith(f"{name}=") for name in assignment_names
+            ), f"{path} duplicates backend env value line: {stripped}"
+
+
+def test_service_placeholder_values_live_only_in_env_example():
+    settings = Settings(_env_file=None)
+
+    assert settings.SUPABASE_URL == ""
+    assert settings.SUPABASE_SERVICE_ROLE_KEY == ""
+    assert settings.SHOPAIKEY_API_KEY == ""
+    assert settings.QDRANT_URL == ""
+    assert settings.QDRANT_API_KEY == ""
+    assert settings.JINA_API_KEY == ""
 
 
 def test_settings_read_environment_overrides(monkeypatch):

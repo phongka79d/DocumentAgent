@@ -18,18 +18,18 @@ class Settings(BaseSettings):
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     ADMIN_API_TOKEN: str = ""
 
-    SUPABASE_URL: str = "https://your-project.supabase.co"
-    SUPABASE_SERVICE_ROLE_KEY: str = "your-supabase-service-role-key"
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
     SUPABASE_STORAGE_BUCKET: str = "documents"
 
-    SHOPAIKEY_API_KEY: str = "your-key"
+    SHOPAIKEY_API_KEY: str = ""
     SHOPAIKEY_BASE_URL: str = "https://api.shopaikey.com/v1"
-    SHOPAIKEY_CHAT_MODEL: str = "gpt-4o-mini"
-    SHOPAIKEY_INPUT_MODEL: str = "gpt-4o-mini"
+    SHOPAIKEY_CHAT_MODEL: str = "gpt-5-mini"
+    SHOPAIKEY_INPUT_MODEL: str = "gpt-5-mini"
     SHOPAIKEY_EMBEDDING_MODEL: str = "text-embedding-3-small"
 
-    QDRANT_URL: str = "https://your-cluster-url.cloud.qdrant.io"
-    QDRANT_API_KEY: str = "your-qdrant-key"
+    QDRANT_URL: str = ""
+    QDRANT_API_KEY: str = ""
     QDRANT_COLLECTION: str = "document_chunks_v1"
 
     ENABLE_RERANK: bool = True
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     ENABLE_SUMMARIES: bool = True
     ENABLE_RELATION_RETRIEVAL: bool = True
     ENABLE_WORKFLOW_TRACING: bool = True
-    JINA_API_KEY: str = "your-jina-key"
+    JINA_API_KEY: str = ""
     JINA_RERANK_MODEL: str = "jina-reranker-v2-base-multilingual"
 
     RETRIEVAL_SEMANTIC_TOP_K: int = 40
