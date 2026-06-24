@@ -21,6 +21,7 @@ interface ReferencesDrawerProps {
   onClose: () => void;
   onViewPreviousChunk: () => void;
   onViewNextChunk: () => void;
+  onOpenDocument?: (documentId: string, fileName: string) => void;
 }
 
 export default function ReferencesDrawer({
@@ -35,6 +36,7 @@ export default function ReferencesDrawer({
   onClose,
   onViewPreviousChunk,
   onViewNextChunk,
+  onOpenDocument,
 }: ReferencesDrawerProps) {
   const isOpen = selectedSource !== null;
   const entries = buildCitationEntries(sources);
@@ -46,14 +48,27 @@ export default function ReferencesDrawer({
           <span className="material-symbols-outlined">fact_check</span>
           <h2>{selectedSource?.file_name ?? "References"}</h2>
         </div>
-        <button
-          className="preview-close-button"
-          onClick={onClose}
-          aria-label="Close references drawer"
-          type="button"
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
+        <div className="preview-panel-header-actions">
+          {selectedSource && (
+            <button
+              className="preview-header-action-btn"
+              onClick={() => onOpenDocument?.(selectedSource.document_id, selectedSource.file_name)}
+              title="Open full document inline"
+              type="button"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>open_in_new</span>
+              <span>Open File</span>
+            </button>
+          )}
+          <button
+            className="preview-close-button"
+            onClick={onClose}
+            aria-label="Close references drawer"
+            type="button"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
 
       <div className="references-drawer-content">

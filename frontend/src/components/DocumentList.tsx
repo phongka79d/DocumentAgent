@@ -19,6 +19,7 @@ interface DocumentListProps {
   onReindex: (documentId: string) => Promise<void>;
   onDelete: (documentId: string) => Promise<void>;
   onRefresh: () => Promise<void>;
+  onOpenDocument?: (documentId: string, fileName: string) => void;
   apiBaseUrl: string;
 }
 
@@ -80,6 +81,7 @@ export default function DocumentList({
   onReindex,
   pendingAction,
   pendingDocumentId,
+  onOpenDocument,
   apiBaseUrl,
 }: DocumentListProps) {
   const hasDocuments = documents.length > 0;
@@ -194,16 +196,14 @@ export default function DocumentList({
 
             {/* Action Buttons */}
             <div className="document-card-actions">
-              <a
+              <button
                 className="document-action-btn"
-                href={`${apiBaseUrl}/api/documents/${document.id}/file`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: "none" }}
+                type="button"
+                onClick={() => onOpenDocument?.(document.id, document.file_name)}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>open_in_new</span>
                 <span>Open</span>
-              </a>
+              </button>
               {!isReady && !isProcessing && (
                 <button
                   className="document-action-btn"

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_API_BASE_URL } from "./api/client";
 import type { MessageHistoryItem } from "./api/types";
 import { useChat } from "./hooks/useChat";
@@ -10,6 +10,7 @@ import ChatPanel from "./components/ChatPanel";
 import DocumentList from "./components/DocumentList";
 import MessageHistoryPanel from "./components/MessageHistoryPanel";
 import ReferencesDrawer from "./components/ReferencesDrawer";
+import DocumentViewerModal from "./components/DocumentViewerModal";
 
 function resolveApiBaseUrl(rawValue: string | undefined): string {
   const value = rawValue?.trim();
@@ -27,6 +28,12 @@ export default function App() {
   const chat = useChat();
   const history = useMessageHistory();
   const ui = useUiState();
+
+  const [previewDoc, setPreviewDoc] = useState<{ id: string; name: string } | null>(null);
+
+  const handleOpenDocument = useCallback((documentId: string, fileName: string) => {
+    setPreviewDoc({ id: documentId, name: fileName });
+  }, []);
 
   // Message history: load after documents finish loading
   useEffect(() => {
@@ -286,6 +293,7 @@ export default function App() {
                 onReindex={(id) => docs.handleDocumentAction(id, "reindex")}
                 pendingAction={docs.pendingAction?.kind ?? null}
                 pendingDocumentId={docs.pendingAction?.documentId ?? null}
+                onOpenDocument={handleOpenDocument}
                 apiBaseUrl={apiBaseUrl}
               />
             </div>
@@ -332,7 +340,17 @@ export default function App() {
         onClose={chunks.clearSelection}
         onViewPreviousChunk={chunks.viewPreviousChunk}
         onViewNextChunk={chunks.viewNextChunk}
+        onOpenDocument={handleOpenDocument}
       />
+
+      {previewDoc && (
+        <DocumentViewerModal
+          documentId={previewDoc.id}
+          fileName={previewDoc.name}
+          onClose={() => setPreviewDoc(null)}
+          apiBaseUrl={apiBaseUrl}
+        />
+      )}
     </div>
   );
 }
