@@ -932,7 +932,7 @@ git commit -m "refactor: split query graph node steps"
 - Test: `backend/tests/test_ingestion_graph.py`
 - Test: `backend/tests/test_api_documents.py`
 
-- [ ] **Step 1: Add ingestion step dependency object**
+- [x] **Step 1: Add ingestion step dependency object**
 
 Create `backend/app/graphs/ingestion_steps/dependencies.py`:
 
@@ -953,7 +953,7 @@ class IngestionStepDependencies:
     relations: Any
 ```
 
-- [ ] **Step 2: Add facade dependency factory**
+- [x] **Step 2: Add facade dependency factory**
 
 In `backend/app/graphs/ingestion_nodes.py`, add:
 
@@ -971,7 +971,7 @@ def _ingestion_step_dependencies() -> IngestionStepDependencies:
     )
 ```
 
-- [ ] **Step 3: Move record state nodes**
+- [x] **Step 3: Move record state nodes**
 
 Move these symbols to `backend/app/graphs/ingestion_steps/records.py`:
 
@@ -994,7 +994,7 @@ def load_document_record_node(
 
 Use `deps.create_supabase_client(settings=resolved_settings)` instead of direct factory references.
 
-- [ ] **Step 4: Add record wrappers in the facade**
+- [x] **Step 4: Add record wrappers in the facade**
 
 In `backend/app/graphs/ingestion_nodes.py`, expose:
 
@@ -1023,7 +1023,7 @@ def mark_processing_node(
     )
 ```
 
-- [ ] **Step 5: Run ingestion tests after record move**
+- [x] **Step 5: Run ingestion tests after record move**
 
 Run from `backend/`:
 
@@ -1037,7 +1037,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 6: Move parse and chunk nodes**
+- [x] **Step 6: Move parse and chunk nodes**
 
 Move:
 
@@ -1048,7 +1048,7 @@ chunk_document_node -> backend/app/graphs/ingestion_steps/chunking.py
 
 Use `deps.get_parser_for_file(...)` inside parsing.
 
-- [ ] **Step 7: Add parse and chunk wrappers**
+- [x] **Step 7: Add parse and chunk wrappers**
 
 In `backend/app/graphs/ingestion_nodes.py`, expose wrappers for:
 
@@ -1059,7 +1059,7 @@ chunk_document_node
 
 Each wrapper must pass `_ingestion_step_dependencies()`.
 
-- [ ] **Step 8: Run parsing/chunking tests**
+- [x] **Step 8: Run parsing/chunking tests**
 
 Run from `backend/`:
 
@@ -1073,7 +1073,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 9: Move chunk persistence and summary nodes**
+- [x] **Step 9: Move chunk persistence and summary nodes**
 
 Move:
 
@@ -1084,7 +1084,7 @@ summarize_document_node -> backend/app/graphs/ingestion_steps/summaries.py
 
 Use `deps.create_supabase_client(settings=resolved_settings)` and `deps.create_shopaikey_client(settings=resolved_settings)`.
 
-- [ ] **Step 10: Add persistence and summary wrappers**
+- [x] **Step 10: Add persistence and summary wrappers**
 
 In `backend/app/graphs/ingestion_nodes.py`, expose wrappers for:
 
@@ -1093,7 +1093,7 @@ save_chunks_node
 summarize_document_node
 ```
 
-- [ ] **Step 11: Move vector indexing nodes**
+- [x] **Step 11: Move vector indexing nodes**
 
 Move:
 
@@ -1111,7 +1111,7 @@ embedding_client = deps.create_shopaikey_client(settings=resolved_settings)
 qdrant_client = deps.create_qdrant_client(settings=resolved_settings)
 ```
 
-- [ ] **Step 12: Add indexing wrappers**
+- [x] **Step 12: Add indexing wrappers**
 
 In `backend/app/graphs/ingestion_nodes.py`, expose wrappers for:
 
@@ -1120,7 +1120,7 @@ embed_chunks_node
 upsert_qdrant_node
 ```
 
-- [ ] **Step 13: Move relation and finalization nodes**
+- [x] **Step 13: Move relation and finalization nodes**
 
 Move:
 
@@ -1132,7 +1132,7 @@ mark_failed_node -> backend/app/graphs/ingestion_steps/finalization.py
 
 Use `deps.relations.update_document_relations(...)` in relation step code.
 
-- [ ] **Step 14: Add relation and finalization wrappers**
+- [x] **Step 14: Add relation and finalization wrappers**
 
 In `backend/app/graphs/ingestion_nodes.py`, expose wrappers for:
 
@@ -1142,11 +1142,11 @@ mark_ready_node
 mark_failed_node
 ```
 
-- [ ] **Step 15: Preserve facade exports**
+- [x] **Step 15: Preserve facade exports**
 
 At the bottom of `backend/app/graphs/ingestion_nodes.py`, keep all existing `__all__` names. If `__all__` does not exist, add one containing every public node and compatibility alias currently imported by tests.
 
-- [ ] **Step 16: Run ingestion/API tests**
+- [x] **Step 16: Run ingestion/API tests**
 
 Run from `backend/`:
 
@@ -1160,7 +1160,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 17: Run full backend tests**
+- [x] **Step 17: Run full backend tests**
 
 Run from `backend/`:
 
@@ -1174,7 +1174,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 18: Commit task**
+- [x] **Step 18: Commit task**
 
 Run from repository root:
 
@@ -1197,7 +1197,7 @@ git commit -m "refactor: split ingestion graph node steps"
 - Test: `backend/tests/test_score_fusion.py`
 - Test: `backend/tests/test_retrieval_hints.py`
 
-- [ ] **Step 1: Move normalization helpers**
+- [x] **Step 1: Move normalization helpers**
 
 Move retrieval-only normalization helpers from `backend/app/services/retrieval.py` to `backend/app/services/retrieval_normalization.py`.
 
@@ -1215,7 +1215,7 @@ from app.services.retrieval_normalization import (
 
 Use the exact helper names present in the current file.
 
-- [ ] **Step 2: Run retrieval tests after normalization move**
+- [x] **Step 2: Run retrieval tests after normalization move**
 
 Run from `backend/`:
 
@@ -1229,7 +1229,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 3: Move Qdrant filter construction**
+- [x] **Step 3: Move Qdrant filter construction**
 
 Move filter-building helpers from `backend/app/services/retrieval.py` to `backend/app/services/retrieval_filters.py`.
 
@@ -1241,7 +1241,7 @@ from app.services.retrieval_filters import build_qdrant_filter
 
 If the current public helper is named differently, keep that exact name exported from `retrieval.py`.
 
-- [ ] **Step 4: Run filter-related tests**
+- [x] **Step 4: Run filter-related tests**
 
 Run from `backend/`:
 
@@ -1255,7 +1255,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 5: Move semantic retrieval implementation**
+- [x] **Step 5: Move semantic retrieval implementation**
 
 Move these implementations to `backend/app/services/semantic_retrieval.py`:
 
@@ -1284,7 +1284,7 @@ def embed_question(*args: Any, **kwargs: Any) -> list[float]:
     return semantic_retrieval.embed_question(*args, **kwargs)
 ```
 
-- [ ] **Step 6: Preserve monkeypatch compatibility in hybrid retrieval**
+- [x] **Step 6: Preserve monkeypatch compatibility in hybrid retrieval**
 
 In `backend/app/services/retrieval.py`, any function that calls semantic helpers must call the facade-level names, not the moved module directly.
 
@@ -1302,7 +1302,7 @@ semantic_candidates = search_semantic_chunks(
 
 This keeps tests that patch `retrieval.embed_question` or `retrieval.search_semantic_chunks` valid.
 
-- [ ] **Step 7: Run semantic retrieval compatibility tests**
+- [x] **Step 7: Run semantic retrieval compatibility tests**
 
 Run from `backend/`:
 
@@ -1316,18 +1316,18 @@ Expected:
 passed
 ```
 
-- [ ] **Step 8: Move reranking implementation**
+- [x] **Step 8: Move reranking implementation**
 
 Move `rerank_chunks` implementation to `backend/app/services/reranking.py`.
 
 Keep `retrieval.py` facade:
 
 ```python
-def rerank_chunks(*args: Any, **kwargs: Any) -> list[dict[str, Any]]:
+def rerank_chunks(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return reranking.rerank_chunks(*args, **kwargs)
 ```
 
-- [ ] **Step 9: Run rerank tests**
+- [x] **Step 9: Run rerank tests**
 
 Run from `backend/`:
 
@@ -1341,11 +1341,11 @@ Expected:
 passed
 ```
 
-- [ ] **Step 10: Keep hybrid orchestration in the facade for now**
+- [x] **Step 10: Keep hybrid orchestration in the facade for now**
 
 Keep `retrieve_hybrid_chunks` and legacy `retrieve_context_chunks` orchestration inside `backend/app/services/retrieval.py` until all callers are less coupled. This protects tests that monkeypatch facade-level functions.
 
-- [ ] **Step 11: Run full backend tests**
+- [x] **Step 11: Run full backend tests**
 
 Run from `backend/`:
 
@@ -1359,7 +1359,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 12: Commit task**
+- [x] **Step 12: Commit task**
 
 Run from repository root:
 
@@ -1377,7 +1377,7 @@ git commit -m "refactor: split retrieval service internals"
 - Modify: `README.md`
 - Inspect: all files changed by Tasks 1-6
 
-- [ ] **Step 1: Search for duplicate active env blocks**
+- [x] **Step 1: Search for duplicate active env blocks**
 
 Run from repository root:
 
@@ -1393,7 +1393,7 @@ backend/tests/test_config.py
 
 The active docs must not contain backend env assignment lines. The test file may contain env names because it verifies the contract.
 
-- [ ] **Step 2: Search for graph-layer imports from services**
+- [x] **Step 2: Search for graph-layer imports from services**
 
 Run from repository root:
 
@@ -1407,7 +1407,7 @@ Expected:
 no matches
 ```
 
-- [ ] **Step 3: Confirm compatibility modules still import**
+- [x] **Step 3: Confirm compatibility modules still import**
 
 Run from `backend/`:
 
@@ -1436,7 +1436,7 @@ Expected:
 compat imports ok
 ```
 
-- [ ] **Step 4: Run targeted suites**
+- [x] **Step 4: Run targeted suites**
 
 Run from `backend/`:
 
@@ -1450,7 +1450,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 5: Run full backend tests**
+- [x] **Step 5: Run full backend tests**
 
 Run from `backend/`:
 
@@ -1464,7 +1464,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 6: Inspect diff for accidental behavior changes**
+- [x] **Step 6: Inspect diff for accidental behavior changes**
 
 Run from repository root:
 
@@ -1479,12 +1479,14 @@ Expected:
 No API route behavior, schema names, or core contract constants changed.
 ```
 
-- [ ] **Step 7: Commit final cleanup**
+- [x] **Step 7: Commit final cleanup**
 
 Run from repository root:
 
 ```powershell
 git add README.md backend/README.md backend/app backend/tests backend/.env.example
+git commit -m "refactor: complete backend compatibility cleanup"
+```/.env.example
 git commit -m "refactor: complete backend compatibility cleanup"
 ```
 
