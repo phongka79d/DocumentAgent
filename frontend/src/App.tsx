@@ -9,7 +9,7 @@ import { useUiState } from "./hooks/useUiState";
 import ChatPanel from "./components/ChatPanel";
 import DocumentList from "./components/DocumentList";
 import MessageHistoryPanel from "./components/MessageHistoryPanel";
-import ChunkViewerPanel from "./components/ChunkViewerPanel";
+import ReferencesDrawer from "./components/ReferencesDrawer";
 
 function resolveApiBaseUrl(rawValue: string | undefined): string {
   const value = rawValue?.trim();
@@ -319,33 +319,19 @@ export default function App() {
         </div>
       </main>
 
-      <aside className={`app-preview-panel ${chunks.selectedSource ? "open" : ""}`}>
-        <div className="preview-panel-header">
-          <div className="preview-panel-header-title">
-            <span className="material-symbols-outlined">description</span>
-            <h2>{chunks.selectedSource?.file_name ?? "Document Preview"}</h2>
-          </div>
-          <button
-            className="preview-close-button"
-            onClick={chunks.clearSelection}
-            aria-label="Close preview panel"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div className="preview-panel-content">
-          <ChunkViewerPanel
-            selectedSource={chunks.selectedSource}
-            selectedChunk={chunks.selectedChunk}
-            isLoading={chunks.isLoading}
-            error={chunks.error}
-            hasPreviousChunk={chunks.hasPreviousChunk}
-            hasNextChunk={chunks.hasNextChunk}
-            onViewPreviousChunk={chunks.viewPreviousChunk}
-            onViewNextChunk={chunks.viewNextChunk}
-          />
-        </div>
-      </aside>
+      <ReferencesDrawer
+        sources={chat.response.sources ?? []}
+        selectedSource={chunks.selectedSource}
+        selectedChunk={chunks.selectedChunk}
+        isLoading={chunks.isLoading}
+        error={chunks.error}
+        hasPreviousChunk={chunks.hasPreviousChunk}
+        hasNextChunk={chunks.hasNextChunk}
+        onSelectSource={chunks.selectSource}
+        onClose={chunks.clearSelection}
+        onViewPreviousChunk={chunks.viewPreviousChunk}
+        onViewNextChunk={chunks.viewNextChunk}
+      />
     </div>
   );
 }
