@@ -3404,3 +3404,61 @@ def test_jina_rerank_node_scores_unchanged_input_and_selects_distinct_groups():
         "far",
     ]
     assert len(result["rerank_scored_chunks"]) == 3
+
+
+def test_expand_neighbor_context_node_fills_uncovered_scored_anchors_before_neighbors():
+    from app.services import retrieval_context
+
+    settings = _test_settings().model_copy(
+        update={
+            "RETRIEVAL_RERANK_CANDIDATE_TOP_K": 10,
+            "RETRIEVAL_FINAL_TOP_K": 2,
+            "RETRIEVAL_CONTEXT_MAX_CANDIDATES": 8,
+            "RETRIEVAL_CONTEXT_MAX_TOKENS": 4000,
+        }
+    )
+    fake_supabase = FakeSupabaseClient(tables={"document_chunks": []})
+
+    # 6 scored chunks across 2 evidence groups
+    scored_chunks = []
+    for i in range(4):
+        scored_chunks.append({
+            "chunk_id": f"group-a-{i}",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": i,
+            "content": f"alpha evidence {i}",
+            "evidence_group_id": "group-a",
+            "rerank_score": 1.0 - i * 0.05,
+            "subquery_ids": ["q1"],
+        })
+    for i in range(2):
+        scored_chunks.append({
+            "chunk_id": f"group-b-{i}",
+            "document_id": DOC_A,
+            "file_name": "alpha.pdf",
+            "chunk_index": 10 + i,
+            "content": f"bravo evidence {i}",
+            "evidence_group_id": "group-b",
+            "rerank_score": 0.8 - i * 0.05,
+            "subquery_ids": ["q1"],
+        })
+
+    result = query_nodes.expand_neighbor_context_node(
+        {
+            "reranked_chunks": scored_chunks[:2],
+            "rerank_scored_chunks": scored_chunks,
+            "retrieval_metrics": {},
+        },
+        settings=settings,
+        supabase_client=fake_supabase,
+    )
+
+    # All 6 scored anchors (2 reranked + 4 remaining) fill context first
+    context_ids = [c["chunk_id"] for c in result["context_chunks"]]
+    assert len(context_ids) == 6
+    for chunk in scored_chunks:
+        assert chunk["chunk_id"] in context_ids
+    # No neighbor chunks added because context was filled by scored anchors
+    neighbor_count = sum(1 for c in result["context_chunks"] if c.get("is_neighbor_context"))
+    assert neighbor_count == 0

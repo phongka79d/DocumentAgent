@@ -595,7 +595,7 @@ git commit -m "feat: select diverse anchors from full rerank scores"
 - Modify: `backend/tests/test_retrieval_context.py:162-309`
 - Modify: `backend/tests/test_query_graph.py:1629-1765`
 
-- [ ] **Step 1: Write the failing context-priority test**
+- [x] **Step 1: Write the failing context-priority test**
 
 Append to `backend/tests/test_retrieval_context.py`:
 
@@ -665,7 +665,7 @@ def test_context_uses_uncovered_scored_anchors_before_neighbors(monkeypatch):
     assert result["retrieval_metrics"]["context_token_count"] == 3
 ```
 
-- [ ] **Step 2: Run test and verify RED**
+- [x] **Step 2: Run test and verify RED**
 
 Run:
 
@@ -675,7 +675,7 @@ python -m pytest tests/test_retrieval_context.py::test_context_uses_uncovered_sc
 
 Expected: FAIL because `coverage_chunks` is not accepted.
 
-- [ ] **Step 3: Add fixed-budget coverage filling**
+- [x] **Step 3: Add fixed-budget coverage filling**
 
 Add this optional argument to both context functions:
 
@@ -715,7 +715,7 @@ Add this metric:
 ),
 ```
 
-- [ ] **Step 4: Pass scored candidates from the graph node**
+- [x] **Step 4: Pass scored candidates from the graph node**
 
 In `expand_neighbor_context_node`, call:
 
@@ -730,7 +730,7 @@ context_result = retrieval_context.expand_neighbor_context_result(
 )
 ```
 
-- [ ] **Step 5: Run context and source regressions**
+- [x] **Step 5: Run context and source regressions**
 
 Run:
 
@@ -742,7 +742,7 @@ Expected: all selected tests pass. Existing neighbor tests may need expected ord
 updated only where a supplied scored tail now correctly precedes neighbors; do not
 weaken count, token, or source assertions.
 
-- [ ] **Step 6: Commit Task 4**
+- [x] **Step 6: Commit Task 4**
 
 ```powershell
 git add backend/app/services/retrieval_context.py backend/app/graphs/query_nodes.py backend/tests/test_retrieval_context.py backend/tests/test_query_graph.py

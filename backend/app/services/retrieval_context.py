@@ -355,6 +355,7 @@ def expand_neighbor_context_result(
     supabase_client: Any | None = None,
     retrieval_hints: Mapping[str, Any] | None = None,
     document_ids: Sequence[UUID | str] | None = None,
+    rerank_scored_chunks: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     resolved_settings = _resolve_settings(settings)
     if not reranked_chunks:
@@ -502,6 +503,13 @@ def expand_neighbor_context_result(
             try_add_chunk(boundary_chunk)
             if not can_select_more():
                 break
+
+    # Fill remaining context slots with uncovered scored anchors before neighbors.
+    if can_select_more() and rerank_scored_chunks:
+        for scored_chunk in rerank_scored_chunks:
+            if not can_select_more():
+                break
+            try_add_chunk(scored_chunk, allow_oversized_top=not selected)
 
     # Collect and add neighbors with global same-section priority.
     if can_select_more():

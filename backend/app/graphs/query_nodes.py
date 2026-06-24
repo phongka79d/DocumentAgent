@@ -685,6 +685,7 @@ def expand_neighbor_context_node(
             supabase_client=supabase_client,
             retrieval_hints=state.get("retrieval_hints"),
             document_ids=_normalize_document_ids(state.get("document_ids")),
+            rerank_scored_chunks=state.get("rerank_scored_chunks"),
         )
         metrics.update(context_result.get("retrieval_metrics") or {})
         return {
