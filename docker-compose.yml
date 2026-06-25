@@ -1,0 +1,49 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - backend/.env
+    environment:
+      FRONTEND_ORIGIN: http://localhost:8080
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ""
+      QDRANT_COLLECTION: document_chunks_v1
+    ports:
+      - "8000:8000"
+    depends_on:
+      qdrant-init:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.6
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  qdrant-init:
+    image: curlimages/curl:8.11.0
+    depends_on:
+      - qdrant
+    command: >
+      sh -c "until curl -sf http://qdrant:6333/collections >/dev/null; do sleep 2; done;
+      curl -sf http://qdrant:6333/collections/document_chunks_v1 >/dev/null ||
+      curl -sf -X PUT http://qdrant:6333/collections/document_chunks_v1
+      -H 'Content-Type: application/json'
+      -d '{\"vectors\":{\"size\":1536,\"distance\":\"Cosine\"}}'"
+
+volumes:
+  qdrant_data:

@@ -28,9 +28,10 @@ def _resolve_settings(settings: Settings | None = None) -> Settings:
 
 def create_qdrant_client(settings: Settings | None = None) -> QdrantClient:
     resolved_settings = _resolve_settings(settings)
+    api_key = resolved_settings.QDRANT_API_KEY.strip() or None
     return QdrantClient(
         url=resolved_settings.QDRANT_URL,
-        api_key=resolved_settings.QDRANT_API_KEY,
+        api_key=api_key,
         check_compatibility=False,
     )
 
