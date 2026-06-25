@@ -254,7 +254,7 @@ Copy `backend/.env.example` to `backend/.env`, then replace the service placehol
 Docker is the simplest way for another person to run the project. Docker starts the app and local Qdrant, but it does not auto-migrate Supabase. Users must run the tracked Supabase SQL file once in their own Supabase project.
 
 ```powershell
-git clone https://github.com/YOUR_NAME/DocumentAgent.git
+git clone https://github.com/phongka79d/DocumentAgent.git
 cd DocumentAgent
 copy backend\.env.example backend\.env
 ```
@@ -298,30 +298,6 @@ The Compose file starts three services:
 - `qdrant`: Local vector database with a persistent Docker volume.
 
 `qdrant-init` creates the default `document_chunks_v1` collection with vector size `1536`, matching `text-embedding-3-small`. If you change the embedding model to one with a different dimension, delete the `qdrant_data` Docker volume or create a new collection name with the correct dimension.
-
-### Backend Launch
-Run the backend with Python 3.12 from the root folder:
-
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8000
-```
-
-### Frontend Launch
-Launch the React application:
-
-```powershell
-cd frontend
-npm install
-npm run dev -- --host 127.0.0.1 --port 5173
-```
-
-Ensure `FRONTEND_ORIGIN` in your backend `.env` matches the frontend deployment address (`http://127.0.0.1:5173` or `http://localhost:5173`) to satisfy CORS configurations.
-
----
 
 ## Query & Retrieval Architecture
 
@@ -397,12 +373,4 @@ Expected response:
 
 ```json
 {"status":"ok"}
-```
-
-### 2. Run Frontend Build Check
-Ensure TypeScript and production bundling complete successfully:
-
-```powershell
-cd frontend
-npm run build
 ```
