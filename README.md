@@ -130,7 +130,7 @@ graph TD
 
 ## Database Schema
 
-Applied database definitions are tracked in [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql):
+Applied database definitions are tracked in [docs/database/supabase_schema.sql](docs/database/supabase_schema.sql):
 
 ### 1. `documents` Table
 Tracks global status, file characteristics, and parsing configuration.
@@ -246,9 +246,58 @@ Copy `backend/.env.example` to `backend/.env`, then replace the service placehol
 ## Installation & Setup
 
 ### Prerequisite External Resources
-1. **Supabase Database**: Execute the contents of [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql) in your project's SQL editor.
+1. **Supabase Database**: Create a Supabase project, open the SQL editor, then execute the full contents of [docs/database/supabase_schema.sql](docs/database/supabase_schema.sql).
 2. **Supabase Bucket**: Create a private storage bucket named `documents` (or matching `SUPABASE_STORAGE_BUCKET`).
-3. **Qdrant Collection**: Initialize a collection named `document_chunks_v1` (matching `QDRANT_COLLECTION`). Ensure the vector size matches your embedding model's dimensions (1536 for `text-embedding-3-small` or standard default).
+3. **Qdrant**: Docker Compose starts local Qdrant and creates the default `document_chunks_v1` collection automatically. If you deploy without Docker, create the collection yourself with vector size `1536` for `text-embedding-3-small`.
+
+### Docker Launch
+Docker is the simplest way for another person to run the project. Docker starts the app and local Qdrant, but it does not auto-migrate Supabase. Users must run the tracked Supabase SQL file once in their own Supabase project.
+
+```powershell
+git clone https://github.com/YOUR_NAME/DocumentAgent.git
+cd DocumentAgent
+copy backend\.env.example backend\.env
+```
+
+In Supabase:
+
+1. Create a new Supabase project.
+2. Open **SQL Editor**.
+3. Open [docs/database/supabase_schema.sql](docs/database/supabase_schema.sql) from this repo.
+4. Copy the full SQL contents into Supabase SQL Editor and run it.
+5. Open **Storage** and create a private bucket named `documents`.
+
+Then edit `backend/.env` and set the external service credentials:
+
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+SUPABASE_STORAGE_BUCKET=documents
+
+SHOPAIKEY_API_KEY=your-shopaikey-token
+JINA_API_KEY=your-jina-token
+```
+
+Docker Compose supplies the Docker-specific values for `FRONTEND_ORIGIN`, `QDRANT_URL`, `QDRANT_API_KEY`, and `QDRANT_COLLECTION`, so users do not need to edit those for the default local Docker setup.
+
+Start the app:
+
+```powershell
+docker compose up --build
+```
+
+Open the frontend at:
+
+```text
+http://localhost:8080
+```
+
+The Compose file starts three services:
+- `frontend`: Nginx serving the built React app and proxying `/api` to the backend.
+- `backend`: FastAPI reading all runtime settings from `backend/.env`.
+- `qdrant`: Local vector database with a persistent Docker volume.
+
+`qdrant-init` creates the default `document_chunks_v1` collection with vector size `1536`, matching `text-embedding-3-small`. If you change the embedding model to one with a different dimension, delete the `qdrant_data` Docker volume or create a new collection name with the correct dimension.
 
 ### Backend Launch
 Run the backend with Python 3.12 from the root folder:
@@ -336,23 +385,23 @@ Trace persistence stores node names, status, attempts, timing, providers, counts
 
 ## Testing & Verification
 
-### 1. Run Backend Tests
-Execute pytest across the suite:
+### 1. Run Docker Health Check
+After starting Docker Compose, confirm the API is reachable through the frontend proxy:
+
 ```powershell
-cd backend
-python -m pytest tests/test_config.py tests/test_hashing.py tests/test_validation.py tests/test_api_documents.py tests/test_api_messages.py tests/test_parsers.py tests/test_heading_detection.py tests/test_chunker.py tests/test_ingestion_graph.py tests/test_query_graph.py tests/test_api_chat.py -v
-python -m pytest tests/test_contracts.py tests/test_keyword_search.py tests/test_score_fusion.py tests/test_retrieval_context.py tests/test_query_planning.py tests/test_summaries.py tests/test_relations.py tests/test_observability.py tests/test_api_observability.py tests/test_retry.py -v
-python -m pytest tests/test_evaluation_metrics.py -v
+docker compose up --build
+Invoke-RestMethod http://localhost:8080/api/health
 ```
 
-To run evaluation locally:
-```powershell
-python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl
-python scripts/run_rag_evaluation.py --help
+Expected response:
+
+```json
+{"status":"ok"}
 ```
 
 ### 2. Run Frontend Build Check
-Ensure TypeScript checks and compilation compile smoothly:
+Ensure TypeScript and production bundling complete successfully:
+
 ```powershell
 cd frontend
 npm run build

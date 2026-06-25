@@ -3,6 +3,14 @@
 .env.*
 !.env.example
 /.commandcode
+docs/
+!docs/
+docs/*
+!docs/database/
+docs/database/*
+!docs/database/*.sql
+backend/scripts/
+backend/tests/
 # Logs
 *.log
 npm-debug.log*

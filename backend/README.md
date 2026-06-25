@@ -32,8 +32,8 @@ If you use the exact frontend host above (`127.0.0.1`), set `FRONTEND_ORIGIN=htt
 
 ## Required external setup for live E2E
 
-- For a fresh project, run [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql) in Supabase.
-- For an existing Phase 2 project, back up the Supabase database first, confirm you are using the intended project, then run [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) with an authorized service role or SQL editor session. Do not paste service keys into chat, reports, frontend code, or committed files.
+- For a fresh project, run [docs/database/supabase_schema.sql](../docs/database/supabase_schema.sql) in Supabase.
+- For an existing Phase 2 project, back up the Supabase database first, confirm you are using the intended project, then run [docs/database/phase3_migration.sql](../docs/database/phase3_migration.sql) with an authorized service role or SQL editor session. Do not paste service keys into chat, reports, frontend code, or committed files.
 - Create a Supabase Storage bucket named `documents`.
 - Create Qdrant collection `document_chunks_v1` with the embedding dimension returned by the configured ShopAIKey embedding model.
 - Set the backend environment variables in `backend/.env` or your shell.
@@ -126,38 +126,19 @@ When `ADMIN_API_TOKEN` is empty, the application is suitable only for local/priv
 Existing-project upgrade:
 
 1. Back up the Supabase project and confirm the target project.
-2. Apply [docs/database/phase3_migration.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/phase3_migration.sql) once through an authorized SQL path.
+2. Apply [docs/database/phase3_migration.sql](../docs/database/phase3_migration.sql) once through an authorized SQL path.
 3. Confirm the `documents.error_code` column, `document_summaries`, `document_relations`, `workflow_runs`, keyword index, and `search_document_chunks_keyword` RPC exist.
 4. Reindex existing documents with `POST /api/documents/{document_id}/reindex` so Qdrant MIME payloads, summaries, relations, and metadata are rebuilt.
 5. Inspect `/api/documents/{document_id}/summaries`, `/api/documents/{document_id}/relations`, and `/api/observability/runs`.
 
 Fresh setup:
 
-1. Run [docs/database/supabase_schema.sql](file:///C:/Users/ACER/OtherProjects/DocumentAgent/docs/database/supabase_schema.sql).
+1. Run [docs/database/supabase_schema.sql](../docs/database/supabase_schema.sql).
 2. Create the private Supabase Storage bucket and Qdrant collection.
 3. Configure backend secrets in `backend/.env`.
 4. Upload documents, then index or reindex through the API/UI.
 
 Retryable failures are limited to timeouts, connection failures, HTTP 429, and HTTP 5xx. Validation errors, unsupported files, missing documents, contract errors, and non-retryable 4xx failures run once. Final fallbacks are deterministic: planner failure becomes one original-question hybrid/semantic plan; single retrieval-path failure uses the surviving path; relation failure returns to normal scoped hybrid retrieval; Jina failure uses fused ordering; grounding failure regenerates once and then returns the safe insufficient-context response; message and trace persistence failures log warnings without changing a valid answer.
-
-## Evaluation commands
-
-Dataset validation is local:
-
-```powershell
-cd backend
-python -m app.evaluation.dataset evaluation/datasets/phase3_v1.jsonl
-```
-
-Live seeding and evaluation require configured Supabase, Qdrant, ShopAIKey, and Jina credentials:
-
-```powershell
-cd backend
-python scripts/seed_evaluation_corpus.py
-python scripts/run_rag_evaluation.py --dataset evaluation/datasets/phase3_v1.jsonl
-```
-
-Default evaluation gates are `recall_at_5 >= 0.80`, `citation_validity_rate = 1.00`, `grounding_pass_rate >= 0.90`, `unexpected_no_result_rate <= 0.10`, and `forbidden_term_rate = 0.00`. Reports are timestamped JSON files under `backend/evaluation/results/`.
 
 ## Limits and security
 
