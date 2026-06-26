@@ -1,4 +1,56 @@
 {
+  "1": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "lovely_garden", "description": "Alice found a lovely/beautiful garden with bright flowers and cool fountains."}
+    ]
+  },
+  "2": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "caterpillar", "description": "Alice met a Caterpillar sitting on a mushroom and smoking a hookah."},
+      {"id": "who_are_you", "description": "The Caterpillar kept asking Alice 'Who are you?'"}
+    ]
+  },
+  "3": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "size_change", "description": "Eating or drinking caused Alice to change in size (shrinking or growing)."}
+    ]
+  },
+  "4": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "queen_rules_chaos", "description": "The Queen enforced chaotic croquet rules (e.g., executing players, no turns, playing all at once)."},
+      {"id": "flamingos_mallets", "description": "Live flamingos were used as mallets."},
+      {"id": "hedgehogs_balls", "description": "Live hedgehogs were used as balls."},
+      {"id": "soldiers_arches", "description": "Soldiers doubled up to serve as arches."}
+    ]
+  },
+  "5": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "tea_party_characters", "description": "The Mad Hatter, March Hare, and Dormouse sat at the tea party."},
+      {"id": "quarrel_time", "description": "Time was stuck because the Hatter quarreled with Time."},
+      {"id": "always_six", "description": "Time remains stuck at six o'clock (always tea-time)."}
+    ]
+  },
+  "6": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "unsigned_letter_verses", "description": "A paper or letter with verses (nonsense poem) was presented as evidence."},
+      {"id": "not_own_handwriting", "description": "The writing was not in the Knave's own handwriting."},
+      {"id": "no_signature", "description": "The verses were unsigned / had no signature at the end."}
+    ]
+  },
+  "7": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "queen_threats", "description": "The Queen of Hearts threatened to execute characters by saying 'Off with his/her head!'"},
+      {"id": "gardeners_target", "description": "The Queen targeted the gardeners (Five, Seven, and Two)."},
+      {"id": "hatter_target", "description": "The Queen targeted the Mad Hatter."}
+    ]
+  },
   "8": {
     "positive_question": true,
     "required_groups": [
@@ -12,6 +64,22 @@
       {"id": "beautiful_soup", "description": "The song 'Beautiful Soup' sung by the Mock Turtle"},
       {"id": "queen_tarts", "description": "The tart accusation rhyme/poem read by the White Rabbit"},
       {"id": "trial_verse", "description": "The trial verse/poem 'They told me you had been to her' read by the White Rabbit"}
+    ]
+  },
+  "9": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "initial_confusion", "description": "Initially Alice experienced uncontrolled size changes and confusion/crying."},
+      {"id": "size_control", "description": "She learned to control her size by eating pieces of the mushroom."},
+      {"id": "growing_confidence", "description": "During the trial, Alice grew to her full size and gained confidence, defying the Queen/court."}
+    ]
+  },
+  "10": {
+    "positive_question": true,
+    "required_groups": [
+      {"id": "school_subjects", "description": "Mock Turtle's school subjects include Reeling, Writhing, and Arithmetic (Ambition, Distraction, Uglification, Derision)."},
+      {"id": "drawling_master_eel", "description": "The Drawling-master was an old conger-eel."},
+      {"id": "drawling_subjects", "description": "Subjects taught by the eel were Drawling, Stretching, and Fainting in Coils."}
     ]
   }
 }
