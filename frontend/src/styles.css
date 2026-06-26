@@ -2003,3 +2003,124 @@ dl {
     grid-template-columns: 1fr;
   }
 }
+
+/* RAG Stepper Loading Styles */
+.rag-loading-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--panel-soft);
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  max-width: 480px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.rag-loading-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 12px;
+}
+
+.rag-loading-header .spinner.small {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+  border: 2px solid var(--panel-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.rag-loading-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+.rag-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rag-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  opacity: 0.4;
+  transform: translateX(-5px);
+  transition: all var(--motion-medium);
+}
+
+.rag-step-item.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.rag-step-item.completed {
+  opacity: 0.85;
+  transform: translateX(0);
+}
+
+.rag-step-icon {
+  font-size: 20px;
+  user-select: none;
+  transition: all var(--motion-fast);
+}
+
+.rag-step-item.pending .rag-step-icon {
+  color: var(--muted);
+}
+
+.rag-step-item.active .rag-step-icon {
+  color: var(--accent);
+  animation: spin 2s linear infinite;
+}
+
+.rag-step-item.completed .rag-step-icon {
+  color: var(--success);
+}
+
+.rag-step-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rag-step-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  transition: color var(--motion-fast);
+}
+
+.rag-step-item.pending .rag-step-label {
+  color: var(--muted);
+}
+
+.rag-step-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

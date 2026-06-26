@@ -22,6 +22,7 @@ export interface UseChatReturn {
   submit: (selectedDocumentIds: string[]) => Promise<void>;
   displayResponse: (response: ChatResponse, questionText: string) => void;
   reset: () => void;
+  realtimeNodes: string[];
 }
 
 export function useChat(): UseChatReturn {
@@ -30,6 +31,7 @@ export function useChat(): UseChatReturn {
   const [responseState, setResponseState] = useState<ChatResponse>(MOCK_CHAT_RESPONSE);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [realtimeNodes, setRealtimeNodes] = useState<string[]>([]);
 
   const setQuestion = useCallback((value: string) => {
     setQuestionState(value);
@@ -42,6 +44,7 @@ export function useChat(): UseChatReturn {
       setActiveQuestion(questionText);
       setQuestionState("");
       setError(null);
+      setRealtimeNodes([]);
     },
     [],
   );
@@ -54,14 +57,27 @@ export function useChat(): UseChatReturn {
       setIsSubmitting(true);
       setError(null);
       setActiveQuestion(trimmed);
+      setRealtimeNodes([]);
 
       try {
         const request: ChatRequest = { question: trimmed, save_message: true };
         if (selectedDocumentIds.length > 0) {
           request.document_ids = selectedDocumentIds;
         }
-        const chatResponse = await apiClient.sendChatMessage(request);
-        setResponseState(chatResponse);
+
+        let finalResponse: ChatResponse = { answer: "", sources: [] };
+
+        await apiClient.sendChatMessageStream(request, (event) => {
+          if (event.type === "node") {
+            setRealtimeNodes((prev) => [...prev, event.node]);
+          } else if (event.type === "result") {
+            finalResponse = event.data;
+          } else if (event.type === "error") {
+            setError(event.message);
+          }
+        });
+
+        setResponseState(finalResponse);
         setQuestionState("");
       } catch (err) {
         setError(getErrorMessage(err, "Unable to send question."));
@@ -77,6 +93,7 @@ export function useChat(): UseChatReturn {
     setActiveQuestion("");
     setResponseState(MOCK_CHAT_RESPONSE);
     setError(null);
+    setRealtimeNodes([]);
   }, []);
 
   return {
@@ -89,5 +106,6 @@ export function useChat(): UseChatReturn {
     submit,
     displayResponse,
     reset,
+    realtimeNodes,
   };
 }

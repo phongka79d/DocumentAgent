@@ -30,8 +30,11 @@ export interface ApiClient {
   getDocumentChunks(documentId: string): Promise<DocumentChunkListResponse>;
   indexDocument(documentId: string): Promise<DocumentProcessingResponse>;
   reindexDocument(documentId: string): Promise<DocumentProcessingResponse>;
-  deleteDocument(documentId: string): Promise<DocumentResponse>;
   sendChatMessage(request: ChatRequest): Promise<ChatResponse>;
+  sendChatMessageStream(
+    request: ChatRequest,
+    onEvent: (event: any) => void,
+  ): Promise<void>;
   listMessages(limit: number): Promise<MessageListResponse>;
 }
 
@@ -358,6 +361,57 @@ function createRequestHandler(config: ApiClientConfig) {
       });
     },
 
+    async sendChatMessageStream(
+      requestBody: ChatRequest,
+      onEvent: (event: any) => void,
+    ): Promise<void> {
+      const fetchImpl = resolveFetchImpl(config.fetchImpl);
+      const requestHeaders = createHeaders(resolveAdminApiToken(), {
+        "Content-Type": "application/json",
+      });
+
+      const response = await fetchImpl(joinApiUrl(baseUrl, "/api/chat"), {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify(serializeChatRequest(requestBody)),
+      });
+
+      if (!response.ok) {
+        throw await createApiError(response);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("ReadableStream not supported in this browser.");
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const event = JSON.parse(line);
+              onEvent(event);
+            } catch (e) {
+              console.error("Failed to parse JSON stream line:", line, e);
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    },
+
     listMessages(limit: number): Promise<MessageListResponse> {
       return request<MessageListResponse>(`/api/messages?limit=${encodeURIComponent(String(limit))}`);
     },
@@ -428,6 +482,13 @@ export function deleteDocument(documentId: string): Promise<DocumentResponse> {
 
 export function sendChatMessage(requestBody: ChatRequest): Promise<ChatResponse> {
   return apiClient.sendChatMessage(requestBody);
+}
+
+export function sendChatMessageStream(
+  requestBody: ChatRequest,
+  onEvent: (event: any) => void,
+): Promise<void> {
+  return apiClient.sendChatMessageStream(requestBody, onEvent);
 }
 
 export function listMessages(limit: number): Promise<MessageListResponse> {

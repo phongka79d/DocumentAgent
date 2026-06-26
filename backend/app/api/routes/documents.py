@@ -8,6 +8,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 import io
 from qdrant_client.http import models as qdrant_models
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.core.config import Settings, get_settings
 from app.core.errors import safe_http_exception
@@ -95,14 +96,18 @@ def delete_document_vectors(
             )
         ]
     )
-    retry_sync(
-        "qdrant_delete",
-        lambda: client.delete(
-            collection_name=collection_name,
-            points_selector=payload_filter,
-        ),
-        settings=settings,
-    )
+    try:
+        retry_sync(
+            "qdrant_delete",
+            lambda: client.delete(
+                collection_name=collection_name,
+                points_selector=payload_filter,
+            ),
+            settings=settings,
+        )
+    except UnexpectedResponse as exc:
+        if exc.status_code != 404:
+            raise
 
 
 def delete_document_chunks(
@@ -171,6 +176,19 @@ def run_document_reindex(document_id: UUID, *, settings: Settings) -> Any:
         qdrant_collection=document.qdrant_collection,
     )
     delete_document_chunks(document.id, settings=settings)
+    
+    supabase_client = create_supabase_client(settings)
+    retry_sync(
+        "document_reindex_reset",
+        lambda: supabase_client.table("documents").update({
+            "status": "uploaded",
+            "error_message": None,
+            "error_code": None,
+            "qdrant_collection": settings.QDRANT_COLLECTION,
+        }).eq("id", str(document.id)).execute(),
+        settings=settings,
+    )
+    
     return _invoke_ingestion_graph(document.id, settings=settings)
 
 

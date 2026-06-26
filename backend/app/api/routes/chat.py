@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import json
 from typing import Any
 
 from fastapi import APIRouter, status
+from fastapi.responses import StreamingResponse
 from pydantic import ValidationError
 
 from app.core.config import Settings, get_settings
@@ -41,8 +43,8 @@ def _response_payload(result: Mapping[str, Any]) -> dict[str, Any]:
     return payload
 
 
-@router.post("", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
+@router.post("")
+def chat(request: ChatRequest) -> StreamingResponse:
     settings = _resolve_settings()
     started_perf = observability.perf_now()
     run = None
@@ -54,68 +56,73 @@ def chat(request: ChatRequest) -> ChatResponse:
             started_at=observability.now_utc(),
         )
         run_id = run.get("id") if isinstance(run, Mapping) else None
-    try:
+
+    def event_generator():
         graph = build_query_graph(settings=settings)
         initial_state = request.model_dump(mode="json", exclude_none=True)
         if run_id is not None:
             initial_state["trace_id"] = str(run_id)
-        result = graph.invoke(initial_state)
-    except Exception as exc:  # pragma: no cover - defensive API boundary
-        if run_id is not None:
-            observability.update_workflow_run(
-                run_id,
-                status="failed",
-                error_code="query_api_exception",
-                error_message=DEFAULT_CHAT_ERROR,
-                finished_at=observability.now_utc(),
-                duration_ms=observability.duration_ms(started_perf),
-            )
-        raise safe_http_exception(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            str(exc) or DEFAULT_CHAT_ERROR,
-        ) from exc
 
-    if not isinstance(result, Mapping):
-        if run_id is not None:
-            observability.update_workflow_run(
-                run_id,
-                status="failed",
-                error_code="query_invalid_result",
-                error_message=DEFAULT_CHAT_ERROR,
-                finished_at=observability.now_utc(),
-                duration_ms=observability.duration_ms(started_perf),
-            )
-        raise safe_http_exception(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            DEFAULT_CHAT_ERROR,
-        )
+        last_state = {}
+        try:
+            for event in graph.stream(initial_state, stream_mode="updates"):
+                for node_name, state_update in event.items():
+                    yield json.dumps({"type": "node", "node": node_name}) + "\n"
+                    if isinstance(state_update, Mapping):
+                        last_state.update(state_update)
 
-    if run_id is not None:
-        final_status = "failed" if result.get("error_message") else "completed"
-        trace = list(result.get("workflow_trace") or [])
-        if final_status == "completed":
-            trace.append(
-                observability.retrieval_totals_event(
-                    result,
-                    total_query_latency_ms=observability.duration_ms(started_perf),
+            error_message = last_state.get("error_message")
+            if error_message:
+                yield json.dumps({"type": "error", "message": str(error_message)}) + "\n"
+                if run_id is not None:
+                    observability.update_workflow_run(
+                        run_id,
+                        status="failed",
+                        trace=list(last_state.get("workflow_trace") or []),
+                        error_code="query_failed",
+                        error_message=str(error_message),
+                        finished_at=observability.now_utc(),
+                        duration_ms=observability.duration_ms(started_perf),
+                    )
+                return
+
+            if run_id is not None:
+                trace = list(last_state.get("workflow_trace") or [])
+                trace.append(
+                    observability.retrieval_totals_event(
+                        last_state,
+                        total_query_latency_ms=observability.duration_ms(started_perf),
+                    )
                 )
-            )
-        observability.update_workflow_run(
-            run_id,
-            status=final_status,
-            trace=trace,
-            error_code="query_failed" if final_status == "failed" else None,
-            error_message=DEFAULT_CHAT_ERROR if final_status == "failed" else None,
-            finished_at=observability.now_utc(),
-            duration_ms=observability.duration_ms(started_perf),
-        )
-        if result.get("trace_id") is None:
-            result = {**dict(result), "trace_id": str(run_id)}
+                observability.update_workflow_run(
+                    run_id,
+                    status="completed",
+                    trace=trace,
+                    finished_at=observability.now_utc(),
+                    duration_ms=observability.duration_ms(started_perf),
+                )
 
-    try:
-        return ChatResponse.model_validate(_response_payload(result))
-    except ValidationError as exc:
-        raise safe_http_exception(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            DEFAULT_CHAT_ERROR,
-        ) from exc
+            response_payload = {
+                "answer": last_state.get("answer"),
+                "sources": last_state.get("sources") or [],
+            }
+            if last_state.get("trace_id") is not None:
+                response_payload["trace_id"] = last_state["trace_id"]
+            elif run_id is not None:
+                response_payload["trace_id"] = str(run_id)
+
+            yield json.dumps({"type": "result", "data": response_payload}) + "\n"
+
+        except Exception as exc:
+            yield json.dumps({"type": "error", "message": str(exc) or "Query failed"}) + "\n"
+            if run_id is not None:
+                observability.update_workflow_run(
+                    run_id,
+                    status="failed",
+                    error_code="query_api_exception",
+                    error_message=str(exc) or "Query failed",
+                    finished_at=observability.now_utc(),
+                    duration_ms=observability.duration_ms(started_perf),
+                )
+
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")

@@ -230,6 +230,7 @@ export default function App() {
               sourceError={chunks.error}
               hasNextChunk={chunks.hasNextChunk}
               hasPreviousChunk={chunks.hasPreviousChunk}
+              realtimeNodes={chat.realtimeNodes}
             />
           ) : ui.activeView === "documents" ? (
             <div>

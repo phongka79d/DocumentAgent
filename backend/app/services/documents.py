@@ -6,6 +6,7 @@ from typing import Any, Iterable, Mapping
 from uuid import UUID, uuid4
 
 from qdrant_client.http import models as qdrant_models
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.core.config import Settings, get_settings
 from app.core.retry import retry_sync
@@ -329,14 +330,18 @@ def delete_document_and_file(
             )
         ]
     )
-    retry_sync(
-        "qdrant_delete",
-        lambda: resolved_qdrant_client.delete(
-            collection_name=collection_name,
-            points_selector=payload_filter,
-        ),
-        settings=resolved_settings,
-    )
+    try:
+        retry_sync(
+            "qdrant_delete",
+            lambda: resolved_qdrant_client.delete(
+                collection_name=collection_name,
+                points_selector=payload_filter,
+            ),
+            settings=resolved_settings,
+        )
+    except UnexpectedResponse as exc:
+        if exc.status_code != 404:
+            raise
 
     bucket = client.storage.from_(resolved_settings.SUPABASE_STORAGE_BUCKET)
     bucket.remove([document.storage_path])
